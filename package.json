@@ -1,0 +1,45 @@
+{
+  "name": "mrcarpet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development webpack serve --mode development --open",
+    "build": "cross-env NODE_ENV=development webpack --mode production",
+    "production": "cross-env NODE_ENV=production webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VitaliyVa/mrCarpet.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VitaliyVa/mrCarpet/issues"
+  },
+  "homepage": "https://github.com/VitaliyVa/mrCarpet#readme",
+  "devDependencies": {
+    "@types/svgo": "^3.0.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "connect-history-api-fallback": "^2.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.2.0",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.5.0",
+    "imagemin-webpack-plugin": "^2.4.2",
+    "mini-css-extract-plugin": "^2.7.2",
+    "optimize-css-assets-webpack-plugin": "^6.0.1",
+    "sass": "^1.58.3",
+    "sass-loader": "^13.2.0",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "webpack": "^5.31.2",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
+  },
+  "dependencies": {
+    "svgo": "^3.0.2"
+  }
+}
