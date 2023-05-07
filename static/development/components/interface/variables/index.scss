@@ -1,0 +1,28 @@
+.small {
+  font-family: "Futura PT Book", sans-serif;
+
+}
+.medium {
+  font-family: "Futura PT Medium", sans-serif;
+
+}
+.bold {
+  font-family: "Futura PT Bold", sans-serif;
+}
+
+
+.color {
+  &_black {
+    color: #453f3a;
+
+    &_sub {
+      color: #89817c;
+    }
+  }
+  &_white {
+    color: #fffcf2;
+  }
+  &_gold {
+    color: #a46c46;
+  }
+}
