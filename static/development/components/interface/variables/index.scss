@@ -26,3 +26,17 @@
     color: #a46c46;
   }
 }
+
+.font-size {
+  &-18 {
+    font-size: 18px;
+  }
+  &-36 {
+    font-size: 36px;
+  }
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+}
