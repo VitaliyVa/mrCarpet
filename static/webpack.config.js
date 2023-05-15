@@ -39,6 +39,7 @@ module.exports = {
     context: path.resolve(__dirname,'development/pages') ,
     entry:{
         index:  './index.js' ,
+        favorite: './favorite.js'
     },
     output:{
         filename:'[name]/index.js',
