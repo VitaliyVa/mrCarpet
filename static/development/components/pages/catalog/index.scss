@@ -1,0 +1,47 @@
+.catalog {
+    &_items {
+        padding-top: 70px;
+    }
+
+    &_section {
+        margin-bottom: 100px;
+        &_top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #EBEAE8;
+            border-radius: 10px;
+
+            &_img {
+                width: 25%;
+                padding: 2% 5%;
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                }
+            }
+
+            &_center {
+                width: 50%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                
+                h2 {
+                    font-weight: 400;
+                    font-size: 72px;
+                    line-height: 96%;
+                    color: #453F3A;
+                    text-align: center;
+                    margin: 20px 0;
+                }
+            }
+        }
+
+        &_bottom {
+            display: flex;
+            padding: 1% 0;
+        }
+    }
+}
