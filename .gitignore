@@ -13,3 +13,8 @@ yarn.lock
 .yarnclean
 .vscode
 .idea
+/venv/*
+*.sqlite3
+*.pyc
+*.log
+*.vscode/*

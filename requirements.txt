@@ -1,0 +1,5 @@
+django
+Pillow
+django-import-export
+django-rest-framework
+unidecode
