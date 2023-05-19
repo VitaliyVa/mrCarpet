@@ -1,6 +1,33 @@
 .catalog_inside {
     display: flex;
+
     &_filter {
-        width: 20%;
+        min-width: 240px;
+        margin-right: 20px;
+    }
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    padding: 50px 0;
+    
+    a {
+        color: #453F3A;
+        font-weight: 450;
+        font-size: 16px;
+        margin-right: 5px;
+        padding: 4px 12px;
+        border-radius: 8px;
+
+        &:hover {
+            color: #FFFCF2;
+            background: #A46C46;
+        }
+        &.active {
+            color: #FFFCF2;
+            background: #A46C46;
+        }
     }
 }

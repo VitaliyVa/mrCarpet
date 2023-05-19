@@ -331,9 +331,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/accordion/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
-document.querySelectorAll('.accordion_content__block').forEach(function (item) {
+document.querySelectorAll('.accordion__title').forEach(function (item) {
   item.addEventListener('click', function () {
-    item.classList.toggle('active');
+    item.closest('.accordion_content__block').classList.toggle('active');
   });
 });
 
@@ -408,6 +408,34 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "../components/module/catalog_items/index.js":
+/*!***************************************************!*\
+  !*** ../components/module/catalog_items/index.js ***!
+  \***************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/catalog_items/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+
+
+/***/ }),
+
+/***/ "../components/module/catalog_items/index.scss":
+/*!*****************************************************!*\
+  !*** ../components/module/catalog_items/index.scss ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+    if(false) { var cssReload; }
+  
+
+/***/ }),
+
 /***/ "../components/pages/catalog_inside/index.js":
 /*!***************************************************!*\
   !*** ../components/pages/catalog_inside/index.js ***!
@@ -450,17 +478,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_common_componentc_footer_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/common_componentc/footer/index */ "../components/common_componentc/footer/index.js");
 /* harmony import */ var _components_interface_variables_index__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../components/interface/variables/index */ "../components/interface/variables/index.js");
 /* harmony import */ var _components_interface_input_index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../components/interface/input/index */ "../components/interface/input/index.js");
-/* harmony import */ var _components_module_cart_item__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../components/module/cart_item */ "../components/module/cart_item/index.js");
-/* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
-/* harmony import */ var _components_module_accordion_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../components/module/accordion/index */ "../components/module/accordion/index.js");
-/* harmony import */ var _components_pages_catalog_inside_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../components/pages/catalog_inside/index */ "../components/pages/catalog_inside/index.js");
+/* harmony import */ var _components_module_catalog_items_index__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../components/module/catalog_items/index */ "../components/module/catalog_items/index.js");
+/* harmony import */ var _components_module_cart_item__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../components/module/cart_item */ "../components/module/cart_item/index.js");
+/* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
+/* harmony import */ var _components_module_accordion_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../components/module/accordion/index */ "../components/module/accordion/index.js");
+/* harmony import */ var _components_pages_catalog_inside_index__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../components/pages/catalog_inside/index */ "../components/pages/catalog_inside/index.js");
 // script interface
 
 
 
 
- // import "../components/module/catalog_items/index";
-// import "../components/module/catalog_slider/index";
+
+ // import "../components/module/catalog_slider/index";
 
 
 

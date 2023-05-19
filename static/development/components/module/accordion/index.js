@@ -1,7 +1,7 @@
 import "./index.scss"
 
-document.querySelectorAll('.accordion_content__block').forEach(item => {
+document.querySelectorAll('.accordion__title').forEach(item => {
     item.addEventListener('click', () => {
-        item.classList.toggle('active')
+        item.closest('.accordion_content__block').classList.toggle('active')
     })
 })

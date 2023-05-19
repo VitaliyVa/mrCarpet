@@ -999,6 +999,107 @@ textarea {
   font-size: 16px;
   line-height: 130%; }
 
+.catalog_items {
+  position: relative;
+  padding-top: 15px;
+  padding-bottom: 100px; }
+
+.catalog_item {
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ebeae8;
+  border-radius: 10px;
+  margin: 8px;
+  width: calc(25% - 16px);
+  min-width: 300px;
+  padding: 10px 30px; }
+  .catalog_item:hover {
+    background: #a46c46; }
+    .catalog_item:hover .catalog_item_text {
+      color: #fff; }
+  .catalog_item__block {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin: 0px -8px; }
+  .catalog_item_text {
+    transition: all 0.2s;
+    font-size: 20px;
+    line-height: 130%; }
+
+/* Curl Bottom Left */
+.hvr-curl-bottom-left {
+  vertical-align: middle;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative; }
+
+.hvr-curl-bottom-left:before {
+  pointer-events: none;
+  position: absolute;
+  content: "";
+  height: 0;
+  width: 0;
+  bottom: 0;
+  left: 0;
+  background: white;
+  /* IE9 */
+  background: linear-gradient(45deg, white 45%, #aaaaaa 50%, #cccccc 56%, white 80%);
+  box-shadow: 1px -1px 1px rgba(0, 0, 0, 0.4);
+  -webkit-transition-duration: 0.3s;
+  transition-duration: 0.3s;
+  -webkit-transition-property: width, height;
+  transition-property: width, height; }
+
+.hvr-curl-bottom-left:hover:before,
+.hvr-curl-bottom-left:focus:before,
+.hvr-curl-bottom-left:active:before {
+  width: 25px;
+  height: 25px; }
+
+@media (max-width: 1500px) {
+  .catalog_item {
+    min-width: 260px;
+    padding: 10px 10px; }
+    .catalog_item_text {
+      font-size: 16px;
+      line-height: 100%; }
+    .catalog_item_img {
+      width: 80px;
+      display: flex; }
+      .catalog_item_img img {
+        width: 100%; } }
+
+@media (max-width: 1024px) {
+  .catalog_item {
+    min-width: unset;
+    width: calc(50% - 16px); }
+    .catalog_item__block {
+      justify-content: flex-start; }
+    .catalog_item_text {
+      width: calc(100% - 85px); }
+    .catalog_item_img {
+      margin-left: 5px; } }
+
+@media (max-width: 500px) {
+  .catalog_item {
+    padding: 6px;
+    margin: 6px;
+    width: calc(50% - 12px); }
+    .catalog_item_text {
+      width: calc(100% - 45px);
+      font-size: 12px; }
+    .catalog_item_img {
+      margin-left: 5px;
+      width: 40px; } }
+
 .cart_item {
   position: relative;
   display: flex;
@@ -1135,9 +1236,10 @@ textarea {
   display: flex;
   flex-direction: column;
   position: relative;
-  padding: 10px 15px;
+  padding: 13px 0;
   width: 100%;
-  margin: 0; }
+  margin: 0;
+  border-bottom: 1px solid #EBEAE8; }
   .accordion_link {
     text-transform: uppercase;
     display: flex; }
@@ -1161,10 +1263,18 @@ textarea {
     top: 0px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 5px 15px;
     border-radius: 4px;
     background: #fff;
     z-index: -1; }
+    .accordion_content_item {
+      font-size: 14px;
+      line-height: 130%;
+      color: #453F3A;
+      margin-top: 12px; }
+      .accordion_content_item:hover {
+        color: #A46C46; }
+      .accordion_content_item.active {
+        color: #A46C46; }
     .accordion_content__block {
       position: relative; }
       .accordion_content__block::after {
@@ -1190,13 +1300,35 @@ textarea {
         z-index: 9;
         visibility: visible;
         max-height: 1000px; }
+      .accordion_content__block.active .accordion__title {
+        color: #A46C46; }
       .accordion_content__block.active::before {
         opacity: 0; }
 
 .catalog_inside {
   display: flex; }
   .catalog_inside_filter {
-    width: 20%; }
+    min-width: 240px;
+    margin-right: 20px; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  padding: 50px 0; }
+  .pagination a {
+    color: #453F3A;
+    font-weight: 450;
+    font-size: 16px;
+    margin-right: 5px;
+    padding: 4px 12px;
+    border-radius: 8px; }
+    .pagination a:hover {
+      color: #FFFCF2;
+      background: #A46C46; }
+    .pagination a.active {
+      color: #FFFCF2;
+      background: #A46C46; }
 
 
 /*# sourceMappingURL=index.css.map*/
