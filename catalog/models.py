@@ -32,7 +32,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     quantity = models.PositiveSmallIntegerField(
         verbose_name='Кількість'
     )
-    discount = models.IntegerField(blank=True, null=True)
+    # discount = models.IntegerField(blank=True, null=True)
     # sizes = models.ManyToManyField(
     #     verbose_name='Розміри',
     #     blank=True,
@@ -98,6 +98,12 @@ class ProductAttribute(models.Model):
         blank=True,
         null=True
     )
+    discount = models.IntegerField(
+        verbose_name="Знижка",
+        blank=True,
+        null=True,
+        help_text="Знижка у відсотках"
+    )
     price = models.IntegerField(verbose_name='Ціна', blank=True, null=True)
     
     class Meta:
@@ -108,8 +114,8 @@ class ProductAttribute(models.Model):
         return self.product.title
 
     def get_total_price(self):
-        if self.product.discount:
-            discount = self.product.discount / 100
+        if self.discount:
+            discount = self.discount / 100
             total_price = self.price - (self.price * discount)
             return total_price
         else:
