@@ -10989,6 +10989,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
 console.log('1233');
+document.querySelector('.cart_item_add_to_favorite').addEventListener('click', function (e) {
+  e.preventDefault();
+  console.log('add_to_favorite');
+});
 
 /***/ }),
 

@@ -2,10 +2,12 @@
   font-family: "Futura PT Book", sans-serif;
 
 }
+
 .medium {
   font-family: "Futura PT Medium", sans-serif;
 
 }
+
 .bold {
   font-family: "Futura PT Bold", sans-serif;
 }
@@ -19,9 +21,11 @@
       color: #89817c;
     }
   }
+
   &_white {
     color: #fffcf2;
   }
+
   &_gold {
     color: #a46c46;
   }
@@ -31,6 +35,7 @@
   &-18 {
     font-size: 18px;
   }
+
   &-36 {
     font-size: 36px;
   }
@@ -39,4 +44,21 @@
 .flex {
   display: flex;
   align-items: center;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+
+  h1 {
+    font-weight: 700;
+    font-size: 30px;
+    line-height: 38px;
+    color: #453F3A;
+  }
+  
+  span {
+    margin-left: 20px;
+    color: #89817c;
+  }
 }

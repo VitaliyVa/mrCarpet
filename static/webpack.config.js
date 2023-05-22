@@ -40,7 +40,8 @@ module.exports = {
     entry:{
         index:  './index.js' ,
         favorite: './favorite.js',
-        catalog: './catalog.js'
+        catalog: './catalog.js',
+        catalog_inside: './catalog_inside.js'
     },
     output:{
         filename:'[name]/index.js',
