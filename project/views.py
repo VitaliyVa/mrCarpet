@@ -6,5 +6,7 @@ from blog.models import Article
 def index(request):
     # categories = ProductCategory.objects.all()
     products = Product.objects.all()[::-1]
+    on_sale = ProductAttribute.objects.exclude(discount=None).filter(product__in=products).values_list('product')
+    sale_products = Product.objects.filter(id__in=on_sale)
     posts = Article.objects.all()[::-1]
-    return render(request, 'index_new.html', context={'products': products, 'posts': posts})
+    return render(request, 'index_new.html', context={'products': products, 'posts': posts, 'sale_products': sale_products})

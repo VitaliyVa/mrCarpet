@@ -85,18 +85,25 @@
                             <img src="/static/utils/assets/img.png" alt="" />
                         </div>
                         <div class="cart_item_price__block">
+                            {% if product.has_discount %}
                             <div class="cart_item_price medium color_gold" data-item-1="298" data-item-2="398"
                                 data-item-3="498" data-item-4="598">
-                                298 грн
+                                {{ product.product_attr.first.get_total_price }} грн
                             </div>
                             <div class="cart_item_procent medium color_gold" data-item-1="15%" data-item-2="25%"
                                 data-item-3="35%" data-item-4="45%">
-                                15%
+                                {{ product.product_attr.first.discount }}%
                             </div>
                             <div class="cart_item_old_price medium color_black_sub" data-item-1="350"
                                 data-item-2="450" data-item-3="550" data-item-4="650">
-                                350 грн
+                                {{ product.product_attr.first.price }} грн
                             </div>
+                            {% else %}
+                            <div class="cart_item_price medium color_gold" data-item-1="298" data-item-2="398"
+                                data-item-3="498" data-item-4="598">
+                                {{ product.product_attr.first.get_total_price }} грн
+                            </div>
+                            {% endif %}
                             <div class="cart_item_add_to_favorite active">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
                                     xmlns="http://www.w3.org/2000/svg">
@@ -119,18 +126,11 @@
                         </div>
                     </a>
                     <div class="cart_item_size__block">
-                        <div data-item="1" data-novelty="true" class="cart_item_size small color_black active">
-                            0.8x1.1 м
+                        {% for attr in product.product_attr.all %}
+                        <div data-item="{{ forloop.counter }}" data-novelty="true" class="cart_item_size small color_black {% if forloop.first %}active{% endif %} ">
+                            {{ attr.size.title }}
                         </div>
-                        <div data-item="2" data-novelty="true" class="cart_item_size small color_black">
-                            0.8x1.2 м
-                        </div>
-                        <div data-item="3" data-novelty="false" class="cart_item_size small color_black">
-                            0.8x1.3 м
-                        </div>
-                        <div data-item="4" data-novelty="true" class="cart_item_size small color_black">
-                            0.8x1.4 м
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}

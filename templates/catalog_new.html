@@ -29,6 +29,7 @@
                         <img src="/static/utils/assets/img.png" alt="" />
                     </div>
                     <div class="cart_item_price__block">
+                        {% if product.has_discount %}
                         <div class="cart_item_price medium color_gold" data-item-1="298" data-item-2="398"
                             data-item-3="498" data-item-4="598">
                             {{ product.product_attr.first.get_total_price }} грн
@@ -41,6 +42,12 @@
                             data-item-2="450" data-item-3="550" data-item-4="650">
                             {{ product.product_attr.first.price }} грн
                         </div>
+                        {% else %}
+                        <div class="cart_item_price medium color_gold" data-item-1="298" data-item-2="398"
+                            data-item-3="498" data-item-4="598">
+                            {{ product.product_attr.first.get_total_price }} грн
+                        </div>
+                        {% endif %}
                         <div class="cart_item_add_to_favorite active">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -68,15 +75,6 @@
                         {{ attr.size.title }}
                     </div>
                     {% endfor %}
-                    {% comment %} <div data-item="2" data-novelty="true" class="cart_item_size small color_black">
-                        0.8x1.2 м
-                    </div>
-                    <div data-item="3" data-novelty="false" class="cart_item_size small color_black">
-                        0.8x1.3 м
-                    </div>
-                    <div data-item="4" data-novelty="true" class="cart_item_size small color_black">
-                        0.8x1.4 м
-                    </div> {% endcomment %}
                 </div>
             </div>
             {% endfor %}
