@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>index</title>
+    <link rel="stylesheet" href="/static/development/main.css" />
+    {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
+</head>
+
+<body>
+    {% block header %}{% include 'includes/header.html' %}{% endblock header %}
+
+    {% block content %}{% endblock content %}
+
+    {% include 'includes/footer.html' %}
+
+    {% block scripts %}{% endblock scripts %}
+</body>
+
+</html>

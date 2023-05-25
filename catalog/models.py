@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
 
@@ -32,6 +33,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     quantity = models.PositiveSmallIntegerField(
         verbose_name='Кількість'
     )
+    has_discount = models.BooleanField(default=False)
     # discount = models.IntegerField(blank=True, null=True)
     # sizes = models.ManyToManyField(
     #     verbose_name='Розміри',
@@ -68,6 +70,10 @@ class ProductCategory(AbstractTitleSlug):
 
     def __str__(self):
         return self.title
+    
+    def get_absolute_url(self):
+        return reverse("categorie", kwargs={"slug": self.slug})
+    
 
 
 class Size(models.Model):
@@ -111,7 +117,7 @@ class ProductAttribute(models.Model):
         verbose_name_plural = 'Варіації'
 
     def __str__(self):
-        return self.product.title
+        return f'{self.product.title} - {self.size.title}'
 
     def get_total_price(self):
         if self.discount:
@@ -120,6 +126,20 @@ class ProductAttribute(models.Model):
             return total_price
         else:
             return self.price
+        
+    def set_discount(self):
+        for prod in self.product.product_attr.all():
+            if prod.discount:
+                return True
+            else:
+                return False
+        
+    def save(self, *args, **kwargs):
+        discount = super().save(*args, **kwargs)
+        self.product.has_discount = self.set_discount()
+        self.product.save()
+        return discount
+    
 
 # class SizePrice(models.Model):
 #     price = models.IntegerField(
@@ -313,10 +333,13 @@ class FavouriteProducts(models.Model):
     order = models.IntegerField(default=1)
 
     class Meta:
-        ordering = ['-order']
+        # ordering = ['-order']
         verbose_name = 'Улюблений товар'
         verbose_name_plural = 'Улюблені товари'
 
     def save(self, *args, **kwargs):
-        self.order = FavouriteProducts.objects.first().order + 1
+        if FavouriteProducts.objects.first():
+            self.order = FavouriteProducts.objects.first().order + 1
+        else:
+            self.order = 1
         return super().save(*args, **kwargs)

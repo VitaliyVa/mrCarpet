@@ -11,8 +11,17 @@ class FavouriteAdmin(admin.ModelAdmin):
     class Meta:
         model = Favourite
 
+class ProductInLine(admin.TabularInline):
+    model = ProductAttribute
+    extra = 0
 
-admin.site.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    inlines = [ProductInLine]
+    class Meta:
+        model = Product
+
+
+admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductCategory)
 admin.site.register(Favourite, FavouriteAdmin)
 admin.site.register(Specification)
