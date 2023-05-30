@@ -306,7 +306,7 @@ class ProductSpecification(models.Model):
 class Favourite(AbstractCreatedUpdated):
     product = models.ManyToManyField(
         verbose_name='Товар',
-        blank=False,
+        blank=True,
         to='catalog.Product',
         related_name='fav_products',
         through='FavouriteProducts',
