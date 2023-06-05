@@ -967,8 +967,14 @@ textarea {
 .color_gold {
   color: #a46c46; }
 
+.font-size-14 {
+  font-size: 14px; }
+
 .font-size-18 {
   font-size: 18px; }
+
+.font-size-26 {
+  font-size: 26px; }
 
 .font-size-36 {
   font-size: 36px; }
