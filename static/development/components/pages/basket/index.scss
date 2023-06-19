@@ -3,8 +3,8 @@
     margin-top: 60px;
 
     &_wrapper {
-        display: flex;
-        justify-content: space-between;
+        // display: flex;
+        // justify-content: space-between;
     }
 
     &_item {
@@ -81,21 +81,28 @@
     }
 
     &_right {
+        &__wrapper {
+            position: fixed;
+            right: 7%;
+            top: 20%;
+        }
+
         max-width: 400px;
         font-weight: 400;
         font-size: 20px;
         line-height: 96%;
         color: #453F3A;
-    
+
         padding: 20px;
         background: #EBEAE8;
         border-radius: 10px;
         margin-bottom: 25px;
-    
+
         &_block {
             display: flex;
             justify-content: space-between;
             margin-top: 15px;
+
             input {
                 margin-right: 10px;
             }
@@ -103,6 +110,7 @@
 
         &_btn {
             margin: 30px 0;
+
             .btn-gold {
                 width: 100%;
             }

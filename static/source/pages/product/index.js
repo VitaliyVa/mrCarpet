@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./basket.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./product.js");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -11024,25 +11024,58 @@ var catalog_slider = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".catalo
 
 /***/ }),
 
-/***/ "../components/pages/basket/index.js":
-/*!*******************************************!*\
-  !*** ../components/pages/basket/index.js ***!
-  \*******************************************/
+/***/ "../components/pages/product/index.js":
+/*!********************************************!*\
+  !*** ../components/pages/product/index.js ***!
+  \********************************************/
 /*! no exports provided */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/pages/basket/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/pages/product/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var swiper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! swiper */ "../../node_modules/swiper/swiper.esm.js");
+/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! swiper/swiper-bundle.css */ "../../node_modules/swiper/swiper-bundle.css");
+/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_2__);
 
+
+
+swiper__WEBPACK_IMPORTED_MODULE_1__["default"].use([swiper__WEBPACK_IMPORTED_MODULE_1__["Thumbs"]]);
+var product_main_swiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".product_slider_main", {
+  slidesPerView: 1,
+  slidesPerGroup: 1,
+  initialSlide: 0,
+  // zoom: {
+  //     maxRaito: 5,
+  //     minRaito: 1
+  // },
+  thumbs: {
+    swiper: {
+      el: ".product_slider_mini",
+      slidesPerView: 6,
+      spaceBetween: 16,
+      direction: 'vertical',
+      breakpoints: {// 700: {
+        //   slidesPerView: 4,
+        // },
+        // 600: {
+        //   slidesPerView: 3,
+        // },
+        // 300: {
+        //   slidesPerView: 2,
+        // },
+      }
+    }
+  }
+});
 
 /***/ }),
 
-/***/ "../components/pages/basket/index.scss":
-/*!*********************************************!*\
-  !*** ../components/pages/basket/index.scss ***!
-  \*********************************************/
+/***/ "../components/pages/product/index.scss":
+/*!**********************************************!*\
+  !*** ../components/pages/product/index.scss ***!
+  \**********************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11052,10 +11085,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./basket.js":
-/*!*******************!*\
-  !*** ./basket.js ***!
-  \*******************/
+/***/ "./product.js":
+/*!********************!*\
+  !*** ./product.js ***!
+  \********************/
 /*! no exports provided */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -11071,7 +11104,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
 /* harmony import */ var _components_module_cart_item__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../components/module/cart_item */ "../components/module/cart_item/index.js");
 /* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
-/* harmony import */ var _components_pages_basket_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../components/pages/basket/index */ "../components/pages/basket/index.js");
+/* harmony import */ var _components_pages_product_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../components/pages/product/index */ "../components/pages/product/index.js");
 // script interface
 
 

@@ -42,7 +42,8 @@ module.exports = {
         favorite: './favorite.js',
         catalog: './catalog.js',
         catalog_inside: './catalog_inside.js',
-        basket: './basket.js'
+        basket: './basket.js',
+        product: './product.js'
     },
     output:{
         filename:'[name]/index.js',
