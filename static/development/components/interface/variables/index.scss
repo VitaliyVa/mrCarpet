@@ -32,8 +32,16 @@
 }
 
 .font-size {
+  &-14 {
+    font-size: 14px;
+  }
+
   &-18 {
     font-size: 18px;
+  }
+
+  &-26 {
+    font-size: 26px;
   }
 
   &-36 {

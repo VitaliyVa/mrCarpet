@@ -1005,6 +1005,100 @@ textarea {
   font-size: 16px;
   line-height: 130%; }
 
+.btn {
+  font-size: 15px;
+  border: none;
+  outline: none;
+  background: none; }
+  .btn-gold {
+    background: #a46c46;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 16px;
+    line-height: 21px;
+    width: 240px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid #a46c46;
+    border-radius: 8px;
+    transition: all 0.2s; }
+    .btn-gold:hover {
+      color: #a46c46;
+      background: transparent; }
+  .btn-yellow {
+    display: inline-block;
+    padding: 15px 30px;
+    background: #f1c86e;
+    box-shadow: 0px 11px 10px rgba(113, 140, 130, 0.1);
+    transition: 0.3s;
+    color: #23262f; }
+    .btn-yellow:hover {
+      transition: 0.3s;
+      background-color: #c5a96b;
+      color: #23262f; }
+  .btn-smal-yellow {
+    color: #ddb968; }
+  .btn-next {
+    display: flex;
+    align-items: center;
+    color: #EEEEEE;
+    cursor: pointer; }
+    .btn-next .text {
+      color: #EEEEEE; }
+    .btn-next * {
+      cursor: pointer; }
+    .btn-next svg {
+      cursor: pointer;
+      transition: .3s;
+      margin-left: 7px;
+      width: 31px;
+      transform: translate(0, 0); }
+    .btn-next:hover svg {
+      transition: .3s;
+      transform: translate(10px, 0); }
+  .btn-start {
+    transition: .3s;
+    cursor: pointer; }
+    .btn-start * {
+      cursor: pointer; }
+    .btn-start:hover {
+      background: rgba(221, 185, 104, 0.9) !important;
+      transition: .3s; }
+
+.burger {
+  background-color: #f1c86e;
+  border: none;
+  outline: none;
+  padding: 17px 15px; }
+  .burger .burger_box span {
+    width: 27px;
+    height: 4px;
+    border-radius: 4px;
+    -webkit-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+    -webkit-transform-origin: center center;
+    transform-origin: center center;
+    will-change: transform;
+    display: block;
+    background-color: #fff; }
+    .burger .burger_box span:nth-child(2) {
+      width: 10px;
+      margin: 4px 0; }
+  .burger.active .burger_box {
+    transform: rotateZ(136deg); }
+    .burger.active .burger_box span:nth-child(1) {
+      width: 27px;
+      -webkit-transform: rotateZ(90deg) translate(7.5px, 0px);
+      transform: rotateZ(90deg) translate(7.5px, 0px); }
+    .burger.active .burger_box span:nth-child(2) {
+      width: 27px; }
+    .burger.active .burger_box span:nth-child(3) {
+      opacity: 0; }
+
 .catalog_items {
   position: relative;
   padding-top: 15px;
@@ -1987,37 +2081,43 @@ swiper-container .swiper-notification {
       color: #89817C;
       margin-top: 10px; }
 
-.catalog_items {
-  padding-top: 70px; }
-
-.catalog_section {
-  margin-bottom: 100px; }
-  .catalog_section_top {
+.product {
+  margin: 40px 0;
+  display: flex; }
+  .product_slider {
+    width: 50%;
+    max-height: 800px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #EBEAE8;
-    border-radius: 10px; }
-    .catalog_section_top_img {
-      width: 25%;
-      padding: 2% 5%; }
-      .catalog_section_top_img img {
-        width: 100%;
-        height: 100%; }
-    .catalog_section_top_center {
-      width: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center; }
-      .catalog_section_top_center h2 {
-        font-weight: 400;
-        font-size: 72px;
-        line-height: 96%;
-        color: #453F3A;
-        text-align: center;
-        margin: 20px 0; }
-  .catalog_section_bottom {
-    padding: 1% 0; }
+    justify-content: space-between; }
+  .product__right {
+    width: 50%;
+    margin-left: 60px; }
+
+.product_slider_mini {
+  width: 150px;
+  max-height: 700px;
+  margin-right: 40px; }
+  .product_slider_mini .swiper-slide {
+    transition: all 0.3s;
+    cursor: pointer; }
+    .product_slider_mini .swiper-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 5px; }
+    .product_slider_mini .swiper-slide:hover {
+      transform: scale(1.1); }
+  .product_slider_mini .swiper-slide-thumb-active {
+    transform: scale(1.3); }
+    .product_slider_mini .swiper-slide-thumb-active:hover {
+      transform: scale(1.3); }
+
+.product_slider_main {
+  width: calc(100% - 190px); }
+  .product_slider_main .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; }
 
 
 /*# sourceMappingURL=index.css.map*/

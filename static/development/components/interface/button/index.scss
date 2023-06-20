@@ -425,111 +425,152 @@
 // }
 
 .btn {
-  font-size: 15px;
-  border: none;
-  outline: none;
-  background: none;
-  
-  &-yellow {
-    display: inline-block;
-    padding: 15px 30px;
-    background: #f1c86e;
-    box-shadow: 0px 11px 10px rgba(113, 140, 130, 0.1);
-    transition: 0.3s;
-    color: #23262f;
-    &:hover {
-      transition: 0.3s;
-      background-color: #c5a96b;
-      color: #23262f;
+    font-size: 15px;
+    border: none;
+    outline: none;
+    background: none;
+
+    &-gold {
+        background: #a46c46;
+        color: #fff;
+
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 16px;
+        line-height: 21px;
+        width: 240px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border: 1px solid #a46c46;
+
+        border-radius: 8px;
+        transition: all 0.2s;
+    
+        &:hover {
+            color: #a46c46;
+            background: transparent;
+        }
     }
-  }
-  &-smal {
+
     &-yellow {
-      color: #ddb968;
+        display: inline-block;
+        padding: 15px 30px;
+        background: #f1c86e;
+        box-shadow: 0px 11px 10px rgba(113, 140, 130, 0.1);
+        transition: 0.3s;
+        color: #23262f;
+
+        &:hover {
+            transition: 0.3s;
+            background-color: #c5a96b;
+            color: #23262f;
+        }
     }
-  }
-  &-next{
-    display: flex;
-    align-items: center;
-    color: #EEEEEE;
-    cursor: pointer;
-    & .text{
-      color: #EEEEEE;
+
+    &-smal {
+        &-yellow {
+            color: #ddb968;
+        }
     }
-    & * {
-      cursor: pointer;
+
+    &-next {
+        display: flex;
+        align-items: center;
+        color: #EEEEEE;
+        cursor: pointer;
+
+        & .text {
+            color: #EEEEEE;
+        }
+
+        & * {
+            cursor: pointer;
+        }
+
+        & svg {
+            cursor: pointer;
+            transition: .3s;
+            margin-left: 7px;
+            width: 31px;
+            transform: translate(0, 0);
+        }
+
+        &:hover {
+            & svg {
+
+                transition: .3s;
+                transform: translate(10px, 0);
+            }
+        }
     }
-    & svg{
-      cursor: pointer;
-      transition: .3s;
-      margin-left: 7px;
-      width: 31px;
-      transform: translate(0,0);
-    }
-    &:hover{
-      & svg{
-        
+
+    &-start {
         transition: .3s;
-        transform: translate(10px,0);
-      }
+        cursor: pointer;
+
+        & * {
+            cursor: pointer;
+        }
+
+        &:hover {
+
+            background: rgba(221, 185, 104, 0.9) !important;
+            transition: .3s;
+        }
     }
-  }
-  &-start{
-    transition: .3s;
-    cursor: pointer;
-    & *{
-      cursor: pointer;
-    }
-    &:hover{
-     
-      background: rgba(221,185,104,0.9) !important;
-      transition: .3s;
-    }
-  }
 }
 
 // Lines
 
 // Flexbox placeholder
 .burger {
-  background-color: #f1c86e;
-  border: none;
-  outline: none;
-  padding: 17px 15px;
-  & .burger_box {
-    & span {
-      width: 27px;
-      height: 4px;
-      border-radius: 4px;
-      -webkit-transition: all 0.5s ease;
-      transition: all 0.5s ease;
-      -webkit-transform-origin: center center;
-      transform-origin: center center;
-      will-change: transform;
-      display: block;
-      background-color: #fff;
-      &:nth-child(2) {
-        width: 10px;
-        margin: 4px 0;
-      }
-    }
-  }
-  &.active {
+    background-color: #f1c86e;
+    border: none;
+    outline: none;
+    padding: 17px 15px;
+
     & .burger_box {
-      transform: rotateZ(136deg);
-      & span {
-        &:nth-child(1) {
-          width: 27px;
-          -webkit-transform: rotateZ(90deg) translate(7.5px, 0px);
-          transform: rotateZ(90deg) translate(7.5px, 0px);
+        & span {
+            width: 27px;
+            height: 4px;
+            border-radius: 4px;
+            -webkit-transition: all 0.5s ease;
+            transition: all 0.5s ease;
+            -webkit-transform-origin: center center;
+            transform-origin: center center;
+            will-change: transform;
+            display: block;
+            background-color: #fff;
+
+            &:nth-child(2) {
+                width: 10px;
+                margin: 4px 0;
+            }
         }
-        &:nth-child(2) {
-          width: 27px;
-        }
-        &:nth-child(3) {
-          opacity: 0;
-        }
-      }
     }
-  }
+
+    &.active {
+        & .burger_box {
+            transform: rotateZ(136deg);
+
+            & span {
+                &:nth-child(1) {
+                    width: 27px;
+                    -webkit-transform: rotateZ(90deg) translate(7.5px, 0px);
+                    transform: rotateZ(90deg) translate(7.5px, 0px);
+                }
+
+                &:nth-child(2) {
+                    width: 27px;
+                }
+
+                &:nth-child(3) {
+                    opacity: 0;
+                }
+            }
+        }
+    }
 }
