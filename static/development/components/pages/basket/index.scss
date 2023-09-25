@@ -150,7 +150,7 @@
     }
 
     &-body {
-      display: flex;
+      display: none;
       flex-direction: row;
       max-width: calc(100% - 160px);
       padding: 20px 0 46px;
@@ -215,12 +215,17 @@
 
           input {
             color: #89817c;
-            font-size: 12px;
+            font-size: 14px;
             line-height: 130%;
 
             &:read-only {
+              font-size: 12px;
               padding: 0;
               border: none;
+            }
+
+            &.font-size-14 {
+              font-size: 14px;
             }
           }
         }
@@ -231,6 +236,10 @@
       &.basket__delivery-item {
         .basket__checkbox-item-head {
           padding: 30px 87px 20px;
+        }
+
+        .basket__checkbox-item-body {
+          display: flex;
         }
       }
 
