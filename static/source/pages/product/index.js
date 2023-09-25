@@ -87,9 +87,9 @@
 /******/ ({
 
 /***/ "../../node_modules/ssr-window/ssr-window.esm.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/ssr-window/ssr-window.esm.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/ssr-window/ssr-window.esm.js ***!
+  \**********************************************************************************/
 /*! exports provided: extend, getDocument, getWindow, ssrDocument, ssrWindow */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -253,9 +253,9 @@ function getWindow() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/breakpoints/getBreakpoint.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/breakpoints/getBreakpoint.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/breakpoints/getBreakpoint.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -303,9 +303,9 @@ function getBreakpoint(breakpoints, base = 'window', containerEl) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/breakpoints/index.js":
-/*!*********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/breakpoints/index.js ***!
-  \*********************************************************************************/
+/*!**************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/breakpoints/index.js ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -323,9 +323,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/breakpoints/setBreakpoint.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/breakpoints/setBreakpoint.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/breakpoints/setBreakpoint.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -408,9 +408,9 @@ function setBreakpoint() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/check-overflow/index.js":
-/*!************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/check-overflow/index.js ***!
-  \************************************************************************************/
+/*!*****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/check-overflow/index.js ***!
+  \*****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -452,9 +452,9 @@ function checkOverflow() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/classes/addClasses.js":
-/*!**********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/classes/addClasses.js ***!
-  \**********************************************************************************/
+/*!***************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/classes/addClasses.js ***!
+  \***************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -515,9 +515,9 @@ function addClasses() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/classes/index.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/classes/index.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/classes/index.js ***!
+  \**********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -535,9 +535,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/classes/removeClasses.js":
-/*!*************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/classes/removeClasses.js ***!
-  \*************************************************************************************/
+/*!******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/classes/removeClasses.js ***!
+  \******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -557,9 +557,9 @@ function removeClasses() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/core.js":
-/*!********************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/core.js ***!
-  \********************************************************************/
+/*!*************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/core.js ***!
+  \*************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1188,9 +1188,9 @@ Swiper.use([_modules_resize_resize_js__WEBPACK_IMPORTED_MODULE_5__["default"], _
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/defaults.js":
-/*!************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/defaults.js ***!
-  \************************************************************************/
+/*!*****************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/defaults.js ***!
+  \*****************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1317,9 +1317,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events-emitter.js":
-/*!******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events-emitter.js ***!
-  \******************************************************************************/
+/*!***********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events-emitter.js ***!
+  \***********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1427,9 +1427,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/index.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/index.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/index.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1538,9 +1538,9 @@ function detachEvents() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onClick.js":
-/*!******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onClick.js ***!
-  \******************************************************************************/
+/*!***********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onClick.js ***!
+  \***********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1562,9 +1562,9 @@ function onClick(e) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onLoad.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onLoad.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onLoad.js ***!
+  \**********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1582,9 +1582,9 @@ function onLoad(e) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onResize.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onResize.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onResize.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1647,9 +1647,9 @@ function onResize() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onScroll.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onScroll.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onScroll.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1690,9 +1690,9 @@ function onScroll() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onTouchEnd.js":
-/*!*********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onTouchEnd.js ***!
-  \*********************************************************************************/
+/*!**************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onTouchEnd.js ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1854,9 +1854,9 @@ function onTouchEnd(event) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onTouchMove.js":
-/*!**********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onTouchMove.js ***!
-  \**********************************************************************************/
+/*!***************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onTouchMove.js ***!
+  \***************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2110,9 +2110,9 @@ function onTouchMove(event) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/events/onTouchStart.js":
-/*!***********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/events/onTouchStart.js ***!
-  \***********************************************************************************/
+/*!****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/events/onTouchStart.js ***!
+  \****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2237,9 +2237,9 @@ function onTouchStart(event) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/grab-cursor/index.js":
-/*!*********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/grab-cursor/index.js ***!
-  \*********************************************************************************/
+/*!**************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/grab-cursor/index.js ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2257,9 +2257,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/grab-cursor/setGrabCursor.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/grab-cursor/setGrabCursor.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/grab-cursor/setGrabCursor.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2285,9 +2285,9 @@ function setGrabCursor(moving) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/grab-cursor/unsetGrabCursor.js":
-/*!*******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/grab-cursor/unsetGrabCursor.js ***!
-  \*******************************************************************************************/
+/*!************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/grab-cursor/unsetGrabCursor.js ***!
+  \************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2313,9 +2313,9 @@ function unsetGrabCursor() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/loop/index.js":
-/*!**************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/loop/index.js ***!
-  \**************************************************************************/
+/*!*******************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/loop/index.js ***!
+  \*******************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2336,9 +2336,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/loop/loopCreate.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/loop/loopCreate.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/loop/loopCreate.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2367,9 +2367,9 @@ function loopCreate(slideRealIndex) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/loop/loopDestroy.js":
-/*!********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/loop/loopDestroy.js ***!
-  \********************************************************************************/
+/*!*************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/loop/loopDestroy.js ***!
+  \*************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2402,9 +2402,9 @@ function loopDestroy() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/loop/loopFix.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/loop/loopFix.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/loop/loopFix.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2562,9 +2562,9 @@ function loopFix({
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/moduleExtendParams.js":
-/*!**********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/moduleExtendParams.js ***!
-  \**********************************************************************************/
+/*!***************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/moduleExtendParams.js ***!
+  \***************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2608,9 +2608,9 @@ function moduleExtendParams(params, allModulesParams) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/modules/observer/observer.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/modules/observer/observer.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/modules/observer/observer.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2692,9 +2692,9 @@ function Observer({
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/modules/resize/resize.js":
-/*!*************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/modules/resize/resize.js ***!
-  \*************************************************************************************/
+/*!******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/modules/resize/resize.js ***!
+  \******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2773,9 +2773,9 @@ function Resize({
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/index.js":
-/*!***************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/index.js ***!
-  \***************************************************************************/
+/*!********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/index.js ***!
+  \********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2808,9 +2808,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideNext.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideNext.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideNext.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2849,9 +2849,9 @@ function slideNext(speed = this.params.speed, runCallbacks = true, internal) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slidePrev.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slidePrev.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slidePrev.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2918,9 +2918,9 @@ function slidePrev(speed = this.params.speed, runCallbacks = true, internal) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideReset.js":
-/*!********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideReset.js ***!
-  \********************************************************************************/
+/*!*************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideReset.js ***!
+  \*************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2936,9 +2936,9 @@ function slideReset(speed = this.params.speed, runCallbacks = true, internal) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideTo.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideTo.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideTo.js ***!
+  \**********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3092,9 +3092,9 @@ function slideTo(index = 0, speed = this.params.speed, runCallbacks = true, inte
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideToClickedSlide.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideToClickedSlide.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideToClickedSlide.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3143,9 +3143,9 @@ function slideToClickedSlide() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideToClosest.js":
-/*!************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideToClosest.js ***!
-  \************************************************************************************/
+/*!*****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideToClosest.js ***!
+  \*****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3184,9 +3184,9 @@ function slideToClosest(speed = this.params.speed, runCallbacks = true, internal
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/slide/slideToLoop.js":
-/*!*********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/slide/slideToLoop.js ***!
-  \*********************************************************************************/
+/*!**************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/slide/slideToLoop.js ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3214,9 +3214,9 @@ function slideToLoop(index = 0, speed = this.params.speed, runCallbacks = true, 
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/transition/index.js":
-/*!********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/transition/index.js ***!
-  \********************************************************************************/
+/*!*************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/transition/index.js ***!
+  \*************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3237,9 +3237,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/transition/setTransition.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/transition/setTransition.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/transition/setTransition.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3257,9 +3257,9 @@ function setTransition(duration, byController) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/transition/transitionEmit.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/transition/transitionEmit.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/transition/transitionEmit.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3298,9 +3298,9 @@ function transitionEmit({
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/transition/transitionEnd.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/transition/transitionEnd.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/transition/transitionEnd.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3328,9 +3328,9 @@ function transitionEnd(runCallbacks = true, direction) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/transition/transitionStart.js":
-/*!******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/transition/transitionStart.js ***!
-  \******************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/transition/transitionStart.js ***!
+  \***********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3359,9 +3359,9 @@ function transitionStart(runCallbacks = true, direction) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/getTranslate.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/getTranslate.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/getTranslate.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3393,9 +3393,9 @@ function getSwiperTranslate(axis = this.isHorizontal() ? 'x' : 'y') {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/index.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/index.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/index.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3422,9 +3422,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/maxTranslate.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/maxTranslate.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/maxTranslate.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3438,9 +3438,9 @@ function maxTranslate() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/minTranslate.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/minTranslate.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/minTranslate.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3454,9 +3454,9 @@ function minTranslate() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/setTranslate.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/setTranslate.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/setTranslate.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3513,9 +3513,9 @@ function setTranslate(translate, byController) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/translate/translateTo.js":
-/*!*************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/translate/translateTo.js ***!
-  \*************************************************************************************/
+/*!******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/translate/translateTo.js ***!
+  \******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3597,9 +3597,9 @@ function translateTo(translate = 0, speed = this.params.speed, runCallbacks = tr
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/index.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/index.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/index.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3638,9 +3638,9 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateActiveIndex.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateActiveIndex.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateActiveIndex.js ***!
+  \*********************************************************************************************/
 /*! exports provided: getActiveIndexByTranslate, default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3749,9 +3749,9 @@ function updateActiveIndex(newActiveIndex) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateAutoHeight.js":
-/*!***************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateAutoHeight.js ***!
-  \***************************************************************************************/
+/*!********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateAutoHeight.js ***!
+  \********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3807,9 +3807,9 @@ function updateAutoHeight(speed) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateClickedSlide.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateClickedSlide.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateClickedSlide.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3851,9 +3851,9 @@ function updateClickedSlide(e) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateProgress.js":
-/*!*************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateProgress.js ***!
-  \*************************************************************************************/
+/*!******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateProgress.js ***!
+  \******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3926,9 +3926,9 @@ function updateProgress(translate) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateSize.js":
-/*!*********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateSize.js ***!
-  \*********************************************************************************/
+/*!**************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateSize.js ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -3971,9 +3971,9 @@ function updateSize() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateSlides.js":
-/*!***********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateSlides.js ***!
-  \***********************************************************************************/
+/*!****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateSlides.js ***!
+  \****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4272,9 +4272,9 @@ function updateSlides() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateSlidesClasses.js":
-/*!******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateSlidesClasses.js ***!
-  \******************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateSlidesClasses.js ***!
+  \***********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4338,9 +4338,9 @@ function updateSlidesClasses() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateSlidesOffset.js":
-/*!*****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateSlidesOffset.js ***!
-  \*****************************************************************************************/
+/*!**********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateSlidesOffset.js ***!
+  \**********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4360,9 +4360,9 @@ function updateSlidesOffset() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/core/update/updateSlidesProgress.js":
-/*!*******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/core/update/updateSlidesProgress.js ***!
-  \*******************************************************************************************/
+/*!************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/core/update/updateSlidesProgress.js ***!
+  \************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4418,9 +4418,9 @@ function updateSlidesProgress(translate = this && this.translate || 0) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/a11y/a11y.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/a11y/a11y.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/a11y/a11y.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -4776,9 +4776,9 @@ function A11y({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/autoplay/autoplay.js":
-/*!************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/autoplay/autoplay.js ***!
-  \************************************************************************************/
+/*!*****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/autoplay/autoplay.js ***!
+  \*****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5069,9 +5069,9 @@ function Autoplay({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/controller/controller.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/controller/controller.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/controller/controller.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5266,9 +5266,9 @@ function Controller({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-cards/effect-cards.js":
-/*!********************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-cards/effect-cards.js ***!
-  \********************************************************************************************/
+/*!*************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-cards/effect-cards.js ***!
+  \*************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5400,9 +5400,9 @@ function EffectCards({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-coverflow/effect-coverflow.js":
-/*!****************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-coverflow/effect-coverflow.js ***!
-  \****************************************************************************************************/
+/*!*********************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-coverflow/effect-coverflow.js ***!
+  \*********************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5516,9 +5516,9 @@ function EffectCoverflow({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-creative/effect-creative.js":
-/*!**************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-creative/effect-creative.js ***!
-  \**************************************************************************************************/
+/*!*******************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-creative/effect-creative.js ***!
+  \*******************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5674,9 +5674,9 @@ function EffectCreative({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-cube/effect-cube.js":
-/*!******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-cube/effect-cube.js ***!
-  \******************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-cube/effect-cube.js ***!
+  \***********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5858,9 +5858,9 @@ function EffectCube({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-fade/effect-fade.js":
-/*!******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-fade/effect-fade.js ***!
-  \******************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-fade/effect-fade.js ***!
+  \***********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -5937,9 +5937,9 @@ function EffectFade({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/effect-flip/effect-flip.js":
-/*!******************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/effect-flip/effect-flip.js ***!
-  \******************************************************************************************/
+/*!***********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/effect-flip/effect-flip.js ***!
+  \***********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6061,9 +6061,9 @@ function EffectFlip({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/free-mode/free-mode.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/free-mode/free-mode.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/free-mode/free-mode.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6303,9 +6303,9 @@ function freeMode({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/grid/grid.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/grid/grid.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/grid/grid.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6423,9 +6423,9 @@ function Grid({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/hash-navigation/hash-navigation.js":
-/*!**************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/hash-navigation/hash-navigation.js ***!
-  \**************************************************************************************************/
+/*!*******************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/hash-navigation/hash-navigation.js ***!
+  \*******************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6528,9 +6528,9 @@ function HashNavigation({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/history/history.js":
-/*!**********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/history/history.js ***!
-  \**********************************************************************************/
+/*!***************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/history/history.js ***!
+  \***************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6680,9 +6680,9 @@ function History({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/keyboard/keyboard.js":
-/*!************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/keyboard/keyboard.js ***!
-  \************************************************************************************/
+/*!*****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/keyboard/keyboard.js ***!
+  \*****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6808,9 +6808,9 @@ function Keyboard({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/manipulation.js":
-/*!********************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/manipulation.js ***!
-  \********************************************************************************************/
+/*!*************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/manipulation.js ***!
+  \*************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6842,9 +6842,9 @@ function Manipulation({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/methods/addSlide.js":
-/*!************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/addSlide.js ***!
-  \************************************************************************************************/
+/*!*****************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/addSlide.js ***!
+  \*****************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6908,9 +6908,9 @@ function addSlide(index, slides) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/methods/appendSlide.js":
-/*!***************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/appendSlide.js ***!
-  \***************************************************************************************************/
+/*!********************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/appendSlide.js ***!
+  \********************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -6955,9 +6955,9 @@ function appendSlide(slides) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/methods/prependSlide.js":
-/*!****************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/prependSlide.js ***!
-  \****************************************************************************************************/
+/*!*********************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/prependSlide.js ***!
+  \*********************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -7006,9 +7006,9 @@ function prependSlide(slides) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/methods/removeAllSlides.js":
-/*!*******************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/removeAllSlides.js ***!
-  \*******************************************************************************************************/
+/*!************************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/removeAllSlides.js ***!
+  \************************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -7027,9 +7027,9 @@ function removeAllSlides() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/manipulation/methods/removeSlide.js":
-/*!***************************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/removeSlide.js ***!
-  \***************************************************************************************************/
+/*!********************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/manipulation/methods/removeSlide.js ***!
+  \********************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -7079,9 +7079,9 @@ function removeSlide(slidesIndexes) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/mousewheel/mousewheel.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/mousewheel/mousewheel.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/mousewheel/mousewheel.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -7477,9 +7477,9 @@ function Mousewheel({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/navigation/navigation.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/navigation/navigation.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/navigation/navigation.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -7677,9 +7677,9 @@ function Navigation({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/pagination/pagination.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/pagination/pagination.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/pagination/pagination.js ***!
+  \*********************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -8139,9 +8139,9 @@ function Pagination({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/parallax/parallax.js":
-/*!************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/parallax/parallax.js ***!
-  \************************************************************************************/
+/*!*****************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/parallax/parallax.js ***!
+  \*****************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -8259,9 +8259,9 @@ function Parallax({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/scrollbar/scrollbar.js":
-/*!**************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/scrollbar/scrollbar.js ***!
-  \**************************************************************************************/
+/*!*******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/scrollbar/scrollbar.js ***!
+  \*******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -8623,9 +8623,9 @@ function Scrollbar({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/thumbs/thumbs.js":
-/*!********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/thumbs/thumbs.js ***!
-  \********************************************************************************/
+/*!*************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/thumbs/thumbs.js ***!
+  \*************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -8828,9 +8828,9 @@ function Thumb({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/virtual/virtual.js":
-/*!**********************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/virtual/virtual.js ***!
-  \**********************************************************************************/
+/*!***************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/virtual/virtual.js ***!
+  \***************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9168,9 +9168,9 @@ function Virtual({
 /***/ }),
 
 /***/ "../../node_modules/swiper/modules/zoom/zoom.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/modules/zoom/zoom.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/modules/zoom/zoom.js ***!
+  \*********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9770,9 +9770,9 @@ function Zoom({
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/classes-to-selector.js":
-/*!*************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/classes-to-selector.js ***!
-  \*************************************************************************************/
+/*!******************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/classes-to-selector.js ***!
+  \******************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9787,9 +9787,9 @@ function classesToSelector(classes = '') {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/create-element-if-not-defined.js":
-/*!***********************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/create-element-if-not-defined.js ***!
-  \***********************************************************************************************/
+/*!****************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/create-element-if-not-defined.js ***!
+  \****************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9819,9 +9819,9 @@ function createElementIfNotDefined(swiper, originalParams, params, checkProps) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/create-shadow.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/create-shadow.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/create-shadow.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9844,9 +9844,9 @@ function createShadow(params, slideEl, side) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/effect-init.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/effect-init.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/effect-init.js ***!
+  \**********************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9913,9 +9913,9 @@ function effectInit(params) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/effect-target.js":
-/*!*******************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/effect-target.js ***!
-  \*******************************************************************************/
+/*!************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/effect-target.js ***!
+  \************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9936,9 +9936,9 @@ function effectTarget(effectParams, slideEl) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/effect-virtual-transition-end.js":
-/*!***********************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/effect-virtual-transition-end.js ***!
-  \***********************************************************************************************/
+/*!****************************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/effect-virtual-transition-end.js ***!
+  \****************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -9994,9 +9994,9 @@ function effectVirtualTransitionEnd({
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/get-browser.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/get-browser.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/get-browser.js ***!
+  \**********************************************************************************/
 /*! exports provided: getBrowser */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10037,9 +10037,9 @@ function getBrowser() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/get-device.js":
-/*!****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/get-device.js ***!
-  \****************************************************************************/
+/*!*********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/get-device.js ***!
+  \*********************************************************************************/
 /*! exports provided: getDevice */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10103,9 +10103,9 @@ function getDevice(overrides = {}) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/get-support.js":
-/*!*****************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/get-support.js ***!
-  \*****************************************************************************/
+/*!**********************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/get-support.js ***!
+  \**********************************************************************************/
 /*! exports provided: getSupport */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10134,9 +10134,9 @@ function getSupport() {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/process-lazy-preloader.js":
-/*!****************************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/process-lazy-preloader.js ***!
-  \****************************************************************************************/
+/*!*********************************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/process-lazy-preloader.js ***!
+  \*********************************************************************************************/
 /*! exports provided: processLazyPreloader, preload */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10182,9 +10182,9 @@ const preload = swiper => {
 /***/ }),
 
 /***/ "../../node_modules/swiper/shared/utils.js":
-/*!***********************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/shared/utils.js ***!
-  \***********************************************************************/
+/*!****************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/shared/utils.js ***!
+  \****************************************************************************/
 /*! exports provided: animateCSSModeScroll, deleteProps, nextTick, now, getTranslate, isObject, extend, getComputedStyle, setCSSProperty, getSlideTransformEl, findElementsInElements, createElement, elementChildren, elementOffset, elementPrevAll, elementNextAll, elementStyle, elementIndex, elementParents, elementTransitionEnd, elementOuterSize */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10482,9 +10482,9 @@ function elementOuterSize(el, size, includeMargins) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/swiper-bundle.css":
-/*!*************************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/swiper-bundle.css ***!
-  \*************************************************************************/
+/*!******************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/swiper-bundle.css ***!
+  \******************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10495,9 +10495,9 @@ function elementOuterSize(el, size, includeMargins) {
 /***/ }),
 
 /***/ "../../node_modules/swiper/swiper.esm.js":
-/*!*********************************************************************!*\
-  !*** F:/Artem.js/mrCarpet/static/node_modules/swiper/swiper.esm.js ***!
-  \*********************************************************************/
+/*!**************************************************************************!*\
+  !*** D:/WEB/VitaliyVa/mrCarpet/static/node_modules/swiper/swiper.esm.js ***!
+  \**************************************************************************/
 /*! exports provided: Swiper, default, Virtual, Keyboard, Mousewheel, Navigation, Pagination, Scrollbar, Parallax, Zoom, Controller, A11y, History, HashNavigation, Autoplay, Thumbs, FreeMode, Grid, Manipulation, EffectFade, EffectCube, EffectFlip, EffectCoverflow, EffectCreative, EffectCards */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -10909,9 +10909,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/accordion/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
-document.querySelectorAll('.accordion__title').forEach(function (item) {
-  item.addEventListener('click', function () {
-    item.closest('.accordion_content__block').classList.toggle('active');
+document.querySelectorAll(".accordion__title").forEach(function (item) {
+  item.addEventListener("click", function () {
+    item.closest(".accordion_content__block").classList.toggle("active");
   });
 });
 

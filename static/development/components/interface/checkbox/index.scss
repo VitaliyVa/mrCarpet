@@ -1,0 +1,53 @@
+.checkbox {
+  &__input {
+    position: relative;
+    border: 1px solid #89817c;
+    border-radius: 2px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all 0.15s;
+
+    &:active {
+      filter: brightness(0.75);
+    }
+
+    &:checked {
+      &::after {
+        // content: url("/static/utils/assets/check.svg");
+        // position: absolute;
+        // top: 50%;
+        // left: 50%;
+        // transform: translate(-50%, -50%);
+        // display: flex;
+        // align-items: center;
+        // justify-content: center;
+        // height: calc(100% - 2px);
+        // background-color: #a46c46;
+        // border: 2px solid #a46c46 !important;
+        border-radius: 2px;
+        cursor: pointer;
+      }
+    }
+  }
+
+  &-radio {
+    .checkbox__input {
+      border-radius: 100%;
+
+      &:checked {
+        &::after {
+          content: url("/static/utils/assets/check.svg");
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: calc(100% + 2px);
+          height: calc(100% + 2px);
+          border-radius: 100%;
+        }
+      }
+    }
+  }
+}
