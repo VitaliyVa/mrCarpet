@@ -39,8 +39,8 @@ module.exports = {
     catalog_inside: "./catalog_inside.js",
     basket: "./basket.js",
     product: "./product.js",
-    checkout: "./checkout.js",
     blog: "./blog.js",
+    blog_inside: "./blog_inside.js",
   },
   output: {
     filename: "[name]/index.js",

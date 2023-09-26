@@ -177,7 +177,9 @@ button {
   padding-top: 70px; }
 
 .container {
+  max-width: 1920px;
   width: 100%;
+  margin: 0 auto;
   padding: 0px 7%; }
 
 @media (max-width: 1024px) {
@@ -630,22 +632,20 @@ textarea {
   line-height: 21px; }
 
 .header_bottom_panel__block {
-  width: 100%;
-  left: 0;
-  padding: 0px 7%;
-  padding-bottom: 15px;
-  padding-top: 15px;
   position: absolute;
-  background: #fff;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  max-width: 1920px;
+  width: 100%;
+  background: #fff;
+  padding: 15px 7% 15px;
   transition: transform 0.3s ease-out; }
   .header_bottom_panel__block.fixed {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0; }
+    top: 0; }
 
 .header_bottom_panel_logo {
   cursor: pointer;
@@ -2264,15 +2264,16 @@ swiper-container .swiper-notification {
     .blog_item_info {
       padding: 0 5px; }
     .blog_item_title {
+      margin: 16px 0 0;
+      color: #453f3a;
       font-size: 22px;
       line-height: 130%;
-      color: #453F3A;
-      margin-top: 16px; }
+      font-weight: 400; }
     .blog_item_text {
       font-size: 20px;
       line-height: 130%;
-      color: #89817C;
-      margin-top: 10px; }
+      color: #89817c;
+      margin-top: 8px; }
 
 .accordion {
   display: flex;
