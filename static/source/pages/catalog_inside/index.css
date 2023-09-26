@@ -948,13 +948,16 @@ textarea {
     font-size: 14px; }
 
 .small {
-  font-family: "Futura PT Book", sans-serif; }
+  font-family: "Futura PT Book", sans-serif;
+  font-weight: 400; }
 
 .medium {
-  font-family: "Futura PT Medium", sans-serif; }
+  font-family: "Futura PT Medium", sans-serif;
+  font-weight: 500; }
 
 .bold {
-  font-family: "Futura PT Bold", sans-serif; }
+  font-family: "Futura PT Bold", sans-serif;
+  font-weight: 700; }
 
 .color_black {
   color: #453f3a; }
@@ -990,7 +993,7 @@ textarea {
     font-weight: 700;
     font-size: 30px;
     line-height: 38px;
-    color: #453F3A; }
+    color: #453f3a; }
   .title span {
     margin-left: 20px;
     color: #89817c; }

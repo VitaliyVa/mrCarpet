@@ -1,0 +1,33 @@
+.nav-sidebar {
+  max-width: 240px;
+
+  &__items {
+    li {
+      border-bottom: 1px solid #ebeae8;
+      transition: all 0.3s;
+
+      a {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 8px 12px;
+
+        span {
+          line-height: 130%;
+        }
+
+        img {
+          min-width: 16px;
+          width: 16px;
+          height: 16px;
+          margin-left: 15px;
+        }
+
+        &:hover {
+          color: #a46c46;
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+}
