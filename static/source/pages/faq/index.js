@@ -10877,6 +10877,39 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "../components/module/accordion/index.js":
+/*!***********************************************!*\
+  !*** ../components/module/accordion/index.js ***!
+  \***********************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/accordion/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+
+document.querySelectorAll(".accordion__title").forEach(function (item) {
+  item.addEventListener("click", function () {
+    item.closest(".accordion_content__block").classList.toggle("active");
+  });
+});
+
+/***/ }),
+
+/***/ "../components/module/accordion/index.scss":
+/*!*************************************************!*\
+  !*** ../components/module/accordion/index.scss ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+    if(false) { var cssReload; }
+  
+
+/***/ }),
+
 /***/ "../components/module/catalog_slider/index.js":
 /*!****************************************************!*\
   !*** ../components/module/catalog_slider/index.js ***!
@@ -10964,8 +10997,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_interface_variables_index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../components/interface/variables/index */ "../components/interface/variables/index.js");
 /* harmony import */ var _components_interface_input_index__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../components/interface/input/index */ "../components/interface/input/index.js");
 /* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
-/* harmony import */ var _components_pages_faq_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../components/pages/faq/index */ "../components/pages/faq/index.js");
+/* harmony import */ var _components_module_accordion_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../components/module/accordion/index */ "../components/module/accordion/index.js");
+/* harmony import */ var _components_pages_faq_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../components/pages/faq/index */ "../components/pages/faq/index.js");
 // script interface
+
 
 
 

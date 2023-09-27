@@ -1199,7 +1199,10 @@ textarea {
   display: flex;
   padding: 40px 0 104px; }
   .terms-and-policies__sidebar {
-    min-width: 240px; }
+    position: sticky;
+    top: 10%;
+    min-width: 240px;
+    height: 100%; }
   .terms-and-policies__content {
     margin-left: 25px; }
   .terms-and-policies__title {

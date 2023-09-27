@@ -2092,7 +2092,7 @@ swiper-container .swiper-notification {
   padding: 13px 0;
   width: 100%;
   margin: 0;
-  border-bottom: 1px solid #EBEAE8; }
+  border-bottom: 1px solid #ebeae8; }
   .accordion_link {
     text-transform: uppercase;
     display: flex; }
@@ -2102,11 +2102,13 @@ swiper-container .swiper-notification {
     background: #fff;
     flex-direction: column;
     align-items: flex-start; }
+  .accordion__title {
+    width: calc(100% - 32px); }
   .accordion_content {
     position: relative;
     width: 100%;
     box-shadow: unset;
-    transition: all .2s;
+    transition: all 0.2s;
     visibility: hidden;
     opacity: 0;
     max-height: 1px;
@@ -2122,31 +2124,35 @@ swiper-container .swiper-notification {
     .accordion_content_item {
       font-size: 14px;
       line-height: 130%;
-      color: #453F3A;
+      color: #453f3a;
       margin-top: 12px; }
       .accordion_content_item:hover {
-        color: #A46C46; }
+        color: #a46c46; }
       .accordion_content_item.active {
-        color: #A46C46; }
+        color: #a46c46; }
     .accordion_content__block {
       position: relative; }
       .accordion_content__block::after {
-        content: '';
+        content: "";
         position: absolute;
         width: 13px;
         right: 14px;
         height: 1px;
-        background: #000;
-        top: 20px; }
+        background: #453f3a;
+        top: 20px;
+        cursor: pointer;
+        pointer-events: none; }
       .accordion_content__block::before {
-        transition: all .2s;
-        content: '';
+        transition: all 0.2s;
+        content: "";
         position: absolute;
         width: 1px;
         right: 20px;
         height: 12px;
-        background: #000;
-        top: 15px; }
+        background: #453f3a;
+        top: 15px;
+        cursor: pointer;
+        pointer-events: none; }
       .accordion_content__block.active .accordion_content {
         top: 0;
         opacity: 1;
@@ -2154,7 +2160,7 @@ swiper-container .swiper-notification {
         visibility: visible;
         max-height: 1000px; }
       .accordion_content__block.active .accordion__title {
-        color: #A46C46; }
+        color: #a46c46; }
       .accordion_content__block.active::before {
         opacity: 0; }
 

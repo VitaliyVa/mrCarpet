@@ -42,10 +42,10 @@ module.exports = {
     blog: "./blog.js",
     blog_inside: "./blog_inside.js",
     delivery: "./delivery.js",
-    faq: "./faq.js",
     policy: "./policy.js",
     refund: "./refund.js",
     terms: "./terms.js",
+    faq: "./faq.js",
   },
   output: {
     filename: "[name]/index.js",

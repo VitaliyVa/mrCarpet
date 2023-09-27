@@ -8,5 +8,6 @@ import "../components/interface/variables/index";
 import "../components/interface/input/index";
 
 import "../components/module/catalog_slider/index";
+import "../components/module/accordion/index";
 
 import "../components/pages/faq/index";
