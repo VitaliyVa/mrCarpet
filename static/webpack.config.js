@@ -46,6 +46,7 @@ module.exports = {
     refund: "./refund.js",
     terms: "./terms.js",
     faq: "./faq.js",
+    success: "./success.js",
   },
   output: {
     filename: "[name]/index.js",
