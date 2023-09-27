@@ -2,6 +2,12 @@
     margin: 40px 0;
     display: flex;
 
+    h1 {
+        font-size: 40px;
+        font-weight: 400;
+        line-height: 130%;
+    }
+
     &_slider {
         width: 50%;
         max-height: 800px;
@@ -12,6 +18,45 @@
     &__right {
         width: 50%;
         margin-left: 60px;
+        // display: grid;
+        // gap: 20px;
+    }
+
+    .characteristic {
+        max-width: 300px;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    &__info {
+        display: grid;
+        gap: 20px;
+    }
+
+    &__btn {
+        display: flex;
+        position: relative;
+    }
+
+    &_favourite-btn {
+        margin-left: 24px;
+    }
+
+    &__quantity {
+        background: #FFFCF2;
+        border-radius: 8px;
+        padding: 10px;
+        margin-right: 16px;
+    }
+
+    &_review {
+        margin-top: 10px;
+        &__title {
+            color: var(--main, #453F3A);
+            font-weight: 600;
+            line-height: 130%;
+        }
     }
 }
 
@@ -40,6 +85,7 @@
     .swiper-slide-thumb-active {
         //border: 2px solid lightgray;
         transform: scale(1.3);
+
         &:hover {
             transform: scale(1.3);
         }
@@ -56,4 +102,53 @@
             object-fit: contain;
         }
     }
+}
+
+
+.rating-area {
+    overflow: hidden;
+    width: 265px;
+    margin: 0 auto;
+}
+
+.rating-area:not(:checked)>input {
+    display: none;
+}
+
+.rating-area:not(:checked)>label {
+    float: right;
+    width: 42px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 32px;
+    line-height: 32px;
+    color: lightgrey;
+    text-shadow: 1px 1px #bbb;
+}
+
+.rating-area:not(:checked)>label:before {
+    content: '★';
+}
+
+.rating-area>input:checked~label {
+    color: gold;
+    text-shadow: 1px 1px #c60;
+}
+
+.rating-area:not(:checked)>label:hover,
+.rating-area:not(:checked)>label:hover~label {
+    color: gold;
+}
+
+.rating-area>input:checked+label:hover,
+.rating-area>input:checked+label:hover~label,
+.rating-area>input:checked~label:hover,
+.rating-area>input:checked~label:hover~label,
+.rating-area>label:hover~input:checked~label {
+    color: gold;
+    text-shadow: 1px 1px goldenrod;
+}
+
+.rate-area>label:active {
+    position: relative;
 }

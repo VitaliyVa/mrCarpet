@@ -70,23 +70,21 @@
 
 .header_bottom_panel {
   &__block {
-    width: 100%;
-    left: 0;
-    padding: 0px 7%;
-    padding-bottom: 15px;
-    padding-top: 15px;
     position: absolute;
-    background: #fff;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    max-width: 1920px;
+    width: 100%;
+    background: #fff;
+    padding: 15px 7% 15px;
     transition: transform 0.3s ease-out;
 
     &.fixed {
       position: fixed;
       top: 0;
-      left: 0;
-      right: 0;
     }
   }
   &_logo {

@@ -1,0 +1,22 @@
+.blog-section {
+  padding-bottom: 104px;
+
+  .blog {
+    &__items {
+      gap: 18px;
+      width: 100%;
+      margin-top: 32px;
+    }
+
+    .blog_item {
+      max-width: 376px;
+      width: 100%;
+      margin: 0;
+
+      &_img {
+        max-height: 230px;
+        height: 100%;
+      }
+    }
+  }
+}

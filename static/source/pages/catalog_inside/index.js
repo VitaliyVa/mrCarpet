@@ -331,9 +331,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/accordion/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
-document.querySelectorAll('.accordion__title').forEach(function (item) {
-  item.addEventListener('click', function () {
-    item.closest('.accordion_content__block').classList.toggle('active');
+document.querySelectorAll(".accordion__title").forEach(function (item) {
+  item.addEventListener("click", function () {
+    item.closest(".accordion_content__block").classList.toggle("active");
   });
 });
 

@@ -11,5 +11,6 @@ import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
 import "../components/module/cart_item";
 import "../components/module/blog_item/index";
+import "../components/module/accordion/index";
 
 import "../components/pages/product/index";

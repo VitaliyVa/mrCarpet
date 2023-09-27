@@ -1,4 +1,5 @@
 import './index.scss'
+import './star_rate.scss'
 
 import Swiper, { Thumbs, Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
