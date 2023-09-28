@@ -31,6 +31,7 @@
   &__question {
     padding: 8px 8px 12px;
     line-height: 130%;
+    color: #453f3a;
 
     & + & {
       margin-top: 16px;
@@ -45,6 +46,7 @@
     &-title {
       margin: 0;
       font-size: 22px;
+      font-weight: 400;
       cursor: pointer;
       transition: all 0.25s;
     }

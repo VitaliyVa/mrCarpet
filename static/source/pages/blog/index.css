@@ -16,6 +16,9 @@
   margin: 0 auto;
   padding: 0px 7%; }
 
+.bread-crumbs span {
+  margin: 0 5px; }
+
 @media (max-width: 1024px) {
   .container {
     width: 100%;
@@ -909,7 +912,7 @@ textarea {
     opacity: 1; } }
 
 .footer {
-  background-color: #F4F3EE;
+  background-color: #f4f3ee;
   background-repeat: no-repeat;
   background-position: center; }
   .footer__wrapper {
@@ -923,6 +926,8 @@ textarea {
     .footer_form_input {
       margin: 30px 0 12px 0; }
     .footer_form [type="submit"] {
+      max-width: 265px;
+      width: 100%;
       margin-top: 20px; }
   .footer__right {
     display: flex; }
@@ -938,13 +943,13 @@ textarea {
     display: flex;
     flex-direction: column; }
     .footer__links a {
-      color: #89817C;
+      color: #89817c;
       margin-bottom: 30px; }
       .footer__links a:hover {
         color: #a46c46; }
   .footer .accept {
-    color: #89817C;
-    border-bottom: 1px solid #89817C;
+    color: #89817c;
+    border-bottom: 1px solid #89817c;
     font-size: 14px; }
 
 .small {
@@ -1050,20 +1055,24 @@ textarea {
 .catalog_slider {
   margin-bottom: 120px; }
 
-.catalog-swiper .swiper-button-next, .catalog-swiper .swiper-button-prev {
-  background: #FFFFFF;
+.catalog-swiper .swiper-button-next,
+.catalog-swiper .swiper-button-prev {
+  background: #ffffff;
   border-radius: 50%;
   width: 60px;
   height: 60px;
   transition: all 0.3s; }
-  .catalog-swiper .swiper-button-next::after, .catalog-swiper .swiper-button-prev::after {
-    color: #453F3A;
+  .catalog-swiper .swiper-button-next::after,
+  .catalog-swiper .swiper-button-prev::after {
+    color: #453f3a;
     font-size: 25px; }
-  .catalog-swiper .swiper-button-next:hover, .catalog-swiper .swiper-button-prev:hover {
+  .catalog-swiper .swiper-button-next:hover,
+  .catalog-swiper .swiper-button-prev:hover {
     transform: scale(1.1);
-    background: #453F3A; }
-    .catalog-swiper .swiper-button-next:hover::after, .catalog-swiper .swiper-button-prev:hover::after {
-      color: #FFFFFF; }
+    background: #453f3a; }
+    .catalog-swiper .swiper-button-next:hover::after,
+    .catalog-swiper .swiper-button-prev:hover::after {
+      color: #ffffff; }
 
 /**
  * Swiper 9.3.1
