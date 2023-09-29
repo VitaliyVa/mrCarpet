@@ -1,0 +1,64 @@
+.profile {
+  padding-bottom: 104px;
+
+  &__center {
+    display: flex;
+    margin-top: 30px;
+  }
+
+  &__sidebar {
+    max-width: 212px;
+    width: 100%;
+
+    &-bottom {
+      margin-top: 24px;
+    }
+  }
+
+  &__user {
+    &-info {
+      display: flex;
+      justify-content: space-between;
+      padding-left: 4px;
+      color: #453f3a;
+      line-height: 130%;
+
+      &-left {
+      }
+
+      &-right {
+        margin-left: 15px;
+      }
+    }
+
+    &-name {
+      font-size: 18px;
+    }
+
+    &-phone {
+      font-size: 14px;
+    }
+
+    &-edit-btn {
+      img {
+      }
+    }
+
+    &-exit-btn {
+      display: flex;
+      align-items: center;
+
+      span {
+        margin-left: 8px;
+      }
+    }
+  }
+
+  &__orders {
+    margin-left: 53px;
+  }
+
+  &__title {
+    margin: 0;
+  }
+}
