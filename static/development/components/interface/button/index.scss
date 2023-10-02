@@ -434,10 +434,12 @@
   &-gold {
     background: #a46c46;
     color: #fff;
+    font-family: "Futura PT Medium", sans-serif;
 
     cursor: pointer;
     font-size: 16px;
     line-height: 21px;
+    font-weight: 500;
     width: 240px;
     padding: 15px;
     display: flex;
@@ -528,7 +530,8 @@
 
   &-underline {
     padding: 4px;
-    border-bottom: 1px solid #453f3a;
+    text-decoration: underline;
+    text-underline-offset: 5px;
     transition: all 0.2s;
 
     &:hover {

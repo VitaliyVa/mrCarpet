@@ -582,6 +582,62 @@ textarea {
   margin: 0;
   /* 3 */ }
 
+.authorization__bottom {
+  margin-top: 104px; }
+
+.login-modal__form-field {
+  max-width: 320px; }
+
+.login-modal__form-buttons {
+  margin-top: 30px; }
+
+.login-modal__sign-in-btn {
+  max-width: 265px; }
+
+.login-modal__forgot-password-btn {
+  max-width: 164px;
+  margin-top: 10px;
+  padding: 0 !important;
+  color: #89817c;
+  line-height: 130%;
+  font-weight: 400; }
+
+.login-modal__create-account-btn {
+  max-width: 276px;
+  margin-top: 20px; }
+
+.register-modal__form {
+  max-width: 440px; }
+  .register-modal__form-description {
+    margin: 10px 0; }
+  .register-modal__form-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px; }
+  .register-modal__form-field.--full {
+    grid-column: span 2 / span 2; }
+  .register-modal__form-buttons {
+    margin-top: 40px; }
+
+.register-modal__create-account-btn {
+  max-width: 276px; }
+
+.register-modal__info {
+  margin-top: 10px;
+  color: #212529;
+  font-size: 14px;
+  line-height: 130%; }
+  .register-modal__info-text {
+    color: #6c757d; }
+  .register-modal__info a {
+    transition: all 0.2s; }
+    .register-modal__info a:hover {
+      color: #a46c46; }
+
+.register-modal__sign-in-btn {
+  max-width: 280px;
+  margin-top: 30px; }
+
 .header {
   position: relative;
   z-index: 999;
@@ -1175,8 +1231,9 @@ textarea {
   background-color: transparent;
   padding: 10px;
   border: none;
-  border-bottom: 1px solid #89817C;
+  border-bottom: 1px solid #89817c;
   width: 100%;
+  font-family: "Futura PT Medium", sans-serif;
   font-weight: 450;
   font-size: 16px;
   line-height: 130%; }
