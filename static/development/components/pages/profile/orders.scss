@@ -66,6 +66,7 @@
 
       &-center {
         // min-width: 101px;
+        min-width: 316px;
         width: 25%;
         transition: all 0.2s;
       }
@@ -75,6 +76,7 @@
         justify-content: flex-end;
         align-items: center;
         // min-width: 240px;
+        min-width: 316px;
         width: 25%;
       }
     }
@@ -246,6 +248,7 @@
         // max-width: 632px;
         // width: 100%;
         width: 50%;
+        min-width: 632px;
       }
 
       &-details {

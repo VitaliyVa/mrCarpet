@@ -2096,12 +2096,14 @@ swiper-container .swiper-notification {
           font-size: 14px;
           white-space: nowrap; }
       .orders__block-head-center {
+        min-width: 316px;
         width: 25%;
         transition: all 0.2s; }
       .orders__block-head-right {
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        min-width: 316px;
         width: 25%; }
     .orders__block-date-key {
       margin: 2px; }
@@ -2178,7 +2180,8 @@ swiper-container .swiper-notification {
       .orders__block-body-left {
         width: 50%; }
       .orders__block-body-right {
-        width: 50%; }
+        width: 50%;
+        min-width: 632px; }
       .orders__block-body-details {
         margin-top: 24px; }
         .orders__block-body-details p {
