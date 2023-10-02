@@ -1,0 +1,48 @@
+.profile-modal {
+  &__close-btn {
+    img {
+    }
+  }
+
+  &__container {
+    max-width: 440px;
+  }
+
+  &__form {
+    &-block {
+    }
+
+    &-edit-profile {
+    }
+
+    &-change-password {
+      margin-top: 60px;
+    }
+
+    &-title {
+    }
+
+    &-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    &-field {
+      max-width: 210px;
+      margin: 0;
+
+      input {
+      }
+    }
+
+    &-buttons {
+      margin-top: 40px;
+    }
+  }
+
+  &__save-btn {
+    max-width: 198px;
+  }
+}

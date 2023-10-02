@@ -587,6 +587,130 @@
     <!-- /.header -->
 
     <section class="profile first_section">
+      <div class="modal-overlay active">
+        <div class="profile-modal modal modal__block active">
+          <button class="profile-modal__close-btn modal__close-btn modal_close">
+            <img src="/static/utils/assets/close.svg" alt="close" />
+          </button>
+
+          <div class="modal__content">
+            <div class="profile-modal__container">
+              <form
+                action="/edit-profile"
+                class="profile-modal__form validation__block"
+              >
+                <div
+                  class="profile-modal__form-edit-profile profile-modal__form-block"
+                >
+                  <h3 class="profile-modal__form-title modal__title">
+                    Редагувати дані
+                  </h3>
+
+                  <div class="profile-modal__form-fields">
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="firstName"
+                        class="input-transparent validation_input"
+                        name="firstName"
+                        type="text"
+                        data-type="name"
+                        placeholder="Ім’я"
+                      />
+                    </div>
+
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="lastName"
+                        class="input-transparent validation_input"
+                        name="lastName"
+                        type="text"
+                        data-type="name"
+                        placeholder="Прізвище"
+                      />
+                    </div>
+
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="phone"
+                        class="input-transparent validation_input"
+                        name="phone"
+                        type="tel"
+                        data-type="phone"
+                        placeholder="Телефон"
+                      />
+                    </div>
+
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="email"
+                        class="input-transparent validation_input"
+                        name="email"
+                        type="email"
+                        data-type="email"
+                        placeholder="Емаіл"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="profile-modal__form-change-password profile-modal__form-block"
+                >
+                  <h3 class="profile-modal__form-title modal__title">
+                    Змінити пароль
+                  </h3>
+
+                  <div class="profile-modal__form-fields">
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="password"
+                        class="input-transparent validation_input"
+                        name="password"
+                        type="password"
+                        data-type="password1"
+                        placeholder="Новий пароль"
+                      />
+                    </div>
+
+                    <div
+                      class="profile-modal__form-field modal__field validation_container"
+                    >
+                      <input
+                        id="repeatPassword"
+                        class="input-transparent validation_input"
+                        name="repeatPassword"
+                        type="password"
+                        data-type="password2"
+                        placeholder="Підтвердьте пароль"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-modal__form-buttons">
+                  <button
+                    type="submit"
+                    class="profile-modal__save-btn btn-gold validation_btn"
+                  >
+                    Зберегти зміни
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="container">
         <div class="bread-crumbs">
           <a href="#" class="color_black_sub">Головна</a>
@@ -602,7 +726,11 @@
                 <p class="profile__user-phone">+380 87 000 00 00</p>
               </div>
               <div class="profile__user-info-right">
-                <button class="profile__user-edit-btn" title="Редагувати">
+                <button
+                  class="profile__user-edit-btn modal_open"
+                  data-href="profile-modal"
+                  title="Редагувати"
+                >
                   <img
                     src="/static/utils/assets/edit-bordered.svg"
                     alt="edit"
@@ -1210,7 +1338,9 @@
                       </p>
                     </div>
                     <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                    <p class="orders__block-status medium">Скасовано</p>
+                    <p class="orders__block-status color_black medium">
+                      Скасовано
+                    </p>
                   </div>
 
                   <div class="orders__block-head-center">

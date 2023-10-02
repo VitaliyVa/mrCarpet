@@ -1,1 +1,0 @@
-import "./authorization.scss";

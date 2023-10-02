@@ -19267,13 +19267,9 @@ __webpack_require__.r(__webpack_exports__);
 /*!***************************************************************!*\
   !*** ../components/common_componentc/header/authorization.js ***!
   \***************************************************************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./authorization.scss */ "../components/common_componentc/header/authorization.scss");
-/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_authorization_scss__WEBPACK_IMPORTED_MODULE_0__);
 
 
 /***/ }),
@@ -19301,6 +19297,7 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _authorization__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./authorization */ "../components/common_componentc/header/authorization.js");
+/* harmony import */ var _authorization__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_authorization__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.scss */ "../components/common_componentc/header/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./authorization.scss */ "../components/common_componentc/header/authorization.scss");

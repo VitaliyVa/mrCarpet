@@ -9,6 +9,8 @@
   &__sidebar {
     max-width: 212px;
     width: 100%;
+    color: #453f3a;
+    line-height: 130%;
 
     &-bottom {
       margin-top: 24px;
@@ -20,8 +22,6 @@
       display: flex;
       justify-content: space-between;
       padding-left: 4px;
-      color: #453f3a;
-      line-height: 130%;
 
       &-left {
       }
@@ -40,16 +40,27 @@
     }
 
     &-edit-btn {
+      transition: all 0.25s;
+
       img {
+      }
+
+      &:hover {
+        transform: scale(1.3);
       }
     }
 
     &-exit-btn {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
+      transition: all 0.25s;
 
       span {
         margin-left: 8px;
+      }
+
+      &:hover {
+        color: #a46c46;
       }
     }
   }
