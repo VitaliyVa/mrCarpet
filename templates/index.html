@@ -620,17 +620,19 @@
 
                 <form
                   action="/login"
-                  class="login-modal__form authorization__form"
+                  class="login-modal__form authorization__form validation__block"
                 >
                   <h3 class="login-modal__form-title modal__title">
                     Ви користувач?
                   </h3>
 
                   <div class="login-modal__form-fields">
-                    <div class="login-modal__form-field modal__field">
+                    <div
+                      class="login-modal__form-field modal__field validation_container"
+                    >
                       <input
                         id="email"
-                        class="input-transparent"
+                        class="input-transparent validation_input"
                         name="email"
                         type="email"
                         data-type="email"
@@ -638,10 +640,12 @@
                       />
                     </div>
 
-                    <div class="login-modal__form-field modal__field">
+                    <div
+                      class="login-modal__form-field modal__field validation_container"
+                    >
                       <input
                         id="password"
-                        class="input-transparent"
+                        class="input-transparent validation_input"
                         name="password"
                         type="password"
                         data-type="password"
@@ -651,7 +655,10 @@
                   </div>
 
                   <div class="login-modal__form-buttons">
-                    <button class="login-modal__sign-in-btn btn-gold">
+                    <button
+                      type="submit"
+                      class="login-modal__sign-in-btn btn-gold validation_btn"
+                    >
                       Увійти в кабінет покупця
                     </button>
 

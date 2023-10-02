@@ -19721,12 +19721,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 form_send(".sign-in__form");
-form_send(".registration__form");
-form_send(".contacts__form");
-form_send(".partnership__form");
-form_send(".profile-form");
-form_send(".order_form");
-form_send(".quickly-shop__form");
 
 function form_send(wrapper, modal) {
   var form_wrapper = document.querySelectorAll(wrapper);
