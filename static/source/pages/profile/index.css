@@ -2086,25 +2086,23 @@ swiper-container .swiper-notification {
     .orders__block-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      column-gap: 27.5%;
       width: 100%;
       cursor: pointer; }
       .orders__block-head-left {
-        min-width: 202px; }
+        width: 50%; }
         .orders__block-head-left-top {
           display: flex;
           align-items: center;
           font-size: 14px;
           white-space: nowrap; }
       .orders__block-head-center {
-        min-width: 101px;
+        width: 25%;
         transition: all 0.2s; }
       .orders__block-head-right {
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        min-width: 240px; }
+        width: 25%; }
     .orders__block-date-key {
       margin: 2px; }
     .orders__block-status {
@@ -2178,11 +2176,9 @@ swiper-container .swiper-notification {
       font-size: 14px;
       transition: all 0.3s; }
       .orders__block-body-left {
-        max-width: 295px;
-        width: 100%; }
+        width: 50%; }
       .orders__block-body-right {
-        max-width: 632px;
-        width: 100%; }
+        width: 50%; }
       .orders__block-body-details {
         margin-top: 24px; }
         .orders__block-body-details p {

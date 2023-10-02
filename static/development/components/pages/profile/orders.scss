@@ -47,13 +47,14 @@
     &-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      column-gap: 27.5%;
+      //   justify-content: space-between;
+      //   column-gap: 27.5%;
       width: 100%;
       cursor: pointer;
 
       &-left {
-        min-width: 202px;
+        // min-width: 202px;
+        width: 50%;
 
         &-top {
           display: flex;
@@ -64,7 +65,8 @@
       }
 
       &-center {
-        min-width: 101px;
+        // min-width: 101px;
+        width: 25%;
         transition: all 0.2s;
       }
 
@@ -72,7 +74,8 @@
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        min-width: 240px;
+        // min-width: 240px;
+        width: 25%;
       }
     }
 
@@ -234,13 +237,15 @@
       transition: all 0.3s;
 
       &-left {
-        max-width: 295px;
-        width: 100%;
+        // max-width: 295px;
+        // width: 100%;
+        width: 50%;
       }
 
       &-right {
-        max-width: 632px;
-        width: 100%;
+        // max-width: 632px;
+        // width: 100%;
+        width: 50%;
       }
 
       &-details {
