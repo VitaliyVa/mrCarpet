@@ -16,11 +16,9 @@
     &.active {
       padding: 22px 20px;
 
-      .orders__block-head-center {
-        transform: scale(0);
-      }
-
+      .orders__block-head-center,
       .orders__block-products-head {
+        max-height: 0;
         transform: scale(0);
       }
 
@@ -68,7 +66,8 @@
         // min-width: 101px;
         min-width: 316px;
         width: 25%;
-        transition: all 0.2s;
+        max-height: 88px;
+        transition: all 0.3s ease-in-out;
       }
 
       &-right {
@@ -117,7 +116,9 @@
 
       &-head {
         display: flex;
-        transition: all 0.2s;
+        max-height: 88px;
+        // transform: scale(1);
+        transition: all 0.3s ease-in-out;
       }
 
       &-body {

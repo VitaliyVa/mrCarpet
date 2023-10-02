@@ -2071,9 +2071,9 @@ swiper-container .swiper-notification {
     transition: all 0.25s; }
     .orders__block.active {
       padding: 22px 20px; }
-      .orders__block.active .orders__block-head-center {
-        transform: scale(0); }
+      .orders__block.active .orders__block-head-center,
       .orders__block.active .orders__block-products-head {
+        max-height: 0;
         transform: scale(0); }
       .orders__block.active .orders__block-chevron-icon img {
         transform: rotate(180deg); }
@@ -2098,7 +2098,8 @@ swiper-container .swiper-notification {
       .orders__block-head-center {
         min-width: 316px;
         width: 25%;
-        transition: all 0.2s; }
+        max-height: 88px;
+        transition: all 0.3s ease-in-out; }
       .orders__block-head-right {
         display: flex;
         justify-content: flex-end;
@@ -2117,7 +2118,8 @@ swiper-container .swiper-notification {
       gap: 8px; }
       .orders__block-products-head {
         display: flex;
-        transition: all 0.2s; }
+        max-height: 88px;
+        transition: all 0.3s ease-in-out; }
       .orders__block-products-title {
         line-height: 130%; }
     .orders__block-product {
