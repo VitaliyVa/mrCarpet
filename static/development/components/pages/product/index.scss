@@ -50,11 +50,39 @@
     margin-right: 16px;
   }
 
+  &_reviews {
+    &__content {
+      margin-top: 8px;
+
+      a,
+      button {
+        color: #a46c46;
+        transition: all 0.25s;
+
+        &:hover {
+          filter: brightness(1.25);
+        }
+      }
+    }
+
+    &__items {
+    }
+
+    &__no-items {
+      color: #453f3a;
+      font-size: 14px;
+      line-height: 130%;
+    }
+  }
+
   &_review {
-    margin-top: 8px;
     color: #453f3a;
     font-size: 14px;
     line-height: 130%;
+
+    & + & {
+      margin-top: 16px;
+    }
 
     &__info {
     }

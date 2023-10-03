@@ -20040,11 +20040,11 @@ starRateAllItems.forEach(function (starRate) {
 });
 document.addEventListener("click", function (_ref) {
   var target = _ref.target;
-  var starRate = target.closest(".star-rate");
-  var starRateItems = starRate.querySelectorAll(".star-rate__item");
   var currentStarItem = target.closest(".star-rate__item");
 
   if (currentStarItem) {
+    var starRate = currentStarItem.closest(".star-rate");
+    var starRateItems = starRate.querySelectorAll(".star-rate__item");
     var currentStarItemInputValue = Number(currentStarItem.querySelector("input").value);
     starRateItems.forEach(function (item) {
       var itemInputValue = Number(item.querySelector("input").value);
@@ -20383,18 +20383,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./review-write-modal.scss */ "../components/pages/product/review-write-modal.scss");
 /* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_review_write_modal_scss__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _star_rate_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./star_rate.scss */ "../components/pages/product/star_rate.scss");
-/* harmony import */ var _star_rate_scss__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_star_rate_scss__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var swiper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! swiper */ "../../node_modules/swiper/swiper.esm.js");
-/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! swiper/swiper-bundle.css */ "../../node_modules/swiper/swiper-bundle.css");
-/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var swiper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! swiper */ "../../node_modules/swiper/swiper.esm.js");
+/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! swiper/swiper-bundle.css */ "../../node_modules/swiper/swiper-bundle.css");
+/* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_3__);
 
 
 
 
-
-swiper__WEBPACK_IMPORTED_MODULE_3__["default"].use([swiper__WEBPACK_IMPORTED_MODULE_3__["Thumbs"]]);
-var product_main_swiper = new swiper__WEBPACK_IMPORTED_MODULE_3__["default"](".product_slider_main", {
+swiper__WEBPACK_IMPORTED_MODULE_2__["default"].use([swiper__WEBPACK_IMPORTED_MODULE_2__["Thumbs"]]);
+var product_main_swiper = new swiper__WEBPACK_IMPORTED_MODULE_2__["default"](".product_slider_main", {
   slidesPerView: 1,
   slidesPerGroup: 1,
   initialSlide: 0,
@@ -20447,17 +20444,6 @@ var product_main_swiper = new swiper__WEBPACK_IMPORTED_MODULE_3__["default"](".p
 // extracted by mini-css-extract-plugin
     if(false) { var cssReload; }
   
-
-/***/ }),
-
-/***/ "../components/pages/product/star_rate.scss":
-/*!**************************************************!*\
-  !*** ../components/pages/product/star_rate.scss ***!
-  \**************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-throw new Error("Module build failed (from D:/WEB/VitaliyVa/mrCarpet/static/node_modules/mini-css-extract-plugin/dist/loader.js):\nModuleBuildError: Module build failed (from D:/WEB/VitaliyVa/mrCarpet/static/node_modules/sass-loader/dist/cjs.js):\nError: ENOENT: no such file or directory, open 'D:\\WEB\\VitaliyVa\\mrCarpet\\static\\development\\components\\pages\\product\\star_rate.scss'\n    at D:\\WEB\\VitaliyVa\\mrCarpet\\static\\node_modules\\webpack\\lib\\NormalModule.js:316:20\n    at D:\\WEB\\VitaliyVa\\mrCarpet\\static\\node_modules\\loader-runner\\lib\\LoaderRunner.js:367:11\n    at D:\\WEB\\VitaliyVa\\mrCarpet\\static\\node_modules\\loader-runner\\lib\\LoaderRunner.js:203:19\n    at D:\\WEB\\VitaliyVa\\mrCarpet\\static\\node_modules\\enhanced-resolve\\lib\\CachedInputFileSystem.js:85:15\n    at processTicksAndRejections (internal/process/task_queues.js:77:11)");
 
 /***/ }),
 

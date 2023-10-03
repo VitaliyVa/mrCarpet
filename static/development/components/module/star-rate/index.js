@@ -15,11 +15,12 @@ starRateAllItems.forEach((starRate) => {
 });
 
 document.addEventListener("click", ({ target }) => {
-  const starRate = target.closest(".star-rate");
-  const starRateItems = starRate.querySelectorAll(".star-rate__item");
   const currentStarItem = target.closest(".star-rate__item");
 
   if (currentStarItem) {
+    const starRate = currentStarItem.closest(".star-rate");
+    const starRateItems = starRate.querySelectorAll(".star-rate__item");
+
     const currentStarItemInputValue = Number(
       currentStarItem.querySelector("input").value
     );
