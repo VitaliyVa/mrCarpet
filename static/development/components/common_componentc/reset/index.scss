@@ -171,9 +171,15 @@ hr {
 }
 
 input,
+textarea,
 select {
   vertical-align: middle;
   outline: none;
+}
+
+textarea {
+  height: auto;
+  width: auto;
 }
 
 button {

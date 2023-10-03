@@ -1,4 +1,5 @@
 // script interface
+import "../components/common_componentc/reset/index";
 import "../components/common_componentc/normalize/index";
 import "../components/common_componentc/header/index";
 import "../components/common_componentc/footer/index";

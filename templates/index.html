@@ -48,9 +48,12 @@
                 >
               </li>
               <li>
-                <a class="header_top_panel_nav_link small color_black" href="#">
+                <button
+                  class="header_top_panel_nav_link small color_black modal_open"
+                  data-href="contacts-modal"
+                >
                   Контакти
-                </a>
+                </button>
               </li>
             </ul>
           </nav>
@@ -637,6 +640,7 @@
                         type="email"
                         data-type="email"
                         placeholder="Електронна пошта"
+                        required
                       />
                     </div>
 
@@ -650,6 +654,7 @@
                         type="password"
                         data-type="password"
                         placeholder="Пароль"
+                        required
                       />
                     </div>
                   </div>
@@ -726,6 +731,7 @@
                         type="email"
                         data-type="email"
                         placeholder="Електронна пошта"
+                        required
                       />
                     </div>
 
@@ -737,6 +743,7 @@
                         type="text"
                         data-type="name"
                         placeholder="Ім’я"
+                        required
                       />
                     </div>
 
@@ -759,6 +766,7 @@
                         type="tel"
                         data-type="phone"
                         placeholder="Телефон"
+                        required
                       />
                     </div>
                   </div>
@@ -768,8 +776,8 @@
                       Створити обліковий запис
                     </button>
                   </div>
-                  <div class="register-modal__info">
-                    <p class="register-modal__info-text">
+                  <div class="register-modal__form-info">
+                    <p class="register-modal__form-info-text">
                       Натиснувши кнопку «Створити обліковий запис», Ви приймаєте
                       умови
                     </p>
@@ -792,6 +800,107 @@
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay active">
+        <div class="contacts-modal modal modal__block active">
+          <button
+            class="contacts-modal__close-btn modal__close-btn modal_close"
+          >
+            <img src="/static/utils/assets/close.svg" alt="close" />
+          </button>
+
+          <div class="modal__content">
+            <div class="contacts-modal__container">
+              <div class="contacts-modal__info">
+                <div class="contacts-modal__info-top">
+                  <h3 class="contacts-modal__title color_black bold">
+                    Контактна інформація інтернет магазину
+                  </h3>
+
+                  <p class="contacts-modal__description color_gold">
+                    Зв'яжіться з нами для уточнення всіх питань, що Вас
+                    цікавлять.
+                  </p>
+                </div>
+
+                <div class="contacts-modal__info-details">
+                  <div
+                    class="contacts-modal__phone contacts-modal__info-details-item"
+                  >
+                    <a href="tel:+380671254317"> +380 67 125 43 17 </a>
+                  </div>
+
+                  <div
+                    class="contacts-modal__address contacts-modal__info-details-item"
+                  >
+                    <a href="#"> м. Тернопіль </a>
+                  </div>
+
+                  <div
+                    class="contacts-modal__inst contacts-modal__info-details-item"
+                  >
+                    <a href="https://www.instagram.com/">
+                      <img
+                        src="/static/utils/assets/inst.svg"
+                        alt="instagram"
+                      />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <form action="/contacts" class="contacts-modal__feedback-form">
+                <div class="contacts-modal__feedback-form-fields">
+                  <div class="contacts-modal__feedback-form-field modal__field">
+                    <input
+                      id="name"
+                      class="input-transparent"
+                      name="name"
+                      type="text"
+                      data-type="name"
+                      placeholder="Ім’я"
+                      required
+                    />
+                  </div>
+
+                  <div class="contacts-modal__feedback-form-field modal__field">
+                    <input
+                      id="email"
+                      class="input-transparent"
+                      name="email"
+                      type="email"
+                      data-type="email"
+                      placeholder="Пошта"
+                      required
+                    />
+                  </div>
+
+                  <div class="contacts-modal__feedback-form-field modal__field">
+                    <textarea
+                      id="message"
+                      class="input-transparent"
+                      name="message"
+                      placeholder="Коментар / питання"
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div class="contacts-modal__feedback-form-buttons">
+                  <button class="contacts-modal__send-application-btn btn-gold">
+                    Залишити заявку
+                  </button>
+                </div>
+                <div class="contacts-modal__feedback-form-info">
+                  <p class="contacts-modal__feedback-form-info-text">
+                    Натискаючи кнопку “Залишити заявку” Ви погоджуєтеся на
+                    обробку персональних даних
+                  </p>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1602,7 +1711,9 @@
                 </div>
                 <a href="#"> Про компанію </a>
                 <a href="#"> Блог </a>
-                <a href="#"> Контакти </a>
+                <button class="modal_open" data-href="contacts-modal">
+                  Контакти
+                </button>
               </div>
 
               <a href="#" class="color_black_sub flex">

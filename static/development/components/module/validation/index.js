@@ -70,7 +70,7 @@ export default function validation(validation_btn) {
         });
       },
     },
-    comment: {
+    message: {
       error: {
         ua: "Це поле обовязкове для заповнення!",
         ru: "Це поле обовязкове для заповнення!",

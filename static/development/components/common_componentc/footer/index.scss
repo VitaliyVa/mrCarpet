@@ -54,12 +54,18 @@
     display: flex;
     flex-direction: column;
 
-    a {
+    a,
+    button {
       color: #89817c;
       margin-bottom: 30px;
+
       &:hover {
         color: #a46c46;
       }
+    }
+
+    button {
+      text-align: left;
     }
   }
 

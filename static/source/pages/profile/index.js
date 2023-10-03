@@ -19287,6 +19287,19 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "../components/common_componentc/header/contacts-modal.scss":
+/*!******************************************************************!*\
+  !*** ../components/common_componentc/header/contacts-modal.scss ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+    if(false) { var cssReload; }
+  
+
+/***/ }),
+
 /***/ "../components/common_componentc/header/index.js":
 /*!*******************************************************!*\
   !*** ../components/common_componentc/header/index.js ***!
@@ -19302,6 +19315,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./authorization.scss */ "../components/common_componentc/header/authorization.scss");
 /* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_authorization_scss__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./contacts-modal.scss */ "../components/common_componentc/header/contacts-modal.scss");
+/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_contacts_modal_scss__WEBPACK_IMPORTED_MODULE_3__);
+
 
 
 
@@ -20029,7 +20045,7 @@ function validation(validation_btn) {
         });
       }
     },
-    comment: {
+    message: {
       error: {
         ua: "Це поле обовязкове для заповнення!",
         ru: "Це поле обовязкове для заповнення!",
