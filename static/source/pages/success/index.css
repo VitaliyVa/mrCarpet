@@ -591,6 +591,73 @@ textarea {
   position: relative;
   z-index: 999;
   padding: 25px 0; }
+  .header__search {
+    position: relative;
+    max-width: 620px;
+    width: 100%; }
+    .header__search-head {
+      color: #89817c; }
+    .header__search-body {
+      position: absolute;
+      top: 60px;
+      left: 0;
+      width: 100%;
+      background-color: #fff;
+      padding: 12px 36px;
+      border-radius: 8px;
+      box-shadow: 0px 20px 60px 0px rgba(69, 63, 58, 0.3);
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(-50%) scaleY(0);
+      transition: all 0.3s; }
+      .header__search-body.active {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0) scaleY(1); }
+    .header__search-product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      column-gap: 24px;
+      font-size: 14px; }
+      .header__search-product + .header__search-product {
+        margin-top: 11px; }
+      .header__search-product-left {
+        display: flex;
+        align-items: center; }
+      .header__search-product-right {
+        min-width: 142px;
+        width: 26%; }
+      .header__search-product-img {
+        max-width: 64px;
+        max-height: 88px; }
+        .header__search-product-img img {
+          width: 100%;
+          height: 100%; }
+      .header__search-product-info {
+        margin-left: 24px; }
+      .header__search-product-title {
+        max-width: 294px;
+        color: #453f3a;
+        line-height: 130%; }
+      .header__search-product-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        column-gap: 12px;
+        text-align: center;
+        font-family: "Futura PT Medium", sans-serif;
+        color: #a46c46;
+        font-weight: 450; }
+        .header__search-product-price-current {
+          width: 40%; }
+        .header__search-product-price-discount {
+          width: 20%;
+          min-width: 32px; }
+        .header__search-product-price-old {
+          width: 40%;
+          color: #89817c;
+          text-decoration: line-through; }
 
 .header_top_panel__block {
   display: flex;
@@ -785,8 +852,7 @@ textarea {
   position: relative;
   display: flex;
   align-items: center;
-  width: 620px;
-  max-width: 620px;
+  width: 100%;
   height: 50px;
   background: #ebeae8;
   border-radius: 8px; }
@@ -826,8 +892,10 @@ textarea {
   .header_bottom_panel_item_label {
     font-size: 18px; }
 
-.header_widget_wrapper .header_bottom_panel_cart {
-  display: none; }
+.header_widget_wrapper {
+  width: 100%; }
+  .header_widget_wrapper .header_bottom_panel_cart {
+    display: none; }
 
 .header_content__block.mobile {
   display: none; }
