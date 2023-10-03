@@ -1,0 +1,60 @@
+.star-rate {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  column-gap: 10px;
+
+  &.readonly {
+    pointer-events: none;
+  }
+
+  &__item {
+    position: relative;
+    width: 20%;
+
+    &:hover,
+    &:hover ~ .star-rate__item {
+      label {
+        svg {
+          fill: #a46c46;
+        }
+
+        span {
+          color: #a46c46;
+        }
+      }
+    }
+
+    &.active {
+      label {
+        svg {
+          fill: #a46c46;
+        }
+
+        span {
+          color: #a46c46;
+        }
+      }
+    }
+
+    input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      span {
+        color: #453f3a;
+      }
+    }
+  }
+}

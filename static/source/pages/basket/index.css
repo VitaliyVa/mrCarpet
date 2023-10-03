@@ -1481,6 +1481,7 @@ textarea {
       transform: translateY(5px) scale(1.1);
       filter: brightness(0.95); }
   .modal__content {
+    width: 100%;
     padding-left: 125px; }
     .modal__content button {
       width: 100%;
