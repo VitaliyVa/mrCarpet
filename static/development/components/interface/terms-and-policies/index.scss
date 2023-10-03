@@ -1,0 +1,56 @@
+.terms-and-policies {
+  display: flex;
+  padding: 40px 0 104px;
+
+  &__sidebar {
+    position: sticky;
+    top: 10%;
+    min-width: 240px;
+    height: 100%;
+  }
+
+  &__content {
+    margin-left: 25px;
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__items {
+    max-width: 900px;
+    width: 100%;
+    margin-top: 24px;
+  }
+
+  &__block-item {
+    color: #453f3a;
+    font-size: 16px;
+    line-height: 130%;
+
+    & + & {
+      margin-top: 45px;
+    }
+
+    &-title {
+      &.--top-indent {
+        margin-top: 15px;
+      }
+    }
+
+    &-subtitle {
+      margin: 15px 0;
+    }
+
+    &-text {
+      margin-top: 15px;
+      color: #453f3a;
+      font-weight: 400;
+
+      p + p,
+      li + li {
+        margin-top: 15px;
+      }
+    }
+  }
+}

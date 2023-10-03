@@ -1,0 +1,56 @@
+.review-write-modal {
+  &__close-btn {
+    img {
+    }
+  }
+
+  &__container {
+  }
+
+  &__form {
+    max-width: 440px;
+
+    &-title {
+      font-size: 30px;
+    }
+
+    &-fields {
+    }
+
+    &-field {
+      input,
+      textarea {
+      }
+
+      textarea {
+        min-height: 41.8px;
+        height: 41.8px;
+        resize: vertical;
+      }
+
+      .star-rate {
+        column-gap: 38px;
+        margin: 24px 0;
+
+        &__item {
+          max-width: 56px;
+
+          label {
+            svg {
+              width: 48px;
+              height: 48px;
+            }
+          }
+        }
+      }
+    }
+
+    &-buttons {
+      margin-top: 40px;
+    }
+  }
+
+  &__send-review-btn {
+    max-width: 208px;
+  }
+}

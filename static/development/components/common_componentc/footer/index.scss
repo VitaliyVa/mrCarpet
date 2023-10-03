@@ -1,71 +1,77 @@
 .footer {
-    background-color: #F4F3EE;
-    background-repeat: no-repeat;
-    background-position: center;
+  background-color: #f4f3ee;
+  background-repeat: no-repeat;
+  background-position: center;
 
-    &__wrapper {
-        display: flex;
-        justify-content: space-between;
-        padding: 5% 0;
+  &__wrapper {
+    display: flex;
+    justify-content: space-between;
+    padding: 5% 0;
+  }
+
+  &_form {
+    width: 20%;
+
+    &_title {
+      margin-bottom: 20px;
     }
 
-    &_form {
-        width: 20%;
-
-        &_title {
-            margin-bottom: 20px;
-        }
-
-        &_text {
-
-        }
-
-        &_input {
-            margin: 30px 0 12px 0;
-        }
-
-        [type="submit"] {
-            margin-top: 20px;
-        }
+    &_text {
     }
 
-    &__right {
-        display: flex;
+    &_input {
+      margin: 30px 0 12px 0;
     }
 
-    &__column {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+    [type="submit"] {
+      max-width: 265px;
+      width: 100%;
+      margin-top: 20px;
+    }
+  }
 
-        &:first-child {
-            margin-right: 100px;
-        }
+  &__right {
+    display: flex;
+  }
 
-       a {
-        img {
-            margin-right: 20px;
-        }
-       }
+  &__column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    &:first-child {
+      margin-right: 100px;
     }
 
-    &__links {
-        display: flex;
-        flex-direction: column;
+    a {
+      img {
+        margin-right: 20px;
+      }
+    }
+  }
 
+  &__links {
+    display: flex;
+    flex-direction: column;
 
-        a {
-            color: #89817C;
-            margin-bottom: 30px;
-            &:hover {
-                color: #a46c46;
-            }
-        }
+    a,
+    button {
+      color: #89817c;
+      margin-bottom: 30px;
+
+      &:hover {
+        color: #a46c46;
+      }
     }
 
-    .accept {
-        color: #89817C;
-        border-bottom: 1px solid #89817C;
-        font-size: 14px;
+    button {
+      text-align: left;
     }
+  }
+
+  .accept {
+    color: #89817c;
+    border-bottom: 1px solid #89817c;
+    font-size: 14px;
+  }
 }

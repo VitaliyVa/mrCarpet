@@ -1,4 +1,9 @@
+import "./authorization";
+import "./search";
+
 import "./index.scss";
+import "./authorization.scss";
+import "./contacts-modal.scss";
 
 const headerMain = document.querySelector(".header");
 const header = document.querySelector(".header_bottom_panel__block");
@@ -84,15 +89,15 @@ function headerPanelScroll() {
 }
 headerPanelScroll();
 
-function toggleActiveSearch() {
-  document.addEventListener("click", function (event) {
-    if (event.target !== search && !search.contains(event.target)) {
-      search.classList.remove("active");
-    }
-  });
+// function toggleActiveSearch() {
+//   document.addEventListener("click", function (event) {
+//     if (event.target !== search && !search.contains(event.target)) {
+//       search.classList.remove("active");
+//     }
+//   });
 
-  search.addEventListener("click", (e) => {
-    search.classList.add("active");
-  });
-}
-toggleActiveSearch();
+//   search.addEventListener("click", (e) => {
+//     search.classList.add("active");
+//   });
+// }
+// toggleActiveSearch();

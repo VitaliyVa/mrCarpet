@@ -17,8 +17,16 @@ $legacy_browser_support: false !default;
   padding-top: 70px;
 }
 .container {
+  max-width: 1920px;
   width: 100%;
+  margin: 0 auto;
   padding: 0px 7%;
+}
+
+.bread-crumbs {
+  span {
+    margin: 0 5px;
+  }
 }
 
 @media (max-width: 1024px) {

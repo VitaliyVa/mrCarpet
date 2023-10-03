@@ -1,0 +1,142 @@
+.authorization {
+  &__form {
+  }
+
+  &__bottom {
+    margin-top: 104px;
+  }
+}
+
+.login-modal {
+  &__close-btn {
+    img {
+    }
+  }
+
+  &__container {
+  }
+
+  &__logo {
+    img {
+    }
+  }
+
+  &__form {
+    &-title {
+    }
+
+    &-fields {
+    }
+
+    &-field {
+      max-width: 320px;
+
+      input {
+      }
+    }
+
+    &-buttons {
+      margin-top: 30px;
+    }
+  }
+
+  &__sign-in-btn {
+    max-width: 265px;
+  }
+
+  &__forgot-password-btn {
+    max-width: 164px;
+    margin-top: 10px;
+    padding: 0 !important;
+    color: #89817c;
+    line-height: 130%;
+    font-weight: 400;
+  }
+
+  &__bottom {
+    &-title {
+    }
+  }
+
+  &__create-account-btn {
+    max-width: 276px;
+    margin-top: 20px;
+  }
+}
+
+.register-modal {
+  &__close-btn {
+    img {
+    }
+  }
+
+  &__container {
+  }
+
+  &__logo {
+    img {
+    }
+  }
+
+  &__form {
+    max-width: 440px;
+    &-title {
+    }
+
+    &-description {
+      margin: 10px 0;
+    }
+
+    &-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 20px;
+    }
+
+    &-field {
+      &.--full {
+        grid-column: span 2 / span 2;
+      }
+
+      input {
+      }
+    }
+
+    &-buttons {
+      margin-top: 40px;
+    }
+
+    &-info {
+      margin-top: 10px;
+      color: #212529;
+      font-size: 14px;
+      line-height: 130%;
+
+      &-text {
+        color: #6c757d;
+      }
+
+      a {
+        transition: all 0.2s;
+
+        &:hover {
+          color: #a46c46;
+        }
+      }
+    }
+  }
+
+  &__create-account-btn {
+    max-width: 276px;
+  }
+
+  &__bottom {
+    &-title {
+    }
+  }
+
+  &__sign-in-btn {
+    max-width: 280px;
+    margin-top: 30px;
+  }
+}

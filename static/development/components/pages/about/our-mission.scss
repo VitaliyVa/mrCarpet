@@ -1,0 +1,29 @@
+.our-mission {
+  padding: 104px 0;
+
+  &__container {
+  }
+
+  &__info {
+  }
+
+  &__title {
+  }
+
+  &__description {
+    max-width: 720px;
+    margin: 40px auto;
+    text-align: center;
+  }
+
+  &__bottom {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__view-catalog-btn {
+    max-width: 239px;
+    width: 100%;
+    padding: 15px 45px;
+  }
+}
