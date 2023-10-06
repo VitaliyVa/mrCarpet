@@ -1484,6 +1484,12 @@ textarea {
   font-size: 14px;
   line-height: 130%;
   border-radius: 50px; }
+  @media (max-width: 1024px) {
+    .size-label {
+      font-size: 14px; } }
+  @media (max-width: 600px) {
+    .size-label {
+      font-size: 12px; } }
 
 .modal {
   position: relative;
@@ -1578,6 +1584,8 @@ textarea {
 .info_for_product {
   width: 240px;
   margin-right: 20px; }
+  .info_for_product__timer {
+    margin-bottom: 10px; }
   .info_for_product_title {
     font-size: 36px;
     line-height: 110%; }
@@ -1601,9 +1609,37 @@ textarea {
     background: transparent;
     border-radius: 8px;
     transition: all 0.2s; }
+    .info_for_product_btn.mob-btn {
+      display: none; }
     .info_for_product_btn:hover {
       color: #fff;
       background: #a46c46; }
+  @media (max-width: 1024px) {
+    .info_for_product {
+      width: 100%;
+      margin: 0 0 24px 0;
+      text-align: center; }
+      .info_for_product__timer {
+        margin-bottom: 8px;
+        font-size: 28px; }
+        .info_for_product__timer-subtitle {
+          font-size: 14px; }
+      .info_for_product_title {
+        font-size: 24px; }
+      .info_for_product_subtitle {
+        font-size: 14px;
+        margin: 8px 0 0; }
+      .info_for_product_btn {
+        display: none; }
+        .info_for_product_btn.mob-btn {
+          display: block;
+          max-width: 349px;
+          width: 100%;
+          margin-top: 24px;
+          padding: 12px 45px; } }
+  @media (max-width: 600px) {
+    .info_for_product_btn.mob-btn {
+      font-size: 12px; } }
 
 .slider__block {
   width: calc(100% - 260px); }
@@ -1613,8 +1649,36 @@ textarea {
   .slider__wrapper .swiper {
     margin-left: 0; }
 
+@media (max-width: 1440px) {
+  .slider__wrapper .blog_item {
+    width: 328px; } }
+
+@media (max-width: 1024px) {
+  .slider__wrapper {
+    flex-wrap: wrap;
+    justify-content: center; }
+    .slider__wrapper .catalog-swiper .cart_item {
+      width: 176px; } }
+
+@media (max-width: 600px) {
+  .slider__wrapper .catalog-swiper .cart_item {
+    width: 168px; } }
+
+@media (max-width: 400px) {
+  .slider__wrapper .blog_item {
+    width: 100%; } }
+
 .catalog_slider {
   margin-bottom: 120px; }
+  @media (max-width: 1024px) {
+    .catalog_slider {
+      margin-bottom: 80px; } }
+  @media (max-width: 600px) {
+    .catalog_slider {
+      margin-bottom: 48px; } }
+
+.catalog-swiper .cart_item {
+  width: 312px; }
 
 .catalog-swiper .swiper-button-next,
 .catalog-swiper .swiper-button-prev {

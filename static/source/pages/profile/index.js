@@ -19439,13 +19439,17 @@ headerPanelScroll(); // function toggleActiveSearch() {
 
 var searchInput = document.querySelector(".header__search input");
 var searchBody = document.querySelector(".header__search-body");
-searchInput.addEventListener("input", function () {
-  searchBody.classList.add("active");
-});
+
+if (searchInput) {
+  searchInput.addEventListener("input", function () {
+    searchBody.classList.add("active");
+  });
+}
+
 document.addEventListener("click", function (_ref) {
   var target = _ref.target;
 
-  if (target.closest(".header__search")) {
+  if (target.closest(".header__search-head")) {
     searchBody.classList.toggle("active");
   }
 
@@ -19696,9 +19700,25 @@ __webpack_require__.r(__webpack_exports__);
 
 
 swiper__WEBPACK_IMPORTED_MODULE_1__["default"].use([swiper__WEBPACK_IMPORTED_MODULE_1__["Navigation"]]);
-var catalog_slider = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".catalog-swiper", {
-  slidesPerView: '4',
-  spaceBetween: 30,
+var productsSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".products-swiper", {
+  slidesPerView: "auto",
+  spaceBetween: 16,
+  navigation: {
+    nextEl: ".swiper-button-next",
+    prevEl: ".swiper-button-prev"
+  },
+  breakpoints: {
+    0: {
+      spaceBetween: 14
+    },
+    600: {
+      spaceBetween: 16
+    }
+  }
+});
+var blogSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".blog-swiper", {
+  slidesPerView: "auto",
+  // spaceBetween: 0,
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev"

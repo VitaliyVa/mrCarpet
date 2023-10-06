@@ -34,6 +34,15 @@
     font-size: 20px;
     line-height: 130%;
   }
+
+  &_img {
+    img {
+      object-fit: cover;
+      width: 110px;
+      height: 110px;
+      border-radius: 100%;
+    }
+  }
 }
 
 /* Curl Bottom Left */
@@ -84,20 +93,22 @@
     padding: 10px 10px;
     &_text {
       font-size: 16px;
-      line-height: 100%;
     }
+
     &_img {
-      width: 80px;
-      display: flex;
       img {
-        width: 100%;
+        width: 80px;
+        height: 80px;
       }
     }
   }
 }
 
-
 @media (max-width: 1024px) {
+  .catalog_items {
+    padding-bottom: 60px;
+  }
+
   .catalog_item {
     min-width: unset;
     width: calc(50% - 16px);
@@ -114,6 +125,10 @@
 }
 
 @media (max-width: 500px) {
+  .catalog_items {
+    padding-bottom: 41px;
+  }
+
   .catalog_item {
     padding: 6px;
     margin: 6px;
@@ -124,7 +139,11 @@
     }
     &_img {
       margin-left: 5px;
-      width: 40px;
+
+      img {
+        width: 42px;
+        height: 42px;
+      }
     }
   }
 }
