@@ -1444,6 +1444,19 @@ body {
   .title span {
     margin-left: 20px;
     color: #89817c; }
+  @media (max-width: 1024px) {
+    .title h1 {
+      font-size: 24px;
+      line-height: normal; } }
+  @media (max-width: 720px) {
+    .title {
+      flex-direction: column;
+      align-items: start;
+      justify-content: center; }
+      .title h1 {
+        font-size: 20px; }
+      .title span {
+        margin: 4px 0 0; } }
 
 .truncate {
   overflow: hidden;
@@ -1801,13 +1814,13 @@ body {
     width: 100%; } }
 
 .catalog_slider {
-  margin-bottom: 120px; }
+  padding-bottom: 120px; }
   @media (max-width: 1024px) {
     .catalog_slider {
-      margin-bottom: 80px; } }
-  @media (max-width: 600px) {
+      padding-bottom: 80px; } }
+  @media (max-width: 720px) {
     .catalog_slider {
-      margin-bottom: 48px; } }
+      padding-bottom: 48px; } }
 
 .catalog-swiper .cart_item {
   width: 312px; }

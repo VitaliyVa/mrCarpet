@@ -141,14 +141,14 @@
 }
 
 .catalog_slider {
-  margin-bottom: 120px;
+  padding-bottom: 120px;
 
   @media (max-width: 1024px) {
-    margin-bottom: 80px;
+    padding-bottom: 80px;
   }
 
-  @media (max-width: 600px) {
-    margin-bottom: 48px;
+  @media (max-width: 720px) {
+    padding-bottom: 48px;
   }
 }
 

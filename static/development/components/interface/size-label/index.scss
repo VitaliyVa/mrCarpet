@@ -16,6 +16,12 @@
   }
 
   @media (max-width: 600px) {
+    max-width: 64px;
     font-size: 12px;
+  }
+
+  @media (max-width: 390px) {
+    max-width: 56px;
+    font-size: 10px;
   }
 }

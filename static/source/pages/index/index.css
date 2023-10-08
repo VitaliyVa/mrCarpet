@@ -1444,6 +1444,19 @@ body {
   .title span {
     margin-left: 20px;
     color: #89817c; }
+  @media (max-width: 1024px) {
+    .title h1 {
+      font-size: 24px;
+      line-height: normal; } }
+  @media (max-width: 720px) {
+    .title {
+      flex-direction: column;
+      align-items: start;
+      justify-content: center; }
+      .title h1 {
+        font-size: 20px; }
+      .title span {
+        margin: 4px 0 0; } }
 
 .truncate {
   overflow: hidden;
@@ -1855,13 +1868,13 @@ body {
     width: 100%; } }
 
 .catalog_slider {
-  margin-bottom: 120px; }
+  padding-bottom: 120px; }
   @media (max-width: 1024px) {
     .catalog_slider {
-      margin-bottom: 80px; } }
-  @media (max-width: 600px) {
+      padding-bottom: 80px; } }
+  @media (max-width: 720px) {
     .catalog_slider {
-      margin-bottom: 48px; } }
+      padding-bottom: 48px; } }
 
 .catalog-swiper .cart_item {
   width: 312px; }
@@ -2686,7 +2699,7 @@ swiper-container .swiper-notification {
       grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 1024px) {
     .cart_item_wrapper {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       row-gap: 12px;
       column-gap: 14px; }
     .cart_item_img {
@@ -2715,12 +2728,23 @@ swiper-container .swiper-notification {
       font-size: 14px; }
       .cart_item_size__block {
         padding: 0 4px; } }
-  @media (max-width: 600px) {
+  @media (max-width: 800px) {
     .cart_item_wrapper {
-      grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .cart_item_size {
-      width: 64px;
-      font-size: 12px; } }
+      grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 600px) {
+    .cart_item {
+      min-width: 168px; }
+      .cart_item_wrapper {
+        grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cart_item_size {
+        width: 64px;
+        font-size: 12px; } }
+  @media (max-width: 390px) {
+    .cart_item {
+      min-width: auto; }
+      .cart_item_size {
+        width: 56px;
+        font-size: 10px; } }
 
 .blog {
   display: flex;
@@ -2821,9 +2845,9 @@ swiper-container .swiper-notification {
   .cover_subtitle {
     font-size: 16px; } }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   .blog-section {
-    margin-bottom: 78px; } }
+    padding-bottom: 78px; } }
 
 @media (max-width: 380px) {
   .cover_title {

@@ -1,4 +1,27 @@
-// .favorite {
-//     display: flex;
-//     flex-wrap: wrap;
-// }
+.favorite {
+  padding-bottom: 104px;
+
+  &__title {
+    margin: 4px 0 0;
+  }
+
+  &__items {
+    margin-top: 60px;
+  }
+
+  @media (max-width: 1024px) {
+    padding-bottom: 80px;
+
+    &__items {
+      margin-top: 30px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    padding-bottom: 48px;
+
+    &__items {
+      margin-top: 18px;
+    }
+  }
+}
