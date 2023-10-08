@@ -73,21 +73,20 @@
     }
 
     &_btn {
+      padding: 12px 45px;
+
       &.mob-btn {
         display: block;
         max-width: 349px;
         width: 100%;
         margin-top: 24px;
-        padding: 12px 45px;
       }
     }
   }
 
   @media (max-width: 600px) {
     &_btn {
-      &.mob-btn {
-        font-size: 12px;
-      }
+      font-size: 12px;
     }
   }
 }

@@ -1721,14 +1721,15 @@ body {
         margin: 8px 0 0; }
       .info_for_product .info_for_product_btn {
         display: none; }
-      .info_for_product_btn.mob-btn {
-        display: block;
-        max-width: 349px;
-        width: 100%;
-        margin-top: 24px;
-        padding: 12px 45px; } }
+      .info_for_product_btn {
+        padding: 12px 45px; }
+        .info_for_product_btn.mob-btn {
+          display: block;
+          max-width: 349px;
+          width: 100%;
+          margin-top: 24px; } }
   @media (max-width: 600px) {
-    .info_for_product_btn.mob-btn {
+    .info_for_product_btn {
       font-size: 12px; } }
 
 .slider__block {
