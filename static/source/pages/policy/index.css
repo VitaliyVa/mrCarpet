@@ -587,6 +587,9 @@ textarea {
   margin: 0;
   /* 3 */ }
 
+body {
+  overflow-x: hidden; }
+
 .header {
   position: relative;
   z-index: 999;
@@ -609,6 +612,7 @@ textarea {
       visibility: hidden;
       opacity: 0;
       transform: translateY(-50%) scaleY(0);
+      z-index: 10;
       transition: all 0.3s; }
       .header__search-body.active {
         visibility: visible;
@@ -624,22 +628,33 @@ textarea {
         margin-top: 11px; }
       .header__search-product-left {
         display: flex;
-        align-items: center; }
+        align-items: center;
+        overflow: hidden; }
       .header__search-product-right {
         min-width: 142px;
         width: 26%; }
       .header__search-product-img {
+        min-width: 64px;
         max-width: 64px;
+        height: 88px;
         max-height: 88px; }
+        .header__search-product-img:hover img {
+          transform: scale(1.2); }
         .header__search-product-img img {
           width: 100%;
-          height: 100%; }
+          height: 100%;
+          object-fit: cover;
+          transition: all 0.3s; }
       .header__search-product-info {
-        margin-left: 24px; }
+        margin-left: 24px;
+        overflow: hidden; }
       .header__search-product-title {
         max-width: 294px;
         color: #453f3a;
-        line-height: 130%; }
+        line-height: 130%;
+        transition: all 0.3s; }
+        .header__search-product-title:hover {
+          color: #a46c46; }
       .header__search-product-price {
         display: flex;
         justify-content: space-between;
@@ -658,6 +673,45 @@ textarea {
           width: 40%;
           color: #89817c;
           text-decoration: line-through; }
+  @media (max-width: 1300px) {
+    .header__search-body {
+      padding: 12px 20px; }
+    .header__search-product-left {
+      width: 100%; }
+    .header__search-product-right {
+      min-width: 80px;
+      width: auto; }
+    .header__search-product-price-current {
+      width: 100%; }
+    .header__search-product-price-discount {
+      display: none; }
+    .header__search-product-price-old {
+      display: none; } }
+  @media (max-width: 1200px) {
+    .header__search-product {
+      column-gap: 16px; }
+      .header__search-product-right {
+        display: none; } }
+  @media (max-width: 1024px) {
+    .header__search-product-right {
+      display: block; } }
+  @media (max-width: 720px) {
+    .header__search-body {
+      padding: 12px; }
+    .header__search-product {
+      font-size: 12px; }
+      .header__search-product-info {
+        margin-left: 12px; }
+      .header__search-product-title {
+        max-width: none; }
+      .header__search-product-right {
+        display: none; } }
+  @media (max-width: 600px) {
+    .header__search-product-img {
+      min-width: 45px;
+      max-width: 45px;
+      height: 60px;
+      max-height: 60px; } }
 
 .header_top_panel__block {
   display: flex;
@@ -714,7 +768,6 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1920px;
   width: 100%;
   background: #fff;
   padding: 15px 7% 15px;
@@ -790,7 +843,7 @@ textarea {
     transition: all 0.2s;
     position: fixed;
     left: 0;
-    top: 174px;
+    top: 95px;
     opacity: 0;
     width: 100vw;
     height: 100vh;
@@ -824,7 +877,7 @@ textarea {
     border-radius: 0px 0px 10px 10px; }
     .header_bottom_panel_catalog_content.active {
       opacity: 1;
-      top: 173px;
+      top: 95px;
       z-index: 9;
       pointer-events: initial; }
     .header_bottom_panel_catalog_content.fixed {
@@ -1009,7 +1062,8 @@ textarea {
     position: relative;
     display: flex;
     align-items: center;
-    right: 100px; }
+    right: 100px;
+    max-width: 620px; }
     .header_widget_wrapper .header_bottom_panel_cart {
       display: flex; }
   .header_bottom_panel__block {
@@ -1051,7 +1105,7 @@ textarea {
       background: #ebeae8; }
       .header_bottom_panel_search.active input {
         padding: 0px 40px 0px 10px;
-        width: 200px;
+        width: 100%;
         opacity: 1; }
   .header_bottom_panel_logo {
     width: 36px; }
@@ -1150,6 +1204,24 @@ textarea {
   .header.active .animate_header_5 {
     top: 10px;
     opacity: 1; } }
+
+@media (max-width: 820px) {
+  .header_widget_wrapper {
+    max-width: calc(100% - 176px); } }
+
+@media (max-width: 450px) {
+  .header_widget_wrapper {
+    right: 45px;
+    max-width: calc(100% - 100px); }
+  .header_bottom_panel_cart {
+    margin-left: 15px; }
+  .header_bottom_panel_catalog {
+    width: 40px;
+    min-width: 40px; }
+    .header_bottom_panel_catalog_lines {
+      margin: 0 !important; }
+    .header_bottom_panel_catalog_label {
+      font-size: 0 !important; } }
 
 .authorization__bottom {
   margin-top: 104px; }
@@ -1301,6 +1373,25 @@ textarea {
     color: #89817c;
     border-bottom: 1px solid #89817c;
     font-size: 14px; }
+  @media (max-width: 1024px) {
+    .footer {
+      background-image: none !important; }
+      .footer__wrapper {
+        justify-content: center;
+        padding: 20px 0; }
+      .footer_form {
+        display: none; }
+      .footer__column:first-child {
+        margin: 0; }
+      .footer__column + .footer__column {
+        display: none; }
+      .footer__column a {
+        font-size: 14px; }
+      .footer__links {
+        display: none; } }
+  @media (max-width: 450px) {
+    .footer__column a {
+      font-size: 12px; } }
 
 .small {
   font-family: "Futura PT Book", sans-serif;
@@ -1353,6 +1444,11 @@ textarea {
   .title span {
     margin-left: 20px;
     color: #89817c; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; }
 
 .btn {
   font-size: 15px;
@@ -1665,14 +1761,14 @@ textarea {
       .info_for_product_subtitle {
         font-size: 14px;
         margin: 8px 0 0; }
-      .info_for_product_btn {
+      .info_for_product .info_for_product_btn {
         display: none; }
-        .info_for_product_btn.mob-btn {
-          display: block;
-          max-width: 349px;
-          width: 100%;
-          margin-top: 24px;
-          padding: 12px 45px; } }
+      .info_for_product_btn.mob-btn {
+        display: block;
+        max-width: 349px;
+        width: 100%;
+        margin-top: 24px;
+        padding: 12px 45px; } }
   @media (max-width: 600px) {
     .info_for_product_btn.mob-btn {
       font-size: 12px; } }

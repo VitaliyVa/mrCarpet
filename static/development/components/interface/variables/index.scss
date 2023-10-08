@@ -71,3 +71,9 @@
     color: #89817c;
   }
 }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

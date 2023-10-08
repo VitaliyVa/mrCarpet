@@ -17,7 +17,7 @@ modal_open.forEach((element) => {
         overlay.classList.remove("active");
       }
 
-      document.body.style.overflow = "auto";
+      document.body.style.overflowY = "initial";
     });
     const overlay_block = modal_block.closest(".modal-overlay");
 
@@ -25,7 +25,7 @@ modal_open.forEach((element) => {
 
     if (overlay_block) {
       overlay_block.classList.add("active");
-      document.body.style.overflow = "hidden";
+      document.body.style.overflowY = "hidden";
     }
   });
 });
@@ -51,7 +51,7 @@ all_modals.forEach((element) => {
         overlay.classList.remove("active");
       }
 
-      document.body.style.overflow = "auto";
+      document.body.style.overflowY = "initial";
     }
   });
 });
@@ -67,6 +67,6 @@ modal_close.forEach((element) => {
       overlay.classList.remove("active");
     }
 
-    document.body.style.overflow = "auto";
+    document.body.style.overflowY = "initial";
   });
 });

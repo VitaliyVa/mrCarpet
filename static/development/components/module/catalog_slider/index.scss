@@ -65,9 +65,14 @@
       font-size: 14px;
       margin: 8px 0 0;
     }
-    &_btn {
-      display: none;
 
+    .info_for_product {
+      &_btn {
+        display: none;
+      }
+    }
+
+    &_btn {
       &.mob-btn {
         display: block;
         max-width: 349px;

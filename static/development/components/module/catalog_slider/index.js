@@ -27,8 +27,6 @@ const productsSwiper = new Swiper(".products-swiper", {
 
 const blogSwiper = new Swiper(".blog-swiper", {
   slidesPerView: "auto",
-  // spaceBetween: 0,
-
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev",

@@ -89,15 +89,15 @@ function headerPanelScroll() {
 }
 headerPanelScroll();
 
-// function toggleActiveSearch() {
-//   document.addEventListener("click", function (event) {
-//     if (event.target !== search && !search.contains(event.target)) {
-//       search.classList.remove("active");
-//     }
-//   });
+function toggleActiveSearch() {
+  document.addEventListener("click", function (event) {
+    if (event.target !== search && !search.contains(event.target)) {
+      search.classList.remove("active");
+    }
+  });
 
-//   search.addEventListener("click", (e) => {
-//     search.classList.add("active");
-//   });
-// }
-// toggleActiveSearch();
+  search.addEventListener("click", (e) => {
+    search.classList.add("active");
+  });
+}
+toggleActiveSearch();

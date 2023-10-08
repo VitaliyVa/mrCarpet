@@ -19403,17 +19403,20 @@ function headerPanelScroll() {
   window.addEventListener("scroll", handleScroll);
 }
 
-headerPanelScroll(); // function toggleActiveSearch() {
-//   document.addEventListener("click", function (event) {
-//     if (event.target !== search && !search.contains(event.target)) {
-//       search.classList.remove("active");
-//     }
-//   });
-//   search.addEventListener("click", (e) => {
-//     search.classList.add("active");
-//   });
-// }
-// toggleActiveSearch();
+headerPanelScroll();
+
+function toggleActiveSearch() {
+  document.addEventListener("click", function (event) {
+    if (event.target !== search && !search.contains(event.target)) {
+      search.classList.remove("active");
+    }
+  });
+  search.addEventListener("click", function (e) {
+    search.classList.add("active");
+  });
+}
+
+toggleActiveSearch();
 
 /***/ }),
 
@@ -19774,7 +19777,6 @@ var productsSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".produc
 });
 var blogSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".blog-swiper", {
   slidesPerView: "auto",
-  // spaceBetween: 0,
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev"
@@ -19998,14 +20000,14 @@ modal_open.forEach(function (element) {
         overlay.classList.remove("active");
       }
 
-      document.body.style.overflow = "auto";
+      document.body.style.overflowY = "initial";
     });
     var overlay_block = modal_block.closest(".modal-overlay");
     modal_block.classList.add("active");
 
     if (overlay_block) {
       overlay_block.classList.add("active");
-      document.body.style.overflow = "hidden";
+      document.body.style.overflowY = "hidden";
     }
   });
 });
@@ -20028,7 +20030,7 @@ all_modals.forEach(function (element) {
         overlay.classList.remove("active");
       }
 
-      document.body.style.overflow = "auto";
+      document.body.style.overflowY = "initial";
     }
   });
 });
@@ -20042,7 +20044,7 @@ modal_close.forEach(function (element) {
       overlay.classList.remove("active");
     }
 
-    document.body.style.overflow = "auto";
+    document.body.style.overflowY = "initial";
   });
 });
 
