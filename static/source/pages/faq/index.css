@@ -2728,7 +2728,8 @@ swiper-container .swiper-notification {
 
 @media (max-width: 1440px) {
   .faq__content {
-    flex-direction: column; }
+    flex-direction: column;
+    align-items: center; }
   .faq__left {
     min-width: auto;
     max-width: none;
