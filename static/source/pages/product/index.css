@@ -1505,6 +1505,10 @@ body {
       .btn-gold-bordered:hover {
         color: #fff;
         background-color: #a46c46; }
+    @media (max-width: 720px) {
+      .btn-gold {
+        padding: 12px 45px;
+        font-size: 12px; } }
   .btn-yellow {
     display: inline-block;
     padding: 15px 30px;
@@ -2947,7 +2951,7 @@ swiper-container .swiper-notification {
         color: #453f3a; }
 
 @media (max-width: 1024px) {
-  .container {
+  .first_section .container {
     padding: 0; }
   .bread-crumbs {
     padding: 0 20px; } }

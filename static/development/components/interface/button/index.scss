@@ -465,6 +465,11 @@
         background-color: #a46c46;
       }
     }
+
+    @media (max-width: 720px) {
+      padding: 12px 45px;
+      font-size: 12px;
+    }
   }
 
   &-yellow {
