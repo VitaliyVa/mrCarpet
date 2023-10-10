@@ -771,6 +771,7 @@ body {
   width: 100%;
   background: #fff;
   padding: 15px 7% 15px;
+  border-bottom: 1px solid #ebeae8;
   transition: transform 0.3s ease-out; }
   .header_bottom_panel__block.fixed {
     position: fixed;
@@ -1648,6 +1649,33 @@ body {
       .terms-and-policies__block-item-text p + p,
       .terms-and-policies__block-item-text li + li {
         margin-top: 15px; }
+  @media (max-width: 720px) {
+    .terms-and-policies {
+      padding: 18px 0 48px; }
+      .terms-and-policies__sidebar {
+        display: none; }
+      .terms-and-policies__content {
+        margin-left: 0; }
+      .terms-and-policies__items {
+        max-width: none;
+        margin-top: 16px; } }
+  @media (max-width: 500px) {
+    .terms-and-policies__block-item {
+      font-size: 12px; }
+      .terms-and-policies__block-item + .terms-and-policies__block-item {
+        margin-top: 35px; }
+      .terms-and-policies__block-item-title.--top-indent {
+        margin-top: 10px; }
+      .terms-and-policies__block-item-subtitle {
+        margin: 10px 0; }
+      .terms-and-policies__block-item-text {
+        margin-top: 10px; }
+        .terms-and-policies__block-item-text p + p,
+        .terms-and-policies__block-item-text li + li {
+          margin-top: 10px; } }
+  @media (max-width: 0px) {
+    .terms-and-policies__title {
+      margin: 0; } }
 
 .modal {
   position: relative;

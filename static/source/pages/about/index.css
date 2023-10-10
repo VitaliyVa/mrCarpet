@@ -771,6 +771,7 @@ body {
   width: 100%;
   background: #fff;
   padding: 15px 7% 15px;
+  border-bottom: 1px solid #ebeae8;
   transition: transform 0.3s ease-out; }
   .header_bottom_panel__block.fixed {
     position: fixed;
