@@ -19670,7 +19670,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
 swiper__WEBPACK_IMPORTED_MODULE_1__["default"].use([swiper__WEBPACK_IMPORTED_MODULE_1__["Navigation"]]);
 var productsSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".products-swiper", {
   slidesPerView: "auto",

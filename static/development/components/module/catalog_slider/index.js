@@ -1,7 +1,6 @@
 import "./index.scss";
 import Swiper, { Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
-import "./index.scss";
 
 Swiper.use([Navigation]);
 

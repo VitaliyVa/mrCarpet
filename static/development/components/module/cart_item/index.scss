@@ -139,10 +139,12 @@
 
     &__block {
       display: flex;
-      align-items: center;
       flex-wrap: wrap;
-      margin: 0 -4px;
-      padding: 0 8px;
+      // align-items: center;
+      // flex-wrap: wrap;
+      // margin: 0 -4px;
+      // padding: 0 8px;
+      gap: 4px 5px;
     }
   }
 

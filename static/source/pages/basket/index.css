@@ -2727,10 +2727,8 @@ swiper-container .swiper-notification {
       color: #fff; }
     .cart_item_size__block {
       display: flex;
-      align-items: center;
       flex-wrap: wrap;
-      margin: 0 -4px;
-      padding: 0 8px; }
+      gap: 4px 5px; }
   @media (max-width: 1440px) {
     .cart_item_wrapper {
       grid-template-columns: repeat(3, minmax(0, 1fr)); } }

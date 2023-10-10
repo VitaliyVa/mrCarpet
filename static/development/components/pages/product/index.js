@@ -1,10 +1,11 @@
+import "swiper/swiper-bundle.css";
 import "./index.scss";
 import "./review-write-modal.scss";
 
 import Swiper, { Thumbs, Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
 
-Swiper.use([Thumbs]);
+Swiper.use([Thumbs, Navigation]);
 
 const product_main_swiper = new Swiper(".product_slider_main", {
   slidesPerView: 1,
@@ -14,6 +15,10 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   //     maxRaito: 5,
   //     minRaito: 1
   // },
+  navigation: {
+    nextEl: ".swiper-button-next",
+    prevEl: ".swiper-button-prev",
+  },
 
   thumbs: {
     swiper: {

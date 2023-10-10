@@ -176,33 +176,3 @@
     }
   }
 }
-
-@media (max-width: 0px) {
-  .catalog_inside {
-    // display: flex;
-
-    &_filter {
-      //   min-width: 240px;
-      //   margin-right: 20px;
-
-      &-mob {
-      }
-    }
-  }
-
-  .pagination {
-    // display: flex;
-    // align-items: center;
-    // justify-content: end;
-    // padding: 50px 0;
-
-    a {
-      //   color: #453f3a;
-      //   font-weight: 450;
-      //   font-size: 16px;
-      //   margin-right: 5px;
-      //   padding: 4px 12px;
-      //   border-radius: 8px;
-    }
-  }
-}
