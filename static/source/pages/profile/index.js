@@ -19686,6 +19686,34 @@ document.querySelectorAll(".accordion__title").forEach(function (item) {
 
 /***/ }),
 
+/***/ "../components/module/catalog_items/index.js":
+/*!***************************************************!*\
+  !*** ../components/module/catalog_items/index.js ***!
+  \***************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/catalog_items/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+
+
+/***/ }),
+
+/***/ "../components/module/catalog_items/index.scss":
+/*!*****************************************************!*\
+  !*** ../components/module/catalog_items/index.scss ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+    if(false) { var cssReload; }
+  
+
+/***/ }),
+
 /***/ "../components/module/catalog_slider/index.js":
 /*!****************************************************!*\
   !*** ../components/module/catalog_slider/index.js ***!
@@ -20384,10 +20412,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_modal_script_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../components/module/modal_script/index */ "../components/module/modal_script/index.js");
 /* harmony import */ var _components_module_validation_index__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../components/module/validation/index */ "../components/module/validation/index.js");
 /* harmony import */ var _components_module_form_action_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../components/module/form_action/index */ "../components/module/form_action/index.js");
-/* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
-/* harmony import */ var _components_module_accordion_index__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../components/module/accordion/index */ "../components/module/accordion/index.js");
-/* harmony import */ var _components_pages_profile_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../components/pages/profile/index */ "../components/pages/profile/index.js");
+/* harmony import */ var _components_module_catalog_items_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../components/module/catalog_items/index */ "../components/module/catalog_items/index.js");
+/* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
+/* harmony import */ var _components_module_accordion_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../components/module/accordion/index */ "../components/module/accordion/index.js");
+/* harmony import */ var _components_pages_profile_index__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../components/pages/profile/index */ "../components/pages/profile/index.js");
 // script interface
+
 
 
 

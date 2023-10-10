@@ -11,6 +11,7 @@ import "../components/interface/input/index";
 import "../components/module/modal_script/index";
 import "../components/module/validation/index";
 import "../components/module/form_action/index";
+import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
 import "../components/module/accordion/index";
 
