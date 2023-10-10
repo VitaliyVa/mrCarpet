@@ -1458,6 +1458,15 @@ body {
       .title span {
         margin: 4px 0 0; } }
 
+.bread-crumbs {
+  padding-top: 15px; }
+  @media (max-width: 1024px) {
+    .bread-crumbs {
+      padding-top: 20px; } }
+  @media (max-width: 828px) {
+    .bread-crumbs {
+      display: none; } }
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;

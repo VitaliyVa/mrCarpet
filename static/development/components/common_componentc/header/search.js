@@ -7,11 +7,13 @@ if (searchInput) {
   });
 }
 
-document.addEventListener("click", ({ target }) => {
-  if (target.closest(".header__search-head")) {
-    searchBody.classList.toggle("active");
-  }
-  if (!target.closest(".header")) {
-    searchBody.classList.remove("active");
-  }
-});
+if (searchBody) {
+  document.addEventListener("click", ({ target }) => {
+    if (target.closest(".header__search-head")) {
+      searchBody.classList.toggle("active");
+    }
+    if (!target.closest(".header")) {
+      searchBody.classList.remove("active");
+    }
+  });
+}

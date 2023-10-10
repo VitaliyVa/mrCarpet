@@ -93,6 +93,18 @@
   }
 }
 
+.bread-crumbs {
+  padding-top: 15px;
+
+  @media (max-width: 1024px) {
+    padding-top: 20px;
+  }
+
+  @media (max-width: 828px) {
+    display: none;
+  }
+}
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;

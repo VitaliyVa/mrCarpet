@@ -19449,17 +19449,19 @@ if (searchInput) {
   });
 }
 
-document.addEventListener("click", function (_ref) {
-  var target = _ref.target;
+if (searchBody) {
+  document.addEventListener("click", function (_ref) {
+    var target = _ref.target;
 
-  if (target.closest(".header__search-head")) {
-    searchBody.classList.toggle("active");
-  }
+    if (target.closest(".header__search-head")) {
+      searchBody.classList.toggle("active");
+    }
 
-  if (!target.closest(".header")) {
-    searchBody.classList.remove("active");
-  }
-});
+    if (!target.closest(".header")) {
+      searchBody.classList.remove("active");
+    }
+  });
+}
 
 /***/ }),
 
@@ -20359,6 +20361,28 @@ var validationBtn = function validationBtn(formClassName) {
 
 /***/ }),
 
+/***/ "../components/pages/catalog_inside/filters.js":
+/*!*****************************************************!*\
+  !*** ../components/pages/catalog_inside/filters.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var filters = document.querySelector(".catalog_inside_filter");
+document.addEventListener("click", function (_ref) {
+  var target = _ref.target;
+
+  if (target.closest(".catalog_inside_filter-btn")) {
+    filters.classList.add("active");
+  }
+
+  if (target.closest(".catalog_inside_filter-close-btn")) {
+    filters.classList.remove("active");
+  }
+});
+
+/***/ }),
+
 /***/ "../components/pages/catalog_inside/index.js":
 /*!***************************************************!*\
   !*** ../components/pages/catalog_inside/index.js ***!
@@ -20368,8 +20392,11 @@ var validationBtn = function validationBtn(formClassName) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/pages/catalog_inside/index.scss");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _filters__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./filters */ "../components/pages/catalog_inside/filters.js");
+/* harmony import */ var _filters__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_filters__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.scss */ "../components/pages/catalog_inside/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_1__);
+
 
 
 /***/ }),

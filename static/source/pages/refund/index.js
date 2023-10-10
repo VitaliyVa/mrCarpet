@@ -19449,17 +19449,19 @@ if (searchInput) {
   });
 }
 
-document.addEventListener("click", function (_ref) {
-  var target = _ref.target;
+if (searchBody) {
+  document.addEventListener("click", function (_ref) {
+    var target = _ref.target;
 
-  if (target.closest(".header__search-head")) {
-    searchBody.classList.toggle("active");
-  }
+    if (target.closest(".header__search-head")) {
+      searchBody.classList.toggle("active");
+    }
 
-  if (!target.closest(".header")) {
-    searchBody.classList.remove("active");
-  }
-});
+    if (!target.closest(".header")) {
+      searchBody.classList.remove("active");
+    }
+  });
+}
 
 /***/ }),
 

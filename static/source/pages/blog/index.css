@@ -1458,6 +1458,15 @@ body {
       .title span {
         margin: 4px 0 0; } }
 
+.bread-crumbs {
+  padding-top: 15px; }
+  @media (max-width: 1024px) {
+    .bread-crumbs {
+      padding-top: 20px; } }
+  @media (max-width: 828px) {
+    .bread-crumbs {
+      display: none; } }
+
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2528,10 +2537,12 @@ swiper-container .swiper-notification {
 
 .blog-section {
   padding-bottom: 104px; }
+  .blog-section .title h1 {
+    margin: 4px 0 0; }
   .blog-section .blog__items {
     gap: 18px;
     width: 100%;
-    margin-top: 32px; }
+    margin-top: 52px; }
   .blog-section .blog .blog_item {
     max-width: 376px;
     width: 100%;

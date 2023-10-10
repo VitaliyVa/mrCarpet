@@ -589,70 +589,92 @@
     </header>
     <!-- /.header -->
 
-    <section class="first_section">
+    <section class="catalog_inside first_section">
       <div class="container">
-        <div>
+        <div class="bread-crumbs">
           <a href="#" class="color_black_sub">Головна</a>
           <span class="color_black_sub">/</span>
           <a href="#" class="color_gold">Килими українського виробництва</a>
         </div>
-        <div class="title">
-          <h1>Килими українського виробництва</h1>
-          <span>64 товари</span>
+        <div class="catalog_inside-top">
+          <div class="title">
+            <h1 class="catalog_inside__title">
+              Килими українського виробництва
+            </h1>
+            <span>64 товари</span>
+          </div>
+
+          <button class="catalog_inside_filter-btn">
+            <img src="/static/utils/assets/filters.svg" alt="filters" />
+          </button>
         </div>
 
-        <div class="catalog_inside">
+        <div class="catalog_inside__content">
           <div class="catalog_inside_filter accordion_container">
-            <span class="accordion accordion_content__block">
-              <a class="color_black accordion__title"> Сортувати за </a>
-              <span class="accordion_content content_column">
-                <a href="#" class="active accordion_content_item">
-                  За замовчуванням
-                </a>
+            <div class="catalog_inside_filter-head">
+              <h3 class="catalog_inside_filter-title color_black bold">
+                Фільтри
+              </h3>
+              <button class="catalog_inside_filter-close-btn">
+                <img src="/static/utils/assets/close.svg" alt="close" />
+              </button>
+            </div>
+            <div class="catalog_inside_filter-body">
+              <span
+                class="catalog_inside_filter-body-item accordion accordion_content__block"
+              >
+                <a class="color_black accordion__title"> Сортувати за </a>
+                <span class="accordion_content content_column">
+                  <a href="#" class="active accordion_content_item">
+                    За замовчуванням
+                  </a>
 
-                <a href="#" class="accordion_content_item"> За ім’ям А–Я </a>
+                  <a href="#" class="accordion_content_item"> За ім’ям А–Я </a>
 
-                <a href="#" class="accordion_content_item"> За ім’ям Я–А </a>
+                  <a href="#" class="accordion_content_item"> За ім’ям Я–А </a>
 
-                <a href="#" class="accordion_content_item">
-                  Ціна за зростанням
-                </a>
+                  <a href="#" class="accordion_content_item">
+                    Ціна за зростанням
+                  </a>
 
-                <a href="#" class="accordion_content_item">
-                  Ціна за спаданням
-                </a>
+                  <a href="#" class="accordion_content_item">
+                    Ціна за спаданням
+                  </a>
+                </span>
               </span>
-            </span>
 
-            <span class="accordion accordion_content__block">
-              <a class="color_black accordion__title"> Розмір </a>
-              <span class="accordion_content content_column">
-                <div class="accordion_content_item">
-                  <label for="1">
-                    <input type="checkbox" name="" id="1" />
-                    0.8x1.1 м
-                  </label>
-                </div>
-                <div class="accordion_content_item">
-                  <label for="2">
-                    <input type="checkbox" name="" id="2" />
-                    0.8x1.2 м
-                  </label>
-                </div>
-                <div class="accordion_content_item">
-                  <label for="3">
-                    <input type="checkbox" name="" id="3" />
-                    0.8x1.3 м
-                  </label>
-                </div>
-                <div class="accordion_content_item">
-                  <label for="4">
-                    <input type="checkbox" name="" id="4" />
-                    0.8x1.4 м
-                  </label>
-                </div>
+              <span
+                class="catalog_inside_filter-body-item accordion accordion_content__block"
+              >
+                <a class="color_black accordion__title"> Розмір </a>
+                <span class="accordion_content content_column">
+                  <div class="accordion_content_item">
+                    <label for="1">
+                      <input type="checkbox" name="" id="1" />
+                      0.8x1.1 м
+                    </label>
+                  </div>
+                  <div class="accordion_content_item">
+                    <label for="2">
+                      <input type="checkbox" name="" id="2" />
+                      0.8x1.2 м
+                    </label>
+                  </div>
+                  <div class="accordion_content_item">
+                    <label for="3">
+                      <input type="checkbox" name="" id="3" />
+                      0.8x1.3 м
+                    </label>
+                  </div>
+                  <div class="accordion_content_item">
+                    <label for="4">
+                      <input type="checkbox" name="" id="4" />
+                      0.8x1.4 м
+                    </label>
+                  </div>
+                </span>
               </span>
-            </span>
+            </div>
           </div>
           <div class="catalog_section_bottom cart_item_wrapper">
             <div class="cart_item">
