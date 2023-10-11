@@ -4,7 +4,8 @@
   gap: 12px;
 
   &_item {
-    display: block;
+    display: flex;
+    flex-direction: column;
     transition: all 0.3s;
     width: 32%;
 

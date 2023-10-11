@@ -2791,7 +2791,8 @@ swiper-container .swiper-notification {
   width: 100%;
   gap: 12px; }
   .blog_item {
-    display: block;
+    display: flex;
+    flex-direction: column;
     transition: all 0.3s;
     width: 32%; }
     .blog_item:hover {
