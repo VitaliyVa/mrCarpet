@@ -15,13 +15,11 @@
 
     &_img {
       width: 100%;
-      height: 100%;
-      max-height: 230px;
 
       img {
         object-fit: cover;
         width: 100%;
-        height: 100%;
+        height: 230px;
         border-radius: 8px;
       }
     }
@@ -49,7 +47,9 @@
   @media (max-width: 1024px) {
     &_item {
       &_img {
-        max-height: 188px;
+        img {
+          height: 188px;
+        }
       }
 
       &_info {

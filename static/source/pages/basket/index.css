@@ -2798,13 +2798,11 @@ swiper-container .swiper-notification {
     .blog_item:hover {
       transform: scale(1.02); }
     .blog_item_img {
-      width: 100%;
-      height: 100%;
-      max-height: 230px; }
+      width: 100%; }
       .blog_item_img img {
         object-fit: cover;
         width: 100%;
-        height: 100%;
+        height: 230px;
         border-radius: 8px; }
     .blog_item_info {
       padding: 0 8px; }
@@ -2820,8 +2818,8 @@ swiper-container .swiper-notification {
       color: #89817c;
       margin-top: 8px; }
   @media (max-width: 1024px) {
-    .blog_item_img {
-      max-height: 188px; }
+    .blog_item_img img {
+      height: 188px; }
     .blog_item_info {
       padding: 0 10px; }
     .blog_item_title {

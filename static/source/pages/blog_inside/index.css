@@ -2618,13 +2618,11 @@ swiper-container .swiper-notification {
     .blog_item:hover {
       transform: scale(1.02); }
     .blog_item_img {
-      width: 100%;
-      height: 100%;
-      max-height: 230px; }
+      width: 100%; }
       .blog_item_img img {
         object-fit: cover;
         width: 100%;
-        height: 100%;
+        height: 230px;
         border-radius: 8px; }
     .blog_item_info {
       padding: 0 8px; }
@@ -2640,8 +2638,8 @@ swiper-container .swiper-notification {
       color: #89817c;
       margin-top: 8px; }
   @media (max-width: 1024px) {
-    .blog_item_img {
-      max-height: 188px; }
+    .blog_item_img img {
+      height: 188px; }
     .blog_item_info {
       padding: 0 10px; }
     .blog_item_title {
@@ -2649,6 +2647,12 @@ swiper-container .swiper-notification {
       font-size: 16px; }
     .blog_item_text {
       font-size: 14px; } }
+
+.blog-inside .bread-crumbs__mob {
+  display: none;
+  align-items: center; }
+  .blog-inside .bread-crumbs__mob span {
+    margin-left: 4px; }
 
 .blog-inside__center {
   box-sizing: content-box;
@@ -2667,14 +2671,15 @@ swiper-container .swiper-notification {
   .blog-inside__block-info {
     max-width: 820px; }
   .blog-inside__block-title {
+    margin: 20px 0;
     font-size: 30px; }
   .blog-inside__block-text {
     color: #89817c; }
     .blog-inside__block-text p {
       font-size: 20px;
       line-height: 130%; }
-      .blog-inside__block-text p + .blog-inside__block-text p {
-        margin-top: 20px; }
+    .blog-inside__block-text p + p {
+      margin-top: 20px; }
 
 .blog-inside__sidebar {
   position: sticky;
@@ -2691,6 +2696,92 @@ swiper-container .swiper-notification {
       width: calc(100% - 18px); }
   .blog-inside__sidebar-items .blog_item + .blog_item {
     margin-top: 40px; }
+
+.blog-inside__swiper {
+  display: none;
+  margin-top: 48px; }
+  .blog-inside__swiper-title {
+    margin-bottom: 16px;
+    font-size: 20px; }
+
+@media (max-width: 1440px) {
+  .blog-inside__center {
+    max-width: none;
+    padding: 0 0 104px 0; }
+  .blog-inside__sidebar {
+    max-width: 320px;
+    margin-left: 50px; } }
+
+@media (max-width: 1024px) {
+  .blog-inside__center {
+    margin-top: 20px;
+    padding-bottom: 80px; }
+  .blog-inside__block-info {
+    max-width: none; }
+  .blog-inside__block-title {
+    margin: 24px 0 16px;
+    font-size: 24px; }
+  .blog-inside__block-text p {
+    font-size: 16px; }
+  .blog-inside__sidebar {
+    max-width: 280px;
+    margin-left: 40px; }
+    .blog-inside__sidebar-title {
+      margin: 0 0 20px;
+      font-size: 20px; }
+    .blog-inside__sidebar-items .blog_item_info {
+      width: 100%;
+      padding: 0; }
+    .blog-inside__sidebar-items .blog_item + .blog_item {
+      margin-top: 30px; } }
+
+@media (max-width: 828px) {
+  .blog-inside .bread-crumbs {
+    display: block; }
+    .blog-inside .bread-crumbs span,
+    .blog-inside .bread-crumbs a {
+      display: none; }
+    .blog-inside .bread-crumbs__mob {
+      display: flex !important; }
+      .blog-inside .bread-crumbs__mob span {
+        display: block !important; } }
+
+@media (max-width: 720px) {
+  .blog-inside .bread-crumbs {
+    padding: 20px 20px 0; }
+  .blog-inside .container {
+    padding: 0; }
+  .blog-inside__center {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 16px;
+    padding-bottom: 78px; }
+  .blog-inside__block-img img {
+    border-radius: 0; }
+  .blog-inside__block-info {
+    padding: 0 20px; }
+  .blog-inside__block-title {
+    font-size: 20px; }
+  .blog-inside__block-text p {
+    font-size: 14px; }
+  .blog-inside__sidebar {
+    display: none; }
+  .blog-inside__swiper {
+    display: block;
+    padding: 0 20px; }
+    .blog-inside__swiper .blog {
+      gap: 0; }
+    .blog-inside__swiper .blog_item {
+      max-width: 328px;
+      width: 100%; } }
+
+@media (max-width: 500px) {
+  .blog-inside__block-img img {
+    max-height: 220px; } }
+
+@media (max-width: 400px) {
+  .blog-inside__swiper .blog_item {
+    max-width: none; } }
 
 
 /*# sourceMappingURL=index.css.map*/

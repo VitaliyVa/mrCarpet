@@ -19750,6 +19750,7 @@ var productsSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".produc
 });
 var blogSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".blog-swiper", {
   slidesPerView: "auto",
+  spaceBetween: 12,
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev"

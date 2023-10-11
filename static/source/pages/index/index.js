@@ -19745,6 +19745,7 @@ var productsSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".produc
 });
 var blogSwiper = new swiper__WEBPACK_IMPORTED_MODULE_1__["default"](".blog-swiper", {
   slidesPerView: "auto",
+  spaceBetween: 12,
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev"
@@ -20380,7 +20381,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_form_action_index__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../components/module/form_action/index */ "../components/module/form_action/index.js");
 /* harmony import */ var _components_module_catalog_items_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../components/module/catalog_items/index */ "../components/module/catalog_items/index.js");
 /* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
-/* harmony import */ var _components_module_cart_item__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../components/module/cart_item */ "../components/module/cart_item/index.js");
+/* harmony import */ var _components_module_cart_item_index__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../components/module/cart_item/index */ "../components/module/cart_item/index.js");
 /* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
 /* harmony import */ var _components_pages_index_index__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../components/pages/index/index */ "../components/pages/index/index.js");
 // script interface
