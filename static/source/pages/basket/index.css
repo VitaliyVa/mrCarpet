@@ -2982,6 +2982,7 @@ swiper-container .swiper-notification {
     display: flex;
     align-items: center;
     column-gap: 15%;
+    width: 100%;
     padding: 30px;
     cursor: pointer; }
     .basket__checkbox-item-head .checkbox__input {
@@ -3004,7 +3005,6 @@ swiper-container .swiper-notification {
     min-width: 61px;
     color: #89817c; }
   .basket__checkbox-item-price {
-    align-self: flex-end;
     min-width: 72px;
     font-weight: 450; }
   .basket__checkbox-item-body {
@@ -3022,9 +3022,11 @@ swiper-container .swiper-notification {
         border-left: 1px solid #e9ecef; }
       .basket__checkbox-item-body-block-head {
         display: flex;
-        justify-content: space-between; }
+        justify-content: space-between;
+        line-height: 130%; }
       .basket__checkbox-item-body-block-edit-btn {
-        margin-left: 20px; }
+        margin-left: 20px;
+        color: #a46c46; }
         .basket__checkbox-item-body-block-edit-btn .is-edited,
         .basket__checkbox-item-body-block-edit-btn .is-completed {
           display: flex;
@@ -3057,6 +3059,8 @@ swiper-container .swiper-notification {
           .basket__checkbox-item-body-block-fields input.font-size-14 {
             font-size: 14px; }
   .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-head {
+    column-gap: normal;
+    max-width: calc(100% - 32px);
     padding: 30px 87px 20px; }
   .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-body {
     display: flex; }
@@ -3066,15 +3070,20 @@ swiper-container .swiper-notification {
   .basket__checkbox-item::before, .basket__checkbox-item::after {
     content: none; }
 
+.basket__delivery-title {
+  color: #453f3a; }
+
 .basket__delivery-item .basket__checkbox-item-head {
   justify-content: space-between; }
 
 .basket__delivery-item .basket__checkbox-item-title {
-  max-width: 116px;
-  width: 100%; }
+  min-width: 116px;
+  width: 116px; }
 
 .basket__payment {
   margin-top: 40px; }
+  .basket__payment-title {
+    color: #453f3a; }
   .basket__payment-item .basket__checkbox-item-head {
     column-gap: 16.5%; }
   .basket__payment-item .basket__checkbox-item-icon {
@@ -3106,6 +3115,158 @@ swiper-container .swiper-notification {
     margin: 30px 0; }
     .basket_right_btn .btn-gold {
       width: 100%; }
+
+.basket__promocode-title {
+  margin-bottom: 13px;
+  font-weight: 400;
+  line-height: 96%; }
+
+.basket__promocode input {
+  margin-right: 12px; }
+
+.basket__calculate-title {
+  line-height: 130%; }
+
+.basket__calculate-sum-products {
+  margin: 30px 0 14px; }
+
+.basket__calculate-delivery {
+  margin: 0 0 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #dee2e6; }
+
+.basket__calculate-info p + p {
+  margin-top: 16px; }
+
+.basket__to-order-btn {
+  margin: 35px 0 20px; }
+
+@media (max-width: 1520px) {
+  .basket__checkbox-item-head {
+    column-gap: normal; } }
+
+@media (max-width: 1300px) {
+  .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-head {
+    max-width: none;
+    padding: 30px 50px 20px; }
+  .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-body {
+    max-width: calc(100% - 100px); }
+  .basket_right {
+    max-width: 350px;
+    margin-left: 40px; } }
+
+@media (max-width: 1100px) {
+  .basket__center {
+    flex-direction: column;
+    align-items: center; }
+  .basket__left {
+    width: 100%; }
+  .basket__checkout {
+    max-width: none; }
+  .basket_right {
+    max-width: none;
+    width: 100%;
+    margin-left: 0; }
+    .basket_right__wrapper {
+      position: static;
+      width: 100%; } }
+
+@media (max-width: 1024px) {
+  .basket {
+    padding-bottom: 49px; }
+    .basket__center {
+      margin-top: 40px; }
+    .basket__delivery-title, .basket__payment-title {
+      font-size: 20px; }
+    .basket_right + .basket_right {
+      margin-bottom: 0; } }
+
+@media (max-width: 828px) {
+  .basket h1 {
+    margin: 18px 0 0; } }
+
+@media (max-width: 720px) {
+  .basket__center {
+    margin-top: 24px; }
+  .basket__checkout {
+    padding-bottom: 48px; }
+  .basket__checkbox-item {
+    margin-top: 12px; }
+    .basket__checkbox-item-head {
+      padding: 30px 10px; }
+    .basket__checkbox-item-title {
+      font-size: 14px; }
+    .basket__checkbox-item-time {
+      min-width: 46px;
+      font-size: 12px; }
+    .basket__checkbox-item-price {
+      min-width: 56px;
+      font-weight: 500;
+      font-size: 12px; }
+    .basket__checkbox-item-body {
+      flex-direction: column;
+      padding: 30px 3px 17.5px; }
+      .basket__checkbox-item-body-block {
+        width: 100%; }
+        .basket__checkbox-item-body-block:nth-child(odd) {
+          padding-bottom: 10px;
+          padding-right: 0; }
+        .basket__checkbox-item-body-block:nth-child(even) {
+          padding-top: 10px;
+          padding-left: 0;
+          border-top: 1px solid #e9ecef;
+          border-left: none; }
+        .basket__checkbox-item-body-block-head label {
+          color: #453f3a;
+          font-size: 14px; }
+        .basket__checkbox-item-body-block-edit-btn {
+          margin-left: 15px;
+          font-size: 12px; }
+          .basket__checkbox-item-body-block-edit-btn .is-edited img,
+          .basket__checkbox-item-body-block-edit-btn .is-completed img {
+            width: 12px;
+            height: 12px; }
+        .basket__checkbox-item-body-block-fields {
+          margin-top: 10px; }
+    .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-head {
+      padding: 17.5px 17px 30px; }
+    .basket__checkbox-item.active.basket__delivery-item .basket__checkbox-item-body {
+      max-width: calc(100% - 34px); }
+  .basket__delivery-item .basket__checkbox-item-title {
+    min-width: 72px;
+    width: 72px; }
+  .basket__payment {
+    margin-top: 24px; }
+    .basket__payment-title {
+      margin-bottom: 25px; }
+  .basket__promocode {
+    padding: 20px 16px; }
+    .basket__promocode-title {
+      font-size: 16px; }
+    .basket__promocode-add-btn {
+      padding: 12px 35px; }
+  .basket__calculate {
+    padding: 20px 8px;
+    font-size: 14px; }
+    .basket__calculate-title {
+      font-size: 20px; }
+    .basket__calculate-sum-products {
+      margin: 12px 0; }
+    .basket__calculate-delivery {
+      margin: 0 0 12px;
+      padding-bottom: 12px; }
+    .basket__calculate-total-price-value {
+      font-size: 18px; }
+    .basket__calculate-info {
+      font-size: 12px; }
+      .basket__calculate-info p + p {
+        margin-top: 12px; }
+  .basket__to-order-btn {
+    margin: 28px 2px 12px; } }
+
+@media (max-width: 0px) {
+  .basket__checkbox-item-body-block-edit-btn .is-edited {
+    display: none; } }
 
 
 /*# sourceMappingURL=index.css.map*/
