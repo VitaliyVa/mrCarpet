@@ -1649,6 +1649,12 @@ body {
       .terms-and-policies__block-item-text p + p,
       .terms-and-policies__block-item-text li + li {
         margin-top: 15px; }
+  @media (max-width: 1024px) {
+    .terms-and-policies {
+      padding: 40px 0 80px; } }
+  @media (max-width: 828px) {
+    .terms-and-policies {
+      padding: 18px 0 80px; } }
   @media (max-width: 720px) {
     .terms-and-policies {
       padding: 18px 0 48px; }
