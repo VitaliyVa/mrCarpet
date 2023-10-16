@@ -1,25 +1,11 @@
 .profile-modal {
-  &__close-btn {
-    img {
-    }
-  }
-
   &__container {
     max-width: 440px;
   }
 
   &__form {
-    &-block {
-    }
-
-    &-edit-profile {
-    }
-
     &-change-password {
       margin-top: 60px;
-    }
-
-    &-title {
     }
 
     &-fields {
@@ -31,10 +17,7 @@
 
     &-field {
       max-width: 210px;
-      margin: 0;
-
-      input {
-      }
+      margin: 0 !important;
     }
 
     &-buttons {
@@ -44,5 +27,37 @@
 
   &__save-btn {
     max-width: 198px;
+  }
+
+  @media (max-width: 720px) {
+    &__container {
+      max-width: none;
+    }
+
+    &__form {
+      &-change-password {
+        margin-top: 48px;
+      }
+
+      &-field {
+        max-width: none;
+      }
+
+      &-buttons {
+        margin-top: 32px;
+      }
+    }
+
+    &__save-btn {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 500px) {
+    &__form {
+      &-fields {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+    }
   }
 }

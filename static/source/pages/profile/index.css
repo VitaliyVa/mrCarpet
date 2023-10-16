@@ -3177,13 +3177,29 @@ swiper-container .swiper-notification {
 
 .profile-modal__form-field {
   max-width: 210px;
-  margin: 0; }
+  margin: 0 !important; }
 
 .profile-modal__form-buttons {
   margin-top: 40px; }
 
 .profile-modal__save-btn {
   max-width: 198px; }
+
+@media (max-width: 720px) {
+  .profile-modal__container {
+    max-width: none; }
+  .profile-modal__form-change-password {
+    margin-top: 48px; }
+  .profile-modal__form-field {
+    max-width: none; }
+  .profile-modal__form-buttons {
+    margin-top: 32px; }
+  .profile-modal__save-btn {
+    max-width: none; } }
+
+@media (max-width: 500px) {
+  .profile-modal__form-fields {
+    grid-template-columns: repeat(1, minmax(0, 1fr)); } }
 
 
 /*# sourceMappingURL=index.css.map*/
