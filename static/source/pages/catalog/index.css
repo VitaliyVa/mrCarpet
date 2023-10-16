@@ -1227,6 +1227,14 @@ body {
 .authorization__bottom {
   margin-top: 104px; }
 
+@media (max-width: 1024px) {
+  .authorization__bottom {
+    margin-top: 80px; } }
+
+@media (max-width: 720px) {
+  .authorization__bottom {
+    margin-top: 48px; } }
+
 .login-modal__form-field {
   max-width: 320px; }
 
@@ -1248,10 +1256,23 @@ body {
   max-width: 276px;
   margin-top: 20px; }
 
+@media (max-width: 720px) {
+  .login-modal__form-field {
+    max-width: none; }
+  .login-modal__form-buttons {
+    margin-top: 24px; }
+  .login-modal__sign-in-btn {
+    max-width: none; }
+  .login-modal__forgot-password-btn {
+    margin-top: 22px; }
+  .login-modal__create-account-btn {
+    max-width: none;
+    margin-top: 24px; } }
+
 .register-modal__form {
   max-width: 440px; }
   .register-modal__form-description {
-    margin: 10px 0; }
+    margin-top: 10px; }
   .register-modal__form-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1278,6 +1299,29 @@ body {
 .register-modal__sign-in-btn {
   max-width: 280px;
   margin-top: 30px; }
+
+@media (max-width: 900px) {
+  .register-modal__form {
+    max-width: 360px; } }
+
+@media (max-width: 720px) {
+  .register-modal__form {
+    max-width: none; }
+    .register-modal__form-description {
+      margin-top: 12px; }
+    .register-modal__form-buttons {
+      margin-top: 32px; }
+    .register-modal__form-info {
+      margin-top: 16px; }
+      .register-modal__form-info p,
+      .register-modal__form-info a,
+      .register-modal__form-info span {
+        display: inline; }
+  .register-modal__create-account-btn {
+    max-width: none; }
+  .register-modal__sign-in-btn {
+    max-width: none;
+    margin-top: 24px; } }
 
 .contacts-modal__info {
   max-width: 400px; }
@@ -1329,6 +1373,33 @@ body {
 
 .contacts-modal__send-application-btn {
   max-width: 214px; }
+
+@media (max-width: 720px) {
+  .contacts-modal__info {
+    max-width: none; }
+    .contacts-modal__info-details {
+      margin-top: 24px; }
+  .contacts-modal__title {
+    font-size: 24px; }
+  .contacts-modal__description {
+    max-width: none;
+    margin-top: 12px;
+    font-size: 14px; }
+  .contacts-modal__phone {
+    font-size: 24px; }
+  .contacts-modal__address {
+    margin-top: 8px; }
+  .contacts-modal__inst {
+    margin-top: 16px; }
+  .contacts-modal__feedback-form {
+    max-width: none;
+    margin-top: 48px; }
+    .contacts-modal__feedback-form-buttons {
+      margin-top: 32px; }
+    .contacts-modal__feedback-form-info {
+      margin-top: 16px; }
+  .contacts-modal__send-application-btn {
+    max-width: none; } }
 
 .footer {
   background-color: #f4f3ee;
@@ -1646,10 +1717,11 @@ body {
       filter: brightness(0.95); }
   .modal__content {
     width: 100%;
-    padding-left: 125px; }
+    max-height: 100%;
+    padding: 20px 0 20px 125px;
+    overflow: auto; }
     .modal__content button {
-      width: 100%;
-      padding: 15px 45px; }
+      width: 100%; }
   .modal__logo {
     max-width: 60px;
     max-height: 60px;
@@ -1669,6 +1741,35 @@ body {
   .modal__text {
     color: #89817c;
     font-size: 20px; }
+  @media (max-width: 1024px) {
+    .modal__title {
+      font-size: 30px; }
+    .modal__text {
+      font-size: 18px; } }
+  @media (max-width: 900px) {
+    .modal {
+      max-width: 550px; }
+      .modal__content {
+        padding-left: 85px; } }
+  @media (max-width: 720px) {
+    .modal {
+      max-width: none;
+      padding: 0 0 124px; }
+      .modal__close-btn {
+        top: auto;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%); }
+      .modal__content {
+        padding: 20px; }
+      .modal__title {
+        font-size: 24px; }
+      .modal__field {
+        margin-top: 24px; }
+        .modal__field + .modal__field {
+          margin-top: 20px; }
+      .modal__text {
+        font-size: 16px; } }
 
 .validation_container {
   position: relative; }
