@@ -14,6 +14,11 @@
   transition: all 0.2s;
   cursor: pointer;
 
+  &:hover {
+    background-color: #89817c;
+    color: #fff;
+  }
+
   &.active {
     background-color: #89817c;
     color: #fff;

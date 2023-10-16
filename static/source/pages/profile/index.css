@@ -1681,6 +1681,9 @@ body {
   border-radius: 50px;
   transition: all 0.2s;
   cursor: pointer; }
+  .size-label:hover {
+    background-color: #89817c;
+    color: #fff; }
   .size-label.active {
     background-color: #89817c;
     color: #fff; }

@@ -19609,6 +19609,42 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/interface/size-label/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
+document.addEventListener("click", function (_ref) {
+  var target = _ref.target;
+  var sizeLabel = target.closest(".size-label");
+
+  if (sizeLabel) {
+    var product = sizeLabel.closest(".cart_item") || sizeLabel.closest(".product");
+    var newLabelProduct = product.querySelector(".cart_item_new ");
+    var sizesBlock = product.querySelector(".sizes-block");
+    var allSizeLabels = sizesBlock.querySelectorAll(".size-label");
+    var _sizeLabel$dataset = sizeLabel.dataset,
+        item = _sizeLabel$dataset.item,
+        novelty = _sizeLabel$dataset.novelty;
+    var priceProduct = product.querySelector(".cart_item_price");
+    var discountProduct = product.querySelector(".cart_item_procent");
+    var oldPriceProduct = product.querySelector(".cart_item_old_price");
+    var priceProductValue = product.querySelector(".cart_item_price-value");
+    var oldPriceProductValue = product.querySelector(".cart_item_old_price-value");
+    var newPriceProduct = priceProduct.dataset["item-".concat(item)];
+    var newDiscountProduct = discountProduct.dataset["item-".concat(item)];
+    var newOldPriceProduct = oldPriceProduct.dataset["item-".concat(item)];
+    allSizeLabels.forEach(function (item) {
+      item.classList.remove("active");
+    });
+    sizeLabel.classList.add("active");
+    product.dataset.productId = item;
+    priceProductValue.textContent = newPriceProduct;
+    discountProduct.textContent = newDiscountProduct;
+    oldPriceProductValue.textContent = newOldPriceProduct;
+
+    if (novelty === "false") {
+      newLabelProduct.classList.add("disabled");
+    } else {
+      newLabelProduct.classList.remove("disabled");
+    }
+  }
+});
 
 /***/ }),
 

@@ -41,6 +41,11 @@
     border-radius: 10px 0px;
     font-size: 16px;
     line-height: 21px;
+    transition: all 0.3s;
+
+    &.disabled {
+      opacity: 0;
+    }
   }
 
   &_price {
@@ -117,26 +122,6 @@
   }
 
   &_size {
-    cursor: pointer;
-    transition: all 0.2s;
-    background: #fffcf2;
-    display: flex;
-    align-items: center;
-    text-align: center;
-    justify-content: center;
-    margin: 4px;
-    padding: 4px 8px;
-    border-radius: 50px;
-    width: 80px;
-    font-size: 16px;
-    line-height: 130%;
-
-    &.active,
-    &:hover {
-      background: #89817c;
-      color: #fff;
-    }
-
     &__block {
       display: flex;
       flex-wrap: wrap;
@@ -201,8 +186,6 @@
     }
 
     &_size {
-      font-size: 14px;
-
       &__block {
         padding: 0 4px;
       }
@@ -221,19 +204,9 @@
     &_wrapper {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    &_size {
-      width: 64px;
-      font-size: 12px;
-    }
   }
 
   @media (max-width: 390px) {
     min-width: auto;
-
-    &_size {
-      width: 56px;
-      font-size: 10px;
-    }
   }
 }

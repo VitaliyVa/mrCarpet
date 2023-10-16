@@ -1,8 +1,12 @@
 .favorite {
   padding-bottom: 104px;
 
+  .bread-crumbs {
+    margin: 0 0 4px;
+  }
+
   &__title {
-    margin: 4px 0 0;
+    margin: 0;
   }
 
   &__items {
@@ -15,6 +19,10 @@
     &__items {
       margin-top: 30px;
     }
+  }
+
+  @media (max-width: 828px) {
+    padding-top: 70px;
   }
 
   @media (max-width: 720px) {
