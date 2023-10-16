@@ -1,17 +1,6 @@
 .contacts-modal {
-  &__close-btn {
-    img {
-    }
-  }
-
-  &__container {
-  }
-
   &__info {
     max-width: 400px;
-
-    &-top {
-    }
 
     &-details {
       margin-top: 36px;
@@ -62,14 +51,7 @@
     max-width: 440px;
     margin-top: 60px;
 
-    &-fields {
-    }
-
     &-field {
-      input,
-      textarea {
-      }
-
       textarea {
         min-height: 41.8px;
         height: 41.8px;
@@ -94,5 +76,54 @@
 
   &__send-application-btn {
     max-width: 214px;
+  }
+
+  @media (max-width: 720px) {
+    &__info {
+      max-width: none;
+
+      &-details {
+        margin-top: 24px;
+      }
+    }
+
+    &__title {
+      font-size: 24px;
+    }
+
+    &__description {
+      max-width: none;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    &__phone {
+      font-size: 24px;
+    }
+
+    &__address {
+      margin-top: 8px;
+    }
+
+    &__inst {
+      margin-top: 16px;
+    }
+
+    &__feedback-form {
+      max-width: none;
+      margin-top: 48px;
+
+      &-buttons {
+        margin-top: 32px;
+      }
+
+      &-info {
+        margin-top: 16px;
+      }
+    }
+
+    &__send-application-btn {
+      max-width: none;
+    }
   }
 }

@@ -7,13 +7,14 @@ import "../components/common_componentc/footer/index";
 import "../components/interface/variables/index";
 import "../components/interface/button/index";
 import "../components/interface/input/index";
+import "../components/interface/size-label/index";
 
 import "../components/module/modal_script/index";
 import "../components/module/validation/index";
 import "../components/module/form_action/index";
 import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
-import "../components/module/cart_item";
+import "../components/module/cart_item/index";
 import "../components/module/blog_item/index";
 
 import "../components/pages/index/index";

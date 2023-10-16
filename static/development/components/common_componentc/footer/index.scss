@@ -74,4 +74,43 @@
     border-bottom: 1px solid #89817c;
     font-size: 14px;
   }
+
+  @media (max-width: 1024px) {
+    background-image: none !important;
+
+    &__wrapper {
+      justify-content: center;
+      padding: 20px 0;
+    }
+
+    &_form {
+      display: none;
+    }
+
+    &__column {
+      &:first-child {
+        margin: 0;
+      }
+
+      & + & {
+        display: none;
+      }
+
+      a {
+        font-size: 14px;
+      }
+    }
+
+    &__links {
+      display: none;
+    }
+  }
+
+  @media (max-width: 450px) {
+    &__column {
+      a {
+        font-size: 12px;
+      }
+    }
+  }
 }

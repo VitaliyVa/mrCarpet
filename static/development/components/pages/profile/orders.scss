@@ -45,14 +45,12 @@
     &-head {
       display: flex;
       align-items: center;
-      //   justify-content: space-between;
-      //   column-gap: 27.5%;
       width: 100%;
       cursor: pointer;
 
       &-left {
-        // min-width: 202px;
         width: 50%;
+        margin-right: 20px;
 
         &-top {
           display: flex;
@@ -63,7 +61,6 @@
       }
 
       &-center {
-        // min-width: 101px;
         min-width: 316px;
         width: 25%;
         max-height: 88px;
@@ -74,26 +71,14 @@
         display: flex;
         justify-content: flex-end;
         align-items: center;
-        // min-width: 240px;
         min-width: 316px;
         width: 25%;
-      }
-    }
-
-    &-id {
-      &-key {
-      }
-
-      &-value {
       }
     }
 
     &-date {
       &-key {
         margin: 2px;
-      }
-
-      &-value {
       }
     }
 
@@ -112,8 +97,6 @@
     }
 
     &-products {
-      gap: 8px;
-
       &-head {
         display: flex;
         max-height: 88px;
@@ -121,6 +104,12 @@
       }
 
       &-body {
+        .orders__block-products {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 12px;
+        }
       }
 
       &-title {
@@ -171,6 +160,7 @@
       &-sizes {
         display: flex;
         gap: 4px;
+        margin-top: 4px;
       }
 
       &-right {
@@ -188,9 +178,6 @@
       }
 
       &-price {
-        &-title {
-        }
-
         &-current {
           margin: 4px 0;
         }
@@ -201,18 +188,12 @@
       }
 
       &-quantity {
-        &-title {
-        }
-
         &-value {
           margin-top: 4px;
         }
       }
 
       &-sum {
-        &-title {
-        }
-
         &-value {
           margin-top: 4px;
         }
@@ -239,14 +220,11 @@
       transition: all 0.3s;
 
       &-left {
-        // max-width: 295px;
-        // width: 100%;
         width: 50%;
+        margin-right: 20px;
       }
 
       &-right {
-        // max-width: 632px;
-        // width: 100%;
         width: 50%;
         min-width: 632px;
       }
@@ -264,9 +242,6 @@
     &-info {
       line-height: 130%;
 
-      &-title {
-      }
-
       &-items {
         margin-top: 12px;
       }
@@ -278,48 +253,256 @@
       }
     }
 
-    &-address {
-      &-warehouse {
-      }
-
-      &-settlement {
-      }
-    }
-
-    &-contacts {
-      &-name {
-      }
-
-      &-phone {
-      }
-    }
-
-    &-payment {
-      &-title {
-      }
-
-      &-value {
-      }
-    }
-
     &-delivery {
       margin-top: 12px;
-
-      &-title {
-      }
-
-      &-value {
-      }
     }
 
     &-total-price {
       margin-top: 13.5px;
 
-      &-title {
-      }
-
       &-value {
         font-size: 16px;
+      }
+    }
+  }
+
+  @media (max-width: 1300px) {
+    max-width: none;
+
+    &__block {
+      &-head {
+        &-center {
+          min-width: auto;
+        }
+
+        &-right {
+          min-width: auto;
+          margin-left: 20px;
+        }
+      }
+
+      &-products {
+        &-body {
+          .orders__block-products {
+            gap: 12px;
+          }
+        }
+      }
+
+      &-product {
+        flex-wrap: wrap;
+        gap: 10px;
+
+        &-center {
+          width: calc(100% - 74px);
+        }
+
+        &-right {
+          max-width: none;
+          width: 100%;
+        }
+      }
+
+      &-body {
+        &-left {
+          width: calc(50% - 20px);
+        }
+
+        &-right {
+          min-width: auto;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1200px) {
+    &__block {
+      &-head {
+        justify-content: space-between;
+        height: 50px;
+
+        &-center {
+          width: calc(50% - 32px);
+        }
+
+        &-right {
+          width: auto;
+          margin-left: 0;
+
+          .orders__block-products-head {
+            display: none;
+          }
+        }
+      }
+
+      &-total-sum {
+        text-align: end;
+      }
+    }
+  }
+
+  @media (max-width: 1100px) {
+    &__block {
+      &-body {
+        flex-direction: column;
+
+        &-left {
+          width: 100%;
+          margin: 0 0 16px;
+        }
+
+        &-right {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 720px) {
+    margin: 20px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #ebeae8;
+
+    &__items {
+      margin-top: 12px;
+    }
+
+    &__block {
+      padding: 10px;
+
+      &.active {
+        padding: 12px 10px;
+
+        .orders__block-body {
+          margin-top: 12px;
+        }
+      }
+
+      &-head {
+        height: 42px;
+
+        &-left {
+          &-top {
+            font-size: 12px;
+          }
+        }
+      }
+
+      &-status {
+        font-size: 14px;
+      }
+
+      &-total-sum {
+        &-title {
+          font-size: 12px;
+        }
+
+        &-value {
+          font-size: 14px;
+        }
+      }
+
+      &-products {
+        &-body {
+          .orders__block-products {
+            margin-top: 8px;
+          }
+        }
+      }
+
+      &-product {
+        &-title {
+          font-size: 14px;
+        }
+
+        &-price {
+          &-current {
+            margin: 2px 0;
+            font-size: 14px;
+          }
+        }
+
+        &-quantity {
+          &-value {
+            margin-top: 2px;
+            font-size: 14px;
+          }
+        }
+
+        &-sum {
+          &-value {
+            margin-top: 2px;
+            font-size: 14px;
+          }
+        }
+      }
+
+      &-chevron-icon {
+        max-width: 20px;
+        max-height: 20px;
+        margin-left: 6px;
+
+        img {
+          width: 100%;
+          height: 100%;
+        }
+      }
+
+      &-body {
+        font-size: 12px;
+
+        &-left {
+          margin: 0 0 12px;
+        }
+
+        &-details {
+          margin-top: 20px;
+        }
+      }
+
+      &-info {
+        &-items {
+          margin-top: 8px;
+        }
+      }
+
+      &-delivery {
+        margin-top: 10px;
+      }
+
+      &-total-price {
+        margin-top: 12px;
+
+        &-value {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 500px) {
+    margin: 16px 0 0;
+    padding-top: 12px;
+  }
+
+  @media (max-width: 400px) {
+    &__block {
+      &-head {
+        height: 42px;
+
+        &-left {
+          &-top {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+        }
+      }
+
+      &-date {
+        margin-top: 2px;
+        &-key {
+          margin: 0 2px 0 0;
+        }
       }
     }
   }

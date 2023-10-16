@@ -587,7 +587,7 @@
     <!-- /.header -->
 
     <section class="first_section">
-      <div class="modal-overlay">
+      <div class="review-write-modal-overlay modal-overlay">
         <div class="review-write-modal modal modal__block">
           <button
             class="review-write-modal__close-btn modal__close-btn modal_close"
@@ -778,7 +778,7 @@
       </div>
 
       <div class="container">
-        <div>
+        <div class="bread-crumbs">
           <a href="#" class="color_black_sub">Головна</a>
           <span class="color_black_sub">/</span>
           <a href="#" class="color_black_sub"
@@ -818,6 +818,9 @@
                   <img src="/static/utils/assets/img.png" alt="" />
                 </div>
               </div>
+
+              <div class="swiper-button swiper-button-next"></div>
+              <div class="swiper-button swiper-button-prev"></div>
             </div>
           </div>
           <div class="product__right">
@@ -827,47 +830,38 @@
 
             <div class="product__info">
               <div class="cart_item_price__block">
-                <div class="cart_item_price medium color_gold">298 грн</div>
-                <div class="cart_item_procent medium color_gold">15%</div>
-                <div class="cart_item_old_price medium color_black_sub">
+                <p class="cart_item_price medium color_gold">298 грн</p>
+                <p class="cart_item_procent medium color_gold">15%</p>
+                <p class="cart_item_old_price medium color_black_sub">
                   350 грн
-                </div>
+                </p>
               </div>
 
-              <div>Вовна, шовк Вироблено в Україні</div>
+              <div class="product__origin color_black_sub">
+                <p class="product__material">Вовна, шовк</p>
+                <p class="product__country">Вироблено в Україні</p>
+              </div>
 
               <div class="cart_item_size__block">
                 <div
                   data-item="1"
                   data-novelty="true"
-                  class="cart_item_size small color_black active"
+                  class="size-label active"
                 >
                   0.8x1.1 м
                 </div>
-                <div
-                  data-item="2"
-                  data-novelty="true"
-                  class="cart_item_size small color_black"
-                >
+                <div data-item="2" data-novelty="true" class="size-label">
                   0.8x1.2 м
                 </div>
-                <div
-                  data-item="3"
-                  data-novelty="false"
-                  class="cart_item_size small color_black"
-                >
+                <div data-item="3" data-novelty="false" class="size-label">
                   0.8x1.3 м
                 </div>
-                <div
-                  data-item="4"
-                  data-novelty="true"
-                  class="cart_item_size small color_black"
-                >
+                <div data-item="4" data-novelty="true" class="size-label">
                   0.8x1.4 м
                 </div>
               </div>
 
-              <div>
+              <div class="product__option">
                 <select name="" id="" class="product__quantity">
                   <option value="1">1</option>
                 </select>
@@ -900,7 +894,7 @@
               </div>
             </div>
 
-            <div style="margin-top: 50px">
+            <div class="product__info-bottom">
               <span class="accordion accordion_content__block">
                 <a class="color_black accordion__title"> Опис </a>
                 <span class="accordion_content content_column">
@@ -1243,7 +1237,7 @@
               Переглянути каталог
             </a>
           </div>
-          <div class="swiper catalog-swiper">
+          <div class="swiper blog-swiper catalog-swiper">
             <div class="slider__block swiper-wrapper">
               <div class="slider_item cart_item swiper-slide">
                 <a href="#">
@@ -1309,29 +1303,17 @@
                   <div
                     data-item="1"
                     data-novelty="true"
-                    class="cart_item_size small color_black active"
+                    class="size-label active"
                   >
                     0.8x1.1 м
                   </div>
-                  <div
-                    data-item="2"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="2" data-novelty="true" class="size-label">
                     0.8x1.2 м
                   </div>
-                  <div
-                    data-item="3"
-                    data-novelty="false"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="3" data-novelty="false" class="size-label">
                     0.8x1.3 м
                   </div>
-                  <div
-                    data-item="4"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="4" data-novelty="true" class="size-label">
                     0.8x1.4 м
                   </div>
                 </div>
@@ -1400,29 +1382,17 @@
                   <div
                     data-item="1"
                     data-novelty="true"
-                    class="cart_item_size small color_black active"
+                    class="size-label active"
                   >
                     0.8x1.1 м
                   </div>
-                  <div
-                    data-item="2"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="2" data-novelty="true" class="size-label">
                     0.8x1.2 м
                   </div>
-                  <div
-                    data-item="3"
-                    data-novelty="false"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="3" data-novelty="false" class="size-label">
                     0.8x1.3 м
                   </div>
-                  <div
-                    data-item="4"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="4" data-novelty="true" class="size-label">
                     0.8x1.4 м
                   </div>
                 </div>
@@ -1491,29 +1461,17 @@
                   <div
                     data-item="1"
                     data-novelty="true"
-                    class="cart_item_size small color_black active"
+                    class="size-label active"
                   >
                     0.8x1.1 м
                   </div>
-                  <div
-                    data-item="2"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="2" data-novelty="true" class="size-label">
                     0.8x1.2 м
                   </div>
-                  <div
-                    data-item="3"
-                    data-novelty="false"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="3" data-novelty="false" class="size-label">
                     0.8x1.3 м
                   </div>
-                  <div
-                    data-item="4"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="4" data-novelty="true" class="size-label">
                     0.8x1.4 м
                   </div>
                 </div>
@@ -1582,29 +1540,17 @@
                   <div
                     data-item="1"
                     data-novelty="true"
-                    class="cart_item_size small color_black active"
+                    class="size-label active"
                   >
                     0.8x1.1 м
                   </div>
-                  <div
-                    data-item="2"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="2" data-novelty="true" class="size-label">
                     0.8x1.2 м
                   </div>
-                  <div
-                    data-item="3"
-                    data-novelty="false"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="3" data-novelty="false" class="size-label">
                     0.8x1.3 м
                   </div>
-                  <div
-                    data-item="4"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="4" data-novelty="true" class="size-label">
                     0.8x1.4 м
                   </div>
                 </div>
@@ -1673,29 +1619,17 @@
                   <div
                     data-item="1"
                     data-novelty="true"
-                    class="cart_item_size small color_black active"
+                    class="size-label active"
                   >
                     0.8x1.1 м
                   </div>
-                  <div
-                    data-item="2"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="2" data-novelty="true" class="size-label">
                     0.8x1.2 м
                   </div>
-                  <div
-                    data-item="3"
-                    data-novelty="false"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="3" data-novelty="false" class="size-label">
                     0.8x1.3 м
                   </div>
-                  <div
-                    data-item="4"
-                    data-novelty="true"
-                    class="cart_item_size small color_black"
-                  >
+                  <div data-item="4" data-novelty="true" class="size-label">
                     0.8x1.4 м
                   </div>
                 </div>
@@ -1704,6 +1638,10 @@
             <div class="swiper-button swiper-button-next"></div>
             <div class="swiper-button swiper-button-prev"></div>
           </div>
+
+          <a href="#" class="info_for_product_btn mob-btn medium color_gold">
+            Переглянути каталог
+          </a>
         </div>
       </div>
       <!-- /.container -->

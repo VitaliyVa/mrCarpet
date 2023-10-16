@@ -7,6 +7,7 @@
   }
 
   &__sidebar {
+    min-width: 160px;
     max-width: 212px;
     width: 100%;
     color: #453f3a;
@@ -23,9 +24,6 @@
       justify-content: space-between;
       padding-left: 4px;
 
-      &-left {
-      }
-
       &-right {
         margin-left: 15px;
       }
@@ -40,9 +38,13 @@
     }
 
     &-edit-btn {
+      display: flex;
+      align-items: flex-end;
       transition: all 0.25s;
 
-      img {
+      span {
+        display: none;
+        padding-left: 8px;
       }
 
       &:hover {
@@ -53,7 +55,7 @@
     &-exit-btn {
       display: flex;
       align-items: flex-end;
-      max-width: 24px;
+      max-width: 70px;
       max-height: 24px;
       transition: all 0.25s;
 
@@ -79,5 +81,60 @@
 
   &__title {
     margin: 0;
+  }
+
+  @media (max-width: 1024px) {
+    padding-bottom: 80px;
+  }
+
+  @media (max-width: 828px) {
+    &__center {
+      margin-top: 18px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    padding-bottom: 48px;
+
+    &__center {
+      flex-direction: column;
+    }
+
+    &__sidebar {
+      min-width: auto;
+      max-width: none;
+
+      &-bottom {
+        margin-top: 16px;
+      }
+    }
+
+    &__user {
+      &-name {
+        font-size: 16px;
+      }
+
+      &-edit-btn {
+        img {
+          width: 24px;
+          height: 24px;
+        }
+
+        span {
+          display: block;
+        }
+
+        &:hover {
+          transform: scale(1);
+          color: #a46c46;
+        }
+      }
+
+      &-exit-btn {
+        &:hover {
+          transform: scale(1);
+        }
+      }
+    }
   }
 }

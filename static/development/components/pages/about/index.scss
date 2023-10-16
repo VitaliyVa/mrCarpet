@@ -15,4 +15,35 @@
       margin-top: 40px;
     }
   }
+
+  @media (max-width: 1024px) {
+    &-title {
+      font-size: 36px;
+    }
+
+    &-text {
+      font-size: 18px;
+
+      p + p {
+        margin-top: 24px;
+      }
+    }
+  }
+
+  @media (max-width: 900px) {
+    &-text {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    &-title {
+      font-size: 24px;
+    }
+
+    &-text {
+      text-align: center;
+      font-size: 14px;
+    }
+  }
 }

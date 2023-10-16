@@ -1,38 +1,25 @@
 .authorization {
-  &__form {
-  }
-
   &__bottom {
     margin-top: 104px;
+  }
+
+  @media (max-width: 1024px) {
+    &__bottom {
+      margin-top: 80px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    &__bottom {
+      margin-top: 48px;
+    }
   }
 }
 
 .login-modal {
-  &__close-btn {
-    img {
-    }
-  }
-
-  &__container {
-  }
-
-  &__logo {
-    img {
-    }
-  }
-
   &__form {
-    &-title {
-    }
-
-    &-fields {
-    }
-
     &-field {
       max-width: 320px;
-
-      input {
-      }
     }
 
     &-buttons {
@@ -53,38 +40,43 @@
     font-weight: 400;
   }
 
-  &__bottom {
-    &-title {
-    }
-  }
-
   &__create-account-btn {
     max-width: 276px;
     margin-top: 20px;
   }
+
+  @media (max-width: 720px) {
+    &__form {
+      &-field {
+        max-width: none;
+      }
+
+      &-buttons {
+        margin-top: 24px;
+      }
+    }
+
+    &__sign-in-btn {
+      max-width: none;
+    }
+
+    &__forgot-password-btn {
+      margin-top: 22px;
+    }
+
+    &__create-account-btn {
+      max-width: none;
+      margin-top: 24px;
+    }
+  }
 }
 
 .register-modal {
-  &__close-btn {
-    img {
-    }
-  }
-
-  &__container {
-  }
-
-  &__logo {
-    img {
-    }
-  }
-
   &__form {
     max-width: 440px;
-    &-title {
-    }
 
     &-description {
-      margin: 10px 0;
+      margin-top: 10px;
     }
 
     &-fields {
@@ -96,9 +88,6 @@
     &-field {
       &.--full {
         grid-column: span 2 / span 2;
-      }
-
-      input {
       }
     }
 
@@ -130,13 +119,47 @@
     max-width: 276px;
   }
 
-  &__bottom {
-    &-title {
-    }
-  }
-
   &__sign-in-btn {
     max-width: 280px;
     margin-top: 30px;
+  }
+
+  @media (max-width: 900px) {
+    &__form {
+      max-width: 360px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    &__form {
+      max-width: none;
+
+      &-description {
+        margin-top: 12px;
+      }
+
+      &-buttons {
+        margin-top: 32px;
+      }
+
+      &-info {
+        margin-top: 16px;
+
+        p,
+        a,
+        span {
+          display: inline;
+        }
+      }
+    }
+
+    &__create-account-btn {
+      max-width: none;
+    }
+
+    &__sign-in-btn {
+      max-width: none;
+      margin-top: 24px;
+    }
   }
 }

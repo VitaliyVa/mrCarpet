@@ -1,16 +1,23 @@
 .info_for_product {
   width: 240px;
   margin-right: 20px;
+
+  &__timer {
+    margin-bottom: 10px;
+  }
+
   &_title {
     font-size: 36px;
     line-height: 110%;
   }
+
   &_subtitle {
     font-size: 22px;
     margin-top: 20px;
     margin-bottom: 30px;
     line-height: 130%;
   }
+
   &_btn {
     cursor: pointer;
     transition: all 0.2s;
@@ -27,9 +34,59 @@
     border-radius: 8px;
     transition: all 0.2s;
 
+    &.mob-btn {
+      display: none;
+    }
+
     &:hover {
       color: #fff;
       background: #a46c46;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    margin: 0 0 24px 0;
+    text-align: center;
+
+    &__timer {
+      margin-bottom: 8px;
+      font-size: 28px;
+
+      &-subtitle {
+        font-size: 14px;
+      }
+    }
+
+    &_title {
+      font-size: 24px;
+    }
+    &_subtitle {
+      font-size: 14px;
+      margin: 8px 0 0;
+    }
+
+    .info_for_product {
+      &_btn {
+        display: none;
+      }
+    }
+
+    &_btn {
+      padding: 12px 45px;
+
+      &.mob-btn {
+        display: block;
+        max-width: 349px;
+        width: 100%;
+        margin-top: 24px;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    &_btn {
+      font-size: 12px;
     }
   }
 }
@@ -45,13 +102,60 @@
       margin-left: 0;
     }
   }
+
+  @media (max-width: 1440px) {
+    &__wrapper {
+      .blog_item {
+        width: 328px;
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    &__wrapper {
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .catalog-swiper .cart_item {
+        width: 176px;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    &__wrapper {
+      .catalog-swiper .cart_item {
+        width: 168px;
+      }
+    }
+  }
+
+  @media (max-width: 400px) {
+    &__wrapper {
+      .blog_item {
+        width: 100%;
+      }
+    }
+  }
 }
 
 .catalog_slider {
-  margin-bottom: 120px;
+  padding-bottom: 120px;
+
+  @media (max-width: 1024px) {
+    padding-bottom: 80px;
+  }
+
+  @media (max-width: 720px) {
+    padding-bottom: 48px;
+  }
 }
 
 .catalog-swiper {
+  .cart_item {
+    width: 312px;
+  }
+
   .swiper-button-next,
   .swiper-button-prev {
     background: #ffffff;
@@ -60,6 +164,7 @@
     width: 60px;
     height: 60px;
     transition: all 0.3s;
+
     &::after {
       color: #453f3a;
       font-size: 25px;
