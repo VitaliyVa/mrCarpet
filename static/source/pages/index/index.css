@@ -1709,7 +1709,7 @@ body {
   height: 100%;
   background-color: #fff;
   margin: 0 0 0 auto;
-  transform: translateX(680px);
+  transform: translateX(100%);
   transition: all 0.35s ease-in-out; }
   .modal.active {
     transform: translateX(0); }
@@ -1788,7 +1788,10 @@ body {
   @media (max-width: 720px) {
     .modal {
       max-width: none;
-      padding: 0 0 124px; }
+      padding: 0 0 124px;
+      transform: translateY(100%); }
+      .modal.active {
+        transform: translateY(0); }
       .modal__close-btn {
         top: auto;
         bottom: 24px;

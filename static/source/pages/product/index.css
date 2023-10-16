@@ -1709,7 +1709,7 @@ body {
   height: 100%;
   background-color: #fff;
   margin: 0 0 0 auto;
-  transform: translateX(680px);
+  transform: translateX(100%);
   transition: all 0.35s ease-in-out; }
   .modal.active {
     transform: translateX(0); }
@@ -1788,7 +1788,10 @@ body {
   @media (max-width: 720px) {
     .modal {
       max-width: none;
-      padding: 0 0 124px; }
+      padding: 0 0 124px;
+      transform: translateY(100%); }
+      .modal.active {
+        transform: translateY(0); }
       .modal__close-btn {
         top: auto;
         bottom: 24px;
@@ -3049,7 +3052,8 @@ swiper-container .swiper-notification {
       align-items: center;
       justify-content: center; }
       .star-rate__item label span {
-        color: #453f3a; }
+        color: #453f3a;
+        margin-top: 4px; }
 
 @media (max-width: 1024px) {
   .first_section .container {
@@ -3264,6 +3268,38 @@ swiper-container .swiper-notification {
 
 .review-write-modal__send-review-btn {
   max-width: 208px; }
+
+@media (max-width: 720px) {
+  .review-write-modal {
+    max-height: 444px;
+    padding: 0;
+    border-radius: 20px 20px 0px 0px; }
+    .review-write-modal-overlay {
+      display: flex;
+      align-items: flex-end; }
+    .review-write-modal .modal__content {
+      padding: 72px 20px 41px; }
+    .review-write-modal__close-btn {
+      top: -40px;
+      bottom: auto; }
+    .review-write-modal__form {
+      max-width: none; }
+      .review-write-modal__form-title {
+        font-size: 24px; }
+      .review-write-modal__form-field .star-rate {
+        max-width: 400px;
+        column-gap: normal;
+        margin: 24px 0 32px; }
+        .review-write-modal__form-field .star-rate__item label svg {
+          width: 36px;
+          height: 36px; }
+        .review-write-modal__form-field .star-rate__item label span {
+          margin-top: 16px;
+          font-size: 14px; }
+      .review-write-modal__form-buttons {
+        margin-top: 32px; }
+    .review-write-modal__send-review-btn {
+      max-width: none; } }
 
 
 /*# sourceMappingURL=index.css.map*/
