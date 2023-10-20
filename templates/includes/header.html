@@ -144,7 +144,7 @@
                         Вибране
                     </span>
                 </a>
-                <a href="#" class="header_bottom_panel_item header_bottom_panel_cart">
+                <a href="{% url 'cart' %}" class="header_bottom_panel_item header_bottom_panel_cart">
                     <span class="header_bottom_panel_item_icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                             xmlns="http://www.w3.org/2000/svg">
@@ -165,7 +165,7 @@
                             </defs>
                         </svg>
 
-                        <span class="header_bottom_panel_item_count"> 4 </span>
+                        <span class="header_bottom_panel_item_count"> {{ cart_products|length }} </span>
                     </span>
                     <span class="header_bottom_panel_item_label small color_black">
                         Кошик

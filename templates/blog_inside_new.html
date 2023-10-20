@@ -1,0 +1,54 @@
+{% extends "_base.html" %}{% block styles %}
+<link rel="stylesheet" href="/static/source/pages/blog_inside/index.css" />
+{% endblock styles %}{% block content %}
+<section class="blog-inside first_section">
+    <div class="container">
+        <div class="bread-crumbs">
+            <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+            <span class="color_black_sub">/</span>
+            <a href="{% url 'blog' %}" class="color_black_sub">Блог</a>
+            <span class="color_black_sub">/</span>
+            <a href="{% url 'article' article.slug %}" class="color_gold">{{ article.title }}</a>
+        </div>
+
+        <div class="blog-inside__center">
+            <div class="blog-inside__block">
+                <div class="blog-inside__block-img">
+                    <img src="{{ article.image.url }}" alt="blog" />
+                </div>
+                <div class="blog-inside__block-info">
+                    <h2 class="blog-inside__block-title color_black bold">
+                        {{ article.title }}
+                    </h2>
+                    <div class="blog-inside__block-text">
+                        {{ article.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-inside__sidebar">
+                <h3 class="blog-inside__sidebar-title color_black bold">
+                    Читайте також
+                </h3>
+                <div class="blog-inside__sidebar-items">
+                    {% for article in articles %}
+                    <a href="{% url 'article' article.slug %}" class="blog_item">
+                        <div class="blog_item_img">
+                            <img src="{{ article.image.url }}" alt="" />
+                        </div>
+                        <div class="blog_item_info">
+                            <h4 class="blog_item_title">{{ article.title }}</h4>
+                            <p class="blog_item_text">
+                                {{ article.description }}
+                            </p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}{% block scripts %}
+<script src="/static/source/pages/blog_inside/index.js"></script>
+{% endblock scripts %}

@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from .models import Product, Favourite, FavouriteProducts, ProductCategory
+from .models import Product, Favourite, FavouriteProducts, ProductCategory, ProductAttribute
 
 # Create your views here.
 def catalog_detail(request, slug):
@@ -11,9 +11,14 @@ def catalog(request):
     products = Product.objects.all()
     return render(request, 'catalog_new.html', {'products': products})
 
-@login_required
+# @login_required
 def favourites(request):
     # favourite = Favourite.objects.get(user=request.user)
     # f_products = favourite.product.all()[::-1]
     # favorites = FavouriteProducts.objects.filter(favourite=favourite)
     return render(request, 'favorite_new.html')
+
+def product(request, slug):
+    prod = Product.objects.get(slug=slug)
+    product_attr = ProductAttribute.objects.filter(product=prod)
+    return render(request, 'product_new.html', {'product': prod})

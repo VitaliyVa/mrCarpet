@@ -311,9 +311,10 @@ class Favourite(AbstractCreatedUpdated):
         related_name='fav_products',
         through='FavouriteProducts',
     )
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         verbose_name='Юзер',
         blank=False,
+        null=True,
         to=User,
         on_delete=models.CASCADE,
         related_name='user'
@@ -324,7 +325,7 @@ class Favourite(AbstractCreatedUpdated):
         verbose_name_plural = 'Улюблені'
 
     def __str__(self):
-        return f"{self.user.username}'s favourites"
+        return f"{self.user.username}'s favourites" if self.user else 'unknown favourite'
 
 
 class FavouriteProducts(models.Model):
