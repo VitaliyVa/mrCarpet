@@ -656,12 +656,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="warehouse"
                             class="input-transparent font-size-14"
+                            name="warehouse"
                             value="Пункт приймання-видачі"
                             readonly
                           />
                           <input
+                            id="settlement"
                             class="input-transparent"
+                            name="settlement"
                             value="вул. Центральна, 98 (Котеджне містечко), Осещина"
                             readonly
                           />
@@ -693,12 +697,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="name"
                             class="input-transparent"
+                            name="name"
                             value="Inverness McKenzie"
                             readonly
                           />
                           <input
+                            id="phone"
                             class="input-transparent"
+                            name="phone"
                             value="+380 87 000 00 00"
                             readonly
                           />
@@ -755,12 +763,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="warehouse"
                             class="input-transparent font-size-14"
+                            name="warehouse"
                             value="Пункт приймання-видачі"
                             readonly
                           />
                           <input
+                            id="settlement"
                             class="input-transparent"
+                            name="settlement"
                             value="вул. Центральна, 98 (Котеджне містечко), Осещина"
                             readonly
                           />
@@ -792,12 +804,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="name"
                             class="input-transparent"
+                            name="name"
                             value="Inverness McKenzie"
                             readonly
                           />
                           <input
+                            id="phone"
                             class="input-transparent"
+                            name="phone"
                             value="+380 87 000 00 00"
                             readonly
                           />
@@ -854,12 +870,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="warehouse"
                             class="input-transparent font-size-14"
+                            name="warehouse"
                             value="Пункт приймання-видачі"
                             readonly
                           />
                           <input
+                            id="settlement"
                             class="input-transparent"
+                            name="settlement"
                             value="вул. Центральна, 98 (Котеджне містечко), Осещина"
                             readonly
                           />
@@ -891,12 +911,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="name"
                             class="input-transparent"
+                            name="name"
                             value="Inverness McKenzie"
                             readonly
                           />
                           <input
+                            id="phone"
                             class="input-transparent"
+                            name="phone"
                             value="+380 87 000 00 00"
                             readonly
                           />
@@ -953,12 +977,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="warehouse"
                             class="input-transparent font-size-14"
+                            name="warehouse"
                             value="Пункт приймання-видачі"
                             readonly
                           />
                           <input
+                            id="settlement"
                             class="input-transparent"
+                            name="settlement"
                             value="вул. Центральна, 98 (Котеджне містечко), Осещина"
                             readonly
                           />
@@ -990,12 +1018,16 @@
                         </div>
                         <div class="basket__checkbox-item-body-block-fields">
                           <input
+                            id="name"
                             class="input-transparent"
+                            name="name"
                             value="Inverness McKenzie"
                             readonly
                           />
                           <input
+                            id="phone"
                             class="input-transparent"
+                            name="phone"
                             value="+380 87 000 00 00"
                             readonly
                           />
@@ -1060,57 +1092,70 @@
           </div>
 
           <div class="basket_right__wrapper">
-            <div class="basket_right">
-              <div>Промокод</div>
+            <div class="basket__promocode basket_right">
+              <h3 class="basket__promocode-title">Промокод</h3>
               <div class="basket_right_block">
                 <input
                   type="text"
                   class="input-transparent"
                   placeholder="Введіть промокод"
                 />
-                <button class="info_for_product_btn medium color_gold">
+                <button
+                  class="basket__promocode-add-btn info_for_product_btn medium color_gold"
+                >
                   Додати
                 </button>
               </div>
             </div>
 
-            <div class="basket_right">
-              <div class="font-size-26 bold">Разом</div>
-              <div class="basket_right_block">
-                <div>Ціна товарів на суму</div>
-                <div>767 грн.</div>
+            <div class="basket__calculate basket_right">
+              <h3 class="basket__calculate-title font-size-26 bold">Разом</h3>
+              <div class="basket__calculate-sum-products basket_right_block">
+                <p class="basket__calculate-sum-products-title">
+                  Ціна товарів на суму
+                </p>
+                <p class="basket__calculate-sum-products-cost">767 грн.</p>
               </div>
-              <div class="basket_right_block">
-                <div>
+              <div class="basket__calculate-delivery basket_right_block">
+                <p class="basket__calculate-delivery-title">
                   Вартість
                   <br />
                   доставки
-                </div>
-                <div>
+                </p>
+                <p class="basket__calculate-delivery-price">
                   за тарифами
                   <br />
                   перевізника
-                </div>
+                </p>
               </div>
-              <div class="basket_right_block">
-                <div>До сплати</div>
-                <div class="font-size-26 bold color_gold">787 грн.</div>
+              <div class="basket__calculate-total-price basket_right_block">
+                <p class="basket__calculate-total-price-title">До сплати</p>
+                <p
+                  class="basket__calculate-total-price-value font-size-26 bold color_gold"
+                >
+                  787 грн.
+                </p>
               </div>
 
-              <div class="basket_right_btn">
-                <a href="#" class="btn-gold">Замовлення підтверджую</a>
-              </div>
+              <button class="basket__to-order-btn basket_right_btn">
+                <a href="#" class="btn-gold">Перейти до оформлення</a>
+              </button>
 
-              <div class="color_black_sub font-size-14">
-                <div>
-                  Оформляючи замовлення на сайті, Ви погоджуєтесь з нашими
-                  <b>Умовами і положеннями</b>
-                </div>
-                <br />
-                <b>
-                  Просимо надавати достовірні дані для успішного отримання
-                  замовлення
-                </b>
+              <div class="basket__calculate-info color_black_sub font-size-14">
+                <p>
+                  <span>
+                    Оформляючи замовлення на сайті, Ви погоджуєтесь з нашими
+                  </span>
+                  <a href="#">
+                    <b>Умовами і положеннями</b>
+                  </a>
+                </p>
+                <p>
+                  <b>
+                    Просимо надавати достовірні дані для успішного отримання
+                    замовлення
+                  </b>
+                </p>
               </div>
             </div>
           </div>

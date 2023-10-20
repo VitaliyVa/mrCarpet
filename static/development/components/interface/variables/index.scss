@@ -59,6 +59,7 @@
   align-items: center;
 
   h1 {
+    font-family: "Futura PT Bold", sans-serif;
     font-weight: 700;
     font-size: 30px;
     line-height: 38px;
@@ -69,4 +70,43 @@
     margin-left: 20px;
     color: #89817c;
   }
+
+  @media (max-width: 1024px) {
+    h1 {
+      font-size: 24px;
+      line-height: normal;
+    }
+  }
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+
+    h1 {
+      font-size: 20px;
+    }
+
+    span {
+      margin: 4px 0 0;
+    }
+  }
+}
+
+.bread-crumbs {
+  padding-top: 15px;
+
+  @media (max-width: 1024px) {
+    padding-top: 20px;
+  }
+
+  @media (max-width: 828px) {
+    display: none;
+  }
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

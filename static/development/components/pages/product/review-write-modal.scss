@@ -1,0 +1,99 @@
+.review-write-modal {
+  &__form {
+    max-width: 440px;
+
+    &-title {
+      font-size: 30px;
+    }
+
+    &-field {
+      textarea {
+        min-height: 41.8px;
+        height: 41.8px;
+        resize: vertical;
+      }
+
+      .star-rate {
+        column-gap: 38px;
+        margin: 24px 0;
+
+        &__item {
+          max-width: 56px;
+
+          label {
+            svg {
+              width: 48px;
+              height: 48px;
+            }
+          }
+        }
+      }
+    }
+
+    &-buttons {
+      margin-top: 40px;
+    }
+  }
+
+  &__send-review-btn {
+    max-width: 208px;
+  }
+
+  @media (max-width: 720px) {
+    max-height: 444px;
+    padding: 0;
+    border-radius: 20px 20px 0px 0px;
+
+    &-overlay {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .modal__content {
+      padding: 72px 20px 41px;
+    }
+
+    &__close-btn {
+      top: -40px;
+      bottom: auto;
+    }
+
+    &__form {
+      max-width: none;
+
+      &-title {
+        font-size: 24px;
+      }
+
+      &-field {
+        .star-rate {
+          max-width: 400px;
+          column-gap: normal;
+          margin: 24px 0 32px;
+
+          &__item {
+            label {
+              svg {
+                width: 36px;
+                height: 36px;
+              }
+
+              span {
+                margin-top: 16px;
+                font-size: 14px;
+              }
+            }
+          }
+        }
+      }
+
+      &-buttons {
+        margin-top: 32px;
+      }
+    }
+
+    &__send-review-btn {
+      max-width: none;
+    }
+  }
+}

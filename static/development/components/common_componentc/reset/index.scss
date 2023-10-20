@@ -171,13 +171,20 @@ hr {
 }
 
 input,
+textarea,
 select {
   vertical-align: middle;
   outline: none;
+}
+
+textarea {
+  height: auto;
+  width: auto;
 }
 
 button {
   background: none;
   border: none;
   outline: none;
+  padding: 0;
 }

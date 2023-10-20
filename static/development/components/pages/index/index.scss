@@ -31,9 +31,28 @@
   }
 }
 
+.blog-section {
+  .mob-blog {
+    display: none;
+  }
+}
+
+@media (max-width: 1440px) {
+  .blog-section {
+    .blog {
+      display: none;
+    }
+
+    .mob-blog {
+      display: flex;
+      gap: 0;
+    }
+  }
+}
 
 @media (max-width: 1024px) {
   .cover_img {
+    max-height: 560px;
     height: calc(100vh - 58px);
 
     img {
@@ -43,6 +62,7 @@
     }
   }
 }
+
 @media (max-width: 835px) {
   .cover {
     &__block {
@@ -58,6 +78,12 @@
     &_subtitle {
       font-size: 16px;
     }
+  }
+}
+
+@media (max-width: 720px) {
+  .blog-section {
+    padding-bottom: 78px;
   }
 }
 

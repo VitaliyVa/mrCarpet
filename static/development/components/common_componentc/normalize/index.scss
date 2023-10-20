@@ -23,6 +23,12 @@ $legacy_browser_support: false !default;
   padding: 0px 7%;
 }
 
+.bread-crumbs {
+  span {
+    margin: 0 5px;
+  }
+}
+
 @media (max-width: 1024px) {
   .container {
     width: 100%;
