@@ -9,16 +9,16 @@ def index(request):
     on_sale = ProductAttribute.objects.exclude(discount=None).filter(product__in=products).values_list('product')
     sale_products = Product.objects.filter(id__in=on_sale)
     posts = Article.objects.all()[::-1]
-    return render(request, 'index_v1.html', context={'products': products, 'posts': posts, 'sale_products': sale_products})
+    return render(request, 'index.html', context={'products': products, 'posts': posts, 'sale_products': sale_products})
 
 
 def checkout(request):
-    return render(request, 'checkout_v1.html')
+    return render(request, 'checkout.html')
 
 
 def delivery(request):
-    return render(request, 'delivery_v1.html')
+    return render(request, 'delivery.html')
 
 
 def faq(request):
-    return render(request, 'faq_v1.html')
+    return render(request, 'faq.html')

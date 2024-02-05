@@ -18,9 +18,10 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             "it is not a drf request"
         data = request.data
         cart = get_cart(request)
-        data["total_price"] = cart.get_total_price()
+        # data["total_price"] = cart.get_total_price()
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
+        serializer.validated_data["total_price"] = cart.get_total_price()
         order = Order.objects.create(**serializer.validated_data)
         cart.order = order
         cart.ordered = True

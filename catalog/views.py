@@ -20,7 +20,7 @@ def catalog_detail(request, slug):
     sizes = Size.objects.all()
     return render(
         request,
-        "catalog_inside_v1.html",
+        "catalog_inside.html",
         {"categorie": categorie, "products": products, "sizes": sizes},
     )
 
@@ -29,7 +29,7 @@ def catalog(request):
     products = Product.objects.all()
     # filter_set = ProductFilter(request.GET, products)
     # products = filter_set.qs
-    return render(request, "catalog_v1.html", {"products": products})
+    return render(request, "catalog.html", {"products": products})
 
 
 # @login_required
@@ -37,10 +37,10 @@ def favourites(request):
     # favourite = Favourite.objects.get(user=request.user)
     # f_products = favourite.product.all()[::-1]
     # favorites = FavouriteProducts.objects.filter(favourite=favourite)
-    return render(request, "favorite_v1.html")
+    return render(request, "favorite.html")
 
 
 def product(request, slug):
     product = Product.objects.get(slug=slug)
     # product_attr = ProductAttribute.objects.filter(product=prod)
-    return render(request, "product_v1.html", {"product": product})
+    return render(request, "product.html", {"product": product})

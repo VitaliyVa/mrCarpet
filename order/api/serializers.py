@@ -8,4 +8,4 @@ class OrderSerializer(serializers.ModelSerializer):
     cart = CartSerializer(read_only=True)
     class Meta:
         model = Order
-        fields = "__all__"
+        exclude = ("total_price", "status", "order_number",)
