@@ -1,0 +1,79 @@
+<a href="{{ product.get_absolute_url }}">
+  <div class="cart_item_new color_white small">Новинка</div>
+  <div class="cart_item_img">
+    <img src="/static/utils/assets/img.png" alt="" />
+  </div>
+  <div class="cart_item_price__block">
+    <div
+      class="cart_item_price medium color_gold"
+      {% for attr in product.product_attr.all %}
+      data-item-{{ forloop.counter }}={{ attr.get_total_price }}
+      {% endfor %}
+    >
+      <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
+      <span>грн</span>
+    </div>
+    <div
+      class="cart_item_procent medium color_gold"
+      {% for attr in product.product_attr.all %}
+      {% if attr.discount %}
+      data-item-{{ forloop.counter }}="{{ attr.discount }}%"
+      {% endif %}
+      {% endfor %}
+    >
+      {% if product.product_attr.first.discount %}
+      {{ product.product_attr.first.discount }}%
+      {% endif %}
+    </div>
+    <div
+      class="cart_item_old_price medium color_black_sub"
+      {% for attr in product.product_attr.all %}
+      {% if attr.discount %}
+      data-item-{{ forloop.counter }}="{{ attr.price }}"
+      {% endif %}
+      {% endfor %}
+    >
+      {% if product.product_attr.first.discount %}
+      <span class="cart_item_old_price-value">{{product.product_attr.first.price}}</span>
+      <span>грн</span>
+      {% endif %}
+    </div>
+    <div class="cart_item_add_to_favorite active">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g clip-path="url(#clip0_703_57)">
+          <path
+            d="M8 2.74799L7.283 2.01099C5.6 0.280988 2.514 0.877988 1.4 3.05299C0.877 4.07599 0.759 5.55299 1.714 7.43799C2.634 9.25299 4.548 11.427 8 13.795C11.452 11.427 13.365 9.25299 14.286 7.43799C15.241 5.55199 15.124 4.07599 14.6 3.05299C13.486 0.877988 10.4 0.279988 8.717 2.00999L8 2.74799ZM8 15C-7.333 4.86799 3.279 -3.04001 7.824 1.14299C7.884 1.19799 7.943 1.25499 8 1.31399C8.05642 1.25504 8.11513 1.19833 8.176 1.14399C12.72 -3.04201 23.333 4.86699 8 15Z"
+            fill="#A46C46"
+          />
+        </g>
+        <defs>
+          <clipPath id="clip0_703_57">
+            <rect width="16" height="16" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <div class="cart_item_title small color_black">
+    {{ product.title }}
+  </div>
+</a>
+<div class="sizes-block cart_item_size__block">
+  {% for attr in product.product_attr.all %}
+  {% if forloop.first %}
+  <div data-item="{{ forloop.counter }}" data-novelty="true" class="size-label active">
+    {{ attr.size }}
+  </div>
+  {% else %}
+  <div data-item="{{ forloop.counter }}" data-novelty="true" class="size-label">
+    {{ attr.size }}
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>

@@ -1,15 +1,26 @@
+from django.db.models import Min
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics
+from rest_framework import generics, filters
 from rest_framework import mixins
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework import permissions
 from rest_framework.decorators import permission_classes
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from django_filters import rest_framework as rest_filters
 from django.http import JsonResponse
 
-from .serializers import ProductSerializer, FavouriteSerializer, FavouriteProductsSerializer
-from ..models import Product, Favourite, FavouriteProducts
+from .permissions import IsAdminEdit, IsFavouriteOwner
+from .serializers import (
+    ProductSerializer,
+    FavouriteSerializer,
+    FavouriteProductsSerializer,
+    ProductReviewSerializer,
+)
+from ..models import Product, Favourite, FavouriteProducts, ProductReview
+from ..utils import get_favourite
+from .filters import ProductFilter
 
 
 class FavouriteProductPermission(permissions.BasePermission):
@@ -23,17 +34,17 @@ class FavouriteProductPermission(permissions.BasePermission):
         return True
 
 
-class ProductApiView(generics.ListAPIView):
-    serializer_class = ProductSerializer
-    queryset = Product.objects.all()
+# class ProductApiView(generics.ListAPIView):
+#     serializer_class = ProductSerializer
+#     queryset = Product.objects.all()
 
 
-class FavouriteApiView(APIView):
-    # serializer_class = FavouriteSerializer
-    # queryset = Favourite.objects.all()
+class FavouriteApiView(generics.ListAPIView):
+    serializer_class = FavouriteSerializer
+    queryset = Favourite.objects.all()
 
-    def get(self, request, *args, **kwargs):
-        return Response(FavouriteSerializer(Favourite.objects.all(), many=True).data)
+    # def get(self, request, *args, **kwargs):
+    #     return Response(FavouriteSerializer(Favourite.objects.all(), many=True).data)
 
 
 class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
@@ -50,9 +61,11 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
         serializer = FavouriteProductsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         print(serializer.validated_data)
-        favorite_product = FavouriteProducts.objects.filter(**serializer.validated_data).first()
+        favorite_product = FavouriteProducts.objects.filter(
+            **serializer.validated_data
+        ).first()
         if favorite_product:
-            return JsonResponse({'bad': 'request'})
+            return JsonResponse({"bad": "request"})
         favourite = serializer.validated_data["favourite"]
         if favourite.user == request.user:
             serializer.save()
@@ -62,7 +75,7 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
             )
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
-    
+
     # @permission_classes([FavouriteProductPermission])
     # def delete(self, request, *args, **kwargs):
     #     return self.destroy(request, *args, **kwargs)
@@ -75,9 +88,54 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
         #     'favourite': request.data['favourite'],
         #     'product': request.data['product']
         # }
-        favorite_product = FavouriteProducts.objects.filter(**serializer.validated_data).first()
+        favorite_product = FavouriteProducts.objects.filter(
+            **serializer.validated_data
+        ).first()
         if favorite_product:
             favorite_product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProductReviewViewSet(ModelViewSet):
+    queryset = ProductReview.objects.all()
+    serializer_class = ProductReviewSerializer
+    permission_classes = [IsAdminEdit]
+
+
+class FavouriteProductViewSet(ModelViewSet):
+    queryset = FavouriteProducts.objects.all()
+    serializer_class = FavouriteProductsSerializer
+    permission_classes = [IsFavouriteOwner]
+
+    def create(self, request, *args, **kwargs):
+        try:
+            request.data._mutable = True
+        except:
+            "it is not a drf request"
+        request.data["favourite"] = get_favourite(request)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            fav_product = FavouriteProducts.objects.get(**serializer.validated_data)
+            return Response(
+                {"message": "Даний товар вже у вашому списку."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except FavouriteProducts.DoesNotExist:
+            fav_product = FavouriteProducts.objects.create(**serializer.validated_data)
+            return Response(
+                {"message": "Товар додано!"}, status=status.HTTP_201_CREATED
+            )
+
+
+class ProductViewSet(mixins.ListModelMixin, GenericViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    # filter_backends = [filters.OrderingFilter, rest_filters.DjangoFilterBackend]
+    filter_backends = [rest_filters.DjangoFilterBackend]
+    filterset_class = ProductFilter
+    # ordering_fields = ["title", "product_attr__price"]
+    # ordering = ["-id"]
+    # ordering_param = "sort"

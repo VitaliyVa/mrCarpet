@@ -1,22 +1,46 @@
 from django.contrib import admin
-from .models import Product, ProductCategory, Favourite, FavouriteProducts, Specification, SpecificationValue, ProductSpecification, Size, ProductAttribute
+from .models import (
+    Product,
+    ProductCategory,
+    Favourite,
+    FavouriteProducts,
+    Specification,
+    SpecificationValue,
+    ProductSpecification,
+    Size,
+    ProductAttribute,
+    ProductReview,
+    RelatedProduct,
+)
+
 
 # Register your models here.
 class FavouriteItemInLine(admin.TabularInline):
     model = FavouriteProducts
     extra = 0
 
+
 class FavouriteAdmin(admin.ModelAdmin):
     inlines = [FavouriteItemInLine]
+
     class Meta:
         model = Favourite
+
 
 class ProductInLine(admin.TabularInline):
     model = ProductAttribute
     extra = 0
 
+
+class RelatedProductInline(admin.TabularInline):
+    model = RelatedProduct
+    fk_name = "related_to"
+    extra = 0
+
+
 class ProductAdmin(admin.ModelAdmin):
-    inlines = [ProductInLine]
+    inlines = [ProductInLine, RelatedProductInline]
+
     class Meta:
         model = Product
 
@@ -29,3 +53,4 @@ admin.site.register(SpecificationValue)
 admin.site.register(ProductSpecification)
 admin.site.register(Size)
 admin.site.register(ProductAttribute)
+admin.site.register(ProductReview)

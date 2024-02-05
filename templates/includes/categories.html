@@ -1,15 +1,20 @@
 <section class="catalog_items">
-    <div class="container">
-        <div class="catalog_item__block">
-            {% for categorie in categories %}
-            <a href="{{ categorie.get_absolute_url }}" class="catalog_item hvr-curl-bottom-left">
-                <span class="catalog_item_text small color_black">{{ categorie.title }}</span>
-                <span class="catalog_item_img">
-                    <img src="{{ categorie.image.url }}" alt="" />
-                </span>
-            </a>
-            {% endfor %}
-        </div>
+  <div class="container">
+    <div class="catalog_item__block">
+      {% for category in categories %}
+      <a href="{{ category.get_absolute_url }}" class="catalog_item hvr-curl-bottom-left">
+        <span class="catalog_item_text small color_black"
+          >{{ category.title }}</span
+        >
+        <span class="catalog_item_img">
+          <img
+            src="/static/utils/assets/catalog_item/catalog_item-1.png"
+            alt=""
+          />
+        </span>
+      </a>
+      {% endfor %}
     </div>
-    <!-- /.container -->
+  </div>
+  <!-- /.container -->
 </section>

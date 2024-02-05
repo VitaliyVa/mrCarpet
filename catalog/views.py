@@ -1,24 +1,46 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from .models import Product, Favourite, FavouriteProducts, ProductCategory, ProductAttribute
+
+from .filters import ProductFilter
+from .models import (
+    Product,
+    Favourite,
+    FavouriteProducts,
+    ProductCategory,
+    ProductAttribute,
+    Size,
+)
+
 
 # Create your views here.
 def catalog_detail(request, slug):
     categorie = ProductCategory.objects.get(slug=slug)
-    return render(request, 'catalog_inside_new.html', {'categorie': categorie})
+    filter_set = ProductFilter(request.GET, categorie.products.all())
+    products = filter_set.qs
+    sizes = Size.objects.all()
+    return render(
+        request,
+        "catalog_inside_v1.html",
+        {"categorie": categorie, "products": products, "sizes": sizes},
+    )
+
 
 def catalog(request):
     products = Product.objects.all()
-    return render(request, 'catalog_new.html', {'products': products})
+    # filter_set = ProductFilter(request.GET, products)
+    # products = filter_set.qs
+    return render(request, "catalog_v1.html", {"products": products})
+
 
 # @login_required
 def favourites(request):
     # favourite = Favourite.objects.get(user=request.user)
     # f_products = favourite.product.all()[::-1]
     # favorites = FavouriteProducts.objects.filter(favourite=favourite)
-    return render(request, 'favorite_new.html')
+    return render(request, "favorite_v1.html")
+
 
 def product(request, slug):
-    prod = Product.objects.get(slug=slug)
-    product_attr = ProductAttribute.objects.filter(product=prod)
-    return render(request, 'product_new.html', {'product': prod})
+    product = Product.objects.get(slug=slug)
+    # product_attr = ProductAttribute.objects.filter(product=prod)
+    return render(request, "product_v1.html", {"product": product})

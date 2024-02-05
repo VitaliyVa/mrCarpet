@@ -1,13 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
 from s_content.models import AbstractCreatedUpdated
+from users.models import CustomUser
 from .price import cart_total_price
 
 # Create your models here.
 class Cart(AbstractCreatedUpdated):
     user = models.ForeignKey(
         verbose_name='Cart owner',
-        to=User,
+        to=CustomUser,
         on_delete=models.SET_NULL,
         related_name='carts',
         blank=False,
@@ -24,7 +24,7 @@ class Cart(AbstractCreatedUpdated):
     )
 
     def __str__(self):
-        return f"{self.user.username}'s cart" if self.user else "Unknown cart"
+        return f"{self.user.email}'s cart" if self.user else "Unknown cart"
 
     class Meta:
         verbose_name = "Корзина"
@@ -32,6 +32,9 @@ class Cart(AbstractCreatedUpdated):
 
     def get_total_price(self):
         return cart_total_price(self)
+
+    def get_cart_product_total_quantity(self):
+        return self.cart_products.all().aggregate(q=models.Sum("quantity"))["q"] or 0
 
 
 class CartProduct(AbstractCreatedUpdated):
@@ -51,3 +54,10 @@ class CartProduct(AbstractCreatedUpdated):
 
     def __str__(self):
         return self.product_attr.product.title
+    
+    def cart_product_total_price(self):
+        product_price = self.product_attr.get_total_price()
+        return product_price * self.quantity
+
+    def able_add_to_cart(self, quantity: int) -> bool:
+        return quantity <= self.product_attr.quantity

@@ -4,9 +4,9 @@ from .models import Article
 # Create your views here.
 def blog(request):
     articles = Article.objects.all()[::-1]
-    return render(request, 'blog_new.html', context={'articles': articles})
+    return render(request, 'blog_v1.html', context={'articles': articles})
 
 def post(request, slug):
     article = get_object_or_404(Article, slug=slug)
     articles = Article.objects.exclude(slug=slug)[::-1]
-    return render(request, 'blog_inside_new.html', context={'article': article, 'articles': articles})
+    return render(request, 'blog_inside_v1.html', context={'article': article, 'articles': articles})

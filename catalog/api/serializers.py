@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute
+from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -26,7 +26,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'title',
             'image',
             'categories',
-            'quantity',
+            # 'quantity',
             'product_attributes'
         ]
 
@@ -52,3 +52,9 @@ class FavouriteProductsSerializer(serializers.ModelSerializer):
             'favourite',
             'product',
         ]
+
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields = "__all__"

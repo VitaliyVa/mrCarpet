@@ -1,16 +1,15 @@
+from django.core.validators import MaxValueValidator
 from django.db import models
-from django.contrib.auth.models import User
 from django.urls import reverse
+import decimal
 
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
+from users.models import CustomUser
+
 
 # Create your models here.
 class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
-    description = models.TextField(
-        verbose_name='Description',
-        blank=True,
-        null=True
-    )
+    description = models.TextField(verbose_name="Description", blank=True, null=True)
     # prices = models.ManyToManyField(
     #     verbose_name='Ціни',
     #     blank=True,
@@ -19,19 +18,13 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     #     related_name='product_prices'
     # )
     image = models.ImageField(
-        verbose_name='Зображення',
-        max_length=512,
-        blank=True,
-        upload_to='products'
+        verbose_name="Зображення", max_length=512, blank=True, upload_to="products"
     )
     categories = models.ManyToManyField(
-        verbose_name='Категорії',
+        verbose_name="Категорії",
         blank=True,
-        to='catalog.ProductCategory',
-        related_name='products'
-    )
-    quantity = models.PositiveSmallIntegerField(
-        verbose_name='Кількість'
+        to="catalog.ProductCategory",
+        related_name="products",
     )
     has_discount = models.BooleanField(default=False)
     # discount = models.IntegerField(blank=True, null=True)
@@ -49,39 +42,38 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     # )
 
     class Meta:
-        verbose_name = 'Товар'
-        verbose_name_plural = 'Товари'
+        verbose_name = "Товар"
+        verbose_name_plural = "Товари"
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse("product", args=(self.slug, ))
 
 
 class ProductCategory(AbstractTitleSlug):
     image = models.ImageField(
-        verbose_name='Зображення',
-        max_length=512,
-        blank=True,
-        upload_to='categories'
+        verbose_name="Зображення", max_length=512, blank=True, upload_to="categories"
     )
 
     class Meta:
-        verbose_name = 'Категорія'
-        verbose_name_plural = 'Категорії'
+        verbose_name = "Категорія"
+        verbose_name_plural = "Категорії"
 
     def __str__(self):
         return self.title
-    
+
     def get_absolute_url(self):
         return reverse("categorie", kwargs={"slug": self.slug})
-    
 
 
 class Size(models.Model):
     title = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        verbose_name = 'Розмір'
-        verbose_name_plural = 'Розміри'
+        verbose_name = "Розмір"
+        verbose_name_plural = "Розміри"
 
     def __str__(self):
         return self.title
@@ -89,57 +81,58 @@ class Size(models.Model):
 
 class ProductAttribute(models.Model):
     product = models.ForeignKey(
-        verbose_name='Товар',
-        to='catalog.Product',
+        verbose_name="Товар",
+        to="catalog.Product",
         on_delete=models.CASCADE,
-        related_name='product_attr',
-        blank=True,
-        null=True
-    )
-    size = models.ForeignKey(
-        verbose_name='Розмір',
-        to='catalog.Size',
-        on_delete=models.CASCADE,
-        related_name='product_attr',
-        blank=True,
-        null=True
-    )
-    discount = models.IntegerField(
-        verbose_name="Знижка",
+        related_name="product_attr",
         blank=True,
         null=True,
-        help_text="Знижка у відсотках"
     )
-    price = models.IntegerField(verbose_name='Ціна', blank=True, null=True)
-    
+    size = models.ForeignKey(
+        verbose_name="Розмір",
+        to="catalog.Size",
+        on_delete=models.CASCADE,
+        related_name="product_attr",
+        blank=True,
+        null=True,
+    )
+    discount = models.IntegerField(
+        verbose_name="Знижка", blank=True, null=True, help_text="Знижка у відсотках"
+    )
+    price = models.IntegerField(verbose_name="Ціна", blank=True, null=True)
+    quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
+
     class Meta:
-        verbose_name = 'Варіація'
-        verbose_name_plural = 'Варіації'
+        verbose_name = "Варіація"
+        verbose_name_plural = "Варіації"
 
     def __str__(self):
-        return f'{self.product.title} - {self.size.title}'
+        return f"{self.product.title} - {self.size.title}"
 
     def get_total_price(self):
         if self.discount:
             discount = self.discount / 100
             total_price = self.price - (self.price * discount)
-            return total_price
+            if total_price % 1 == 0:
+                return int(total_price)
+            else:
+                return total_price
         else:
             return self.price
-        
+
     def set_discount(self):
         for prod in self.product.product_attr.all():
             if prod.discount:
                 return True
             else:
                 return False
-        
+
     def save(self, *args, **kwargs):
         discount = super().save(*args, **kwargs)
         self.product.has_discount = self.set_discount()
         self.product.save()
         return discount
-    
+
 
 # class SizePrice(models.Model):
 #     price = models.IntegerField(
@@ -154,7 +147,7 @@ class ProductAttribute(models.Model):
 
 #     def __str__(self):
 #         return f'{self.price} грн'
-    
+
 
 # class ProductSizePrice(models.Model):
 #     product = models.ForeignKey(
@@ -188,19 +181,16 @@ class ProductAttribute(models.Model):
 
 #     def __str__(self):
 #         return f"{self.size}: {self.size_value}"
-    
+
 
 class Specification(models.Model):
     title = models.CharField(
-        verbose_name='Назва',
-        max_length=128,
-        blank=True,
-        null=True
+        verbose_name="Назва", max_length=128, blank=True, null=True
     )
 
     class Meta:
-        verbose_name = 'Характеристика'
-        verbose_name_plural = 'Характеристики'
+        verbose_name = "Характеристика"
+        verbose_name_plural = "Характеристики"
 
     def __str__(self):
         return self.title
@@ -208,15 +198,12 @@ class Specification(models.Model):
 
 class SpecificationValue(models.Model):
     title = models.CharField(
-        verbose_name='Назва',
-        max_length=128,
-        blank=True,
-        null=True
+        verbose_name="Назва", max_length=128, blank=True, null=True
     )
 
     class Meta:
-        verbose_name = 'Значення характеристики'
-        verbose_name_plural = 'Значення характеристик'
+        verbose_name = "Значення характеристики"
+        verbose_name_plural = "Значення характеристик"
 
     def __str__(self):
         return self.title
@@ -224,33 +211,33 @@ class SpecificationValue(models.Model):
 
 class ProductSpecification(models.Model):
     product = models.ForeignKey(
-        verbose_name='Товар',
-        to='catalog.Product',
+        verbose_name="Товар",
+        to="catalog.Product",
         on_delete=models.CASCADE,
-        related_name='product_specs',
+        related_name="product_specs",
         blank=True,
-        null=True
+        null=True,
     )
     specification = models.ForeignKey(
-        verbose_name='Характеристика',
-        to='catalog.Specification',
+        verbose_name="Характеристика",
+        to="catalog.Specification",
         on_delete=models.CASCADE,
-        related_name='product_specs',
+        related_name="product_specs",
         blank=True,
-        null=True
+        null=True,
     )
     spec_value = models.ForeignKey(
-        verbose_name='Значення характеристики',
-        to='catalog.SpecificationValue',
+        verbose_name="Значення характеристики",
+        to="catalog.SpecificationValue",
         on_delete=models.CASCADE,
-        related_name='product_specs',
+        related_name="product_specs",
         blank=True,
-        null=True
+        null=True,
     )
 
     class Meta:
-        verbose_name = 'Характеристика товару'
-        verbose_name_plural = 'Характеристики товару'
+        verbose_name = "Характеристика товару"
+        verbose_name_plural = "Характеристики товару"
 
     def __str__(self):
         return f"{self.specification}: {self.spec_value}"
@@ -305,27 +292,29 @@ class ProductSpecification(models.Model):
 
 class Favourite(AbstractCreatedUpdated):
     product = models.ManyToManyField(
-        verbose_name='Товар',
+        verbose_name="Товар",
         blank=True,
-        to='catalog.Product',
-        related_name='fav_products',
-        through='FavouriteProducts',
+        to="catalog.Product",
+        related_name="fav_products",
+        through="FavouriteProducts",
     )
     user = models.ForeignKey(
-        verbose_name='Юзер',
+        verbose_name="Юзер",
         blank=False,
         null=True,
-        to=User,
+        to=CustomUser,
         on_delete=models.CASCADE,
-        related_name='user'
+        related_name="user",
     )
 
     class Meta:
-        verbose_name = 'Улюблені'
-        verbose_name_plural = 'Улюблені'
+        verbose_name = "Улюблені"
+        verbose_name_plural = "Улюблені"
 
     def __str__(self):
-        return f"{self.user.username}'s favourites" if self.user else 'unknown favourite'
+        return (
+            f"{self.user.username}'s favourites" if self.user else "unknown favourite"
+        )
 
 
 class FavouriteProducts(models.Model):
@@ -335,8 +324,8 @@ class FavouriteProducts(models.Model):
 
     class Meta:
         # ordering = ['-order']
-        verbose_name = 'Улюблений товар'
-        verbose_name_plural = 'Улюблені товари'
+        verbose_name = "Улюблений товар"
+        verbose_name_plural = "Улюблені товари"
 
     def save(self, *args, **kwargs):
         if FavouriteProducts.objects.first():
@@ -344,3 +333,47 @@ class FavouriteProducts(models.Model):
         else:
             self.order = 1
         return super().save(*args, **kwargs)
+
+
+class ProductReview(AbstractCreatedUpdated):
+    product = models.ForeignKey(
+        verbose_name="Продукт",
+        blank=False,
+        null=False,
+        to=Product,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    name = models.CharField(max_length=150, blank=False, null=False)
+    content = models.TextField()
+    rating = models.IntegerField(validators=[MaxValueValidator(5)], blank=False, null=False)
+
+    class Meta:
+        verbose_name = "Відгук"
+        verbose_name_plural = "Відгуки"
+
+    def __str__(self):
+        return f"{self.name}'s review"
+
+
+class RelatedProduct(models.Model):
+    related_to = models.ForeignKey(
+        verbose_name="Відповідний товар",
+        blank=False,
+        null=False,
+        to=Product,
+        on_delete=models.CASCADE,
+        related_name="related_products"
+    )
+    product = models.ForeignKey(
+        verbose_name="Схожий товар",
+        blank=False,
+        null=False,
+        to=Product,
+        on_delete=models.CASCADE,
+        related_name="related_to_products"
+    )
+
+    def __str__(self):
+        return self.product.title
+

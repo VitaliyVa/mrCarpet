@@ -24,7 +24,10 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('catalog/', include('catalog.urls')),
     path('cart/', include('cart.urls')),
-    path('', include('project.urls'))
+    path('', include('project.urls')),
+    path('api/', include('cart.api.urls')),
+    path('api/', include('users.api.urls')),
+    path('api/', include('project.api.urls')),
 ]
 
 if settings.DEBUG:
