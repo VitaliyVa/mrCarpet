@@ -39,8 +39,8 @@
                 <div class="footer_form_title medium color_black">
                   Для покупця
                 </div>
-                <a href="#"> Про компанію </a>
-                <a href="#"> Блог </a>
+                <a href="{% url 'about' %}"> Про компанію </a>
+                <a href="{% url 'blog' %}"> Блог </a>
                 <button class="modal_open" data-href="contacts-modal">
                   Контакти
                 </button>
@@ -57,9 +57,9 @@
                   Інтернет-магазин
                 </div>
                 <a href="{% url 'delivery' %}"> Доставка і оплата </a>
-                <a href="#"> Повернення </a>
-                <a href="#"> Умови і положення </a>
-                <a href="#"> Політика конфіденційності </a>
+                <a href="{% url 'refund' %}"> Повернення </a>
+                <a href="{% url 'terms' %}"> Умови і положення </a>
+                <a href="{% url 'policy' %}"> Політика конфіденційності </a>
               </div>
 
               <div class="flex">

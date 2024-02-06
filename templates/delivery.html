@@ -6,13 +6,13 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold">Доставка і оплата</a>
+      <a href="{% url 'delivery' %}" class="color_gold">Доставка і оплата</a>
     </div>
     <div class="terms-and-policies">
       <div class="terms-and-policies__sidebar nav-sidebar">
         <ul class="nav-sidebar__items">
           <li>
-            <a href="#" class="color_gold">
+            <a href="{% url 'delivery' %}" class="color_gold">
               <span>Доставка і оплата</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"
@@ -22,7 +22,7 @@
           </li>
 
           <li>
-            <a href="#" class="color_black">
+            <a href="{% url 'refund' %}" class="color_black">
               <span>Повернення</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"
@@ -32,7 +32,7 @@
           </li>
 
           <li>
-            <a href="#" class="color_black">
+            <a href="{% url 'terms' %}" class="color_black">
               <span>Умови і положення</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"
@@ -42,7 +42,7 @@
           </li>
 
           <li>
-            <a href="#" class="color_black">
+            <a href="{% url 'policy' %}" class="color_black">
               <span>Політика конфіденційності</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"

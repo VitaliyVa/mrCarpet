@@ -11,6 +11,7 @@ from .models import (
     ProductAttribute,
     ProductReview,
     RelatedProduct,
+    ProductSale,
 )
 
 
@@ -54,3 +55,4 @@ admin.site.register(ProductSpecification)
 admin.site.register(Size)
 admin.site.register(ProductAttribute)
 admin.site.register(ProductReview)
+admin.site.register(ProductSale)

@@ -15,3 +15,14 @@ class ContactRequest(AbstractCreatedUpdated):
 
     def __str__(self):
         return f"Запитання від {self.name}"
+
+
+class Subscription(models.Model):
+    email = models.EmailField(unique=True)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        verbose_name = "Підписаний користувач"
+        verbose_name_plural = "Підписані користувачі"

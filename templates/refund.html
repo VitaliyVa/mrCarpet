@@ -4,16 +4,26 @@
 <section class="refund first_section">
   <div class="container">
     <div class="bread-crumbs">
-      <a href="#" class="color_black_sub">Головна</a>
+      <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold">Повернення</a>
+      <a href="{% url 'refund' %}" class="color_gold">Повернення</a>
     </div>
     <div class="terms-and-policies">
       <div class="terms-and-policies__sidebar nav-sidebar">
         <ul class="nav-sidebar__items">
           <li>
             <!-- active item has a "color_gold" class  -->
-            <a href="#" class="color_black">
+            <a href="{% url 'delivery' %}" class="color_black">
+              <span>Доставка і оплата</span>
+              <img
+                src="/static/utils/assets/chevron-right.svg"
+                alt="chevron-right"
+              />
+            </a>
+          </li>
+
+          <li>
+            <a href="{% url 'refund' %}" class="color_gold">
               <span>Повернення</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"
@@ -23,17 +33,7 @@
           </li>
 
           <li>
-            <a href="#" class="color_gold">
-              <span>Повернення</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="#" class="color_black">
+            <a href="{% url 'terms' %}" class="color_black">
               <span>Умови і положення</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"
@@ -43,7 +43,7 @@
           </li>
 
           <li>
-            <a href="#" class="color_black">
+            <a href="{% url 'policy' %}" class="color_black">
               <span>Політика конфіденційності</span>
               <img
                 src="/static/utils/assets/chevron-right.svg"

@@ -101,6 +101,7 @@ class ProductAttribute(models.Model):
     )
     price = models.IntegerField(verbose_name="Ціна", blank=True, null=True)
     quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
+    is_new = models.BooleanField(verbose_name="Новинка", default=True)
 
     class Meta:
         verbose_name = "Варіація"
@@ -376,4 +377,19 @@ class RelatedProduct(models.Model):
 
     def __str__(self):
         return self.product.title
+
+
+class ProductSale(AbstractCreatedUpdated):
+    date_end = models.DateTimeField(verbose_name="Кінець розпродажу")
+    products = models.ManyToManyField(
+        verbose_name="Товари на акції",
+        to=Product,
+    )
+
+    def __str__(self):
+        return f"Акція до {self.date_end}"
+
+    class Meta:
+        verbose_name = "Акція"
+        verbose_name_plural = "Акції"
 
