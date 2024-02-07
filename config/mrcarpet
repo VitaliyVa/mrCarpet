@@ -8,7 +8,7 @@ server{
         alias /home/carpet/projects/carpet/src/static_root;
     }
     location / {
-        uwsgi_pass unix:/home/carpet/projects/carpet/src/config/carpet.sock;
+        uwsgi_pass unix:/home/carpet/projects/carpet/src/config/mrcarpet.sock;
         include /etc/nginx/uwsgi_params;
     }
 
