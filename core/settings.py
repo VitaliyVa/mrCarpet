@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'catalog',
     'order',
     'users',
+    'nova_poshta',
     'rest_framework',
     'django_filters',
     'drf_yasg',
