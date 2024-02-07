@@ -1,0 +1,15 @@
+server{
+    server_name 138.197.188.19;
+    client_max_body_size 100M;
+    location /media {
+        alias /home/carpet/projects/carpet/src/media;
+    }
+    location /static {
+        alias /home/carpet/projects/carpet/src/static_root;
+    }
+    location / {
+        uwsgi_pass unix:/home/carpet/projects/carpet/src/config/carpet.sock;
+        include /etc/nginx/uwsgi_params;
+    }
+
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=uWSGI Emperor service
+
+[Service]
+ExecStartPre=/bin/bash -c 'mkdir -p /home/carpet/projects/carpet/src/config; chown carpet:www-data /home/carpet/projects/carpet/src/config'
+ExecStart=/usr/local/bin/uwsgi --emperor /home/carpet/projects/carpet/src/config
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target 
+
+
+
