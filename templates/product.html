@@ -337,33 +337,18 @@
           <span class="accordion accordion_content__block">
             <a class="color_black accordion__title"> Опис </a>
             <span class="accordion_content content_column">
-              Бельгійська колекція, в основі якої лежить використання
-              найніжнішої вискозной нитки і м"якого бавовни. Завдяки такому
-              поєднанню якісних матеріалів килими легкі, повітряні, ніжні на
-              дотик, і мають до того ж привабливу ціну. Стильне і стримане
-              забарвлення відрізняється своєю універсальністю, тому
-              прекрасно впишеться практично в будь-який інтер"єр.
+              {{ product.description }}
             </span>
           </span>
 
           <span class="accordion accordion_content__block">
             <a class="color_black accordion__title"> Характеристики </a>
             <div class="accordion_content content_column">
+              {% for spec in product.product_specs.all %}
               <div class="characteristic">
-                <span>Висота ворсу</span> <span>12 мм</span>
+                <span>{{ spec.specification }}</span> <span>{{ spec.spec_value }}</span>
               </div>
-              <div class="characteristic">
-                <span>Ворсова основа</span> <span>Ткана</span>
-              </div>
-              <div class="characteristic">
-                <span>Cтилістика</span> <span>Ручна робота</span>
-              </div>
-              <div class="characteristic">
-                <span>Склад</span> <span>Вовна, шовк</span>
-              </div>
-              <div class="characteristic">
-                <span>Форма</span> <span>Прямокутна</span>
-              </div>
+              {% endfor %}
             </div>
           </span>
 

@@ -39,8 +39,13 @@ class RelatedProductInline(admin.TabularInline):
     extra = 0
 
 
+class SpecificationInline(admin.TabularInline):
+    model = ProductSpecification
+    extra = 0
+
+
 class ProductAdmin(admin.ModelAdmin):
-    inlines = [ProductInLine, RelatedProductInline]
+    inlines = [ProductInLine, RelatedProductInline, SpecificationInline]
 
     class Meta:
         model = Product
