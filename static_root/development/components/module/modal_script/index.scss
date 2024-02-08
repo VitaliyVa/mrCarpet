@@ -1,0 +1,167 @@
+.modal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 680px;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  margin: 0 0 0 auto;
+  transform: translateX(100%);
+  transition: all 0.35s ease-in-out;
+
+  &.active {
+    transform: translateX(0);
+  }
+
+  &-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      180deg,
+      rgba(69, 63, 58, 0.7) 0%,
+      rgba(69, 63, 58, 0.6) 100%
+    );
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+    z-index: 9999;
+
+    &.active {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
+  &__close-btn {
+    position: absolute;
+    top: 70px;
+    left: -40px;
+    max-width: 80px;
+    max-height: 80px;
+    background-color: #ebeae8;
+    padding: 24px;
+    border-radius: 100%;
+    transition: all 0.25s;
+
+    img {
+      width: 32px;
+      height: 32px;
+      transition: all 0.35s;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+      filter: brightness(0.85);
+
+      img {
+        transform: scale(1.5);
+      }
+    }
+
+    &:active {
+      transform: translateY(5px) scale(1.1);
+      filter: brightness(0.95);
+    }
+  }
+
+  &__content {
+    width: 100%;
+    max-height: 100%;
+    padding: 20px 0 20px 125px;
+    overflow: auto;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  &__logo {
+    max-width: 60px;
+    max-height: 60px;
+    margin-bottom: 40px;
+
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__title {
+    font-family: "Futura PT Medium", sans-serif;
+    color: #453f3a;
+    font-size: 36px;
+    font-weight: 500;
+  }
+
+  &__field {
+    margin-top: 20px;
+
+    input {
+      width: 100%;
+    }
+  }
+
+  &__text {
+    color: #89817c;
+    font-size: 20px;
+  }
+
+  @media (max-width: 1024px) {
+    &__title {
+      font-size: 30px;
+    }
+
+    &__text {
+      font-size: 18px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    max-width: 550px;
+
+    &__content {
+      padding-left: 85px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    max-width: none;
+    padding: 0 0 124px;
+    transform: translateY(100%);
+
+    &.active {
+      transform: translateY(0);
+    }
+
+    &__close-btn {
+      top: auto;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &__content {
+      padding: 20px;
+    }
+
+    &__title {
+      font-size: 24px;
+    }
+
+    &__field {
+      margin-top: 24px;
+
+      & + & {
+        margin-top: 20px;
+      }
+    }
+
+    &__text {
+      font-size: 16px;
+    }
+  }
+}

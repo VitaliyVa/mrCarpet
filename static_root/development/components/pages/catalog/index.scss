@@ -1,0 +1,157 @@
+.catalog {
+  &_items {
+    padding: 66px 0 104px;
+  }
+
+  &_section {
+    padding-bottom: 104px;
+
+    &_top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ebeae8;
+      border-radius: 10px;
+
+      &_img {
+        width: 25%;
+        padding: 0 5%;
+
+        &-left {
+          align-self: flex-start;
+        }
+
+        &-right {
+          align-self: flex-end;
+        }
+
+        img {
+          width: 100%;
+          height: 400px;
+          object-fit: cover;
+        }
+      }
+
+      &_center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 50%;
+        padding: 115px 0;
+
+        h2 {
+          font-weight: 400;
+          font-size: 72px;
+          line-height: 96%;
+          color: #453f3a;
+          text-align: center;
+          margin: 0 0 30px;
+        }
+      }
+    }
+
+    &_bottom {
+      margin-top: 20px;
+    }
+  }
+
+  @media (max-width: 1440px) {
+    &_section {
+      &_top {
+        &_img {
+          img {
+            height: 320px;
+          }
+        }
+
+        &_center {
+          h2 {
+            font-size: 52px;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    &_items {
+      padding-bottom: 80px;
+    }
+
+    &_section {
+      padding-bottom: 80px;
+
+      &_top {
+        &_img {
+          img {
+            height: 240px;
+          }
+        }
+
+        &_center {
+          padding: 90px 0;
+
+          h2 {
+            font-size: 40px;
+            margin: 0 0 20px;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 720px) {
+    &_items {
+      padding-bottom: 24px;
+    }
+
+    &_section {
+      padding-bottom: 48px;
+
+      &_top {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        &_img {
+          width: 100%;
+          padding: 0 17%;
+
+          &-left {
+            align-self: center;
+          }
+
+          &-right {
+            display: none;
+          }
+
+          img {
+            height: 260px;
+          }
+        }
+
+        &_center {
+          padding: 20px 0 32px;
+
+          h2 {
+            font-size: 36px;
+            margin: 0 0 15px;
+          }
+        }
+      }
+
+      &_bottom {
+        margin-top: 12px;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    &_center {
+      .info_for_product_btn {
+        max-width: 202px;
+        width: 100%;
+      }
+    }
+  }
+}

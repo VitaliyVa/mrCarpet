@@ -1,0 +1,115 @@
+.repair {
+  &__container {
+    padding-top: 80px;
+  }
+
+  &__items {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    max-width: 1108px;
+    margin: 80px auto 0;
+  }
+
+  &__carpet-block {
+    display: flex;
+    flex-direction: column;
+    max-width: 524px;
+
+    &-description {
+      box-sizing: content-box;
+      max-width: 390px;
+    }
+
+    &-img {
+      img {
+        width: 100%;
+        border-radius: 4px;
+        box-shadow: 0px 20px 60px 0px rgba(69, 63, 58, 0.3);
+      }
+    }
+
+    &:nth-child(odd) {
+      .repair__carpet-block-description {
+        padding: 78px 0 104px 90px;
+      }
+    }
+
+    &:nth-child(even) {
+      flex-direction: column-reverse;
+
+      .repair__carpet-block-description {
+        align-self: flex-end;
+        padding: 104px 90px 0 0;
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    &__container {
+      padding-top: 48px;
+    }
+
+    &__items {
+      gap: 48px;
+      max-width: none;
+      margin: 40px auto 0;
+    }
+
+    &__carpet-block {
+      &:nth-child(odd) {
+        .repair__carpet-block-description {
+          padding: 48px 0 74px 60px;
+        }
+      }
+
+      &:nth-child(even) {
+        .repair__carpet-block-description {
+          padding: 74px 60px 0 0;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 720px) {
+    &__container {
+      padding-top: 32px;
+    }
+
+    &__items {
+      flex-direction: column;
+      align-items: center;
+      margin: 16px auto 0;
+    }
+
+    &__carpet-block {
+      max-width: none;
+
+      &-description {
+        // box-sizing: content-box;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      &-img {
+        max-width: 350px;
+        margin-top: 32px;
+      }
+
+      &:nth-child(odd) {
+        .repair__carpet-block-description {
+          padding: 0;
+        }
+      }
+
+      &:nth-child(even) {
+        flex-direction: column;
+
+        .repair__carpet-block-description {
+          align-self: initial;
+          padding: 0;
+        }
+      }
+    }
+  }
+}

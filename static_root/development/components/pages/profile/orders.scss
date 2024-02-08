@@ -1,0 +1,509 @@
+.orders {
+  max-width: 1295px;
+  width: 100%;
+
+  &__items {
+    margin-top: 24px;
+  }
+
+  &__block {
+    width: 100%;
+    padding: 10px 20px;
+    border: 1px solid #ebeae8;
+    border-radius: 10px;
+    transition: all 0.25s;
+
+    &.active {
+      padding: 22px 20px;
+
+      .orders__block-head-center,
+      .orders__block-products-head {
+        max-height: 0;
+        transform: scale(0);
+      }
+
+      .orders__block-chevron-icon {
+        img {
+          transform: rotate(180deg);
+        }
+      }
+
+      .orders__block-body {
+        margin-top: 24px;
+      }
+    }
+
+    &::before,
+    &::after {
+      content: none;
+    }
+
+    & + & {
+      margin-top: 8px;
+    }
+
+    &-head {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+
+      &-left {
+        width: 50%;
+        margin-right: 20px;
+
+        &-top {
+          display: flex;
+          align-items: center;
+          font-size: 14px;
+          white-space: nowrap;
+        }
+      }
+
+      &-center {
+        min-width: 316px;
+        width: 25%;
+        max-height: 88px;
+        transition: all 0.3s ease-in-out;
+      }
+
+      &-right {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-width: 316px;
+        width: 25%;
+      }
+    }
+
+    &-date {
+      &-key {
+        margin: 2px;
+      }
+    }
+
+    &-status {
+      margin-top: 2px;
+    }
+
+    &-total-sum {
+      &-title {
+        font-size: 14px;
+      }
+
+      &-value {
+        margin-top: 2px;
+      }
+    }
+
+    &-products {
+      &-head {
+        display: flex;
+        max-height: 88px;
+        transition: all 0.3s ease-in-out;
+      }
+
+      &-body {
+        .orders__block-products {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 12px;
+        }
+      }
+
+      &-title {
+        line-height: 130%;
+      }
+    }
+
+    &-product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      column-gap: 24px;
+
+      &-left {
+        a:hover {
+          img {
+            transform: scale(1.1);
+          }
+        }
+      }
+
+      &-img {
+        width: 64px;
+        height: 88px;
+
+        img {
+          width: 100%;
+          height: 100%;
+          transition: all 0.3s;
+        }
+      }
+
+      &-center {
+        width: 100%;
+
+        a {
+          transition: all 0.2s;
+          &:hover {
+            color: #a46c46;
+          }
+        }
+      }
+
+      &-title {
+        line-height: 130%;
+      }
+
+      &-sizes {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+      }
+
+      &-right {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        max-width: 226px;
+        width: 100%;
+
+        &-item {
+          width: 33.3%;
+          text-align: center;
+          font-weight: 450;
+        }
+      }
+
+      &-price {
+        &-current {
+          margin: 4px 0;
+        }
+
+        &-old {
+          text-decoration: line-through;
+        }
+      }
+
+      &-quantity {
+        &-value {
+          margin-top: 4px;
+        }
+      }
+
+      &-sum {
+        &-value {
+          margin-top: 4px;
+        }
+      }
+    }
+
+    &-chevron-icon {
+      max-width: 24px;
+      max-height: 24px;
+      margin-left: 8px;
+      cursor: pointer;
+
+      img {
+        transition: all 0.1s;
+      }
+    }
+
+    &-body {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: row;
+      color: #453f3a;
+      font-size: 14px;
+      transition: all 0.3s;
+
+      &-left {
+        width: 50%;
+        margin-right: 20px;
+      }
+
+      &-right {
+        width: 50%;
+        min-width: 632px;
+      }
+
+      &-details {
+        margin-top: 24px;
+
+        p {
+          display: flex;
+          justify-content: space-between;
+        }
+      }
+    }
+
+    &-info {
+      line-height: 130%;
+
+      &-items {
+        margin-top: 12px;
+      }
+
+      &-item {
+        & + & {
+          margin-top: 8px;
+        }
+      }
+    }
+
+    &-delivery {
+      margin-top: 12px;
+    }
+
+    &-total-price {
+      margin-top: 13.5px;
+
+      &-value {
+        font-size: 16px;
+      }
+    }
+  }
+
+  @media (max-width: 1300px) {
+    max-width: none;
+
+    &__block {
+      &-head {
+        &-center {
+          min-width: auto;
+        }
+
+        &-right {
+          min-width: auto;
+          margin-left: 20px;
+        }
+      }
+
+      &-products {
+        &-body {
+          .orders__block-products {
+            gap: 12px;
+          }
+        }
+      }
+
+      &-product {
+        flex-wrap: wrap;
+        gap: 10px;
+
+        &-center {
+          width: calc(100% - 74px);
+        }
+
+        &-right {
+          max-width: none;
+          width: 100%;
+        }
+      }
+
+      &-body {
+        &-left {
+          width: calc(50% - 20px);
+        }
+
+        &-right {
+          min-width: auto;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1200px) {
+    &__block {
+      &-head {
+        justify-content: space-between;
+        height: 50px;
+
+        &-center {
+          width: calc(50% - 32px);
+        }
+
+        &-right {
+          width: auto;
+          margin-left: 0;
+
+          .orders__block-products-head {
+            display: none;
+          }
+        }
+      }
+
+      &-total-sum {
+        text-align: end;
+      }
+    }
+  }
+
+  @media (max-width: 1100px) {
+    &__block {
+      &-body {
+        flex-direction: column;
+
+        &-left {
+          width: 100%;
+          margin: 0 0 16px;
+        }
+
+        &-right {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 720px) {
+    margin: 20px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #ebeae8;
+
+    &__items {
+      margin-top: 12px;
+    }
+
+    &__block {
+      padding: 10px;
+
+      &.active {
+        padding: 12px 10px;
+
+        .orders__block-body {
+          margin-top: 12px;
+        }
+      }
+
+      &-head {
+        height: 42px;
+
+        &-left {
+          &-top {
+            font-size: 12px;
+          }
+        }
+      }
+
+      &-status {
+        font-size: 14px;
+      }
+
+      &-total-sum {
+        &-title {
+          font-size: 12px;
+        }
+
+        &-value {
+          font-size: 14px;
+        }
+      }
+
+      &-products {
+        &-body {
+          .orders__block-products {
+            margin-top: 8px;
+          }
+        }
+      }
+
+      &-product {
+        &-title {
+          font-size: 14px;
+        }
+
+        &-price {
+          &-current {
+            margin: 2px 0;
+            font-size: 14px;
+          }
+        }
+
+        &-quantity {
+          &-value {
+            margin-top: 2px;
+            font-size: 14px;
+          }
+        }
+
+        &-sum {
+          &-value {
+            margin-top: 2px;
+            font-size: 14px;
+          }
+        }
+      }
+
+      &-chevron-icon {
+        max-width: 20px;
+        max-height: 20px;
+        margin-left: 6px;
+
+        img {
+          width: 100%;
+          height: 100%;
+        }
+      }
+
+      &-body {
+        font-size: 12px;
+
+        &-left {
+          margin: 0 0 12px;
+        }
+
+        &-details {
+          margin-top: 20px;
+        }
+      }
+
+      &-info {
+        &-items {
+          margin-top: 8px;
+        }
+      }
+
+      &-delivery {
+        margin-top: 10px;
+      }
+
+      &-total-price {
+        margin-top: 12px;
+
+        &-value {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 500px) {
+    margin: 16px 0 0;
+    padding-top: 12px;
+  }
+
+  @media (max-width: 400px) {
+    &__block {
+      &-head {
+        height: 42px;
+
+        &-left {
+          &-top {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+        }
+      }
+
+      &-date {
+        margin-top: 2px;
+        &-key {
+          margin: 0 2px 0 0;
+        }
+      }
+    }
+  }
+}
