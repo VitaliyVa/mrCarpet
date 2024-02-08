@@ -18,3 +18,6 @@ yarn.lock
 *.pyc
 *.log
 *.vscode/*
+*.env
+.env
+/media/*

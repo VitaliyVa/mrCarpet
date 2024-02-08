@@ -1,0 +1,69 @@
+.blog {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+
+  &_item {
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+    width: 32%;
+
+    &:hover {
+      transform: scale(1.02);
+    }
+
+    &_img {
+      width: 100%;
+
+      img {
+        object-fit: cover;
+        width: 100%;
+        height: 230px;
+        border-radius: 8px;
+      }
+    }
+
+    &_info {
+      padding: 0 8px;
+    }
+
+    &_title {
+      margin: 16px 0 0;
+      color: #453f3a;
+      font-size: 22px;
+      line-height: 130%;
+      font-weight: 400;
+    }
+
+    &_text {
+      font-size: 20px;
+      line-height: 130%;
+      color: #89817c;
+      margin-top: 8px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    &_item {
+      &_img {
+        img {
+          height: 188px;
+        }
+      }
+
+      &_info {
+        padding: 0 10px;
+      }
+
+      &_title {
+        margin: 12px 0 0;
+        font-size: 16px;
+      }
+
+      &_text {
+        font-size: 14px;
+      }
+    }
+  }
+}

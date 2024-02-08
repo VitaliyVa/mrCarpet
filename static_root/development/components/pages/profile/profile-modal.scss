@@ -1,0 +1,63 @@
+.profile-modal {
+  &__container {
+    max-width: 440px;
+  }
+
+  &__form {
+    &-change-password {
+      margin-top: 60px;
+    }
+
+    &-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    &-field {
+      max-width: 210px;
+      margin: 0 !important;
+    }
+
+    &-buttons {
+      margin-top: 40px;
+    }
+  }
+
+  &__save-btn {
+    max-width: 198px;
+  }
+
+  @media (max-width: 720px) {
+    &__container {
+      max-width: none;
+    }
+
+    &__form {
+      &-change-password {
+        margin-top: 48px;
+      }
+
+      &-field {
+        max-width: none;
+      }
+
+      &-buttons {
+        margin-top: 32px;
+      }
+    }
+
+    &__save-btn {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 500px) {
+    &__form {
+      &-fields {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+    }
+  }
+}
