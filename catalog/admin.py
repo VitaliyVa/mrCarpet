@@ -12,6 +12,7 @@ from .models import (
     ProductReview,
     RelatedProduct,
     ProductSale,
+    ProductColor,
 )
 
 
@@ -51,6 +52,14 @@ class ProductAdmin(admin.ModelAdmin):
         model = Product
 
 
+class ProductColorAdmin(admin.ModelAdmin):
+    fields = ["title", "color"]
+    list_display = [
+        "title",
+        "color",
+    ]
+
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductCategory)
 admin.site.register(Favourite, FavouriteAdmin)
@@ -61,3 +70,4 @@ admin.site.register(Size)
 admin.site.register(ProductAttribute)
 admin.site.register(ProductReview)
 admin.site.register(ProductSale)
+admin.site.register(ProductColor, ProductColorAdmin)

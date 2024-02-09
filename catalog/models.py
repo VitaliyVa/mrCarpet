@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.urls import reverse
@@ -25,6 +26,11 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         blank=True,
         to="catalog.ProductCategory",
         related_name="products",
+    )
+    colors = models.ManyToManyField(
+        verbose_name="Кольори",
+        blank=True,
+        to="catalog.ProductColor",
     )
     has_discount = models.BooleanField(default=False)
     # discount = models.IntegerField(blank=True, null=True)
@@ -77,6 +83,17 @@ class Size(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ProductColor(AbstractTitleSlug):
+    color = ColorField(verbose_name="Колір", blank=False, unique=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Колір"
+        verbose_name_plural = "Кольори"
 
 
 class ProductAttribute(models.Model):
