@@ -55,7 +55,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         return self.title
 
     def get_absolute_url(self):
-        return reverse("product", args=(self.slug, ))
+        return reverse("product", args=(self.slug,))
 
 
 class ProductCategory(AbstractTitleSlug):
@@ -114,7 +114,11 @@ class ProductAttribute(models.Model):
         null=True,
     )
     discount = models.IntegerField(
-        verbose_name="Знижка", blank=True, null=True, help_text="Знижка у відсотках"
+        verbose_name="Знижка",
+        blank=True,
+        null=True,
+        help_text="Знижка у відсотках",
+        validators=[MaxValueValidator(100)],
     )
     price = models.IntegerField(verbose_name="Ціна", blank=True, null=True)
     quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
@@ -134,7 +138,7 @@ class ProductAttribute(models.Model):
             if total_price % 1 == 0:
                 return int(total_price)
             else:
-                return total_price
+                return "{:.2f}".format(total_price)
         else:
             return self.price
 
@@ -364,7 +368,9 @@ class ProductReview(AbstractCreatedUpdated):
     )
     name = models.CharField(max_length=150, blank=False, null=False)
     content = models.TextField()
-    rating = models.IntegerField(validators=[MaxValueValidator(5)], blank=False, null=False)
+    rating = models.IntegerField(
+        validators=[MaxValueValidator(5)], blank=False, null=False
+    )
 
     class Meta:
         verbose_name = "Відгук"
@@ -381,7 +387,7 @@ class RelatedProduct(models.Model):
         null=False,
         to=Product,
         on_delete=models.CASCADE,
-        related_name="related_products"
+        related_name="related_products",
     )
     product = models.ForeignKey(
         verbose_name="Схожий товар",
@@ -389,7 +395,7 @@ class RelatedProduct(models.Model):
         null=False,
         to=Product,
         on_delete=models.CASCADE,
-        related_name="related_to_products"
+        related_name="related_to_products",
     )
 
     def __str__(self):
@@ -409,4 +415,3 @@ class ProductSale(AbstractCreatedUpdated):
     class Meta:
         verbose_name = "Акція"
         verbose_name_plural = "Акції"
-
