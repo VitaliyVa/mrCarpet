@@ -1,5 +1,5 @@
 server{
-    server_name 138.197.188.19;
+    server_name mrcarpet.shop;
     client_max_body_size 100M;
     location = /favicon.ico { access_log off; log_not_found off; }
     location /media {
