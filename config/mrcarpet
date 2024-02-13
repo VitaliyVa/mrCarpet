@@ -34,3 +34,20 @@ server{
 
 
 }
+
+server{
+    server_name www.mrcarpet.shop;
+    client_max_body_size 100M;
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /media {
+        alias /home/carpet/projects/carpet/src/media;
+    }
+    location /static {
+        alias /home/carpet/projects/carpet/src/static_root;
+    }
+    location / {
+        uwsgi_pass unix:/home/carpet/projects/carpet/src/config/mrcarpet.sock;
+        include /etc/nginx/uwsgi_params;
+    }
+
+}
