@@ -113,6 +113,7 @@ def create_warehouses():
     for settlement in settlements:
         properties = {"CityRef": settlement.ref}
         response = get_response("Address", "getWarehouses", properties)
+        print(response["data"])
         if response["data"]:
             for obj in response["data"]:
                 title = obj.get("Description")
