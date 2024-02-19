@@ -24,5 +24,5 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
         serializer.validated_data["total_price"] = cart.get_total_price()
         order = Order.objects.create(**serializer.validated_data)
         cart.order = order
-        cart.ordered = True
+        # cart.ordered = True
         return Response(serializer.data, status=status.HTTP_201_CREATED)

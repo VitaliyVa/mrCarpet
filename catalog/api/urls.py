@@ -18,6 +18,7 @@ urlpatterns = [
     # path('add_to_favourites/', views.FavouriteProductView.as_view(), name='add-to-favourites'),
     # path('add_to_favourites/<int:pk>', views.FavouriteProductView.as_view(), name='remove-from-favourites'),
     path('', include(router.urls)),
+    path('add-promocode/', views.apply_promocode, name="promocode")
 ]
 
 if settings.DEBUG:

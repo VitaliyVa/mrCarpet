@@ -4,6 +4,9 @@ from django.db import models
 from django.urls import reverse
 import decimal
 
+from django.utils import timezone
+
+from cart.models import CartProduct
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
 from users.models import CustomUser
 
@@ -96,6 +99,23 @@ class ProductColor(AbstractTitleSlug):
         verbose_name_plural = "Кольори"
 
 
+class ProductWidth(models.Model):
+    width = models.DecimalField(
+        verbose_name="Ширина продукта",
+        max_digits=4,
+        decimal_places=1,
+        blank=False,
+        null=False,
+    )
+
+    class Meta:
+        verbose_name = "Ширина продукта"
+        verbose_name_plural = "Ширина продукта"
+
+    def __str__(self):
+        return str(self.width)
+
+
 class ProductAttribute(models.Model):
     product = models.ForeignKey(
         verbose_name="Товар",
@@ -123,13 +143,49 @@ class ProductAttribute(models.Model):
     price = models.IntegerField(verbose_name="Ціна", blank=True, null=True)
     quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
     is_new = models.BooleanField(verbose_name="Новинка", default=True)
+    custom_attribute = models.BooleanField(
+        verbose_name="Кастомна варіація",
+        help_text="Позначати тільки якщо це кастомний варіант!",
+        default=False,
+    )
+    min_len = models.DecimalField(
+        verbose_name="Мінімальна довжина",
+        help_text="Позначати тільки якщо це кастомний варіант!",
+        max_digits=4,
+        decimal_places=1,
+        blank=True,
+        null=True,
+    )
+    max_len = models.DecimalField(
+        verbose_name="Максимальна довжина",
+        help_text="Позначати тільки якщо це кастомний варіант!",
+        max_digits=4,
+        decimal_places=1,
+        blank=True,
+        null=True,
+    )
+    width = models.ManyToManyField(
+        verbose_name="Ширина",
+        help_text="Позначати тільки якщо це кастомний варіант!",
+        to=ProductWidth,
+        related_name="widths",
+        blank=True,
+    )
+    custom_price = models.DecimalField(
+        verbose_name="Ціна за метр квадратний",
+        help_text="Позначати тільки якщо це кастомний варіант!",
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Варіація"
         verbose_name_plural = "Варіації"
 
     def __str__(self):
-        return f"{self.product.title} - {self.size.title}"
+        return f"{self.product.title} - {self.size.title if self.size else 'кастомна варіація'}"
 
     def get_total_price(self):
         if self.discount:
@@ -137,8 +193,7 @@ class ProductAttribute(models.Model):
             total_price = self.price - (self.price * discount)
             if total_price % 1 == 0:
                 return int(total_price)
-            else:
-                return "{:.2f}".format(total_price)
+            return float("{:.2f}".format(total_price))
         else:
             return self.price
 
@@ -153,7 +208,87 @@ class ProductAttribute(models.Model):
         discount = super().save(*args, **kwargs)
         self.product.has_discount = self.set_discount()
         self.product.save()
+        if self.custom_attribute:
+            cart_products = CartProduct.objects.filter(product_attr=self)
+            if cart_products:
+                for cart_product in cart_products:
+                    cart_product.delete()
         return discount
+
+
+# class CustomProductAttribute(models.Model):
+#     product = models.ForeignKey(
+#         verbose_name="Товар",
+#         to="catalog.Product",
+#         on_delete=models.CASCADE,
+#         related_name="custom_product_attr",
+#         blank=True,
+#         null=True,
+#     )
+#     min_len = models.DecimalField(
+#         verbose_name="Мінімальна довжина",
+#         max_digits=4,
+#         decimal_places=1,
+#         blank=False,
+#         null=False,
+#     )
+#     max_len = models.DecimalField(
+#         verbose_name="Максимальна довжина",
+#         max_digits=4,
+#         decimal_places=1,
+#         blank=False,
+#         null=False,
+#     )
+#     width = models.ManyToManyField(
+#         verbose_name="Ширина",
+#         to=ProductWidth,
+#         related_name="widths",
+#         blank=False,
+#     )
+#     discount = models.IntegerField(
+#         verbose_name="Знижка",
+#         blank=True,
+#         null=True,
+#         help_text="Знижка у відсотках",
+#         validators=[MaxValueValidator(100)],
+#     )
+#     price = models.IntegerField(
+#         verbose_name="Ціна за квадратний метр", blank=True, null=True
+#     )
+#     quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
+#     is_new = models.BooleanField(verbose_name="Новинка", default=True)
+#
+#     class Meta:
+#         verbose_name = "Кастомна варіація"
+#         verbose_name_plural = "Кастомні варіації"
+#
+#     def __str__(self):
+#         return f"{self.product.title} - кастомний розмір"
+#
+#     def get_total_price(self, width, length):
+#         if self.discount:
+#             discount = self.discount / 100
+#             raw_price = width * length * self.price
+#             total_price = raw_price - (raw_price * discount)
+#             if total_price % 1 == 0:
+#                 return int(total_price)
+#             else:
+#                 return "{:.2f}".format(total_price)
+#         else:
+#             return self.price
+#
+#     def set_discount(self):
+#         for prod in self.product.product_attr.all():
+#             if prod.discount:
+#                 return True
+#             else:
+#                 return False
+#
+#     def save(self, *args, **kwargs):
+#         discount = super().save(*args, **kwargs)
+#         self.product.has_discount = self.set_discount()
+#         self.product.save()
+#         return discount
 
 
 # class SizePrice(models.Model):
@@ -415,3 +550,26 @@ class ProductSale(AbstractCreatedUpdated):
     class Meta:
         verbose_name = "Акція"
         verbose_name_plural = "Акції"
+
+
+class PromoCode(AbstractCreatedUpdated):
+    code = models.CharField(
+        verbose_name="Код",
+        max_length=115,
+        blank=False,
+        null=False
+    )
+    end_time = models.DateTimeField(verbose_name="Дата закінчення")
+
+    class Meta:
+        verbose_name = "Промокод",
+        verbose_name_plural = "Промокоди"
+
+    def __str__(self):
+        return self.code
+
+    @property
+    def is_active(self):
+        if self.end_time < timezone.now():
+            return False
+        return True

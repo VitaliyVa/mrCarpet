@@ -35,10 +35,16 @@
                             <div class="basket_item__center">
                                 <div class="basket_item__center-block basket_item__price-block">
                                     <span> Ціна </span>
-                                    <p class="cart_item_price medium color_gold">{{ cart_product.product_attr.get_total_price }} грн</p>
+                                    <p class="cart_item_price medium color_gold">{% if cart_product.product_attr.custom_attribute %}{{ cart_product.total_price }} грн{% else %}{{ cart_product.product_attr.get_total_price }} грн{% endif %}</p>
+                                    {% if cart_product.product_attr.discount and not cart_product.product_attr.custom_attribute %}
                                     <p class="cart_item_old_price medium color_black_sub">
-                                        {{ cart_product.product_attr.price }} грн
+                                        {% if cart_product.product_attr.custom_attribute %}
+                                            {{ cart_product.total_price }} грн
+                                        {% else %}
+                                            {{ cart_product.product_attr.price }} грн
+                                        {% endif %}
                                     </p>
+                                    {% endif %}
                                 </div>
                                 <div class="basket_item__center-block basket_item__quantity-block">
                                     <span>Кількість</span>

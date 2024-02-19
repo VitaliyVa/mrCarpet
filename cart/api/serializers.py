@@ -1,16 +1,29 @@
 from rest_framework import serializers
 
-from catalog.models import ProductAttribute
+from catalog.models import ProductAttribute, ProductWidth
 from ..models import Cart, CartProduct
 
 
+class ProductWidthSerializer(serializers.ModelSerializer):
+    def get_choices(self):
+        return [value.width for value in ProductWidth.objects.all()]
+    class Meta:
+        model = ProductWidth
+        fields = ["width"]
+
+
 class CartProductSerializer(serializers.ModelSerializer):
-    product_attr = serializers.PrimaryKeyRelatedField(queryset=ProductAttribute.objects.all())
+    product_attr = serializers.PrimaryKeyRelatedField(
+        queryset=ProductAttribute.objects.all()
+    )
     cart = serializers.PrimaryKeyRelatedField(queryset=Cart.objects.all())
+    width = serializers.PrimaryKeyRelatedField(queryset=ProductWidth.objects.all(), write_only=True, required=False)
+    length = serializers.DecimalField(max_digits=5, decimal_places=1, write_only=True, required=False)
+    total_price = serializers.CharField(read_only=True)
 
     class Meta:
         model = CartProduct
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CartSerializer(serializers.ModelSerializer):
