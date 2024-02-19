@@ -1,8 +1,8 @@
 // script interface
-import "../components/common_componentc/reset/index";
-import "../components/common_componentc/normalize/index";
-import "../components/common_componentc/header/index";
-import "../components/common_componentc/footer/index";
+import "../components/common_components/reset/index";
+import "../components/common_components/normalize/index";
+import "../components/common_components/header/index";
+import "../components/common_components/footer/index";
 
 import "../components/interface/variables/index";
 import "../components/interface/button/index";

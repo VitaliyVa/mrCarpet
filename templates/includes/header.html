@@ -6,8 +6,7 @@
           <img src="/static/utils/assets/header/clock.svg" alt="" />
           <div class="header_top_panel_clock_info">
             <span class="small color_black">9:00 – 18:00</span>
-            <span
-              class="header_top_panel_clock_subtext small color_black_sub"
+            <span class="header_top_panel_clock_subtext small color_black_sub"
               >(сб-нд вихідні)</span
             >
           </div>
@@ -16,7 +15,9 @@
       <nav class="header_top_panel_nav__block">
         <ul class="header_top_panel_nav_list">
           <li>
-            <a class="header_top_panel_nav_link small color_black" href="{% url 'about' %}"
+            <a
+              class="header_top_panel_nav_link small color_black"
+              href="{% url 'about' %}"
               >Про магазин</a
             >
           </li>
@@ -26,12 +27,16 @@
             >
           </li>
           <li>
-            <a class="header_top_panel_nav_link small color_black" href="{% url 'blog' %}"
+            <a
+              class="header_top_panel_nav_link small color_black"
+              href="{% url 'blog' %}"
               >Блог</a
             >
           </li>
           <li>
-            <a class="header_top_panel_nav_link small color_black" href="{% url 'faq' %}"
+            <a
+              class="header_top_panel_nav_link small color_black"
+              href="{% url 'faq' %}"
               >Питання / Відповідь</a
             >
           </li>
@@ -48,19 +53,16 @@
     </div>
     <div class="header_bottom_panel__block">
       <div class="header_bottom_panel_left_content">
-        <a href="{% url 'index' %}" class="header_bottom_panel_logo animate_header_4">
+        <a
+          href="{% url 'index' %}"
+          class="header_bottom_panel_logo animate_header_4"
+        >
           <img class="white" src="/static/utils/assets/Logo.svg" alt="" />
-          <img
-            class="black"
-            src="/static/utils/assets/LogoBlack.svg"
-            alt=""
-          />
+          <img class="black" src="/static/utils/assets/LogoBlack.svg" alt="" />
         </a>
         <div class="header_close_menu animate_header_5">
           <div class="cross"></div>
-          <div class="header_close_menu_title medium color_gold">
-            Закрити
-          </div>
+          <div class="header_close_menu_title medium color_gold">Закрити</div>
         </div>
         <div class="header_bottom_panel_catalog animate_header_3">
           <div class="header_bottom_panel_catalog_lines">
@@ -112,9 +114,7 @@
             {% endfor %}
           </div>
           <div class="header_bottom_panel_catalog_bg catalog_bg_left"></div>
-          <div
-            class="header_bottom_panel_catalog_bg catalog_bg_right"
-          ></div>
+          <div class="header_bottom_panel_catalog_bg catalog_bg_right"></div>
         </div>
         <div class="header_widget_wrapper">
           <div class="header__search">
@@ -141,10 +141,7 @@
                   <div class="header__search-product-left">
                     <div class="header__search-product-img">
                       <a href="#">
-                        <img
-                          src="/static/utils/assets/img.png"
-                          alt="product"
-                        />
+                        <img src="/static/utils/assets/img.png" alt="product" />
                       </a>
                     </div>
                     <div class="header__search-product-info">
@@ -319,7 +316,9 @@
               </defs>
             </svg>
 
-            <span class="header_bottom_panel_item_count"> {{ cart_products|length }} </span>
+            <span class="header_bottom_panel_item_count">
+              {{ cart_products|length }}
+            </span>
           </span>
           <span class="header_bottom_panel_item_label small color_black">
             Кошик
@@ -349,10 +348,7 @@
           </span>
         </a> -->
 
-        <button
-          class="header_mob_icon_item modal_open"
-          data-href="login-modal"
-        >
+        <button class="header_mob_icon_item modal_open" data-href="login-modal">
           <span class="header_mob_icon">
             <svg
               width="18"
@@ -367,9 +363,7 @@
               />
             </svg>
           </span>
-          <span class="header_mob_icon_text small color_white">
-            Увійти
-          </span>
+          <span class="header_mob_icon_text small color_white"> Увійти </span>
         </button>
 
         <a href="#" class="header_mob_icon_item">
@@ -392,15 +386,16 @@
 
             <span class="header_mob_icon_count small color_white">4</span>
           </span>
-          <span class="header_mob_icon_text small color_white">
-            Вибране
-          </span>
+          <span class="header_mob_icon_text small color_white"> Вибране </span>
         </a>
       </div>
       <div class="header_catalog_scroll">
         <div class="catalog_item__block">
           {% for category in categories %}
-          <a href="{{ category.get_absolute_url }}" class="catalog_item hvr-curl-bottom-left">
+          <a
+            href="{{ category.get_absolute_url }}"
+            class="catalog_item hvr-curl-bottom-left"
+          >
             <span class="catalog_item_text small color_black"
               >{{ category.title }}</span
             >
@@ -416,9 +411,7 @@
       </div>
       <div class="header_info__block">
         <div class="header_info_left">
-          <div class="header_info_title medium color_white">
-            Для покупця
-          </div>
+          <div class="header_info_title medium color_white">Для покупця</div>
           <a href="#" class="header_info_link small color_white"
             >Про компанію</a
           >
@@ -427,9 +420,7 @@
           <a href="#" class="header_info_link small color_white"
             >Питання / Відповідь</a
           >
-          <a href="#" class="header_info_link small color_white"
-            >Контакти</a
-          >
+          <a href="#" class="header_info_link small color_white">Контакти</a>
         </div>
         <div class="header_info_right">
           <div class="header_info_title medium color_white">
@@ -438,9 +429,7 @@
           <a href="#" class="header_info_link small color_white"
             >Доставка і оплата</a
           >
-          <a href="#" class="header_info_link small color_white"
-            >Повернення</a
-          >
+          <a href="#" class="header_info_link small color_white">Повернення</a>
           <a href="#" class="header_info_link small color_white"
             >Умови і положення</a
           >
@@ -466,14 +455,10 @@
         <div class="modal__content">
           <div class="login-modal__container">
             <div class="login-modal__logo modal__logo">
-              <img
-                src="/static/utils/assets/LogoBlack.svg"
-                alt="mr.Carpet"
-              />
+              <img src="/static/utils/assets/LogoBlack.svg" alt="mr.Carpet" />
             </div>
 
             <form
-              action="/login"
               class="login-modal__form authorization__form validation__block"
             >
               <h3 class="login-modal__form-title modal__title">
@@ -518,9 +503,7 @@
                   Увійти в кабінет покупця
                 </button>
 
-                <button
-                  class="login-modal__forgot-password-btn btn-underline"
-                >
+                <button class="login-modal__forgot-password-btn btn-underline">
                   Я забув (-ла) свій пароль
                 </button>
               </div>
@@ -543,26 +526,20 @@
       </div>
     </div>
 
-    <div class="modal-overlay">
-      <div class="register-modal modal modal__block">
-        <button
-          class="register-modal__close-btn modal__close-btn modal_close"
-        >
+    <div class="modal-overlay active">
+      <div class="register-modal modal modal__block active">
+        <button class="register-modal__close-btn modal__close-btn modal_close">
           <img src="/static/utils/assets/close.svg" alt="close" />
         </button>
 
         <div class="modal__content">
           <div class="register-modal__container">
             <div class="register-modal__logo modal__logo">
-              <img
-                src="/static/utils/assets/LogoBlack.svg"
-                alt="mr.Carpet"
-              />
+              <img src="/static/utils/assets/LogoBlack.svg" alt="mr.Carpet" />
             </div>
 
             <form
-              action="/register"
-              class="register-modal__form authorization__form"
+              class="register-modal__form authorization__form validation__block"
             >
               <h3 class="register-modal__form-title modal__title">
                 Це ваш перший візит?
@@ -574,10 +551,12 @@
               </p>
 
               <div class="register-modal__form-fields">
-                <div class="register-modal__form-field modal__field --full">
+                <div
+                  class="register-modal__form-field modal__field validation_container --full"
+                >
                   <input
                     id="email"
-                    class="input-transparent"
+                    class="input-transparent validation_input"
                     name="email"
                     type="email"
                     data-type="email"
@@ -586,11 +565,13 @@
                   />
                 </div>
 
-                <div class="register-modal__form-field modal__field">
+                <div
+                  class="register-modal__form-field modal__field validation_container"
+                >
                   <input
-                    id="firstName"
-                    class="input-transparent"
-                    name="firstName"
+                    id="first_name"
+                    class="input-transparent validation_input"
+                    name="first_name"
                     type="text"
                     data-type="name"
                     placeholder="Ім’я"
@@ -598,21 +579,25 @@
                   />
                 </div>
 
-                <div class="register-modal__form-field modal__field">
+                <div
+                  class="register-modal__form-field modal__field validation_container"
+                >
                   <input
-                    id="lastName"
-                    class="input-transparent"
-                    name="lastName"
+                    id="last_name"
+                    class="input-transparent validation_input"
+                    name="last_name"
                     type="text"
                     data-type="name"
                     placeholder="Прізвище"
                   />
                 </div>
 
-                <div class="register-modal__form-field modal__field --full">
+                <div
+                  class="register-modal__form-field modal__field validation_container --full"
+                >
                   <input
                     id="phone"
-                    class="input-transparent"
+                    class="input-transparent validation_input"
                     name="phone"
                     type="tel"
                     data-type="phone"
@@ -620,10 +605,26 @@
                     required
                   />
                 </div>
+
+                <div
+                  class="register-modal__form-field modal__field validation_container --full"
+                >
+                  <input
+                    id="password"
+                    class="input-transparent validation_input"
+                    name="password"
+                    type="password"
+                    data-type="password"
+                    placeholder="Пароль"
+                    required
+                  />
+                </div>
               </div>
 
               <div class="register-modal__form-buttons">
-                <button class="register-modal__create-account-btn btn-gold">
+                <button
+                  class="register-modal__create-account-btn btn-gold validation_btn"
+                >
                   Створити обліковий запис
                 </button>
               </div>
@@ -658,9 +659,7 @@
 
   <div class="modal-overlay">
     <div class="contacts-modal modal modal__block">
-      <button
-        class="contacts-modal__close-btn modal__close-btn modal_close"
-      >
+      <button class="contacts-modal__close-btn modal__close-btn modal_close">
         <img src="/static/utils/assets/close.svg" alt="close" />
       </button>
 
@@ -673,8 +672,7 @@
               </h3>
 
               <p class="contacts-modal__description color_gold">
-                Зв'яжіться з нами для уточнення всіх питань, що Вас
-                цікавлять.
+                Зв'яжіться з нами для уточнення всіх питань, що Вас цікавлять.
               </p>
             </div>
 
@@ -695,21 +693,20 @@
                 class="contacts-modal__inst contacts-modal__info-details-item"
               >
                 <a href="https://www.instagram.com/">
-                  <img
-                    src="/static/utils/assets/inst.svg"
-                    alt="instagram"
-                  />
+                  <img src="/static/utils/assets/inst.svg" alt="instagram" />
                 </a>
               </div>
             </div>
           </div>
 
-          <form action="/contacts" class="contacts-modal__feedback-form">
+          <form class="contacts-modal__feedback-form validation__block">
             <div class="contacts-modal__feedback-form-fields">
-              <div class="contacts-modal__feedback-form-field modal__field">
+              <div
+                class="contacts-modal__feedback-form-field modal__field validation_container"
+              >
                 <input
                   id="name"
-                  class="input-transparent"
+                  class="input-transparent validation_input"
                   name="name"
                   type="text"
                   data-type="name"
@@ -718,10 +715,12 @@
                 />
               </div>
 
-              <div class="contacts-modal__feedback-form-field modal__field">
+              <div
+                class="contacts-modal__feedback-form-field modal__field validation_container"
+              >
                 <input
                   id="email"
-                  class="input-transparent"
+                  class="input-transparent validation_input"
                   name="email"
                   type="email"
                   data-type="email"
@@ -747,8 +746,8 @@
             </div>
             <div class="contacts-modal__feedback-form-info">
               <p class="contacts-modal__feedback-form-info-text">
-                Натискаючи кнопку “Залишити заявку” Ви погоджуєтеся на
-                обробку персональних даних
+                Натискаючи кнопку “Залишити заявку” Ви погоджуєтеся на обробку
+                персональних даних
               </p>
             </div>
           </form>
@@ -758,3 +757,59 @@
   </div>
   <!-- /.container -->
 </header>
+
+<div class="modal_loading__block">
+  <div class="loader"></div>
+</div>
+
+<div class="modal_accept__block">
+  <div class="modal_accept_svg">
+    <svg
+      color="green"
+      aria-hidden="true"
+      focusable="false"
+      data-prefix="fas"
+      data-icon="check"
+      role="img"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      class="svg-inline--fa fa-check fa-w-16 fa-3x"
+    >
+      <path
+        fill="currentColor"
+        d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+        class=""
+      ></path>
+    </svg>
+  </div>
+
+  <div class="modal_accept_text bold_title bold_title_2 color_green">
+    Все пройшло успішно
+  </div>
+</div>
+
+<div class="modal_bad__block">
+  <div class="modal_bad_svg">
+    <svg
+      color="red"
+      aria-hidden="true"
+      focusable="false"
+      data-prefix="fas"
+      data-icon="times"
+      role="img"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 352 512"
+      class="svg-inline--fa fa-times fa-w-11 fa-3x"
+    >
+      <path
+        fill="currentColor"
+        d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"
+        class=""
+      ></path>
+    </svg>
+  </div>
+
+  <div class="modal_bad_text bold_title bold_title_2 color_red">
+    Щось пішло не так, спробуйте пізніше!
+  </div>
+</div>

@@ -177,9 +177,12 @@ export default function validation(validation_btn) {
         required == "false"
       ) {
         remove_error(container);
+        validation_btn.removeAttribute("disabled");
       } else {
-        create_error(container, input_type[type].error.ua);
         count_error += 1;
+
+        create_error(container, input_type[type].error.ua);
+        validation_btn.setAttribute("disabled", "");
       }
 
       if (element.dataset.event != "active") {
@@ -195,20 +198,26 @@ export default function validation(validation_btn) {
             let error = container.querySelector(".validation_error");
             if (error != null) {
               count_error -= 1;
+
               remove_error(container);
+              validation_btn.removeAttribute("disabled");
             }
           } else {
-            create_error(container, input_type[type].error.ua);
             count_error += 1;
+
+            create_error(container, input_type[type].error.ua);
+            validation_btn.setAttribute("disabled", "");
           }
 
-          checkFormErrors(container, validation_btn);
+          // checkFormErrors(container, validation_btn);
         });
       }
     });
   }
 
   // якщо помилок не було, до кнопки додається дата атрибут true
+  console.log(count_error);
+
   if (count_error == 0) {
     return true;
   } else {
@@ -235,36 +244,57 @@ export default function validation(validation_btn) {
   }
 }
 
+// export const validationBtn = (formClassName) => {
+//   const form = document.querySelector(formClassName);
+
+//   if (form) {
+//     const allFields = form.querySelectorAll(".validation_input");
+//     const btn = form.querySelector(".validation_btn");
+
+//     if (btn) {
+//       btn.addEventListener("click", () => validation(btn));
+//     }
+
+//     allFields.forEach((item) =>
+//       item.addEventListener("input", () => validation(btn))
+//     );
+
+//     allFields.forEach((item) =>
+//       item.addEventListener("blur", () => validation(btn))
+//     );
+//   }
+// };
+
 // При валідаційні помилці, будь якого поля, додає для кнопки форми стан disabled
 
-export function checkFormErrors(form, btn) {
-  const allValidationError = form.querySelectorAll(".validation_error");
-  const isError = allValidationError.length;
+// export function checkFormErrors(form, btn) {
+//   const allValidationError = form.querySelectorAll(".validation_error");
+//   const isError = allValidationError.length;
 
-  if (isError) {
-    btn.setAttribute("disabled", "");
-  } else {
-    btn.removeAttribute("disabled");
-  }
-}
+//   if (isError) {
+//     btn.setAttribute("disabled", "");
+//   } else {
+//     btn.removeAttribute("disabled");
+//   }
+// }
 
-export const validationBtn = (formClassName) => {
-  const form = document.querySelector(formClassName);
+// export const validationBtn = (formClassName) => {
+//   const form = document.querySelector(formClassName);
 
-  if (form) {
-    const allFields = form.querySelectorAll(".validation_input");
-    const btn = form.querySelector(".validation_btn");
+//   if (form) {
+//     const allFields = form.querySelectorAll(".validation_input");
+//     const btn = form.querySelector(".validation_btn");
 
-    if (btn) {
-      btn.addEventListener("click", () => checkFormErrors(form, btn));
-    }
+//     if (btn) {
+//       btn.addEventListener("click", () => checkFormErrors(form, btn));
+//     }
 
-    allFields.forEach((item) =>
-      item.addEventListener("input", () => checkFormErrors(form, btn))
-    );
+//     allFields.forEach((item) =>
+//       item.addEventListener("input", () => checkFormErrors(form, btn))
+//     );
 
-    allFields.forEach((item) =>
-      item.addEventListener("blur", () => checkFormErrors(form, btn))
-    );
-  }
-};
+//     allFields.forEach((item) =>
+//       item.addEventListener("blur", () => checkFormErrors(form, btn))
+//     );
+//   }
+// };
