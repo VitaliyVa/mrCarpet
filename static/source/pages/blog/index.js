@@ -25739,6 +25739,62 @@ var registerUser = /*#__PURE__*/function () {
 
 /***/ }),
 
+/***/ "../api/basket.js":
+/*!************************!*\
+  !*** ../api/basket.js ***!
+  \************************/
+/*! exports provided: addToBasket */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToBasket", function() { return addToBasket; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+var addToBasket = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product) {
+    var _yield$instance$post, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+            _context.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/cart-products/", product);
+
+          case 3:
+            _yield$instance$post = _context.sent;
+            data = _yield$instance$post.data;
+            return _context.abrupt("return", data);
+
+          case 8:
+            _context.prev = 8;
+            _context.t0 = _context["catch"](0);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
+
+          case 12:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[0, 8]]);
+  }));
+
+  return function addToBasket(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../api/contacts.js":
 /*!**************************!*\
   !*** ../api/contacts.js ***!
@@ -26015,6 +26071,65 @@ if (registerButton) {
 
 /***/ }),
 
+/***/ "../components/common_components/header/basket.js":
+/*!********************************************************!*\
+  !*** ../components/common_components/header/basket.js ***!
+  \********************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_basket__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/basket */ "../api/basket.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+document.addEventListener("click", /*#__PURE__*/function () {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref) {
+    var target, addToBasketButton, _product$dataset, product, productId, basketProduct;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            target = _ref.target;
+            //   змінити на актуаьну назву для кнопки додавання в корзину
+            addToBasketButton = target.closest(".product__btn");
+
+            if (!addToBasketButton) {
+              _context.next = 9;
+              break;
+            }
+
+            product = addToBasketButton.closest(".product__btn");
+            productId = product === null || product === void 0 ? void 0 : (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
+            _context.next = 7;
+            return Object(_api_basket__WEBPACK_IMPORTED_MODULE_0__["addToBasket"])({
+              product: productId,
+              quantity: 1
+            });
+
+          case 7:
+            basketProduct = _context.sent;
+            console.log(basketProduct);
+
+          case 9:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+
+  return function (_x) {
+    return _ref2.apply(this, arguments);
+  };
+}());
+
+/***/ }),
+
 /***/ "../components/common_components/header/contacts-modal.scss":
 /*!******************************************************************!*\
   !*** ../components/common_components/header/contacts-modal.scss ***!
@@ -26153,13 +26268,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _search__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./search */ "../components/common_components/header/search.js");
 /* harmony import */ var _search__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_search__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _contacts__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./contacts */ "../components/common_components/header/contacts.js");
-/* harmony import */ var _favorites__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./favorites */ "../components/common_components/header/favorites.js");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index.scss */ "../components/common_components/header/index.scss");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./authorization.scss */ "../components/common_components/header/authorization.scss");
-/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_authorization_scss__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./contacts-modal.scss */ "../components/common_components/header/contacts-modal.scss");
-/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(_contacts_modal_scss__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _basket__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./basket */ "../components/common_components/header/basket.js");
+/* harmony import */ var _favorites__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./favorites */ "../components/common_components/header/favorites.js");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./index.scss */ "../components/common_components/header/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./authorization.scss */ "../components/common_components/header/authorization.scss");
+/* harmony import */ var _authorization_scss__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(_authorization_scss__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./contacts-modal.scss */ "../components/common_components/header/contacts-modal.scss");
+/* harmony import */ var _contacts_modal_scss__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(_contacts_modal_scss__WEBPACK_IMPORTED_MODULE_7__);
+
 
 
 
