@@ -1,6 +1,7 @@
 import "./authorization";
 import "./search";
 import "./contacts";
+import "./favorites";
 
 import "./index.scss";
 import "./authorization.scss";
