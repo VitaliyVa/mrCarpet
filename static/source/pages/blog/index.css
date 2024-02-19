@@ -622,6 +622,7 @@ textarea {
 
 .modal_accept__block, .modal_bad__block {
   flex-direction: column;
+  gap: 10px;
   padding: 10px;
   color: #fffcf2;
   font-size: 18px; }
@@ -635,7 +636,8 @@ textarea {
 
 .modal_accept_text, .modal_bad_text {
   width: 100%;
-  text-align: center; }
+  text-align: center;
+  font-size: 16px; }
 
 .validation_container {
   position: relative; }
@@ -1608,6 +1610,10 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap; }
 
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed; }
+
 .btn {
   font-size: 15px;
   border: none;
@@ -1634,6 +1640,9 @@ body {
     .btn-gold:hover {
       color: #a46c46;
       background: transparent; }
+    .btn-gold:disabled:hover {
+      background: #a46c46;
+      color: #fff; }
     .btn-gold-bordered {
       background-color: transparent;
       color: #a46c46;
@@ -1641,6 +1650,9 @@ body {
       .btn-gold-bordered:hover {
         color: #fff;
         background-color: #a46c46; }
+      .btn-gold-bordered:disabled:hover {
+        background-color: transparent;
+        color: #a46c46; }
     @media (max-width: 720px) {
       .btn-gold {
         padding: 12px 45px;
@@ -1652,8 +1664,9 @@ body {
     box-shadow: 0px 11px 10px rgba(113, 140, 130, 0.1);
     color: #23262f; }
     .btn-yellow:hover {
-      background-color: #c5a96b;
-      color: #23262f; }
+      background-color: #c5a96b; }
+    .btn-yellow:disabled:hover {
+      background: #f1c86e; }
   .btn-smal-yellow {
     color: #ddb968; }
   .btn-next {
@@ -1670,16 +1683,20 @@ body {
       transition: 0.3s;
       margin-left: 7px;
       width: 31px;
-      transform: translate(0, 0); }
+      transform: translate(0, 0);
+      transition: 0.3s; }
     .btn-next:hover svg {
-      transition: 0.3s;
       transform: translate(10px, 0); }
+    .btn-next:disabled:hover {
+      transform: translate(0, 0); }
   .btn-start {
     cursor: pointer; }
     .btn-start * {
       cursor: pointer; }
     .btn-start:hover {
       background: rgba(221, 185, 104, 0.9) !important; }
+    .btn-start:disabled:hover {
+      background: #fff !important; }
   .btn-underline {
     padding: 4px;
     text-decoration: underline;
@@ -1688,6 +1705,9 @@ body {
     .btn-underline:hover {
       color: #a46c46;
       border-color: #a46c46; }
+    .btn-underline:disabled:hover {
+      color: #23262f;
+      border-color: transparent; }
 
 .burger {
   background-color: #f1c86e;

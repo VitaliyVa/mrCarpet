@@ -25662,7 +25662,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 var loginUser = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(values) {
-    var _yield$instance$post, data, response;
+    var _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -25684,7 +25684,7 @@ var loginUser = /*#__PURE__*/function () {
             _context.prev = 11;
             _context.t0 = _context["catch"](1);
             response = _context.t0.response;
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response.data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
           case 15:
           case "end":
@@ -25700,7 +25700,7 @@ var loginUser = /*#__PURE__*/function () {
 }();
 var registerUser = /*#__PURE__*/function () {
   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(values) {
-    var _yield$instance$post2, data, response;
+    var _yield$instance$post2, data, _response$data2, response;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -25722,7 +25722,7 @@ var registerUser = /*#__PURE__*/function () {
             _context2.prev = 11;
             _context2.t0 = _context2["catch"](1);
             response = _context2.t0.response;
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response.data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message);
 
           case 15:
           case "end":
@@ -26459,8 +26459,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _module_validation_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/validation/index */ "../components/module/validation/index.js");
 
- // form_send(".sign-in__form");
-// form_send(".register-modal__form");
 
 var getFormFields = function getFormFields(formClassName, inputClassName) {
   var form = document.querySelector(formClassName);
@@ -26470,102 +26468,7 @@ var getFormFields = function getFormFields(formClassName, inputClassName) {
     formState[input.name] = input.value;
   });
   return formState;
-}; // function form_send(wrapper, modal) {
-//   let form_wrapper = document.querySelectorAll(wrapper);
-//   let loader = document.querySelector(".modal_loading__block");
-//   form_wrapper.forEach((element) => {
-//     let action = element.getAttribute("action");
-//     let btn = element.querySelector(".validation_btn");
-//     if (btn != null) {
-//       btn.addEventListener("click", function (e) {
-//         e.preventDefault();
-//         // функція для валідації при кліці на кнопку
-//         let status = validation(btn);
-//         // console.log(status);
-//         // if (status == true) {
-//         //   console.log("send!");
-//         //   let elements = element.elements;
-//         //   let obj = {};
-//         //   for (let i = 0; i < elements.length; i++) {
-//         //     let item = elements.item(i);
-//         //     let check_type = ["file", "reset", "submit", "button"].indexOf(
-//         //       item.type
-//         //     );
-//         //     if (check_type > -1) {
-//         //     } else {
-//         //       obj[item.name] = item.value;
-//         //     }
-//         //   }
-//         //   // const item = document.querySelector(wrapper);
-//         //   // obj["item_id"] = item.dataset.id;
-//         //   // if (item.dataset.count) {
-//         //   //   obj["count"] = item.dataset.count;
-//         //   // }
-//         //   // переписати або написати нову
-//         //   // if (action) {
-//         //   //   loader.classList.add("active");
-//         //   //   const cookie = document.cookie;
-//         //   //   const csrfKey = "csrftoken=";
-//         //   //   const start = cookie.indexOf(csrfKey);
-//         //   //   const end = cookie.indexOf(";", start);
-//         //   //   const csrf = cookie.slice(start + csrfKey.length, end);
-//         //   //   fetch(action, {
-//         //   //     method: "POST",
-//         //   //     body: new URLSearchParams(obj),
-//         //   //     headers: {
-//         //   //       "X-CSRFToken": csrf,
-//         //   //     },
-//         //   //     // body: new URLSearchParams(obj).toString(),
-//         //   //   })
-//         //   //     .then((data) => {
-//         //   //       console.log("data1: ", data);
-//         //   //       if (data?.res?.ok) {
-//         //   //         accept_modal();
-//         //   //       }
-//         //   //       return data.json();
-//         //   //     })
-//         //   //     .then((res) => {
-//         //   //       console.log(res);
-//         //   //       if (
-//         //   //         (action.includes("create_user") ||
-//         //   //           action.includes("login_user")) &&
-//         //   //         res?.url
-//         //   //       ) {
-//         //   //         document.location.href = res.url;
-//         //   //       } else if (
-//         //   //         (action.includes("create_user") ||
-//         //   //           action.includes("login_user")) &&
-//         //   //         res
-//         //   //       ) {
-//         //   //         const error = res?.email || res?.username;
-//         //   //         bad_modal(error, false);
-//         //   //       }
-//         //   //       if (
-//         //   //         action.includes("update_user_profile") &&
-//         //   //         res?.status === "OK"
-//         //   //       ) {
-//         //   //         document.location.reload();
-//         //   //       }
-//         //   //     })
-//         //   //     .catch((error) => {
-//         //   //       console.log("error: ", error);
-//         //   //       bad_modal(error);
-//         //   //     })
-//         //   //     .finally(() => {
-//         //   //       loader.classList.remove("active");
-//         //   //     });
-//         //   // }
-//         // } else {
-//         //   console.log("error!");
-//         // }
-//       });
-//     } else {
-//       console.error(
-//         `такого модального вікна не існує на цій сторінці - ${wrapper}`
-//       );
-//     }
-//   });
-// }
+};
 
 var hideAcceptModal = function hideAcceptModal() {
   var accept = document.querySelector(".modal_bad__block");
@@ -26587,24 +26490,19 @@ var hideLoader = function hideLoader() {
   var loader = document.querySelector(".modal_loading__block");
   loader.classList.remove("active");
 };
-function bad_modal(error_message) {
-  var addedDefaultText = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+function bad_modal() {
+  var error_message = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "Щось пішло не так, спробуйте пізніше!";
   var bad = document.querySelector(".modal_bad__block");
 
   if (error_message) {
-    remove_error();
-    console.log("error_message: ", error_message);
-    var field_error = document.createElement("div");
-    field_error.textContent = error_message;
-    field_error.classList.add("custom_modal_text", "modal_bad_text", "bold_title", "bold_title_2", "color_red");
-    console.log("field_error: ", field_error);
-    bad.append(field_error);
+    remove_error(); // код бля додавання кількох рядків помилок
+    // let field_error = document.createElement("div");
+    // field_error.textContent = error_message;
+    // field_error.classList.add("modal_bad_text", "medium");
+    // bad.append(field_error);
 
-    if (addedDefaultText) {
-      bad.querySelector(".modal_bad_text").textContent = "Щось пішло не так, спробуйте пізніше!";
-    } else {
-      bad.querySelector(".modal_bad_text").textContent = "";
-    }
+    bad.querySelector(".modal_bad_text").textContent = error_message;
+    setTimeout(remove_error(), 3000);
   }
 
   setTimeout(function () {
@@ -26991,48 +26889,7 @@ function validation(validation_btn) {
       container.querySelector(".validation_error").remove();
     }
   }
-} // export const validationBtn = (formClassName) => {
-//   const form = document.querySelector(formClassName);
-//   if (form) {
-//     const allFields = form.querySelectorAll(".validation_input");
-//     const btn = form.querySelector(".validation_btn");
-//     if (btn) {
-//       btn.addEventListener("click", () => validation(btn));
-//     }
-//     allFields.forEach((item) =>
-//       item.addEventListener("input", () => validation(btn))
-//     );
-//     allFields.forEach((item) =>
-//       item.addEventListener("blur", () => validation(btn))
-//     );
-//   }
-// };
-// При валідаційні помилці, будь якого поля, додає для кнопки форми стан disabled
-// export function checkFormErrors(form, btn) {
-//   const allValidationError = form.querySelectorAll(".validation_error");
-//   const isError = allValidationError.length;
-//   if (isError) {
-//     btn.setAttribute("disabled", "");
-//   } else {
-//     btn.removeAttribute("disabled");
-//   }
-// }
-// export const validationBtn = (formClassName) => {
-//   const form = document.querySelector(formClassName);
-//   if (form) {
-//     const allFields = form.querySelectorAll(".validation_input");
-//     const btn = form.querySelector(".validation_btn");
-//     if (btn) {
-//       btn.addEventListener("click", () => checkFormErrors(form, btn));
-//     }
-//     allFields.forEach((item) =>
-//       item.addEventListener("input", () => checkFormErrors(form, btn))
-//     );
-//     allFields.forEach((item) =>
-//       item.addEventListener("blur", () => checkFormErrors(form, btn))
-//     );
-//   }
-// };
+}
 
 /***/ }),
 

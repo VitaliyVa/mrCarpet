@@ -16,7 +16,7 @@ export const loginUser = async (values) => {
 
     return data;
   } catch ({ response }) {
-    bad_modal(response.data.message);
+    bad_modal(response?.data?.message);
   }
 };
 
@@ -31,6 +31,6 @@ export const registerUser = async (values) => {
 
     return data;
   } catch ({ response }) {
-    bad_modal(response.data.message);
+    bad_modal(response?.data?.message);
   }
 };
