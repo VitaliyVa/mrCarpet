@@ -19,4 +19,6 @@ import "../components/module/cart_item";
 import "../components/module/blog_item/index";
 import "../components/module/accordion/index.scss";
 
+import "../utils/customMask";
+
 import "../components/pages/basket/index";

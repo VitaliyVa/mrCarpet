@@ -25662,7 +25662,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 var loginUser = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(values) {
-    var _yield$instance$post, data;
+    var _yield$instance$post, data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -25677,20 +25677,21 @@ var loginUser = /*#__PURE__*/function () {
             _yield$instance$post = _context.sent;
             data = _yield$instance$post.data;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])();
+            window.location.reload();
             return _context.abrupt("return", data);
 
-          case 10:
-            _context.prev = 10;
+          case 11:
+            _context.prev = 11;
             _context.t0 = _context["catch"](1);
-            console.log(_context.t0);
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])();
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response.data.message);
 
-          case 14:
+          case 15:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[1, 10]]);
+    }, _callee, null, [[1, 11]]);
   }));
 
   return function loginUser(_x) {
@@ -25698,8 +25699,8 @@ var loginUser = /*#__PURE__*/function () {
   };
 }();
 var registerUser = /*#__PURE__*/function () {
-  var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(values) {
-    var _yield$instance$post2, data;
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(values) {
+    var _yield$instance$post2, data, response;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -25714,24 +25715,25 @@ var registerUser = /*#__PURE__*/function () {
             _yield$instance$post2 = _context2.sent;
             data = _yield$instance$post2.data;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])();
+            window.location.reload();
             return _context2.abrupt("return", data);
 
-          case 10:
-            _context2.prev = 10;
+          case 11:
+            _context2.prev = 11;
             _context2.t0 = _context2["catch"](1);
-            console.log(_context2.t0);
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])();
+            response = _context2.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response.data.message);
 
-          case 14:
+          case 15:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[1, 10]]);
+    }, _callee2, null, [[1, 11]]);
   }));
 
   return function registerUser(_x2) {
-    return _ref2.apply(this, arguments);
+    return _ref3.apply(this, arguments);
   };
 }();
 
@@ -25810,35 +25812,30 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 
-var loginButton = document.querySelector(".register-modal__create-account-btn");
-var registerButton = document.querySelector(".register-modal__create-account-btn"); // if (loginButton) {
-// }
+var loginButton = document.querySelector(".login-modal__sign-in-btn");
+var registerButton = document.querySelector(".register-modal__create-account-btn");
 
-if (registerButton) {
-  registerButton.addEventListener("click", /*#__PURE__*/function () {
+if (loginButton) {
+  loginButton.addEventListener("click", /*#__PURE__*/function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
-      var formValues, status, data;
+      var formValues, status;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
               event.preventDefault();
-              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".register-modal__form", ".validation_input");
-              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(registerButton);
+              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".login-modal__form", ".validation_input");
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(loginButton);
 
               if (!status) {
-                _context.next = 8;
+                _context.next = 6;
                 break;
               }
 
               _context.next = 6;
-              return Object(_api_auth__WEBPACK_IMPORTED_MODULE_0__["registerUser"])(formValues);
+              return Object(_api_auth__WEBPACK_IMPORTED_MODULE_0__["loginUser"])(formValues);
 
             case 6:
-              data = _context.sent;
-              console.log(data);
-
-            case 8:
             case "end":
               return _context.stop();
           }
@@ -25848,6 +25845,40 @@ if (registerButton) {
 
     return function (_x) {
       return _ref.apply(this, arguments);
+    };
+  }());
+}
+
+if (registerButton) {
+  registerButton.addEventListener("click", /*#__PURE__*/function () {
+    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(event) {
+      var formValues, status;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              event.preventDefault();
+              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".register-modal__form", ".validation_input");
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(registerButton);
+
+              if (!status) {
+                _context2.next = 6;
+                break;
+              }
+
+              _context2.next = 6;
+              return Object(_api_auth__WEBPACK_IMPORTED_MODULE_0__["registerUser"])(formValues);
+
+            case 6:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    }));
+
+    return function (_x2) {
+      return _ref2.apply(this, arguments);
     };
   }());
 }
@@ -26954,6 +26985,28 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "../utils/customMask.js":
+/*!******************************!*\
+  !*** ../utils/customMask.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var phoneInputs = document.querySelectorAll('[data-type="phone"]');
+phoneInputs.forEach(function (element) {
+  element.addEventListener("input", handleInput, false);
+});
+
+function handleInput(e) {
+  e.target.value = phoneMask(e.target.value);
+}
+
+function phoneMask(phone) {
+  return phone.replace(/\D/g, "").replace(/^(\d)/, "($1").replace(/^(\(\d{3})(\d)/, "$1) $2").replace(/(\d{2})(\d{2})/, "$1-$2").replace(/(-\d{7})\d+?$/, "$1");
+}
+
+/***/ }),
+
 /***/ "./blog.js":
 /*!*****************!*\
   !*** ./blog.js ***!
@@ -26976,8 +27029,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_catalog_items_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../components/module/catalog_items/index */ "../components/module/catalog_items/index.js");
 /* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
 /* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
-/* harmony import */ var _components_pages_blog_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../components/pages/blog/index */ "../components/pages/blog/index.js");
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../utils/customMask */ "../utils/customMask.js");
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_13___default = /*#__PURE__*/__webpack_require__.n(_utils_customMask__WEBPACK_IMPORTED_MODULE_13__);
+/* harmony import */ var _components_pages_blog_index__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../components/pages/blog/index */ "../components/pages/blog/index.js");
 // script interface
+
 
 
 

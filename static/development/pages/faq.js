@@ -15,4 +15,6 @@ import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
 import "../components/module/accordion/index";
 
+import "../utils/customMask";
+
 import "../components/pages/faq/index";

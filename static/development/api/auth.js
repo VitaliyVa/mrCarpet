@@ -10,12 +10,13 @@ export const loginUser = async (values) => {
 
   try {
     const { data } = await instance.post("/users/user_login/", values);
+
     accept_modal();
+    window.location.reload();
 
     return data;
-  } catch (error) {
-    console.log(error);
-    bad_modal();
+  } catch ({ response }) {
+    bad_modal(response.data.message);
   }
 };
 
@@ -24,11 +25,12 @@ export const registerUser = async (values) => {
 
   try {
     const { data } = await instance.post("/users/register/", values);
+
     accept_modal();
+    window.location.reload();
 
     return data;
-  } catch (error) {
-    console.log(error);
-    bad_modal();
+  } catch ({ response }) {
+    bad_modal(response.data.message);
   }
 };

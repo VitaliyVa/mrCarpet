@@ -14,4 +14,6 @@ import "../components/module/form_action/index";
 import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
 
+import "../utils/customMask";
+
 import "../components/pages/about/index";
