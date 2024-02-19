@@ -470,7 +470,7 @@ class Favourite(AbstractCreatedUpdated):
 
     def __str__(self):
         return (
-            f"{self.user.username}'s favourites" if self.user else "unknown favourite"
+            f"{self.user.first_name}'s favourites" if self.user else "unknown favourite"
         )
 
 

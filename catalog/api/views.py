@@ -112,7 +112,7 @@ class FavouriteProductViewSet(ModelViewSet):
             request.data._mutable = True
         except:
             "it is not a drf request"
-        request.data["favourite"] = get_favourite(request)
+        request.data["favourite"] = get_favourite(request).id
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:

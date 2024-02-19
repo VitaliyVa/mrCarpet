@@ -35,7 +35,7 @@ class UserViewSet(ViewSet):
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                password="test123",
+                password=password,
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 

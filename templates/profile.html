@@ -171,6 +171,7 @@
         </div>
 
         <div class="orders__items accordion_container">
+          {% for order in orders %}
           <div class="orders__block accordion accordion_content__block">
             <div class="orders__block-head accordion__title">
               <div class="orders__block-head-left">
@@ -178,18 +179,18 @@
                   <p class="orders__block-id">
                     <span class="orders__block-id-key">№</span>
                     <span class="orders__block-id-value">
-                      2154879514358
+                      {{ order.order_number }}
                     </span>
                   </p>
 
                   <p class="orders__block-date">
                     <span class="orders__block-date-key">від</span>
-                    <span class="orders__block-date-value">28.02.2023</span>
+                    <span class="orders__block-date-value">{{ order.created|date:"d.m.Y" }}</span>
                   </p>
                 </div>
                 <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                <p class="orders__block-status color_gold medium">
-                  Комплектується
+                <p class="orders__block-status {% if order.status == 'Скасовано' %}color_black{% else %}color_gold{% endif %} medium">
+                  {{ order.status }}
                 </p>
               </div>
 
@@ -201,7 +202,7 @@
                   <p
                     class="orders__block-total-sum-value color_black medium"
                   >
-                    5 750 грн.
+                    {{ order.total_price }} грн.
                   </p>
                 </div>
               </div>
@@ -211,15 +212,17 @@
                 <div
                   class="orders__block-products orders__block-products-head"
                 >
+                  {% for cart_product in order.cart.cart_products.all %}
                   <div class="orders__block-product">
                     <div class="orders__block-product-left">
-                      <a href="#">
+                      <a href="{{ cart_product.product_attr.product.get_absolute_url }}">
                         <div class="orders__block-product-img">
                           <img src="/static/utils/assets/img.png" />
                         </div>
                       </a>
                     </div>
                   </div>
+                  {% endfor %}
                 </div>
 
                 <div class="orders__block-chevron-icon">
@@ -243,7 +246,7 @@
                       class="orders__block-address orders__block-info-item"
                     >
                       <p class="orders__block-address-warehouse">
-                        Пункт приймання-видачі
+                        {{ order.address }}
                       </p>
                       <p class="orders__block-address-settlement">
                         вул. Центральна, 98 (Котеджне містечко), Осещина
@@ -254,10 +257,10 @@
                       class="orders__block-contacts orders__block-info-item"
                     >
                       <p class="orders__block-contacts-name">
-                        Inverness McKenzie
+                        {{ order.name }} {{ order.surname }}
                       </p>
                       <p class="orders__block-contacts-phone">
-                        +380 87 000 00 00
+                        {{ order.phone }}
                       </p>
                     </div>
                   </div>
@@ -270,24 +273,24 @@
                     Товари
                   </p>
                   <div class="orders__block-products">
+                    {% for cart_product in order.cart.cart_products.all %}
                     <div class="orders__block-product">
                       <div class="orders__block-product-left">
-                        <a href="#">
+                        <a href="{{ cart_product.product_attr.product.get_absolute_url }}">
                           <div class="orders__block-product-img">
                             <img src="/static/utils/assets/img.png" />
                           </div>
                         </a>
                       </div>
                       <div class="orders__block-product-center">
-                        <a href="#">
+                        <a href="{{ cart_product.product_attr.product.get_absolute_url }}">
                           <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
+                            {{ cart_product.product_attr.product.title }}
                           </h4>
                         </a>
 
                         <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
+                          <li class="size-label disabled">{{ cart_product.product_attr.size }}</li>
                         </ul>
                       </div>
 
@@ -300,14 +303,20 @@
                           >
                             Ціна
                           </p>
+                          {% if cart_product.product_attr.discount %}
                           <p class="orders__block-product-price-current">
-                            298 грн
+                            {{ cart_product.product_attr.get_total_price }} грн
                           </p>
                           <p
                             class="orders__block-product-price-old color_black_sub"
                           >
-                            350 грн
+                            {{ cart_product.product_attr.price }} грн
                           </p>
+                          {% else %}
+                          <p class="orders__block-product-price-current">
+                            {{ cart_product.product_attr.get_total_price }} грн
+                          </p>
+                          {% endif %}
                         </div>
 
                         <div
@@ -319,7 +328,7 @@
                             Кількість
                           </p>
                           <p class="orders__block-product-quantity-value">
-                            1
+                            {{ cart_product.quantity }}
                           </p>
                         </div>
 
@@ -332,11 +341,12 @@
                             Сума
                           </p>
                           <p class="orders__block-product-sum-value">
-                            298 грн
+                            {{ cart_product.cart_product_total_price }} грн
                           </p>
                         </div>
                       </div>
                     </div>
+                    {% endfor %}
                   </div>
 
                   <div class="orders__block-body-details">
@@ -347,7 +357,7 @@
                         Оплата
                       </span>
                       <span class="orders__block-payment-value">
-                        Оплата під чач отримання товару
+                        {{ order.payment_type }}
                       </span>
                     </p>
                     <p class="orders__block-delivery">
@@ -369,7 +379,7 @@
                       <span
                         class="orders__block-total-price-value color_gold bold"
                       >
-                        21321312123787 грн.
+                        {{ order.total_price }} грн.
                       </span>
                     </p>
                   </div>
@@ -377,1092 +387,7 @@
               </div>
             </div>
           </div>
-
-          <div class="orders__block accordion accordion_content__block">
-            <div class="orders__block-head accordion__title">
-              <div class="orders__block-head-left">
-                <div class="orders__block-head-left-top color_black_sub">
-                  <p class="orders__block-id">
-                    <span class="orders__block-id-key">№</span>
-                    <span class="orders__block-id-value">
-                      1111879514358
-                    </span>
-                  </p>
-
-                  <p class="orders__block-date">
-                    <span class="orders__block-date-key">від</span>
-                    <span class="orders__block-date-value">08.02.2023</span>
-                  </p>
-                </div>
-                <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                <p class="orders__block-status color_gold medium">
-                  Виконано
-                </p>
-              </div>
-
-              <div class="orders__block-head-center">
-                <div class="orders__block-total-sum">
-                  <p class="orders__block-total-sum-title color_black_sub">
-                    Сума замовлення
-                  </p>
-                  <p
-                    class="orders__block-total-sum-value color_black medium"
-                  >
-                    12312750 грн.
-                  </p>
-                </div>
-              </div>
-
-              <div class="orders__block-head-right">
-                <!-- max product count === 3 -->
-                <div
-                  class="orders__block-products orders__block-products-head"
-                >
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div class="orders__block-chevron-icon">
-                  <img
-                    src="/static/utils/assets/chevron-down.svg"
-                    alt="chevron-down"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="orders__block-body accordion_content">
-              <div class="orders__block-body-left">
-                <div class="orders__block-info">
-                  <p class="orders__block-info-title color_black_sub">
-                    Інформація про замовлення
-                  </p>
-
-                  <div class="orders__block-info-items">
-                    <div
-                      class="orders__block-address orders__block-info-item"
-                    >
-                      <p class="orders__block-address-warehouse">
-                        Пункт приймання-видачі
-                      </p>
-                      <p class="orders__block-address-settlement">
-                        вул. Центральна, 98 (Котеджне містечко), Осещина
-                      </p>
-                    </div>
-
-                    <div
-                      class="orders__block-contacts orders__block-info-item"
-                    >
-                      <p class="orders__block-contacts-name">
-                        Inverness McKenzie
-                      </p>
-                      <p class="orders__block-contacts-phone">
-                        +380 87 000 00 00
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="orders__block-body-right">
-                <div class="orders__block-products-body">
-                  <p class="orders__block-products-title color_black_sub">
-                    Товари
-                  </p>
-                  <div class="orders__block-products">
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            21321298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            12321321350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1232232
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            123121298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-body-details">
-                    <p class="orders__block-payment">
-                      <span
-                        class="orders__block-payment-title color_black_sub"
-                      >
-                        Оплата
-                      </span>
-                      <span class="orders__block-payment-value">
-                        Оплата під чач отримання товару
-                      </span>
-                    </p>
-                    <p class="orders__block-delivery">
-                      <span
-                        class="orders__block-delivery-title color_black_sub"
-                      >
-                        Доставка
-                      </span>
-                      <span class="orders__block-delivery-value">
-                        Безкоштовно
-                      </span>
-                    </p>
-                    <p class="orders__block-total-price">
-                      <span
-                        class="orders__block-total-price-title color_black_sub"
-                      >
-                        Загальна сума
-                      </span>
-                      <span
-                        class="orders__block-total-price-value color_gold bold"
-                      >
-                        21321312123787 грн.
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="orders__block accordion accordion_content__block">
-            <div class="orders__block-head accordion__title">
-              <div class="orders__block-head-left">
-                <div class="orders__block-head-left-top color_black_sub">
-                  <p class="orders__block-id">
-                    <span class="orders__block-id-key">№</span>
-                    <span class="orders__block-id-value">
-                      1111879514358
-                    </span>
-                  </p>
-
-                  <p class="orders__block-date">
-                    <span class="orders__block-date-key">від</span>
-                    <span class="orders__block-date-value">08.02.2023</span>
-                  </p>
-                </div>
-                <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                <p class="orders__block-status color_black medium">
-                  Скасовано
-                </p>
-              </div>
-
-              <div class="orders__block-head-center">
-                <div class="orders__block-total-sum">
-                  <p class="orders__block-total-sum-title color_black_sub">
-                    Сума замовлення
-                  </p>
-                  <p
-                    class="orders__block-total-sum-value color_black medium"
-                  >
-                    12312750 грн.
-                  </p>
-                </div>
-              </div>
-
-              <div class="orders__block-head-right">
-                <!-- max product count === 3 -->
-                <div
-                  class="orders__block-products orders__block-products-head"
-                >
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div class="orders__block-chevron-icon">
-                  <img
-                    src="/static/utils/assets/chevron-down.svg"
-                    alt="chevron-down"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="orders__block-body accordion_content">
-              <div class="orders__block-body-left">
-                <div class="orders__block-info">
-                  <p class="orders__block-info-title color_black_sub">
-                    Інформація про замовлення
-                  </p>
-
-                  <div class="orders__block-info-items">
-                    <div
-                      class="orders__block-address orders__block-info-item"
-                    >
-                      <p class="orders__block-address-warehouse">
-                        Пункт приймання-видачі
-                      </p>
-                      <p class="orders__block-address-settlement">
-                        вул. Центральна, 98 (Котеджне містечко), Осещина
-                      </p>
-                    </div>
-
-                    <div
-                      class="orders__block-contacts orders__block-info-item"
-                    >
-                      <p class="orders__block-contacts-name">
-                        Inverness McKenzie
-                      </p>
-                      <p class="orders__block-contacts-phone">
-                        +380 87 000 00 00
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="orders__block-body-right">
-                <div class="orders__block-products-body">
-                  <p class="orders__block-products-title color_black_sub">
-                    Товари
-                  </p>
-                  <div class="orders__block-products">
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            21321298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            12321321350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1232232
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            123121298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-body-details">
-                    <p class="orders__block-payment">
-                      <span
-                        class="orders__block-payment-title color_black_sub"
-                      >
-                        Оплата
-                      </span>
-                      <span class="orders__block-payment-value">
-                        Оплата під чач отримання товару
-                      </span>
-                    </p>
-                    <p class="orders__block-delivery">
-                      <span
-                        class="orders__block-delivery-title color_black_sub"
-                      >
-                        Доставка
-                      </span>
-                      <span class="orders__block-delivery-value">
-                        Безкоштовно
-                      </span>
-                    </p>
-                    <p class="orders__block-total-price">
-                      <span
-                        class="orders__block-total-price-title color_black_sub"
-                      >
-                        Загальна сума
-                      </span>
-                      <span
-                        class="orders__block-total-price-value color_gold bold"
-                      >
-                        21321312123787 грн.
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="orders__block accordion accordion_content__block">
-            <div class="orders__block-head accordion__title">
-              <div class="orders__block-head-left">
-                <div class="orders__block-head-left-top color_black_sub">
-                  <p class="orders__block-id">
-                    <span class="orders__block-id-key">№</span>
-                    <span class="orders__block-id-value">
-                      1111879514358
-                    </span>
-                  </p>
-
-                  <p class="orders__block-date">
-                    <span class="orders__block-date-key">від</span>
-                    <span class="orders__block-date-value">08.02.2023</span>
-                  </p>
-                </div>
-                <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                <p class="orders__block-status color_gold medium">
-                  Виконано
-                </p>
-              </div>
-
-              <div class="orders__block-head-center">
-                <div class="orders__block-total-sum">
-                  <p class="orders__block-total-sum-title color_black_sub">
-                    Сума замовлення
-                  </p>
-                  <p
-                    class="orders__block-total-sum-value color_black medium"
-                  >
-                    12312750 грн.
-                  </p>
-                </div>
-              </div>
-
-              <div class="orders__block-head-right">
-                <!-- max product count === 3 -->
-                <div
-                  class="orders__block-products orders__block-products-head"
-                >
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-product">
-                    <div class="orders__block-product-left">
-                      <a href="#">
-                        <div class="orders__block-product-img">
-                          <img src="/static/utils/assets/img.png" />
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div class="orders__block-chevron-icon">
-                  <img
-                    src="/static/utils/assets/chevron-down.svg"
-                    alt="chevron-down"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="orders__block-body accordion_content">
-              <div class="orders__block-body-left">
-                <div class="orders__block-info">
-                  <p class="orders__block-info-title color_black_sub">
-                    Інформація про замовлення
-                  </p>
-
-                  <div class="orders__block-info-items">
-                    <div
-                      class="orders__block-address orders__block-info-item"
-                    >
-                      <p class="orders__block-address-warehouse">
-                        Пункт приймання-видачі
-                      </p>
-                      <p class="orders__block-address-settlement">
-                        вул. Центральна, 98 (Котеджне містечко), Осещина
-                      </p>
-                    </div>
-
-                    <div
-                      class="orders__block-contacts orders__block-info-item"
-                    >
-                      <p class="orders__block-contacts-name">
-                        Inverness McKenzie
-                      </p>
-                      <p class="orders__block-contacts-phone">
-                        +380 87 000 00 00
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="orders__block-body-right">
-                <div class="orders__block-products-body">
-                  <p class="orders__block-products-title color_black_sub">
-                    Товари
-                  </p>
-                  <div class="orders__block-products">
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            21321298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            12321321350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1232232
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            123121298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="orders__block-product">
-                      <div class="orders__block-product-left">
-                        <a href="#">
-                          <div class="orders__block-product-img">
-                            <img src="/static/utils/assets/img.png" />
-                          </div>
-                        </a>
-                      </div>
-                      <div class="orders__block-product-center">
-                        <a href="#">
-                          <h4 class="orders__block-product-title small">
-                            Килим Layered OVALS WOOL RUG OATMEAL
-                          </h4>
-                        </a>
-
-                        <ul class="orders__block-product-sizes">
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                          <li class="size-label disabled">0.8x1.5 м</li>
-                        </ul>
-                      </div>
-
-                      <div class="orders__block-product-right">
-                        <div
-                          class="orders__block-product-price orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-price-title color_black_sub"
-                          >
-                            Ціна
-                          </p>
-                          <p class="orders__block-product-price-current">
-                            298 грн
-                          </p>
-                          <p
-                            class="orders__block-product-price-old color_black_sub"
-                          >
-                            350 грн
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-quantity orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-quantity-title color_black_sub"
-                          >
-                            Кількість
-                          </p>
-                          <p class="orders__block-product-quantity-value">
-                            1
-                          </p>
-                        </div>
-
-                        <div
-                          class="orders__block-product-sum orders__block-product-right-item"
-                        >
-                          <p
-                            class="orders__block-product-sum-title color_black_sub"
-                          >
-                            Сума
-                          </p>
-                          <p class="orders__block-product-sum-value">
-                            298 грн
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="orders__block-body-details">
-                    <p class="orders__block-payment">
-                      <span
-                        class="orders__block-payment-title color_black_sub"
-                      >
-                        Оплата
-                      </span>
-                      <span class="orders__block-payment-value">
-                        Оплата під чач отримання товару
-                      </span>
-                    </p>
-                    <p class="orders__block-delivery">
-                      <span
-                        class="orders__block-delivery-title color_black_sub"
-                      >
-                        Доставка
-                      </span>
-                      <span class="orders__block-delivery-value">
-                        Безкоштовно
-                      </span>
-                    </p>
-                    <p class="orders__block-total-price">
-                      <span
-                        class="orders__block-total-price-title color_black_sub"
-                      >
-                        Загальна сума
-                      </span>
-                      <span
-                        class="orders__block-total-price-value color_gold bold"
-                      >
-                        21321312123787 грн.
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
