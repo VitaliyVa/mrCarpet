@@ -446,8 +446,8 @@
   </div>
 
   <div class="authorization">
-    <div class="modal-overlay active">
-      <div class="login-modal modal modal__block active">
+    <div class="modal-overlay">
+      <div class="login-modal modal modal__block">
         <button class="login-modal__close-btn modal__close-btn modal_close">
           <img src="/static/utils/assets/close.svg" alt="close" />
         </button>
@@ -729,18 +729,20 @@
                 />
               </div>
 
-              <div class="contacts-modal__feedback-form-field modal__field">
+              <div class="contacts-modal__feedback-form-field modal__field validation_container">
                 <textarea
-                  id="message"
-                  class="input-transparent"
-                  name="message"
+                  id="text"
+                  class="input-transparent validation_input"
+                  name="text"
+                  data-type="message"
                   placeholder="Коментар / питання"
+                  required
                 ></textarea>
               </div>
             </div>
 
             <div class="contacts-modal__feedback-form-buttons">
-              <button class="contacts-modal__send-application-btn btn-gold">
+              <button class="contacts-modal__send-application-btn btn-gold validation_btn">
                 Залишити заявку
               </button>
             </div>
