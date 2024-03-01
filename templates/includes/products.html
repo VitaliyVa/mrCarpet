@@ -8,7 +8,9 @@
     <div
       class="cart_item_price medium color_gold"
       {% for attr in product.product_attr.all %}
+      {% if not attr.custom_attribute %}
       data-item-{{ forloop.counter }}={{ attr.get_total_price }}
+      {% endif %}
       {% endfor %}
     >
       <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
@@ -17,7 +19,7 @@
     <div
       class="cart_item_procent medium color_gold"
       {% for attr in product.product_attr.all %}
-      {% if attr.discount %}
+      {% if attr.discount and not attr.custom_attribute %}
       data-item-{{ forloop.counter }}="{{ attr.discount }}%"
       {% endif %}
       {% endfor %}
@@ -29,7 +31,7 @@
     <div
       class="cart_item_old_price medium color_black_sub"
       {% for attr in product.product_attr.all %}
-      {% if attr.discount %}
+      {% if attr.discount and not attr.custom_attribute %}
       data-item-{{ forloop.counter }}="{{ attr.price }}"
       {% endif %}
       {% endfor %}
@@ -66,6 +68,7 @@
   </div>
 <div class="sizes-block cart_item_size__block">
   {% for attr in product.product_attr.all %}
+  {% if not attr.custom_attribute %}
   {% if forloop.first %}
   <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label active">
     {{ attr.size }}
@@ -74,6 +77,7 @@
   <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label">
     {{ attr.size }}
   </div>
+  {% endif %}
   {% endif %}
   {% endfor %}
 </div>

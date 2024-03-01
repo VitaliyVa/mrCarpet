@@ -209,8 +209,9 @@
         </div>
       </div>
       <div class="header_bottom_panel_nav">
-        <!-- <a
-          href="#"
+        {% if user.is_authenticated %}
+        <a
+          href="{% url 'profile' %}"
           class="header_bottom_panel_item header_bottom_panel_profile"
         >
           <span class="header_bottom_panel_item_icon">
@@ -230,7 +231,8 @@
           <span class="header_bottom_panel_item_label small color_black">
             Профіль
           </span>
-        </a> -->
+        </a>
+        {% else %}
         <button
           class="header_bottom_panel_item header_bottom_panel_profile modal_open"
           data-href="login-modal"
@@ -253,6 +255,7 @@
             Увійти
           </span>
         </button>
+        {% endif %}
         <a
           href="{% url 'favourites' %}"
           class="header_bottom_panel_item header_bottom_panel_like"

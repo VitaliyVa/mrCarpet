@@ -13,6 +13,8 @@ from .models import (
     RelatedProduct,
     ProductSale,
     ProductColor,
+    ProductWidth,
+    PromoCode,
 )
 
 
@@ -71,3 +73,5 @@ admin.site.register(ProductAttribute)
 admin.site.register(ProductReview)
 admin.site.register(ProductSale)
 admin.site.register(ProductColor, ProductColorAdmin)
+admin.site.register(ProductWidth)
+admin.site.register(PromoCode)

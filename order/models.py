@@ -20,7 +20,7 @@ class Order(AbstractCreatedUpdated):
         (DS, "Скасовано")
     )
 
-    order_number = models.IntegerField(verbose_name="Номер замовлення", blank=True, null=True, editable=False)
+    order_number = models.BigIntegerField(verbose_name="Номер замовлення", blank=True, null=True, editable=False)
     status = models.CharField(
         verbose_name="Статус замовлення",
         max_length=155,

@@ -22,6 +22,14 @@ class Cart(AbstractCreatedUpdated):
         blank=False,
         null=True,
     )
+    promocode = models.ForeignKey(
+        verbose_name="Промокод",
+        to="catalog.PromoCode",
+        on_delete=models.SET_NULL,
+        related_name="carts",
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return f"{self.user.email}'s cart" if self.user else "Unknown cart"
@@ -51,12 +59,22 @@ class CartProduct(AbstractCreatedUpdated):
         related_name='cart_products'
     )
     quantity = models.PositiveSmallIntegerField(verbose_name='Кількість')
+    total_price = models.DecimalField(
+        verbose_name="Загальна ціна",
+        help_text="Тільки для кастомних варіацій",
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.product_attr.product.title
     
     def cart_product_total_price(self):
         product_price = self.product_attr.get_total_price()
+        if self.product_attr.custom_attribute:
+            product_price = float(self.total_price)
         return product_price * self.quantity
 
     def able_add_to_cart(self, quantity: int) -> bool:

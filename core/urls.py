@@ -43,9 +43,12 @@ urlpatterns = [
     path('catalog/', include('catalog.urls')),
     path('cart/', include('cart.urls')),
     path('', include('project.urls')),
+    path('', include('payment.urls')),
+    path('', include('users.urls')),
     path('api/', include('cart.api.urls')),
     path('api/', include('users.api.urls')),
     path('api/', include('project.api.urls')),
+    path('api/', include('payment.api.urls')),
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 

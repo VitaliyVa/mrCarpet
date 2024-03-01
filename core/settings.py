@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'order',
     'users',
     'nova_poshta',
+    'payment',
     'rest_framework',
     'django_filters',
     'drf_yasg',
@@ -159,3 +160,6 @@ AUTH_USER_MODEL = 'users.CustomUser'
 REST_FRAMEWORK = {
     'ORDERING_PARAM': 'sort',
 }
+
+LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
+LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)

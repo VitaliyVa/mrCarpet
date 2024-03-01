@@ -1,16 +1,14 @@
-from django.db.models import Min
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework import generics, filters
+from rest_framework import generics
 from rest_framework import mixins
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework import permissions
-from rest_framework.decorators import permission_classes
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 from django_filters import rest_framework as rest_filters
 from django.http import JsonResponse
 
+from cart.utils import get_cart
 from .permissions import IsAdminEdit, IsFavouriteOwner
 from .serializers import (
     ProductSerializer,
@@ -18,7 +16,7 @@ from .serializers import (
     FavouriteProductsSerializer,
     ProductReviewSerializer,
 )
-from ..models import Product, Favourite, FavouriteProducts, ProductReview
+from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode
 from ..utils import get_favourite
 from .filters import ProductFilter
 
@@ -114,7 +112,7 @@ class FavouriteProductViewSet(ModelViewSet):
             request.data._mutable = True
         except:
             "it is not a drf request"
-        request.data["favourite"] = get_favourite(request)
+        request.data["favourite"] = get_favourite(request).id
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -139,3 +137,17 @@ class ProductViewSet(mixins.ListModelMixin, GenericViewSet):
     # ordering_fields = ["title", "product_attr__price"]
     # ordering = ["-id"]
     # ordering_param = "sort"
+
+
+@api_view(["POST"])
+def apply_promocode(request):
+    code = request.data["code"]
+    cart = get_cart(request)
+    promocode = PromoCode.objects.filter(code=code).first()
+    if not promocode or not promocode.is_active:
+        return Response(
+            {"message": "Промокод не дійсний"}, status=status.HTTP_400_BAD_REQUEST
+        )
+    cart.promocode = promocode
+    cart.save()
+    return Response({"message": "Промокод додано"}, status=status.HTTP_200_OK)
