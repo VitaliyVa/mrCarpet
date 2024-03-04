@@ -1,9 +1,15 @@
 import { instance } from "./instance";
-import { bad_modal } from "../components/module/form_action";
+import { accept_modal, bad_modal } from "../components/module/form_action";
 
-export const addToBasket = async (product) => {
+export const addToBasket = async (product, onSucces) => {
   try {
     const { data } = await instance.post("/cart-products/", product);
+
+    if (onSucces) {
+      onSucces();
+    }
+
+    accept_modal(data?.message);
 
     return data;
   } catch ({ response }) {

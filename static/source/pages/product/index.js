@@ -25758,7 +25758,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 var addToBasket = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product, onSucces) {
     var _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -25772,23 +25772,29 @@ var addToBasket = /*#__PURE__*/function () {
           case 3:
             _yield$instance$post = _context.sent;
             data = _yield$instance$post.data;
+
+            if (onSucces) {
+              onSucces();
+            }
+
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
             return _context.abrupt("return", data);
 
-          case 8:
-            _context.prev = 8;
+          case 10:
+            _context.prev = 10;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 12:
+          case 14:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 8]]);
+    }, _callee, null, [[0, 10]]);
   }));
 
-  return function addToBasket(_x) {
+  return function addToBasket(_x, _x2) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -26144,7 +26150,7 @@ document.addEventListener("click", /*#__PURE__*/function () {
           case 0:
             target = _ref.target;
             //   змінити на актуаьну назву для кнопки додавання в корзину
-            addToBasketButton = target.closest(".add-to-cart-btn");
+            addToBasketButton = target.closest(".cart_item__add-to-cart-btn");
 
             if (!addToBasketButton) {
               _context.next = 9;
@@ -27492,53 +27498,74 @@ var product_main_swiper = new swiper__WEBPACK_IMPORTED_MODULE_0__["default"](".p
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _api_favorites__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/favorites */ "../api/favorites.js");
+/* harmony import */ var _api_basket__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/basket */ "../api/basket.js");
+/* harmony import */ var _api_favorites__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../api/favorites */ "../api/favorites.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 
+
 document.addEventListener("click", /*#__PURE__*/function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref) {
-    var target, addToFavoriteButton, _product$dataset, product, productId, isAdded;
+    var target, addToBasketButton, addToFavoriteButton, _product$dataset, product, productId, basketProduct, _product$dataset2, _product, _productId, isAdded;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
             target = _ref.target;
-            addToFavoriteButton = target.closest(".product_favourite-btn");
+            addToBasketButton = target.closest(".add-to-cart");
+            addToFavoriteButton = target.closest(".product_favourite-btn"); // add to basket
 
-            if (!addToFavoriteButton) {
-              _context.next = 13;
+            if (!addToBasketButton) {
+              _context.next = 10;
               break;
             }
 
-            product = addToFavoriteButton.closest(".product");
+            product = addToBasketButton.closest(".product");
             productId = product === null || product === void 0 ? void 0 : (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
+            _context.next = 8;
+            return Object(_api_basket__WEBPACK_IMPORTED_MODULE_0__["addToBasket"])({
+              product: productId,
+              quantity: 1
+            });
+
+          case 8:
+            basketProduct = _context.sent;
+            console.log(basketProduct);
+
+          case 10:
+            if (!addToFavoriteButton) {
+              _context.next = 21;
+              break;
+            }
+
+            _product = addToFavoriteButton.closest(".product");
+            _productId = _product === null || _product === void 0 ? void 0 : (_product$dataset2 = _product.dataset) === null || _product$dataset2 === void 0 ? void 0 : _product$dataset2.productId;
             isAdded = addToFavoriteButton.classList.contains("active");
 
             if (isAdded) {
-              _context.next = 11;
+              _context.next = 19;
               break;
             }
 
-            _context.next = 9;
-            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["addToFavorite"])(productId, function () {
+            _context.next = 17;
+            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_1__["addToFavorite"])(_productId, function () {
               return addToFavoriteButton.classList.add("active");
             });
 
-          case 9:
-            _context.next = 13;
+          case 17:
+            _context.next = 21;
             break;
 
-          case 11:
-            _context.next = 13;
-            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["removeFromFavorite"])(productId, function () {
+          case 19:
+            _context.next = 21;
+            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_1__["removeFromFavorite"])(_productId, function () {
               return addToFavoriteButton.classList.remove("active");
             });
 
-          case 13:
+          case 21:
           case "end":
             return _context.stop();
         }

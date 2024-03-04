@@ -25758,7 +25758,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 var addToBasket = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product, onSucces) {
     var _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -25772,23 +25772,29 @@ var addToBasket = /*#__PURE__*/function () {
           case 3:
             _yield$instance$post = _context.sent;
             data = _yield$instance$post.data;
+
+            if (onSucces) {
+              onSucces();
+            }
+
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
             return _context.abrupt("return", data);
 
-          case 8:
-            _context.prev = 8;
+          case 10:
+            _context.prev = 10;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 12:
+          case 14:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 8]]);
+    }, _callee, null, [[0, 10]]);
   }));
 
-  return function addToBasket(_x) {
+  return function addToBasket(_x, _x2) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -26144,7 +26150,7 @@ document.addEventListener("click", /*#__PURE__*/function () {
           case 0:
             target = _ref.target;
             //   змінити на актуаьну назву для кнопки додавання в корзину
-            addToBasketButton = target.closest(".add-to-cart-btn");
+            addToBasketButton = target.closest(".cart_item__add-to-cart-btn");
 
             if (!addToBasketButton) {
               _context.next = 9;

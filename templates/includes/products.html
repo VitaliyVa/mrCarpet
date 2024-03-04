@@ -1,9 +1,16 @@
 <div class="cart_item_new color_white small">Новинка</div>
-<div class="cart_item_img">
-    <a href="{{ product.get_absolute_url }}">
-    <img src="/static/utils/assets/img.png" alt="{{ product.title }}" />
-  </a>
-  </div>
+<div class="cart_item-top">
+  <a href="{{ product.get_absolute_url }}">
+    <div class="cart_item_img">
+        <img src="/static/utils/assets/img.png" alt="{{ product.title }}" />
+      </div>
+    </a>
+
+    <button class="cart_item__add-to-cart-btn">
+      <img src="/static/utils/assets/bag.svg" alt="bag"/>
+      </button>
+</div>
+
   <div class="cart_item_price__block">
     <div
       class="cart_item_price medium color_gold"
