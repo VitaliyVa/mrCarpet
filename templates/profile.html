@@ -79,42 +79,6 @@
               </div>
             </div>
 
-            <div
-              class="profile-modal__form-change-password profile-modal__form-block"
-            >
-              <h3 class="profile-modal__form-title modal__title">
-                Змінити пароль
-              </h3>
-
-              <div class="profile-modal__form-fields">
-                <div
-                  class="profile-modal__form-field modal__field validation_container"
-                >
-                  <input
-                    id="password"
-                    class="input-transparent validation_input"
-                    name="password"
-                    type="password"
-                    data-type="password1"
-                    placeholder="Новий пароль"
-                  />
-                </div>
-
-                <div
-                  class="profile-modal__form-field modal__field validation_container"
-                >
-                  <input
-                    id="repeatPassword"
-                    class="input-transparent validation_input"
-                    name="repeatPassword"
-                    type="password"
-                    data-type="password2"
-                    placeholder="Підтвердьте пароль"
-                  />
-                </div>
-              </div>
-            </div>
-
             <div class="profile-modal__form-buttons">
               <button
                 type="submit"
@@ -124,6 +88,56 @@
               </button>
             </div>
           </form>
+
+          <form
+          action="/change-password"
+          class="profile-modal__form validation__block"
+        >   
+          <div
+            class="profile-modal__form-change-password profile-modal__form-block"
+          >
+            <h3 class="profile-modal__form-title modal__title">
+              Змінити пароль
+            </h3>
+
+            <div class="profile-modal__form-fields">
+              <div
+                class="profile-modal__form-field modal__field validation_container"
+              >
+                <input
+                  id="password"
+                  class="input-transparent validation_input"
+                  name="password"
+                  type="password"
+                  data-type="password1"
+                  placeholder="Новий пароль"
+                />
+              </div>
+
+              <div
+                class="profile-modal__form-field modal__field validation_container"
+              >
+                <input
+                  id="repeatPassword"
+                  class="input-transparent validation_input"
+                  name="repeatPassword"
+                  type="password"
+                  data-type="password2"
+                  placeholder="Підтвердьте пароль"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-modal__form-buttons">
+            <button
+              type="submit"
+              class="profile-modal__save-btn btn-gold validation_btn"
+            >
+              Оновити пароль
+            </button>
+          </div>
+        </form>
         </div>
       </div>
     </div>
