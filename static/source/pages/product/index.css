@@ -2878,7 +2878,7 @@ swiper-container .swiper-notification {
     right: 0;
     cursor: pointer;
     transition: all 0.2s;
-    opacity: 0.6;
+    opacity: 0.3;
     transform: scale(1);
     padding: 10px; }
     .cart_item_add_to_favorite path {
@@ -3152,7 +3152,10 @@ swiper-container .swiper-notification {
     display: flex;
     position: relative; }
   .product_favourite-btn {
-    margin-left: 24px; }
+    margin-left: 24px;
+    opacity: 0.3; }
+    .product_favourite-btn.active {
+      opacity: 1; }
   .product__quantity {
     background: #fffcf2;
     border-radius: 8px;

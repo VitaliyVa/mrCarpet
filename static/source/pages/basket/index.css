@@ -2905,7 +2905,7 @@ swiper-container .swiper-notification {
     right: 0;
     cursor: pointer;
     transition: all 0.2s;
-    opacity: 0.6;
+    opacity: 0.3;
     transform: scale(1);
     padding: 10px; }
     .cart_item_add_to_favorite path {

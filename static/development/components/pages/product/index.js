@@ -1,9 +1,8 @@
-import "swiper/swiper-bundle.css";
-import "./index.scss";
-import "./review-write-modal.scss";
-
 import Swiper, { Thumbs, Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
+import "./product";
+import "./index.scss";
+import "./review-write-modal.scss";
 
 Swiper.use([Thumbs, Navigation]);
 

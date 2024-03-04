@@ -75,6 +75,11 @@
 
   &_favourite-btn {
     margin-left: 24px;
+    opacity: 0.3;
+
+    &.active {
+      opacity: 1;
+    }
   }
 
   &__quantity {

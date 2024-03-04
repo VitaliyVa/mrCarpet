@@ -25858,12 +25858,13 @@ var sendContactForm = /*#__PURE__*/function () {
 /*!***************************!*\
   !*** ../api/favorites.js ***!
   \***************************/
-/*! exports provided: addToFavorite */
+/*! exports provided: addToFavorite, removeFromFavorite */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToFavorite", function() { return addToFavorite; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromFavorite", function() { return removeFromFavorite; });
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -25873,7 +25874,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 var addToFavorite = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(productId) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(productId, onSucces) {
     var _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -25889,24 +25890,71 @@ var addToFavorite = /*#__PURE__*/function () {
           case 3:
             _yield$instance$post = _context.sent;
             data = _yield$instance$post.data;
+
+            if (onSucces) {
+              onSucces();
+            }
+
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
             return _context.abrupt("return", data);
 
-          case 8:
-            _context.prev = 8;
+          case 10:
+            _context.prev = 10;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 12:
+          case 14:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 8]]);
+    }, _callee, null, [[0, 10]]);
   }));
 
-  return function addToFavorite(_x) {
+  return function addToFavorite(_x, _x2) {
     return _ref.apply(this, arguments);
+  };
+}();
+var removeFromFavorite = /*#__PURE__*/function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(productId, onSucces) {
+    var _yield$instance$delet, data, _response$data2, response;
+
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.prev = 0;
+            _context2.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId));
+
+          case 3:
+            _yield$instance$delet = _context2.sent;
+            data = _yield$instance$delet.data;
+
+            if (onSucces) {
+              onSucces();
+            }
+
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
+            return _context2.abrupt("return", data);
+
+          case 10:
+            _context2.prev = 10;
+            _context2.t0 = _context2["catch"](0);
+            response = _context2.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message);
+
+          case 14:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[0, 10]]);
+  }));
+
+  return function removeFromFavorite(_x3, _x4) {
+    return _ref3.apply(this, arguments);
   };
 }();
 
@@ -26096,14 +26144,14 @@ document.addEventListener("click", /*#__PURE__*/function () {
           case 0:
             target = _ref.target;
             //   змінити на актуаьну назву для кнопки додавання в корзину
-            addToBasketButton = target.closest(".product__btn");
+            addToBasketButton = target.closest(".add-to-cart-btn");
 
             if (!addToBasketButton) {
               _context.next = 9;
               break;
             }
 
-            product = addToBasketButton.closest(".product__btn");
+            product = addToBasketButton.closest(".cart_item");
             productId = product === null || product === void 0 ? void 0 : (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
             _context.next = 7;
             return Object(_api_basket__WEBPACK_IMPORTED_MODULE_0__["addToBasket"])({
@@ -26217,7 +26265,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 document.addEventListener("click", /*#__PURE__*/function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref) {
-    var target, addToFavoriteButton, _product$dataset, product, productId, favoriteProduct;
+    var target, addToFavoriteButton, _product$dataset, product, productId, isAdded;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -26227,20 +26275,35 @@ document.addEventListener("click", /*#__PURE__*/function () {
             addToFavoriteButton = target.closest(".cart_item_add_to_favorite");
 
             if (!addToFavoriteButton) {
-              _context.next = 9;
+              _context.next = 13;
               break;
             }
 
             product = addToFavoriteButton.closest(".cart_item");
             productId = product === null || product === void 0 ? void 0 : (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
-            _context.next = 7;
-            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["addToFavorite"])(productId);
+            isAdded = addToFavoriteButton.classList.contains("active");
 
-          case 7:
-            favoriteProduct = _context.sent;
-            console.log(favoriteProduct);
+            if (isAdded) {
+              _context.next = 11;
+              break;
+            }
+
+            _context.next = 9;
+            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["addToFavorite"])(productId, function () {
+              return addToFavoriteButton.classList.add("active");
+            });
 
           case 9:
+            _context.next = 13;
+            break;
+
+          case 11:
+            _context.next = 13;
+            return Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["removeFromFavorite"])(productId, function () {
+              return addToFavoriteButton.classList.remove("active");
+            });
+
+          case 13:
           case "end":
             return _context.stop();
         }
@@ -26772,8 +26835,10 @@ function bad_modal() {
   }, 2000);
 }
 function accept_modal() {
+  var accept_message = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "Все пройшло успішно! 🎉🥳";
   var accept = document.querySelector(".modal_accept__block");
   var inputs = document.querySelectorAll(".validation_input");
+  accept.querySelector(".modal_accept_text").textContent = accept_message;
   setTimeout(function () {
     hideLoader();
     accept.classList.add("active");

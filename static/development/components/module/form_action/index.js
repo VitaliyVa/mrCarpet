@@ -69,9 +69,11 @@ export function bad_modal(
   }, 2000);
 }
 
-export function accept_modal() {
+export function accept_modal(accept_message = "Все пройшло успішно! 🎉🥳") {
   let accept = document.querySelector(".modal_accept__block");
   let inputs = document.querySelectorAll(".validation_input");
+
+  accept.querySelector(".modal_accept_text").textContent = accept_message;
 
   setTimeout(() => {
     hideLoader();
