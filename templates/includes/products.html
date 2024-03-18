@@ -70,11 +70,11 @@
   {% for attr in product.product_attr.all %}
   {% if not attr.custom_attribute %}
   {% if forloop.first %}
-  <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label active">
+  <div data-item="{{ attr.id }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label active">
     {{ attr.size }}
   </div>
   {% else %}
-  <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label">
+  <div data-item="{{ attr.id }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label">
     {{ attr.size }}
   </div>
   {% endif %}

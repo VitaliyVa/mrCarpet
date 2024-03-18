@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.staticfiles.urls import static
+from django.contrib.auth import views as auth_views
 from django.conf import settings
 
 from drf_yasg.views import get_schema_view
@@ -42,6 +43,7 @@ urlpatterns = [
     path('blog/', include('blog.urls')),
     path('catalog/', include('catalog.urls')),
     path('cart/', include('cart.urls')),
+    path('logout/', auth_views.LogoutView.as_view(next_page="/"), name="logout"),
     path('', include('project.urls')),
     path('', include('payment.urls')),
     path('', include('users.urls')),
