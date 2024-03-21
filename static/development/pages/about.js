@@ -1,3 +1,5 @@
+import "regenerator-runtime/runtime";
+
 // script interface
 import "../components/common_components/reset/index";
 import "../components/common_components/normalize/index";

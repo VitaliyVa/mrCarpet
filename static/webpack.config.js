@@ -33,6 +33,7 @@ const cssLoaders = (extra) => {
 module.exports = {
   context: path.resolve(__dirname, "development/pages"),
   entry: {
+    "regenerator-runtime/runtime.js": "regenerator-runtime/runtime.js",
     index: "./index.js",
     catalog: "./catalog.js",
     catalog_inside: "./catalog_inside.js",
