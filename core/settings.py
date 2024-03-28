@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'order',
     'users',
     'nova_poshta',
+    'ukr_poshta',
     'payment',
     'rest_framework',
     'django_filters',

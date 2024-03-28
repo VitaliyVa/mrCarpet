@@ -14,7 +14,7 @@
     </div>
     <div class="favorite__items cart_item_wrapper">
       {% for product in favourites %}
-      <div class="cart_item" data-product-id="{{ product.id }}">
+      <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
         {% include 'includes/products.html' %}
       </div>
       {% endfor %}

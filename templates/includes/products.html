@@ -1,8 +1,10 @@
+{% if product.is_new %}
 <div class="cart_item_new color_white small">Новинка</div>
+{% endif %}
 <div class="cart_item-top">
   <a href="{{ product.get_absolute_url }}">
     <div class="cart_item_img">
-        <img src="/static/utils/assets/img.png" alt="{{ product.title }}" />
+        <img src="{{ product.image.url }}" alt="{{ product.title }}" />
       </div>
     </a>
 
@@ -16,7 +18,7 @@
       class="cart_item_price medium color_gold"
       {% for attr in product.product_attr.all %}
       {% if not attr.custom_attribute %}
-      data-item-{{ forloop.counter }}={{ attr.get_total_price }}
+      data-item-{{ attr.id }}={{ attr.get_total_price }}
       {% endif %}
       {% endfor %}
     >
@@ -27,7 +29,7 @@
       class="cart_item_procent medium color_gold"
       {% for attr in product.product_attr.all %}
       {% if attr.discount and not attr.custom_attribute %}
-      data-item-{{ forloop.counter }}="{{ attr.discount }}%"
+      data-item-{{ attr.id }}="{{ attr.discount }}%"
       {% endif %}
       {% endfor %}
     >
@@ -39,7 +41,7 @@
       class="cart_item_old_price medium color_black_sub"
       {% for attr in product.product_attr.all %}
       {% if attr.discount and not attr.custom_attribute %}
-      data-item-{{ forloop.counter }}="{{ attr.price }}"
+      data-item-{{ attr.id }}="{{ attr.price }}"
       {% endif %}
       {% endfor %}
     >
@@ -49,7 +51,7 @@
       {% endif %}
     </div>
     <!-- active -->
-    <div class="cart_item_add_to_favorite">
+    <div class="cart_item_add_to_favorite {% if product in favourites %}active{% endif %}">
       <svg
         width="16"
         height="16"
@@ -78,11 +80,11 @@
   {% for attr in product.product_attr.all %}
   {% if not attr.custom_attribute %}
   {% if forloop.first %}
-  <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label active">
+  <div data-item="{{ attr.id }}" data-novelty="{% if product.is_new %}true{%else%}false{% endif %}" class="size-label active">
     {{ attr.size }}
   </div>
   {% else %}
-  <div data-item="{{ forloop.counter }}" data-novelty="{% if attr.is_new %}true{%else%}false{% endif %}" class="size-label">
+  <div data-item="{{ attr.id }}" data-novelty="{% if product.is_new %}true{%else%}false{% endif %}" class="size-label">
     {{ attr.size }}
   </div>
   {% endif %}

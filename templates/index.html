@@ -35,7 +35,7 @@
           {% for product in products %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ product.id }}"
+            data-product-id="{{ product.product_attr.first.id }}"
           >
             {% include 'includes/products.html' %}
           </div>
@@ -78,7 +78,7 @@
           {% for product in sale_products %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ product.id }}"
+            data-product-id="{{ product.product_attr.first.id }}"
           >
             {% include 'includes/products.html' %}
           </div>

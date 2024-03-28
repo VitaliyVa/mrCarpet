@@ -147,7 +147,7 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold">Профіль</a>
+      <a href="{% url 'profile' %}" class="color_gold">Профіль</a>
     </div>
 
     <div class="profile__center">
@@ -173,7 +173,7 @@
         </div>
 
         <div class="profile__sidebar-bottom">
-          <a href="#" class="profile__user-exit-btn">
+          <a href="{% url 'logout' %}" class="profile__user-exit-btn">
             <img src="/static/utils/assets/exit.svg" alt="exit" />
             <span>Вийти</span>
           </a>

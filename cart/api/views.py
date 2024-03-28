@@ -32,6 +32,7 @@ class CartProductViewSet(
         print(self.get_serializer())
         request.data["cart"] = cart.id
         quantity = int(request.data["quantity"])
+        request.data["product_attr"] = request.data["product"]
         # print(type(length))
         # if (not length and width) or (length and not width):
         #     return Response(

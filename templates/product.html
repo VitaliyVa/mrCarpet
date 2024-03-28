@@ -210,28 +210,30 @@
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
             <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
+              <img src="{{ product.image.url }}" alt="" />
             </div>
+            {% if images %}
+            {% for image in images %}
             <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
+              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
             </div>
-            <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
-            </div>
+            {% endfor %}
+            {% endif %}
           </div>
         </div>
 
         <div class="product_slider_main swiper">
           <div class="swiper-wrapper">
             <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
+              <img src="{{ product.image.url }}" alt="" />
             </div>
+            {% if images %}
+            {% for image in images %}
             <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
+              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
             </div>
-            <div class="swiper-slide">
-              <img src="/static/utils/assets/img.png" alt="" />
-            </div>
+            {% endfor %}
+            {% endif %}
           </div>
 
           <div class="swiper-button swiper-button-next"></div>

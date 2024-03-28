@@ -22,7 +22,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     #     related_name='product_prices'
     # )
     image = models.ImageField(
-        verbose_name="Зображення", max_length=512, blank=True, upload_to="products"
+        verbose_name="Зображення", default="products/default.png", max_length=512, blank=True, upload_to="products"
     )
     categories = models.ManyToManyField(
         verbose_name="Категорії",
@@ -30,6 +30,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         to="catalog.ProductCategory",
         related_name="products",
     )
+    is_new = models.BooleanField(verbose_name="Новинка", default=True)
     colors = models.ManyToManyField(
         verbose_name="Кольори",
         blank=True,
@@ -59,6 +60,26 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
 
     def get_absolute_url(self):
         return reverse("product", args=(self.slug,))
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        verbose_name="Продукт",
+        to=Product,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="products/additional", blank=False, null=False)
+    alt = models.CharField(
+        verbose_name="Image alt", max_length=500, blank=True, null=True
+    )
+
+    class Meta:
+        verbose_name = "Зображення продукта"
+        verbose_name_plural = "Зображення продуктів"
+
+    def __str__(self):
+        return f"{self.product.title}: {self.image.url}"
 
 
 class ProductCategory(AbstractTitleSlug):
@@ -142,7 +163,7 @@ class ProductAttribute(models.Model):
     )
     price = models.IntegerField(verbose_name="Ціна", blank=True, null=True)
     quantity = models.PositiveSmallIntegerField(verbose_name="Кількість")
-    is_new = models.BooleanField(verbose_name="Новинка", default=True)
+    # is_new = models.BooleanField(verbose_name="Новинка", default=True)
     custom_attribute = models.BooleanField(
         verbose_name="Кастомна варіація",
         help_text="Позначати тільки якщо це кастомний варіант!",
@@ -480,7 +501,7 @@ class FavouriteProducts(models.Model):
     order = models.IntegerField(default=1)
 
     class Meta:
-        # ordering = ['-order']
+        # ordering = ['order']
         verbose_name = "Улюблений товар"
         verbose_name_plural = "Улюблені товари"
 

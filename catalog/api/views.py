@@ -16,7 +16,7 @@ from .serializers import (
     FavouriteProductsSerializer,
     ProductReviewSerializer,
 )
-from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode
+from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode, ProductAttribute
 from ..utils import get_favourite
 from .filters import ProductFilter
 
@@ -103,9 +103,14 @@ class ProductReviewViewSet(ModelViewSet):
 
 
 class FavouriteProductViewSet(ModelViewSet):
-    queryset = FavouriteProducts.objects.all()
+    # queryset = FavouriteProducts.objects.all()
     serializer_class = FavouriteProductsSerializer
     permission_classes = [IsFavouriteOwner]
+    lookup_field = "product__product_attr__id"
+
+    def get_queryset(self):
+        favourite = get_favourite(self.request)
+        return FavouriteProducts.objects.filter(favourite=favourite)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -113,6 +118,14 @@ class FavouriteProductViewSet(ModelViewSet):
         except:
             "it is not a drf request"
         request.data["favourite"] = get_favourite(request).id
+        try:
+            product = ProductAttribute.objects.get(id=int(request.data["product"])).product.id
+            request.data["product"] = str(product)
+        except:
+            return Response(
+                {"message": "Помилка"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:

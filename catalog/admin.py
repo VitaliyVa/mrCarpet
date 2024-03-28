@@ -14,7 +14,7 @@ from .models import (
     ProductSale,
     ProductColor,
     ProductWidth,
-    PromoCode,
+    PromoCode, ProductImage,
 )
 
 
@@ -36,6 +36,11 @@ class ProductInLine(admin.TabularInline):
     extra = 0
 
 
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 0
+
+
 class RelatedProductInline(admin.TabularInline):
     model = RelatedProduct
     fk_name = "related_to"
@@ -48,7 +53,7 @@ class SpecificationInline(admin.TabularInline):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    inlines = [ProductInLine, RelatedProductInline, SpecificationInline]
+    inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
 
     class Meta:
         model = Product

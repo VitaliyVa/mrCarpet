@@ -70,7 +70,7 @@
             </div>
             <div class="catalog_section_bottom cart_item_wrapper">
                 {% for product in products %}
-                <div class="cart_item" data-product-id="{{ product.id }}">
+                <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
                     {% include 'includes/products.html' %}
                 </div>
                 {% endfor %}

@@ -8,7 +8,7 @@ from .models import (
     FavouriteProducts,
     ProductCategory,
     ProductAttribute,
-    Size,
+    Size, ProductImage,
 )
 
 
@@ -42,5 +42,6 @@ def favourites(request):
 
 def product(request, slug):
     product = Product.objects.get(slug=slug)
+    images = ProductImage.objects.filter(product=product)
     # product_attr = ProductAttribute.objects.filter(product=prod)
-    return render(request, "product.html", {"product": product})
+    return render(request, "product.html", {"product": product, "images": images})
