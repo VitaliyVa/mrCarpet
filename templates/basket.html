@@ -20,7 +20,7 @@
                     {% for cart_product in cart_products %}
                     <div class="basket_item">
                         <div class="basket_item__img">
-                            <img src="/static/utils/assets/img.png" alt="" />
+                            <img src="{{ cart_product.product_attr.product.image.url }}" alt="" />
                         </div>
                         <div class="basket_item__right">
                             <div class="basket_item__title">
