@@ -83,7 +83,7 @@ def create_areas():
 
 
 def create_cities():
-    response = get_full_response("Address", "getCities")
+    response = get_response("Address", "getCities")
     bulk_create_list = []
     bulk_update_list = []
     for obj in response["data"]:
@@ -96,10 +96,12 @@ def create_cities():
             settlement.title = title
             settlement.ref = ref
             bulk_update_list.append(settlement)
+            print("Update")
         else:
             bulk_create_list.append(
                 Settlement(title=title, type=type, ref=ref, area=area)
             )
+            print("Create")
     Settlement.objects.bulk_create(bulk_create_list)
     Settlement.objects.bulk_update(bulk_update_list, fields=["title", "ref"])
     print("Settlement bulk_create", len(bulk_create_list))
@@ -107,34 +109,58 @@ def create_cities():
 
 
 def create_warehouses():
-    settlements = Settlement.objects.all()
+    # settlements = Settlement.objects.all()
     bulk_create_list = []
     bulk_update_list = []
-    for settlement in settlements:
-        properties = {"CityRef": settlement.ref}
-        response = get_response("Address", "getWarehouses", properties)
-        print(response["data"])
-        if response["data"]:
-            for obj in response["data"]:
-                title = obj.get("Description")
-                ref = obj.get("Ref")
-                short_address = obj["ShortAddress"]
-                type = WarehouseType.objects.get(ref=obj["TypeOfWarehouse"])
-                warehouse = Warehouse.objects.filter(ref=ref).first()
-                if warehouse:
-                    warehouse.title = title
-                    warehouse.ref = ref
-                    bulk_update_list.append(warehouse)
-                else:
-                    bulk_create_list.append(
-                        Warehouse(
-                            title=title,
-                            short_address=short_address,
-                            type=type,
-                            settlement=settlement,
-                            ref=ref,
-                        )
-                    )
+    response = get_response("Address", "getWarehouses")
+    for obj in response["data"]:
+        title = obj.get("Description")
+        ref = obj.get("Ref")
+        short_address = obj.get("ShortAddress")
+        type = WarehouseType.objects.get(ref=obj["TypeOfWarehouse"])
+        settlement = Settlement.objects.get(ref=obj["CityRef"])
+        warehouse = Warehouse.objects.filter(ref=ref).first()
+        if warehouse:
+            warehouse.title = title
+            warehouse.ref = ref
+            bulk_update_list.append(warehouse)
+            print("Update")
+        else:
+            bulk_create_list.append(
+                Warehouse(
+                    title=title,
+                    short_address=short_address,
+                    type=type,
+                    settlement=settlement,
+                    ref=ref
+                )
+            )
+            print("Create")
+    # for settlement in settlements:
+    #     properties = {"CityRef": settlement.ref}
+    #     response = get_response("Address", "getWarehouses", properties)
+    #     print(response["data"])
+    #     if response["data"]:
+    #         for obj in response["data"]:
+    #             title = obj.get("Description")
+    #             ref = obj.get("Ref")
+    #             short_address = obj["ShortAddress"]
+    #             type = WarehouseType.objects.get(ref=obj["TypeOfWarehouse"])
+    #             warehouse = Warehouse.objects.filter(ref=ref).first()
+    #             if warehouse:
+    #                 warehouse.title = title
+    #                 warehouse.ref = ref
+    #                 bulk_update_list.append(warehouse)
+    #             else:
+    #                 bulk_create_list.append(
+    #                     Warehouse(
+    #                         title=title,
+    #                         short_address=short_address,
+    #                         type=type,
+    #                         settlement=settlement,
+    #                         ref=ref,
+    #                     )
+    #                 )
     Warehouse.objects.bulk_create(bulk_create_list)
     Warehouse.objects.bulk_update(bulk_update_list, fields=["title", "ref"])
     print("Warehouse bulk_create", len(bulk_create_list))

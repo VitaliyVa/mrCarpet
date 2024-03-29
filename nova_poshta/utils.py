@@ -42,12 +42,7 @@ def get_response(model: str, method: str, properties: dict = {}, url: str = url)
         "calledMethod": method,
         "methodProperties": properties,
     }
-    response = None
-    while not response:
-        try:
-            response = requests.post(url, json=data).json()
-        except requests.exceptions.Timeout:
-            continue
+    response = requests.post(url, json=data).json()
     return response
 
 
