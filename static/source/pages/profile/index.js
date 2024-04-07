@@ -26510,15 +26510,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToBasket", function() { return addToBasket; });
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/updateCountBadge */ "../utils/updateCountBadge.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 
 
+
 var addToBasket = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product, onSucces) {
-    var _yield$instance$post, data, _response$data, response;
+    var _data$cart_products, _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -26536,21 +26538,22 @@ var addToBasket = /*#__PURE__*/function () {
               onSucces();
             }
 
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в корзину!");
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : (_data$cart_products = data.cart_products) === null || _data$cart_products === void 0 ? void 0 : _data$cart_products.length);
             return _context.abrupt("return", data);
 
-          case 10:
-            _context.prev = 10;
+          case 11:
+            _context.prev = 11;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 14:
+          case 15:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 10]]);
+    }, _callee, null, [[0, 11]]);
   }));
 
   return function addToBasket(_x, _x2) {
@@ -26632,9 +26635,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromFavorite", function() { return removeFromFavorite; });
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/updateCountBadge */ "../utils/updateCountBadge.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 
 
 
@@ -26660,14 +26665,18 @@ var addToFavorite = /*#__PURE__*/function () {
               onSucces();
             }
 
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message); // updateCountBadge(
+            //   ".header_bottom_panel_like",
+            //   data?.favourite_products?.length
+            // );
+
             return _context.abrupt("return", data);
 
           case 10:
             _context.prev = 10;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Товар додано!");
 
           case 14:
           case "end":
@@ -26701,7 +26710,11 @@ var removeFromFavorite = /*#__PURE__*/function () {
               onSucces();
             }
 
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено!"); // updateCountBadge(
+            //   ".header_bottom_panel_like",
+            //   data?.favourite_products?.length
+            // );
+
             return _context2.abrupt("return", data);
 
           case 10:
@@ -28142,6 +28155,33 @@ function handleInput(e) {
 function phoneMask(phone) {
   return phone.replace(/\D/g, "").replace(/^(\d)/, "($1").replace(/^(\(\d{3})(\d)/, "$1) $2").replace(/(\d{2})(\d{2})/, "$1-$2").replace(/(-\d{7})\d+?$/, "$1");
 }
+
+/***/ }),
+
+/***/ "../utils/updateCountBadge.js":
+/*!************************************!*\
+  !*** ../utils/updateCountBadge.js ***!
+  \************************************/
+/*! exports provided: updateCountBadge */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateCountBadge", function() { return updateCountBadge; });
+var updateCountBadge = function updateCountBadge(badgeClassName) {
+  var count = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "???";
+  var badgeElements = document.querySelectorAll(badgeClassName);
+
+  if (badgeElements.length) {
+    badgeElements.forEach(function (badge) {
+      var badgeCountLabel = badge.querySelector(".header_bottom_panel_item_count");
+
+      if (badgeCountLabel) {
+        badgeCountLabel.textContent = count;
+      }
+    });
+  }
+};
 
 /***/ }),
 

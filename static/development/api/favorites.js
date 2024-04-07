@@ -1,5 +1,6 @@
 import { instance } from "./instance";
 import { accept_modal, bad_modal } from "../components/module/form_action";
+import { updateCountBadge } from "../utils/updateCountBadge";
 
 export const addToFavorite = async (productId, onSucces) => {
   try {
@@ -13,9 +14,14 @@ export const addToFavorite = async (productId, onSucces) => {
 
     accept_modal(data?.message);
 
+    // updateCountBadge(
+    //   ".header_bottom_panel_like",
+    //   data?.favourite_products?.length
+    // );
+
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    bad_modal(response?.data?.message || "Товар додано!");
   }
 };
 
@@ -27,7 +33,12 @@ export const removeFromFavorite = async (productId, onSucces) => {
       onSucces();
     }
 
-    accept_modal(data?.message);
+    accept_modal(data?.message || "Товар видалено!");
+
+    // updateCountBadge(
+    //   ".header_bottom_panel_like",
+    //   data?.favourite_products?.length
+    // );
 
     return data;
   } catch ({ response }) {
