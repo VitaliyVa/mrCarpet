@@ -19,3 +19,21 @@ export const addToBasket = async (product, onSucces) => {
     bad_modal(response?.data?.message);
   }
 };
+
+export const removeFromBasket = async (productId, onSucces) => {
+  try {
+    const { data } = await instance.delete(`/cart-products/${productId}`);
+
+    if (onSucces) {
+      onSucces();
+    }
+
+    // accept_modal(data?.message || "Товар видалено!");
+
+    updateCountBadge(".header_bottom_panel_cart", data?.cart_products?.length);
+
+    return data;
+  } catch ({ response }) {
+    bad_modal(response?.data?.message);
+  }
+};

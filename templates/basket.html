@@ -18,9 +18,9 @@
             <div class="basket__left">
                 <div class="basket__items">
                     {% for cart_product in cart_products %}
-                    <div class="basket_item">
+                    <div class="basket_item" data-item-id="{{cart_product.id}}">
                         <div class="basket_item__img">
-                            <img src="{{ cart_product.product_attr.product.image.url }}" alt="" />
+                            <img src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" />
                         </div>
                         <div class="basket_item__right">
                             <div class="basket_item__title">

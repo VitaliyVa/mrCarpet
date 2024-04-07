@@ -26502,12 +26502,13 @@ var registerUser = /*#__PURE__*/function () {
 /*!************************!*\
   !*** ../api/basket.js ***!
   \************************/
-/*! exports provided: addToBasket */
+/*! exports provided: addToBasket, removeFromBasket */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addToBasket", function() { return addToBasket; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFromBasket", function() { return removeFromBasket; });
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
 /* harmony import */ var _utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/updateCountBadge */ "../utils/updateCountBadge.js");
@@ -26558,6 +26559,48 @@ var addToBasket = /*#__PURE__*/function () {
 
   return function addToBasket(_x, _x2) {
     return _ref.apply(this, arguments);
+  };
+}();
+var removeFromBasket = /*#__PURE__*/function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(productId, onSucces) {
+    var _data$cart_products2, _yield$instance$delet, data, _response$data2, response;
+
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.prev = 0;
+            _context2.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/cart-products/".concat(productId));
+
+          case 3:
+            _yield$instance$delet = _context2.sent;
+            data = _yield$instance$delet.data;
+
+            if (onSucces) {
+              onSucces();
+            } // accept_modal(data?.message || "Товар видалено!");
+
+
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : (_data$cart_products2 = data.cart_products) === null || _data$cart_products2 === void 0 ? void 0 : _data$cart_products2.length);
+            return _context2.abrupt("return", data);
+
+          case 10:
+            _context2.prev = 10;
+            _context2.t0 = _context2["catch"](0);
+            response = _context2.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message);
+
+          case 14:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[0, 10]]);
+  }));
+
+  return function removeFromBasket(_x3, _x4) {
+    return _ref3.apply(this, arguments);
   };
 }();
 
