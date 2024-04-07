@@ -3127,6 +3127,30 @@ swiper-container .swiper-notification {
         color: #453f3a;
         margin-top: 4px; }
 
+.counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  background-color: #fffcf2;
+  padding: 4px;
+  border-radius: 8px; }
+  .counter button {
+    width: 16px;
+    height: 16px; }
+    .counter button:active {
+      transition: all 0.2s;
+      transform: translateY(3px); }
+  .counter__value {
+    width: 22px;
+    background-color: #fffcf2;
+    color: #453f3a;
+    text-align: center;
+    border: none;
+    outline: none;
+    pointer-events: none; }
+
 @media (max-width: 1024px) {
   .first_section .container {
     padding: 0; }
@@ -3210,6 +3234,8 @@ swiper-container .swiper-notification {
       .product_review .star-rate__item label svg {
         width: 14px;
         height: 14px; }
+  .product .info-text__free-delivery {
+    margin-left: 12px; }
   @media (max-width: 1300px) {
     .product h1 {
       font-size: 30px; }

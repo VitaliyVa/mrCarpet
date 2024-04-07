@@ -3117,6 +3117,30 @@ swiper-container .swiper-notification {
       .accordion_content__block.active::before {
         opacity: 0; }
 
+.counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  background-color: #fffcf2;
+  padding: 4px;
+  border-radius: 8px; }
+  .counter button {
+    width: 16px;
+    height: 16px; }
+    .counter button:active {
+      transition: all 0.2s;
+      transform: translateY(3px); }
+  .counter__value {
+    width: 22px;
+    background-color: #fffcf2;
+    color: #453f3a;
+    text-align: center;
+    border: none;
+    outline: none;
+    pointer-events: none; }
+
 .basket h1 {
   margin: 4px 0 0; }
 

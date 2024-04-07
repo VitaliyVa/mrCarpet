@@ -1,7 +1,6 @@
 import { addToBasket } from "../../../api/basket";
 
 document.addEventListener("click", async ({ target }) => {
-  //   змінити на актуаьну назву для кнопки додавання в корзину
   const addToBasketButton = target.closest(".cart_item__add-to-cart-btn");
 
   if (addToBasketButton) {

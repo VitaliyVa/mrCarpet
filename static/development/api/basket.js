@@ -37,3 +37,21 @@ export const removeFromBasket = async (productId, onSucces) => {
     bad_modal(response?.data?.message);
   }
 };
+
+export const updateBasketItem = async ({ id, ...product }, onSucces) => {
+  try {
+    const { data } = await instance.patch(`/cart-products/${id}/`, product);
+
+    if (onSucces) {
+      onSucces();
+    }
+
+    // accept_modal(data?.message || "Товар видалено!");
+
+    updateCountBadge(".header_bottom_panel_cart", data?.cart_products?.length);
+
+    return data;
+  } catch ({ response }) {
+    bad_modal(response?.data?.message);
+  }
+};

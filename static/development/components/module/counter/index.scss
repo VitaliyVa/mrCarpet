@@ -1,0 +1,30 @@
+.counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  background-color: #fffcf2;
+  padding: 4px;
+  border-radius: 8px;
+
+  button {
+    width: 16px;
+    height: 16px;
+
+    &:active {
+      transition: all 0.2s;
+      transform: translateY(3px);
+    }
+  }
+
+  &__value {
+    width: 22px;
+    background-color: #fffcf2;
+    color: #453f3a;
+    text-align: center;
+    border: none;
+    outline: none;
+    pointer-events: none;
+  }
+}

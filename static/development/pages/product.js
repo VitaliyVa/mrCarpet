@@ -20,6 +20,7 @@ import "../components/module/cart_item";
 import "../components/module/blog_item/index";
 import "../components/module/accordion/index";
 import "../components/module/star-rate/index";
+import "../components/module/counter/index";
 
 import "../utils/customMask";
 

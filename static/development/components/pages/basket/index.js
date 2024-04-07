@@ -1,17 +1,41 @@
 import "./index.scss";
 import "./checkout";
-import { removeFromBasket } from "../../../api/basket";
-import { delete_item } from "../../module/shop_scripts/basket_action";
+import { removeFromBasket, updateBasketItem } from "../../../api/basket";
+import {
+  delete_item,
+  minus,
+  plus,
+} from "../../module/shop_scripts/basket_action";
 
 document.addEventListener("click", ({ target }) => {
-  const deleteButton = target.closest(".basket_item__delete button");
+  const product = target.closest(".basket_item");
 
-  if (deleteButton) {
-    const product = deleteButton.closest(".basket_item");
+  if (product) {
     const productId = Number(product.dataset.itemId);
 
-    removeFromBasket(productId, () =>
-      delete_item(deleteButton, ".basket_item")
-    );
+    const deleteButton = target.closest(".basket_item__delete button");
+
+    const counterMinusButton = target.closest(".counter__minus-btn");
+    const counterPlusButton = target.closest(".counter__plus-btn");
+    const counterValue =
+      Number(product.querySelector(".counter__value").value) || 1;
+
+    if (deleteButton) {
+      removeFromBasket(productId, () =>
+        delete_item(deleteButton, ".basket_item")
+      );
+    }
+
+    if (counterMinusButton) {
+      updateBasketItem({ id: productId, quantity: counterValue }, () =>
+        minus(".counter", ".counter__value", target)
+      );
+    }
+
+    if (counterPlusButton) {
+      updateBasketItem({ id: productId, quantity: counterValue }, () =>
+        plus(".counter", ".counter__value", target)
+      );
+    }
   }
 });

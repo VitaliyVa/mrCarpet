@@ -20,6 +20,7 @@ import "../components/module/catalog_slider/index";
 import "../components/module/cart_item";
 import "../components/module/blog_item/index";
 import "../components/module/accordion/index.scss";
+import "../components/module/counter/index";
 
 import "../utils/customMask";
 
