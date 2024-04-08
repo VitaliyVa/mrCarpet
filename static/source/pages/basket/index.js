@@ -28408,7 +28408,7 @@ document.addEventListener("click", function (_ref) {
     if (counterMinusButton) {
       Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
         id: productId,
-        quantity: counterValue
+        quantity: 1
       }, function () {
         return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["minus"])(".counter", ".counter__value", target);
       });
@@ -28417,7 +28417,7 @@ document.addEventListener("click", function (_ref) {
     if (counterPlusButton) {
       Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
         id: productId,
-        quantity: counterValue
+        quantity: 1
       }, function () {
         return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["plus"])(".counter", ".counter__value", target);
       });
