@@ -16,4 +16,6 @@ class IsFavouriteOwner(permissions.BasePermission):
             return True
         if obj.favourite.user == request.user:
             return True
+        if obj.favourite.id == request.session.get("fav_id", None):
+            return True
         return False

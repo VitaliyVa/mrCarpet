@@ -84,6 +84,13 @@ class CartProductViewSet(
             status=status.HTTP_201_CREATED,
         )
 
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     quantity = request.data.get("quantity", None)
+    #     if quantity and quantity == instance.quantity:
+    #         request.data["quantity"] = instance.quantity + quantity
+    #     return super().update(request, *args, **kwargs)
+
 
 # class CartViewSet(ModelViewSet):
 #     queryset = Cart.objects.all()

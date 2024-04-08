@@ -205,7 +205,7 @@
       >
     </div>
 
-    <div class="product" data-product-id="{{ product.id }}">
+    <div class="product" data-product-id="{{ product.product_attr.first.id }}">
       <div class="product_slider">
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
@@ -251,7 +251,7 @@
               class="cart_item_price medium color_gold"
               {% for attr in product.product_attr.all %}
               {% if not attr.custom_attribute %}
-              data-item-{{ forloop.counter }}={{ attr.get_total_price }}
+              data-item-{{ attr.id }}={{ attr.get_total_price }}
               {% endif %}
               {% endfor %}
             >
@@ -262,7 +262,7 @@
               class="cart_item_procent medium color_gold"
               {% for attr in product.product_attr.all %}
               {% if attr.discount and not attr.custom_attribute %}
-              data-item-{{ forloop.counter }}="{{ attr.discount }}%"
+              data-item-{{ attr.id }}="{{ attr.discount }}%"
               {% endif %}
               {% endfor %}
             >
@@ -274,7 +274,7 @@
               class="cart_item_old_price medium color_black_sub"
               {% for attr in product.product_attr.all %}
               {% if attr.discount and not attr.custom_attribute %}
-              data-item-{{ forloop.counter }}="{{ attr.price }}"
+              data-item-{{ attr.id }}="{{ attr.price }}"
               {% endif %}
               {% endfor %}
             >
@@ -294,11 +294,11 @@
             {% for attr in product.product_attr.all %}
             {% if not attr.custom_attribute %}
             {% if forloop.first %}
-            <div data-item="{{ forloop.counter }}" data-novelty="true" class="size-label active">
+            <div data-item="{{ attr.id }}" data-novelty="true" class="size-label active">
               {{ attr.size }}
             </div>
             {% else %}
-            <div data-item="{{ forloop.counter }}" data-novelty="true" class="size-label">
+            <div data-item="{{ attr.id }}" data-novelty="true" class="size-label">
               {{ attr.size }}
             </div>
             {% endif %}
