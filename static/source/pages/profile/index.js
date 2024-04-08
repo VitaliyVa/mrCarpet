@@ -26713,6 +26713,65 @@ var sendContactForm = /*#__PURE__*/function () {
 
 /***/ }),
 
+/***/ "../api/currentUser.js":
+/*!*****************************!*\
+  !*** ../api/currentUser.js ***!
+  \*****************************/
+/*! exports provided: updateCurrentUser */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateCurrentUser", function() { return updateCurrentUser; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+var updateCurrentUser = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(values) {
+    var _yield$instance$patch, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["showLoader"])();
+            _context.prev = 1;
+            _context.next = 4;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].patch("/users/update_profile/", values);
+
+          case 4:
+            _yield$instance$patch = _context.sent;
+            data = _yield$instance$patch.data;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])();
+            window.location.reload();
+            return _context.abrupt("return", data);
+
+          case 11:
+            _context.prev = 11;
+            _context.t0 = _context["catch"](1);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
+
+          case 15:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[1, 11]]);
+  }));
+
+  return function updateCurrentUser(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../api/favorites.js":
 /*!***************************!*\
   !*** ../api/favorites.js ***!
@@ -28181,9 +28240,89 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _orders_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_orders_scss__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _profile_modal_scss__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./profile-modal.scss */ "../components/pages/profile/profile-modal.scss");
 /* harmony import */ var _profile_modal_scss__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_profile_modal_scss__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _api_currentUser__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../api/currentUser */ "../api/currentUser.js");
+/* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 
 
+
+
+
+
+var saveChangesButton = document.querySelector(".profile-modal__save-changes-btn");
+var updatePasswordButton = document.querySelector(".profile-modal__update-password-btn");
+
+if (saveChangesButton) {
+  saveChangesButton.addEventListener("click", /*#__PURE__*/function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
+      var formValues, status;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              event.preventDefault();
+              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_4__["getFormFields"])(".profile-modal__form-edit-profile", ".validation_input");
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_5__["default"])(saveChangesButton);
+
+              if (!status) {
+                _context.next = 6;
+                break;
+              }
+
+              _context.next = 6;
+              return Object(_api_currentUser__WEBPACK_IMPORTED_MODULE_3__["updateCurrentUser"])(formValues);
+
+            case 6:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+
+    return function (_x) {
+      return _ref.apply(this, arguments);
+    };
+  }());
+}
+
+if (updatePasswordButton) {
+  updatePasswordButton.addEventListener("click", /*#__PURE__*/function () {
+    var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(event) {
+      var formValues, status;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              event.preventDefault();
+              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_4__["getFormFields"])(".profile-modal__form-change-password", ".validation_input");
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_5__["default"])(updatePasswordButton);
+
+              if (!status) {
+                _context2.next = 6;
+                break;
+              }
+
+              _context2.next = 6;
+              return Object(_api_currentUser__WEBPACK_IMPORTED_MODULE_3__["updateCurrentUser"])(formValues);
+
+            case 6:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    }));
+
+    return function (_x2) {
+      return _ref2.apply(this, arguments);
+    };
+  }());
+}
 
 /***/ }),
 
