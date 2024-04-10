@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview
+from ..utils import get_favourite
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -33,13 +34,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class FavouriteSerializer(serializers.ModelSerializer):
     product = ProductSerializer(many=True)
+    quantity = serializers.SerializerMethodField()
+
     class Meta:
         model = Favourite
         fields = [
             'id',
             'product',
-            'user'
+            'user',
+            'quantity',
         ]
+
+    def get_quantity(self, obj):
+        return len(obj.product.all())
 
 
 class FavouriteProductsSerializer(serializers.ModelSerializer):

@@ -1,7 +1,8 @@
 from functools import reduce
 from operator import or_
 
-from django.db.models import Min, ExpressionWrapper, F, fields, Subquery, Q
+from django import db
+from django.db.models import Min, ExpressionWrapper, F, fields, Subquery, Q, Case, When
 from django_filters import rest_framework as rest_filters
 
 from ..models import Product, Specification, SpecificationValue, ProductSpecification
@@ -20,7 +21,7 @@ class ProductFilter(rest_filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ["size", "price"]
+        fields = ["size", "price", "search_query"]
 
     def order_by_price(self, queryset, name, value):
         min_price_attr_subquery = queryset.annotate(
@@ -57,12 +58,16 @@ class ProductFilter(rest_filters.FilterSet):
     #     return exact_search
 
     def search(self, queryset, name, value):
-        search_terms = value.split(" ")
-        exact_search_q = Q(title__icontains=value) | Q(description__icontains=value)
-        partial_search_q_list = [
-            Q(title__icontains=val) | Q(description__icontains=val)
-            for val in search_terms
-        ]
-        partial_search_q = reduce(or_, partial_search_q_list)
-        result_queryset = queryset.filter(exact_search_q | partial_search_q)
-        return result_queryset
+        split_values = value.split(" ")
+        result = (
+            Product.objects.annotate(
+                custom_order=Case(
+                    When(title__icontains=value, then=1),
+                    When(description__icontains=value, then=2),
+                    output_field=db.models.IntegerField(),
+                )
+            )
+            .filter(custom_order__gt=0)
+            .order_by("custom_order", "-created")
+        )
+        return result

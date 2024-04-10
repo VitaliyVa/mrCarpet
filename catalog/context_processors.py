@@ -5,8 +5,9 @@ from .utils import get_favourite
 def context(request):
     categories = ProductCategory.objects.all()
     # f_products = get_favourite(request).product.all()[::-1]
-    raw_products = FavouriteProducts.objects.filter(favourite=get_favourite(request))[::-1]
-    f_products = [product.product for product in raw_products]
+    # raw_products = FavouriteProducts.objects.filter(favourite=get_favourite(request))[::-1]
+    # f_products = [product.product for product in raw_products]
+    f_products = get_favourite(request).product.all()[::-1]
     products = Product.objects.all().order_by("-id")
     # f_products = favourite.product.all()[::-1]
     context = {

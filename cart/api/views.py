@@ -84,12 +84,25 @@ class CartProductViewSet(
             status=status.HTTP_201_CREATED,
         )
 
-    # def update(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     quantity = request.data.get("quantity", None)
-    #     if quantity and quantity == instance.quantity:
-    #         request.data["quantity"] = instance.quantity + quantity
-    #     return super().update(request, *args, **kwargs)
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        quantity = request.data.get("quantity", None)
+        if quantity:
+            request.data["quantity"] = instance.quantity + quantity
+        super().update(request, *args, **kwargs)
+        return Response(
+            CartSerializer(get_cart(request), context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+
+        return Response(
+            CartSerializer(get_cart(request), context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
 
 
 # class CartViewSet(ModelViewSet):

@@ -137,8 +137,18 @@ class FavouriteProductViewSet(ModelViewSet):
         except FavouriteProducts.DoesNotExist:
             fav_product = FavouriteProducts.objects.create(**serializer.validated_data)
             return Response(
-                {"message": "Товар додано!"}, status=status.HTTP_201_CREATED
+                {"favourite": FavouriteSerializer(get_favourite(request)).data, "message": "Товар додано!"}, status=status.HTTP_201_CREATED
             )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        print("ok")
+
+        return Response(
+            FavouriteSerializer(get_favourite(request)).data,
+            status=status.HTTP_200_OK
+        )
 
 
 class ProductViewSet(mixins.ListModelMixin, GenericViewSet):

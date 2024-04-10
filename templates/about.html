@@ -22,27 +22,11 @@
         </div>
         <div class="banner__center-right">
           <ul class="banner__carpets-list">
+            {% for category in categories %}
             <li>
-              <a href="#">Килими українського виробництва</a>
+              <a href="{{ category.get_absolute_url }}">{{ category.title }}</a>
             </li>
-            <li>
-              <a href="#">Килими турецького виробництва</a>
-            </li>
-            <li>
-              <a href="#">Килими в ванну</a>
-            </li>
-            <li>
-              <a href="#">Доріжки на відріз</a>
-            </li>
-            <li>
-              <a href="#">Смайлики</a>
-            </li>
-            <li>
-              <a href="#">Дитячі килими</a>
-            </li>
-            <li>
-              <a href="#">Безворсові килими в кухню</a>
-            </li>
+            {% endfor %}
           </ul>
         </div>
       </div>
