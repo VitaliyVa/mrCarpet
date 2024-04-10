@@ -37,6 +37,7 @@ class UserViewSet(ViewSet):
                 last_name=last_name,
                 password=password,
             )
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"])
