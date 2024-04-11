@@ -14,10 +14,7 @@ export const addToFavorite = async (productId, onSucces) => {
 
     accept_modal(data?.message);
 
-    // updateCountBadge(
-    //   ".header_bottom_panel_like",
-    //   data?.favourite_products?.length
-    // );
+    updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
 
     return data;
   } catch ({ response }) {
@@ -35,10 +32,7 @@ export const removeFromFavorite = async (productId, onSucces) => {
 
     accept_modal(data?.message || "Товар видалено!");
 
-    // updateCountBadge(
-    //   ".header_bottom_panel_like",
-    //   data?.favourite_products?.length
-    // );
+    updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
 
     return data;
   } catch ({ response }) {

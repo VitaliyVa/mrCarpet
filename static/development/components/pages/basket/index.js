@@ -17,8 +17,16 @@ document.addEventListener("click", ({ target }) => {
 
     const counterMinusButton = target.closest(".counter__minus-btn");
     const counterPlusButton = target.closest(".counter__plus-btn");
-    const counterValue =
-      Number(product.querySelector(".counter__value").value) || 1;
+
+    const updateCardItem = (basket) => {
+      const productTotalPrice = product.querySelector(".cart_item_total-price");
+
+      const basketProduct = basket?.cart_products.find(
+        (basketItem) => basketItem.id === productId
+      );
+
+      productTotalPrice.textContent = basketProduct.total_price;
+    };
 
     if (deleteButton) {
       removeFromBasket(productId, () =>
@@ -27,14 +35,22 @@ document.addEventListener("click", ({ target }) => {
     }
 
     if (counterMinusButton) {
-      updateBasketItem({ id: productId, quantity: 1, increment: false }, () =>
-        minus(".counter", ".counter__value", target)
+      updateBasketItem(
+        { id: productId, quantity: 1, increment: false },
+        (basket) => {
+          minus(".counter", ".counter__value", target);
+          updateCardItem(basket);
+        }
       );
     }
 
     if (counterPlusButton) {
-      updateBasketItem({ id: productId, quantity: 1, increment: true }, () =>
-        plus(".counter", ".counter__value", target)
+      updateBasketItem(
+        { id: productId, quantity: 1, increment: true },
+        (basket) => {
+          plus(".counter", ".counter__value", target);
+          updateCardItem(basket);
+        }
       );
     }
   }
