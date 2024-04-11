@@ -87,8 +87,20 @@ class CartProductViewSet(
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         quantity = request.data.get("quantity", None)
-        if quantity:
+        increment = request.data.get("increment", None)
+        print(increment)
+        if (quantity and increment) is None:
+            return Response(
+                {"message": "Wrong request"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if quantity > 0 and increment is True:
             request.data["quantity"] = instance.quantity + quantity
+        elif quantity > 0 and increment is False:
+            if instance.quantity == 1:
+                request.data["quantity"] = 1
+            else:
+                request.data["quantity"] = instance.quantity - quantity
         super().update(request, *args, **kwargs)
         return Response(
             CartSerializer(get_cart(request), context={"request": request}).data,
