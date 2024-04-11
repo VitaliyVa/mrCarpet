@@ -610,6 +610,7 @@ textarea {
   justify-content: center;
   align-items: center;
   background: rgba(0, 0, 0, 0.5);
+  visibility: hidden;
   opacity: 0;
   z-index: 99999;
   width: 200px;
@@ -617,8 +618,8 @@ textarea {
   border-radius: 16px; }
   .modal_loading__block.active, .modal_accept__block.active, .modal_bad__block.active {
     transition: all 0.2s;
-    opacity: 1;
-    z-index: 99999; }
+    visibility: visible;
+    opacity: 1; }
 
 .modal_accept__block, .modal_bad__block {
   flex-direction: column;

@@ -11,7 +11,5 @@ document.addEventListener("click", async ({ target }) => {
       product: productId,
       quantity: 1,
     });
-
-    console.log(basketProduct);
   }
 });

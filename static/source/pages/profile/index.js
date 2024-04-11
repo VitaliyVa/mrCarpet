@@ -26513,6 +26513,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
 /* harmony import */ var _utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/updateCountBadge */ "../utils/updateCountBadge.js");
+/* harmony import */ var _components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../components/pages/basket/utils/updateBasket */ "../components/pages/basket/utils/updateBasket.js");
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
@@ -26524,9 +26525,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 
+
 var addToBasket = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(product, onSucces) {
-    var _data$cart_products, _yield$instance$post, data, _response$data, response;
+    var _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -26545,21 +26547,22 @@ var addToBasket = /*#__PURE__*/function () {
             }
 
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в корзину!");
-            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : (_data$cart_products = data.cart_products) === null || _data$cart_products === void 0 ? void 0 : _data$cart_products.length);
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
+            Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_3__["updateBasket"])(data);
             return _context.abrupt("return", data);
 
-          case 11:
-            _context.prev = 11;
+          case 12:
+            _context.prev = 12;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 15:
+          case 16:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 11]]);
+    }, _callee, null, [[0, 12]]);
   }));
 
   return function addToBasket(_x, _x2) {
@@ -26568,7 +26571,7 @@ var addToBasket = /*#__PURE__*/function () {
 }();
 var removeFromBasket = /*#__PURE__*/function () {
   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(productId, onSucces) {
-    var _data$cart_products2, _yield$instance$delet, data, _response$data2, response;
+    var _yield$instance$delet, data, _response$data2, response;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -26584,24 +26587,24 @@ var removeFromBasket = /*#__PURE__*/function () {
 
             if (onSucces) {
               onSucces();
-            } // accept_modal(data?.message || "Товар видалено!");
+            }
 
-
-            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : (_data$cart_products2 = data.cart_products) === null || _data$cart_products2 === void 0 ? void 0 : _data$cart_products2.length);
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
+            Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_3__["updateBasket"])(data);
             return _context2.abrupt("return", data);
 
-          case 10:
-            _context2.prev = 10;
+          case 11:
+            _context2.prev = 11;
             _context2.t0 = _context2["catch"](0);
             response = _context2.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message);
 
-          case 14:
+          case 15:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[0, 10]]);
+    }, _callee2, null, [[0, 11]]);
   }));
 
   return function removeFromBasket(_x3, _x4) {
@@ -26610,7 +26613,7 @@ var removeFromBasket = /*#__PURE__*/function () {
 }();
 var updateBasketItem = /*#__PURE__*/function () {
   var _ref6 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(_ref5, onSucces) {
-    var id, product, _data$cart_products3, _yield$instance$patch, data, _response$data3, response;
+    var id, product, _yield$instance$patch, data, _response$data3, response;
 
     return regeneratorRuntime.wrap(function _callee3$(_context3) {
       while (1) {
@@ -26626,25 +26629,25 @@ var updateBasketItem = /*#__PURE__*/function () {
             data = _yield$instance$patch.data;
 
             if (onSucces) {
-              onSucces();
-            } // accept_modal(data?.message || "Товар видалено!");
+              onSucces(data);
+            }
 
-
-            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : (_data$cart_products3 = data.cart_products) === null || _data$cart_products3 === void 0 ? void 0 : _data$cart_products3.length);
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
+            Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_3__["updateBasket"])(data);
             return _context3.abrupt("return", data);
 
-          case 11:
-            _context3.prev = 11;
+          case 12:
+            _context3.prev = 12;
             _context3.t0 = _context3["catch"](1);
             response = _context3.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message);
 
-          case 15:
+          case 16:
           case "end":
             return _context3.stop();
         }
       }
-    }, _callee3, null, [[1, 11]]);
+    }, _callee3, null, [[1, 12]]);
   }));
 
   return function updateBasketItem(_x5, _x6) {
@@ -26795,7 +26798,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 var addToFavorite = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(productId, onSucces) {
-    var _yield$instance$post, data, _response$data, response;
+    var _data$favourite, _yield$instance$post, data, _response$data, response;
 
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -26815,25 +26818,22 @@ var addToFavorite = /*#__PURE__*/function () {
               onSucces();
             }
 
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message); // updateCountBadge(
-            //   ".header_bottom_panel_like",
-            //   data?.favourite_products?.length
-            // );
-
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])(data === null || data === void 0 ? void 0 : data.message);
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", data === null || data === void 0 ? void 0 : (_data$favourite = data.favourite) === null || _data$favourite === void 0 ? void 0 : _data$favourite.quantity);
             return _context.abrupt("return", data);
 
-          case 10:
-            _context.prev = 10;
+          case 11:
+            _context.prev = 11;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Товар додано!");
 
-          case 14:
+          case 15:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 10]]);
+    }, _callee, null, [[0, 11]]);
   }));
 
   return function addToFavorite(_x, _x2) {
@@ -26842,7 +26842,7 @@ var addToFavorite = /*#__PURE__*/function () {
 }();
 var removeFromFavorite = /*#__PURE__*/function () {
   var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(productId, onSucces) {
-    var _yield$instance$delet, data, _response$data2, response;
+    var _data$favourite2, _yield$instance$delet, data, _response$data2, response;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -26860,25 +26860,22 @@ var removeFromFavorite = /*#__PURE__*/function () {
               onSucces();
             }
 
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено!"); // updateCountBadge(
-            //   ".header_bottom_panel_like",
-            //   data?.favourite_products?.length
-            // );
-
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено!");
+            Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", data === null || data === void 0 ? void 0 : (_data$favourite2 = data.favourite) === null || _data$favourite2 === void 0 ? void 0 : _data$favourite2.quantity);
             return _context2.abrupt("return", data);
 
-          case 10:
-            _context2.prev = 10;
+          case 11:
+            _context2.prev = 11;
             _context2.t0 = _context2["catch"](0);
             response = _context2.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message);
 
-          case 14:
+          case 15:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[0, 10]]);
+    }, _callee2, null, [[0, 11]]);
   }));
 
   return function removeFromFavorite(_x3, _x4) {
@@ -27074,7 +27071,7 @@ document.addEventListener("click", /*#__PURE__*/function () {
             addToBasketButton = target.closest(".cart_item__add-to-cart-btn");
 
             if (!addToBasketButton) {
-              _context.next = 9;
+              _context.next = 8;
               break;
             }
 
@@ -27088,9 +27085,8 @@ document.addEventListener("click", /*#__PURE__*/function () {
 
           case 7:
             basketProduct = _context.sent;
-            console.log(basketProduct);
 
-          case 9:
+          case 8:
           case "end":
             return _context.stop();
         }
@@ -27565,33 +27561,38 @@ document.addEventListener("click", function (_ref) {
 
   if (sizeLabel) {
     var product = sizeLabel.closest(".cart_item") || sizeLabel.closest(".product");
-    var newLabelProduct = product.querySelector(".cart_item_new ");
-    var sizesBlock = product.querySelector(".sizes-block");
-    var allSizeLabels = sizesBlock.querySelectorAll(".size-label");
-    var _sizeLabel$dataset = sizeLabel.dataset,
-        item = _sizeLabel$dataset.item,
-        novelty = _sizeLabel$dataset.novelty;
-    var priceProduct = product.querySelector(".cart_item_price");
-    var discountProduct = product.querySelector(".cart_item_procent");
-    var oldPriceProduct = product.querySelector(".cart_item_old_price");
-    var priceProductValue = product.querySelector(".cart_item_price-value");
-    var oldPriceProductValue = product.querySelector(".cart_item_old_price-value");
-    var newPriceProduct = priceProduct.dataset["item-".concat(item)];
-    var newDiscountProduct = discountProduct.dataset["item-".concat(item)];
-    var newOldPriceProduct = oldPriceProduct.dataset["item-".concat(item)];
-    allSizeLabels.forEach(function (item) {
-      item.classList.remove("active");
-    });
-    sizeLabel.classList.add("active");
-    product.dataset.productId = item;
-    priceProductValue.textContent = newPriceProduct;
-    discountProduct.textContent = newDiscountProduct;
-    oldPriceProductValue.textContent = newOldPriceProduct;
 
-    if (novelty === "false") {
-      newLabelProduct.classList.add("disabled");
-    } else {
-      newLabelProduct.classList.remove("disabled");
+    if (product) {
+      var newLabelProduct = product.querySelector(".cart_item_new ");
+      var sizesBlock = product.querySelector(".sizes-block");
+      var allSizeLabels = sizesBlock.querySelectorAll(".size-label");
+      var _sizeLabel$dataset = sizeLabel.dataset,
+          item = _sizeLabel$dataset.item,
+          novelty = _sizeLabel$dataset.novelty;
+      var priceProduct = product.querySelector(".cart_item_price");
+      var discountProduct = product.querySelector(".cart_item_procent");
+      var oldPriceProduct = product.querySelector(".cart_item_old_price");
+      var priceProductValue = product.querySelector(".cart_item_price-value");
+      var oldPriceProductValue = product.querySelector(".cart_item_old_price-value");
+      var newPriceProduct = priceProduct.dataset["item-".concat(item)];
+      var newDiscountProduct = discountProduct.dataset["item-".concat(item)];
+      var newOldPriceProduct = oldPriceProduct.dataset["item-".concat(item)];
+      allSizeLabels.forEach(function (item) {
+        item.classList.remove("active");
+      });
+      sizeLabel.classList.add("active");
+      product.dataset.productId = item;
+      priceProductValue.textContent = newPriceProduct;
+      discountProduct.textContent = newDiscountProduct;
+      oldPriceProductValue.textContent = newOldPriceProduct;
+
+      if (newLabelProduct) {
+        if (novelty === "false") {
+          newLabelProduct.classList.add("disabled");
+        } else {
+          newLabelProduct.classList.remove("disabled");
+        }
+      }
     }
   }
 });
@@ -28222,6 +28223,29 @@ function validation(validation_btn) {
 // extracted by mini-css-extract-plugin
     if(false) { var cssReload; }
   
+
+/***/ }),
+
+/***/ "../components/pages/basket/utils/updateBasket.js":
+/*!********************************************************!*\
+  !*** ../components/pages/basket/utils/updateBasket.js ***!
+  \********************************************************/
+/*! exports provided: updateBasket */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateBasket", function() { return updateBasket; });
+var updateBasket = function updateBasket(basket) {
+  var basketElement = document.querySelector(".basket");
+
+  if (basketElement) {
+    var totalPriceForProducts = basketElement.querySelector(".basket__calculate-sum-products-cost");
+    var totalPrice = basketElement.querySelector(".basket__calculate-total-price-value");
+    totalPriceForProducts.textContent = basket.total_price;
+    totalPrice.textContent = basket.total_price;
+  }
+};
 
 /***/ }),
 
