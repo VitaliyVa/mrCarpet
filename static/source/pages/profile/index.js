@@ -27071,7 +27071,7 @@ document.addEventListener("click", /*#__PURE__*/function () {
             addToBasketButton = target.closest(".cart_item__add-to-cart-btn");
 
             if (!addToBasketButton) {
-              _context.next = 9;
+              _context.next = 8;
               break;
             }
 
@@ -27085,9 +27085,8 @@ document.addEventListener("click", /*#__PURE__*/function () {
 
           case 7:
             basketProduct = _context.sent;
-            console.log(basketProduct);
 
-          case 9:
+          case 8:
           case "end":
             return _context.stop();
         }
