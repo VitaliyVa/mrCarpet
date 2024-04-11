@@ -27,7 +27,7 @@ export const addToFavorite = async (productId, onSucces) => {
 
 export const removeFromFavorite = async (productId, onSucces) => {
   try {
-    const { data } = await instance.delete(`/favourite-products/${productId}`);
+    const { data } = await instance.delete(`/favourite-products/${productId}/`);
 
     if (onSucces) {
       onSucces();

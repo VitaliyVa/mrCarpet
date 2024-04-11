@@ -26576,7 +26576,7 @@ var removeFromBasket = /*#__PURE__*/function () {
           case 0:
             _context2.prev = 0;
             _context2.next = 3;
-            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/cart-products/".concat(productId));
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/cart-products/".concat(productId, "/"));
 
           case 3:
             _yield$instance$delet = _context2.sent;
@@ -26850,7 +26850,7 @@ var removeFromFavorite = /*#__PURE__*/function () {
           case 0:
             _context2.prev = 0;
             _context2.next = 3;
-            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId));
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId, "/"));
 
           case 3:
             _yield$instance$delet = _context2.sent;

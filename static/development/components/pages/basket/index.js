@@ -27,13 +27,13 @@ document.addEventListener("click", ({ target }) => {
     }
 
     if (counterMinusButton) {
-      updateBasketItem({ id: productId, quantity: 1 }, () =>
+      updateBasketItem({ id: productId, quantity: 1, increment: false }, () =>
         minus(".counter", ".counter__value", target)
       );
     }
 
     if (counterPlusButton) {
-      updateBasketItem({ id: productId, quantity: 1 }, () =>
+      updateBasketItem({ id: productId, quantity: 1, increment: true }, () =>
         plus(".counter", ".counter__value", target)
       );
     }

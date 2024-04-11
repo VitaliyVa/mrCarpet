@@ -22,7 +22,7 @@ export const addToBasket = async (product, onSucces) => {
 
 export const removeFromBasket = async (productId, onSucces) => {
   try {
-    const { data } = await instance.delete(`/cart-products/${productId}`);
+    const { data } = await instance.delete(`/cart-products/${productId}/`);
 
     if (onSucces) {
       onSucces();

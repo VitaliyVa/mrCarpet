@@ -26576,7 +26576,7 @@ var removeFromBasket = /*#__PURE__*/function () {
           case 0:
             _context2.prev = 0;
             _context2.next = 3;
-            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/cart-products/".concat(productId));
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/cart-products/".concat(productId, "/"));
 
           case 3:
             _yield$instance$delet = _context2.sent;
@@ -26791,7 +26791,7 @@ var removeFromFavorite = /*#__PURE__*/function () {
           case 0:
             _context2.prev = 0;
             _context2.next = 3;
-            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId));
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId, "/"));
 
           case 3:
             _yield$instance$delet = _context2.sent;
@@ -28408,7 +28408,8 @@ document.addEventListener("click", function (_ref) {
     if (counterMinusButton) {
       Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
         id: productId,
-        quantity: 1
+        quantity: 1,
+        increment: false
       }, function () {
         return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["minus"])(".counter", ".counter__value", target);
       });
@@ -28417,7 +28418,8 @@ document.addEventListener("click", function (_ref) {
     if (counterPlusButton) {
       Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
         id: productId,
-        quantity: 1
+        quantity: 1,
+        increment: true
       }, function () {
         return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["plus"])(".counter", ".counter__value", target);
       });
