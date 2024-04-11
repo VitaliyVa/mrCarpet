@@ -19,11 +19,15 @@ class CartProductSerializer(serializers.ModelSerializer):
     cart = serializers.PrimaryKeyRelatedField(queryset=Cart.objects.all())
     width = serializers.PrimaryKeyRelatedField(queryset=ProductWidth.objects.all(), write_only=True, required=False)
     length = serializers.DecimalField(max_digits=5, decimal_places=1, write_only=True, required=False)
-    total_price = serializers.CharField(read_only=True)
+    total_price = serializers.SerializerMethodField()
+    # quantity = serializers.CharField()
 
     class Meta:
         model = CartProduct
         fields = "__all__"
+
+    def get_total_price(self, obj):
+        return f"{obj.total_price} грн" if obj.total_price else f"{obj.cart_product_total_price()} грн"
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -43,7 +47,7 @@ class CartSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_price(self, obj):
-        return obj.get_total_price()
+        return f"{obj.get_total_price()} грн."
 
     def get_quantity(self, obj):
         return obj.get_cart_product_total_quantity()

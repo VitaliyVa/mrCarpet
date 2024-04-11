@@ -75,7 +75,10 @@ class CartProduct(AbstractCreatedUpdated):
         product_price = self.product_attr.get_total_price()
         if self.product_attr.custom_attribute:
             product_price = float(self.total_price)
-        return product_price * self.quantity
+        price = product_price * self.quantity
+        if price % 1 == 0:
+            return int(price)
+        return price
 
     def able_add_to_cart(self, quantity: int) -> bool:
         return quantity <= self.product_attr.quantity

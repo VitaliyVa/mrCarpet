@@ -74,6 +74,7 @@ class UserViewSet(ViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             user.set_password(password)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         if (password and not password2) or (not password and password2):
             return Response(
                 {"error": "Підтвердіть пароль"},
