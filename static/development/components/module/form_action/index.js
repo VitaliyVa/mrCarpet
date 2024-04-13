@@ -1,5 +1,4 @@
 import "./index.scss";
-import validation from "../../module/validation/index";
 
 export const getFormFields = (formClassName, inputClassName) => {
   const form = document.querySelector(formClassName);

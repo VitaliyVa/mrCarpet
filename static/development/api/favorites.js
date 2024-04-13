@@ -18,7 +18,7 @@ export const addToFavorite = async (productId, onSucces) => {
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message || "Товар додано!");
+    bad_modal(response?.data?.message);
   }
 };
 

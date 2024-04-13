@@ -26767,7 +26767,7 @@ var addToFavorite = /*#__PURE__*/function () {
             _context.prev = 11;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
-            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Товар додано!");
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
           case 15:
           case "end":
@@ -26852,6 +26852,66 @@ var instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
 
 /***/ }),
 
+/***/ "../api/subscription.js":
+/*!******************************!*\
+  !*** ../api/subscription.js ***!
+  \******************************/
+/*! exports provided: subscribeToNewsletter */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "subscribeToNewsletter", function() { return subscribeToNewsletter; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+var subscribeToNewsletter = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(email) {
+    var _yield$instance$post, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["showLoader"])();
+            _context.next = 4;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/subscription/", {
+              email: email
+            });
+
+          case 4:
+            _yield$instance$post = _context.sent;
+            data = _yield$instance$post.data;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Ви успішно підписалися на розсилку новин та акцій 🎉🎉🎉");
+            return _context.abrupt("return", data);
+
+          case 10:
+            _context.prev = 10;
+            _context.t0 = _context["catch"](0);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Упс... щось пішло не так🥲");
+
+          case 14:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[0, 10]]);
+  }));
+
+  return function subscribeToNewsletter(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../components/common_components/footer/index.js":
 /*!*******************************************************!*\
   !*** ../components/common_components/footer/index.js ***!
@@ -26861,8 +26921,10 @@ var instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/common_components/footer/index.scss");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _subscription__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./subscription */ "../components/common_components/footer/subscription.js");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.scss */ "../components/common_components/footer/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_1__);
+
 
 
 /***/ }),
@@ -26877,6 +26939,63 @@ __webpack_require__.r(__webpack_exports__);
 // extracted by mini-css-extract-plugin
     if(false) { var cssReload; }
   
+
+/***/ }),
+
+/***/ "../components/common_components/footer/subscription.js":
+/*!**************************************************************!*\
+  !*** ../components/common_components/footer/subscription.js ***!
+  \**************************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_subscription__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/subscription */ "../api/subscription.js");
+/* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+
+var subscribeButton = document.querySelector(".subscribe-btn");
+
+if (subscribeButton) {
+  subscribeButton.addEventListener("click", /*#__PURE__*/function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
+      var formValues, status;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              event.preventDefault();
+              formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".subscription-form", ".validation_input");
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(subscribeButton);
+
+              if (!status) {
+                _context.next = 6;
+                break;
+              }
+
+              _context.next = 6;
+              return Object(_api_subscription__WEBPACK_IMPORTED_MODULE_0__["subscribeToNewsletter"])(formValues.email);
+
+            case 6:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+
+    return function (_x) {
+      return _ref.apply(this, arguments);
+    };
+  }());
+}
 
 /***/ }),
 
@@ -27800,8 +27919,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "accept_modal", function() { return accept_modal; });
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/form_action/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _module_validation_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/validation/index */ "../components/module/validation/index.js");
-
 
 var getFormFields = function getFormFields(formClassName, inputClassName) {
   var form = document.querySelector(formClassName);
@@ -28275,6 +28392,17 @@ function validation(validation_btn) {
         var comparison = document.querySelector('[data-type="password1"]');
         return validator__WEBPACK_IMPORTED_MODULE_0___default.a.equals(str, comparison.value);
       }
+    },
+    checkbox: {
+      error: {
+        ua: "Це поле обов'язкове для заповнення!",
+        ru: "Це поле обов'язкове для заповнення!",
+        eng: "This field is required!"
+      },
+      check: function check(value) {
+        var checkbox = document.querySelector("[value=\"".concat(value, "\"]"));
+        return checkbox.checked;
+      }
     }
   };
 
@@ -28329,8 +28457,6 @@ function validation(validation_btn) {
     });
   } // якщо помилок не було, до кнопки додається дата атрибут true
 
-
-  console.log(count_error);
 
   if (count_error == 0) {
     return true;

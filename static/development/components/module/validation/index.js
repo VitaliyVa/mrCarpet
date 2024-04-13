@@ -150,6 +150,18 @@ export default function validation(validation_btn) {
         return validator.equals(str, comparison.value);
       },
     },
+    checkbox: {
+      error: {
+        ua: "Це поле обов'язкове для заповнення!",
+        ru: "Це поле обов'язкове для заповнення!",
+        eng: "This field is required!",
+      },
+      check: (value) => {
+        const checkbox = document.querySelector(`[value="${value}"]`);
+
+        return checkbox.checked;
+      },
+    },
   };
   if (validation_btn != null) {
     // обгортка всієї форми
@@ -216,7 +228,6 @@ export default function validation(validation_btn) {
   }
 
   // якщо помилок не було, до кнопки додається дата атрибут true
-  console.log(count_error);
 
   if (count_error == 0) {
     return true;
