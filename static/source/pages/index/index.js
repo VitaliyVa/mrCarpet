@@ -26852,6 +26852,60 @@ var instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
 
 /***/ }),
 
+/***/ "../api/search.js":
+/*!************************!*\
+  !*** ../api/search.js ***!
+  \************************/
+/*! exports provided: getProductsBySearchQuery */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getProductsBySearchQuery", function() { return getProductsBySearchQuery; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+var getProductsBySearchQuery = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(searchQuery) {
+    var _yield$instance$get, data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+            _context.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].get("/products/?search_query=".concat(searchQuery));
+
+          case 3:
+            _yield$instance$get = _context.sent;
+            data = _yield$instance$get.data;
+            return _context.abrupt("return", data);
+
+          case 8:
+            _context.prev = 8;
+            _context.t0 = _context["catch"](0);
+            response = _context.t0.response;
+            console.log(response);
+
+          case 12:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[0, 8]]);
+  }));
+
+  return function getProductsBySearchQuery(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../api/subscription.js":
 /*!******************************!*\
   !*** ../api/subscription.js ***!
@@ -27312,7 +27366,6 @@ document.addEventListener("click", /*#__PURE__*/function () {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _authorization__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./authorization */ "../components/common_components/header/authorization.js");
 /* harmony import */ var _search__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./search */ "../components/common_components/header/search.js");
-/* harmony import */ var _search__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_search__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _contacts__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./contacts */ "../components/common_components/header/contacts.js");
 /* harmony import */ var _basket__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./basket */ "../components/common_components/header/basket.js");
 /* harmony import */ var _favorites__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./favorites */ "../components/common_components/header/favorites.js");
@@ -27443,21 +27496,53 @@ toggleActiveSearch();
 /*!********************************************************!*\
   !*** ../components/common_components/header/search.js ***!
   \********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_search__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/search */ "../api/search.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 
 var searchInput = document.querySelector(".header__search input");
 var searchBody = document.querySelector(".header__search-body");
 
 if (searchInput) {
-  searchInput.addEventListener("input", function () {
-    searchBody.classList.add("active");
-  });
+  searchInput.addEventListener("input", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+    var findedProducts;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            searchBody.classList.add("active");
+
+            if (!searchInput.value.length) {
+              _context.next = 6;
+              break;
+            }
+
+            _context.next = 4;
+            return Object(_api_search__WEBPACK_IMPORTED_MODULE_0__["getProductsBySearchQuery"])(searchInput.value);
+
+          case 4:
+            findedProducts = _context.sent;
+            console.log(findedProducts);
+
+          case 6:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  })));
 }
 
 if (searchBody) {
-  document.addEventListener("click", function (_ref) {
-    var target = _ref.target;
+  document.addEventListener("click", function (_ref2) {
+    var target = _ref2.target;
 
     if (target.closest(".header__search-head")) {
       searchBody.classList.toggle("active");
