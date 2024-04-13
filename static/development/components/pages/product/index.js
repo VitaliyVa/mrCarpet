@@ -1,6 +1,7 @@
 import Swiper, { Thumbs, Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
 import "./product";
+import "./reviews";
 import "./index.scss";
 import "./review-write-modal.scss";
 

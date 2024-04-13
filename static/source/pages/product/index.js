@@ -26852,6 +26852,64 @@ var instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
 
 /***/ }),
 
+/***/ "../api/reviews.js":
+/*!*************************!*\
+  !*** ../api/reviews.js ***!
+  \*************************/
+/*! exports provided: sendReview */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendReview", function() { return sendReview; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+var sendReview = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(values) {
+    var _yield$instance$post, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["showLoader"])();
+            _context.prev = 1;
+            _context.next = 4;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/product-reviews/", values);
+
+          case 4:
+            _yield$instance$post = _context.sent;
+            data = _yield$instance$post.data;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Ваш відгук успішно відправлено 🎉🎉🎉");
+            return _context.abrupt("return", data);
+
+          case 10:
+            _context.prev = 10;
+            _context.t0 = _context["catch"](1);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Упс... щось пішло не так🥲");
+
+          case 14:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[1, 10]]);
+  }));
+
+  return function sendReview(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../api/subscription.js":
 /*!******************************!*\
   !*** ../api/subscription.js ***!
@@ -28537,10 +28595,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! swiper/swiper-bundle.css */ "../../node_modules/swiper/swiper-bundle.css");
 /* harmony import */ var swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(swiper_swiper_bundle_css__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _product__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./product */ "../components/pages/product/product.js");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./index.scss */ "../components/pages/product/index.scss");
-/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./review-write-modal.scss */ "../components/pages/product/review-write-modal.scss");
-/* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_review_write_modal_scss__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _reviews__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./reviews */ "../components/pages/product/reviews.js");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index.scss */ "../components/pages/product/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./review-write-modal.scss */ "../components/pages/product/review-write-modal.scss");
+/* harmony import */ var _review_write_modal_scss__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_review_write_modal_scss__WEBPACK_IMPORTED_MODULE_5__);
+
 
 
 
@@ -28708,6 +28768,95 @@ document.addEventListener("click", /*#__PURE__*/function () {
 // extracted by mini-css-extract-plugin
     if(false) { var cssReload; }
   
+
+/***/ }),
+
+/***/ "../components/pages/product/reviews.js":
+/*!**********************************************!*\
+  !*** ../components/pages/product/reviews.js ***!
+  \**********************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_reviews__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/reviews */ "../api/reviews.js");
+/* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+
+var sendReviewButton = document.querySelector(".review-write-modal__send-review-btn");
+
+if (sendReviewButton) {
+  sendReviewButton.addEventListener("click", /*#__PURE__*/function () {
+    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(event) {
+      var product, _product$dataset, productId, ratingElement, rating, formValues, status;
+
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              event.preventDefault();
+              product = document.querySelector(".product");
+
+              if (!product) {
+                _context.next = 15;
+                break;
+              }
+
+              productId = product === null || product === void 0 ? void 0 : (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
+              ratingElement = document.querySelector(".star-rate");
+              rating = Number(ratingElement.dataset.ratingValue);
+              formValues = _objectSpread(_objectSpread({}, Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".review-write-modal__form", ".input-transparent")), {}, {
+                product: productId,
+                rating: rating
+              });
+              status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(sendReviewButton);
+
+              if (!status) {
+                _context.next = 15;
+                break;
+              }
+
+              if (!rating) {
+                _context.next = 14;
+                break;
+              }
+
+              _context.next = 12;
+              return Object(_api_reviews__WEBPACK_IMPORTED_MODULE_0__["sendReview"])(formValues);
+
+            case 12:
+              _context.next = 15;
+              break;
+
+            case 14:
+              Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])("Додайте вашу оцінку!");
+
+            case 15:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+
+    return function (_x) {
+      return _ref.apply(this, arguments);
+    };
+  }());
+}
 
 /***/ }),
 

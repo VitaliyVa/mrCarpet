@@ -13,7 +13,6 @@
       <div class="modal__content">
         <div class="review-write-modal__container">
           <form
-            action="/review"
             class="review-write-modal__form validation__block"
           >
             <div class="review-write-modal__form">
@@ -26,7 +25,7 @@
                   class="review-write-modal__form-field modal__field validation_container"
                 >
                   <!-- Here is the average rating among reviews "data-rating-value" (integer) -->
-                  <div class="star-rate" data-rating-value="3">
+                  <div class="star-rate" data-rating-value="0">
                     <div class="star-rate__item">
                       <input
                         id="star-5"
@@ -169,9 +168,9 @@
 
                 <div class="review-write-modal__form-field modal__field">
                   <textarea
-                    id="comment"
+                    id="content"
                     class="input-transparent"
-                    name="comment"
+                    name="content"
                     placeholder="Коментар"
                   ></textarea>
                 </div>
