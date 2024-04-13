@@ -3215,7 +3215,10 @@ swiper-container .swiper-notification {
         transform: scale(1.3); }
   .basket_item .cart_item_title {
     margin: 0;
-    padding: 0; }
+    padding: 0;
+    transition: all 0.2s; }
+    .basket_item .cart_item_title:hover {
+      color: #a46c46; }
   .basket_item .cart_item_price {
     margin-right: 0; }
   .basket_item .cart_item_size {
