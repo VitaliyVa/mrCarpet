@@ -101,6 +101,17 @@ class ProductReviewViewSet(ModelViewSet):
     serializer_class = ProductReviewSerializer
     permission_classes = [IsAdminEdit]
 
+    def create(self, request, *args, **kwargs):
+        try:
+            product = ProductAttribute.objects.get(id=request.data["product"]).product.id
+            request.data["product"] = str(product)
+        except Exception as e:
+            return Response(
+                {"message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
+
 
 class FavouriteProductViewSet(ModelViewSet):
     # queryset = FavouriteProducts.objects.all()

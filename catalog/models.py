@@ -523,7 +523,7 @@ class ProductReview(AbstractCreatedUpdated):
         related_name="reviews",
     )
     name = models.CharField(max_length=150, blank=False, null=False)
-    content = models.TextField()
+    content = models.TextField(blank=True, null=True)
     rating = models.IntegerField(
         validators=[MaxValueValidator(5)], blank=False, null=False
     )
