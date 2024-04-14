@@ -1,5 +1,9 @@
 import { instance } from "./instance";
-import { accept_modal, bad_modal } from "../components/module/form_action";
+import {
+  showLoader,
+  accept_modal,
+  bad_modal,
+} from "../components/module/form_action";
 import { updateCountBadge } from "../utils/updateCountBadge";
 import { updateBasket } from "../components/pages/basket/utils/updateBasket";
 
@@ -55,3 +59,19 @@ export const updateBasketItem = async ({ id, ...product }, onSucces) => {
     bad_modal(response?.data?.message);
   }
 };
+
+// export const addPromocode = async (code) => {
+//   try {
+//     showLoader();
+//     const { data } = await instance.post(`/add-promocode/`);
+
+//     // updateCountBadge(".header_bottom_panel_cart", data?.quantity);
+//     // updateBasket(data);
+
+//     console.log(data);
+
+//     return data;
+//   } catch ({ response }) {
+//     bad_modal(response?.data?.message);
+//   }
+// };
