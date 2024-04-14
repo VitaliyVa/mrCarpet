@@ -38,6 +38,11 @@ body {
       }
     }
 
+    &-text {
+      color: #453f3a;
+      font-weight: 400;
+    }
+
     &-product {
       display: flex;
       justify-content: space-between;

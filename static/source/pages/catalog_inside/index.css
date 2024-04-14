@@ -684,6 +684,9 @@ body {
         visibility: visible;
         opacity: 1;
         transform: translateY(0) scaleY(1); }
+    .header__search-text {
+      color: #453f3a;
+      font-weight: 400; }
     .header__search-product {
       display: flex;
       justify-content: space-between;

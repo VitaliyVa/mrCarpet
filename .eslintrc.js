@@ -20,8 +20,8 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["react"],
   rules: {
     "no-unused-vars": "warn",
+    "no-undef": "error",
   },
 };

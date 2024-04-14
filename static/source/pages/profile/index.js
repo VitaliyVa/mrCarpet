@@ -27568,18 +27568,40 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 var searchInput = document.querySelector(".header__search input");
 var searchBody = document.querySelector(".header__search-body");
+var searchBodyResults = searchBody.querySelector(".header__search-items");
 
-if (searchInput) {
-  searchInput.addEventListener("input", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+var renderSearchItem = function renderSearchItem(_ref) {
+  var id = _ref.id,
+      title = _ref.title,
+      image = _ref.image,
+      product_attributes = _ref.product_attributes,
+      href = _ref.href;
+  return "                \n<div class=\"header__search-product\">\n<div class=\"header__search-product-left\">\n  <div class=\"header__search-product-img\">\n    <a href=\"#\">\n      <img src=\"".concat(image, "\" />\n    </a>\n  </div>\n  <div class=\"header__search-product-info\">\n    <a href=\"#\">\n      <h4 class=\"header__search-product-title truncate\">\n       ").concat(title, "\n      </h4>\n    </a>\n  </div>\n</div>\n<div class=\"header__search-product-right\">\n  <p class=\"header__search-product-price\">\n    <span class=\"header__search-product-price-current\">\n      10000 \u0433\u0440\u043D\n    </span>\n    <span class=\"header__search-product-price-discount\">\n      43%\n    </span>\n    <span class=\"header__search-product-price-old\">\n      100000 \u0433\u0440\u043D\n    </span>\n  </p>\n</div>\n</div>");
+};
+
+var renderSearchResults = function renderSearchResults(searchResults) {
+  var renderedSearchResults = searchResults === null || searchResults === void 0 ? void 0 : searchResults.map(function (item) {
+    return renderSearchItem(item);
+  });
+
+  if (renderedSearchResults === null || renderedSearchResults === void 0 ? void 0 : renderedSearchResults.length) {
+    searchBodyResults.innerHTML = renderedSearchResults.join("");
+  } else {
+    searchBodyResults.innerHTML = "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+  }
+};
+
+var onSearch = /*#__PURE__*/function () {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
     var findedProducts;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            searchBody.classList.add("active");
+            findedProducts = [];
 
             if (!searchInput.value.length) {
-              _context.next = 6;
+              _context.next = 5;
               break;
             }
 
@@ -27588,7 +27610,9 @@ if (searchInput) {
 
           case 4:
             findedProducts = _context.sent;
-            console.log(findedProducts);
+
+          case 5:
+            renderSearchResults(findedProducts);
 
           case 6:
           case "end":
@@ -27596,12 +27620,34 @@ if (searchInput) {
         }
       }
     }, _callee);
+  }));
+
+  return function onSearch() {
+    return _ref2.apply(this, arguments);
+  };
+}();
+
+if (searchInput) {
+  searchInput.addEventListener("input", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            searchBody.classList.add("active");
+            onSearch();
+
+          case 2:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
   })));
 }
 
 if (searchBody) {
-  document.addEventListener("click", function (_ref2) {
-    var target = _ref2.target;
+  document.addEventListener("click", function (_ref4) {
+    var target = _ref4.target;
 
     if (target.closest(".header__search-head")) {
       searchBody.classList.toggle("active");
