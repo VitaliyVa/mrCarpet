@@ -12,6 +12,7 @@ export const sendReview = async (values) => {
     const { data } = await instance.post("/product-reviews/", values);
 
     accept_modal(data?.message || "Ваш відгук успішно відправлено 🎉🎉🎉");
+    window.location.reload();
 
     return data;
   } catch ({ response }) {

@@ -15,4 +15,4 @@ python manage.py createsuperuser
 python manage.py createsuperuser
 
 sm@sm.com
-sm
+sm@sm.com

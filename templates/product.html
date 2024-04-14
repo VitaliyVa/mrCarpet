@@ -510,19 +510,24 @@
                 </div>
                 {% empty %}
                 {% endfor %}
+
+      
               </div>
 
               <!-- if there are no reviews -->
               {% if not product.reviews.all %}
               <div class="product_reviews__no-items">
                 <p>Немає відгуків про цей товар.</p>
+              
 
                 <!-- if unauthorized -->
 
                 {% if not user.is_authenticated %}
                 <p>
-                  Будь ласка <a href="#">авторизуйтесь</a> або
-                  <a href="#">зареєструйтеся</a> щоб залишити відгук.
+                  Будь ласка <button class="modal_open" href="#" data-href="login-modal" >авторизуйтеся</button> 
+                  або
+                  <button class="modal_open" href="#" data-href="register-modal">зареєструйтеся</button>, 
+                  щоб залишити відгук.
                 </p>
                 {% else %}
                 <!-- if authorized  -->
@@ -532,6 +537,18 @@
                 {% endif %}
               </div>
               {% endif %}
+
+
+              <!-- When there are reviews, the user is authorized and has not yet added a review -->
+              <!-- <div class="product_reviews__add-review">
+                <button class="modal_open" data-href="review-write-modal">
+                  Залишити відгук про товар
+                </button>
+              </div> -->
+
+            
+
+
             </div>
           </span>
         </div>

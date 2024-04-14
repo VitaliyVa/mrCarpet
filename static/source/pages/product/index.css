@@ -3216,7 +3216,7 @@ swiper-container .swiper-notification {
       .product_reviews__content a:hover,
       .product_reviews__content button:hover {
         filter: brightness(1.25); }
-  .product_reviews__no-items {
+  .product_reviews__no-items, .product_reviews__add-review {
     color: #453f3a;
     font-size: 14px;
     line-height: 130%; }

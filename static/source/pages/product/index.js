@@ -26887,20 +26887,21 @@ var sendReview = /*#__PURE__*/function () {
             _yield$instance$post = _context.sent;
             data = _yield$instance$post.data;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Ваш відгук успішно відправлено 🎉🎉🎉");
+            window.location.reload();
             return _context.abrupt("return", data);
 
-          case 10:
-            _context.prev = 10;
+          case 11:
+            _context.prev = 11;
             _context.t0 = _context["catch"](1);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Упс... щось пішло не так🥲");
 
-          case 14:
+          case 15:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[1, 10]]);
+    }, _callee, null, [[1, 11]]);
   }));
 
   return function sendReview(_x) {
