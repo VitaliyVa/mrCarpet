@@ -581,9 +581,17 @@ class PromoCode(AbstractCreatedUpdated):
         null=False
     )
     end_time = models.DateTimeField(verbose_name="Дата закінчення")
+    discount = models.PositiveIntegerField(
+        verbose_name="Знижка",
+        validators=[MaxValueValidator(100)],
+        blank=False,
+        null=False,
+        default=None,
+        help_text="У відсотках"
+    )
 
     class Meta:
-        verbose_name = "Промокод",
+        verbose_name = "Промокод"
         verbose_name_plural = "Промокоди"
 
     def __str__(self):

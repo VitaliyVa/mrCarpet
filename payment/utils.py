@@ -16,7 +16,12 @@ def get_liqpay_context(request):
     cart = get_cart(request)
     order = cart.order
     print(order.id)
-    total_price = cart.get_total_price()
+    total_price = order.total_price
+    # promo = request.session.pop("promocode", None)
+    # if promo:
+    #     total_price = total_price - total_price * (promo / 100)
+    #     order.total_price = float(total_price)
+    #     order.save()
     liqpay = LiqPay(settings.LIQPAY_PUBLIC_KEY, settings.LIQPAY_PRIVATE_KEY)
     params = {
         'action': 'pay',

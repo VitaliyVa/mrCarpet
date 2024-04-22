@@ -76,7 +76,7 @@ class CartProductViewSet(
                 cart_product.save()
         else:
             return Response(
-                {"message": "Неможливо додати товар у корзину"},
+                {"message": "Товар закінчився."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(

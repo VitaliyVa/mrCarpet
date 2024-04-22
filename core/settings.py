@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from decouple import config
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_yasg',
     'colorfield',
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -164,3 +167,13 @@ REST_FRAMEWORK = {
 
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
 LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")
+
+CELERY_BEAT_SCHEDULE = { # scheduler configuration
+    'Task_one_schedule' : {  # whatever the name you want
+        'task': 'order.tasks.remove_orders', # name of task with path
+        'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
+    },
+}

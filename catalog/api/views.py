@@ -182,6 +182,12 @@ def apply_promocode(request):
         return Response(
             {"message": "Промокод не дійсний"}, status=status.HTTP_400_BAD_REQUEST
         )
-    cart.promocode = promocode
-    cart.save()
-    return Response({"message": "Промокод додано"}, status=status.HTTP_200_OK)
+    promocode_price = round(cart.get_total_price() - cart.get_total_price() * (promocode.discount / 100), 1)
+    if promocode_price % 1 == 0:
+        promocode_price = int(promocode_price)
+    # cart.promocode = promocode
+    # cart.save()
+    return Response(
+        {"promocode_id": promocode.id, "promocode_total_price": f"{promocode_price} грн", "message": "Промокод додано"},
+        status=status.HTTP_200_OK
+    )

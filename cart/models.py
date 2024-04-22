@@ -1,4 +1,6 @@
 from django.db import models
+from django.db import transaction
+from django.core.exceptions import ValidationError
 from s_content.models import AbstractCreatedUpdated
 from users.models import CustomUser
 from .price import cart_total_price
@@ -38,11 +40,36 @@ class Cart(AbstractCreatedUpdated):
         verbose_name = "Корзина"
         verbose_name_plural = "Корзини"
 
-    def get_total_price(self):
-        return cart_total_price(self)
+    def get_total_price(self, *args, **kwargs):
+        promo = kwargs.get("promo", None)
+        price = cart_total_price(self)
+        if promo:
+            price = price - price * (promo / 100)
+        return price
 
     def get_cart_product_total_quantity(self):
         return self.cart_products.all().aggregate(q=models.Sum("quantity"))["q"] or 0
+
+    def apply_quantity(self):
+        from django.db import connection
+        connection.force_debug_cursor = True
+        with transaction.atomic():
+            out_of_stock_products = []
+            for cart_product in self.cart_products.all():
+                if cart_product.able_add_to_cart(cart_product.quantity):
+                    cart_product.product_attr.quantity -= cart_product.quantity
+                    cart_product.product_attr.save()
+                else:
+                    out_of_stock_products.append(cart_product.product_attr)
+            if out_of_stock_products:
+                print(out_of_stock_products)
+                error_message = [
+                    f'Доступна кількість товару {product_attr.product.title}: {product_attr.quantity}'
+                    for product_attr in out_of_stock_products
+                ]
+                raise ValidationError("\n".join(error_message))
+            print(len(connection.queries))
+            self.save()
 
 
 class CartProduct(AbstractCreatedUpdated):

@@ -8,16 +8,18 @@ import uuid
 
 
 class Order(AbstractCreatedUpdated):
-    FS = "КОМПЛЕКТУЄТЬСЯ"
-    SS = "ВІДПРАВЛЕНО"
-    TS = "ВИКОНАНО"
-    DS = "СКАСОВАНО"
+    FS = "Комплектується"
+    SS = "Відправлено"
+    TS = "Виконано"
+    DS = "Скасовано"
+    NS = "Не оплачено"
 
     STATUS_CHOICES = (
         (FS, "Комплектується"),
         (SS, "Відправлено"),
         (TS, "Виконано"),
-        (DS, "Скасовано")
+        (DS, "Скасовано"),
+        (NS, "Не оплачено")
     )
 
     order_number = models.BigIntegerField(verbose_name="Номер замовлення", blank=True, null=True, editable=False)
@@ -86,6 +88,13 @@ class Order(AbstractCreatedUpdated):
         max_length=128,
         blank=False,
         null=False,
+    )
+    promocode = models.ForeignKey(
+        verbose_name="Промокод",
+        to="catalog.Promocode",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     class Meta:
