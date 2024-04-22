@@ -174,6 +174,6 @@ CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379
 CELERY_BEAT_SCHEDULE = { # scheduler configuration
     'Task_one_schedule' : {  # whatever the name you want
         'task': 'order.tasks.remove_orders', # name of task with path
-        'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
+        'schedule': crontab(), # crontab() runs the tasks every minute
     },
 }
