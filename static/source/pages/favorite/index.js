@@ -27526,9 +27526,8 @@ var renderSearchItem = function renderSearchItem(_ref) {
   var id = _ref.id,
       title = _ref.title,
       image = _ref.image,
-      product_attributes = _ref.product_attributes,
       href = _ref.href;
-  return "                \n<div class=\"header__search-product\">\n<div class=\"header__search-product-left\">\n  <div class=\"header__search-product-img\">\n    <a href=\"#\">\n      <img src=\"".concat(image, "\" />\n    </a>\n  </div>\n  <div class=\"header__search-product-info\">\n    <a href=\"#\">\n      <h4 class=\"header__search-product-title truncate\">\n       ").concat(title, "\n      </h4>\n    </a>\n  </div>\n</div>\n<div class=\"header__search-product-right\">\n  <p class=\"header__search-product-price\">\n    <span class=\"header__search-product-price-current\">\n      10000 \u0433\u0440\u043D\n    </span>\n    <span class=\"header__search-product-price-discount\">\n      43%\n    </span>\n    <span class=\"header__search-product-price-old\">\n      100000 \u0433\u0440\u043D\n    </span>\n  </p>\n</div>\n</div>");
+  return "                \n<div class=\"header__search-product\" data-product-id=\"".concat(id, "\">\n<div class=\"header__search-product-left\">\n  <div class=\"header__search-product-img\">\n    <a href=\"").concat(href, "\">\n      <img src=\"").concat(image, "\" alt=\"").concat(title, "\" />\n    </a>\n  </div>\n  <div class=\"header__search-product-info\">\n    <a href=\"").concat(href, "\">\n      <h4 class=\"header__search-product-title\">\n       ").concat(title, "\n      </h4>\n    </a>\n  </div>\n</div>\n</div>");
 };
 
 var renderSearchResults = function renderSearchResults(searchResults) {
