@@ -1,3 +1,6 @@
+
+
+
 {% if product.is_new %}
 <div class="cart_item_new color_white small">Новинка</div>
 {% endif %}
@@ -5,7 +8,10 @@
   <a href="{{ product.get_absolute_url }}">
     <div class="cart_item_img">
         <img src="{{ product.image.url }}" alt="{{ product.title }}" />
-      </div>
+    </div>
+    <div class="cart_item_img image-on-hover">
+      <img src="http://127.0.0.1:8000/media/products/3c5b5cac-b9f3-4398-b6e8-90f9719543e4_uQ5Mi2t.jpeg" alt="{{ product.title }}" />
+    </div>
     </a>
 
     <button class="cart_item__add-to-cart-btn">

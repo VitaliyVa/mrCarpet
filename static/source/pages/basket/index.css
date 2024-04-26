@@ -2814,10 +2814,21 @@ swiper-container .swiper-notification {
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 100%; }
+  width: 100%;
+  overflow: hidden; }
   .cart_item:hover .cart_item__add-to-cart-btn {
     visibility: visible;
     opacity: 1; }
+  .cart_item:hover .cart_item_img {
+    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+    transform: scaleX(-1); }
+    .cart_item:hover .cart_item_img.image-on-hover {
+      position: static;
+      visibility: visible;
+      opacity: 1;
+      transform: scaleX(1); }
   .cart_item_wrapper {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2825,14 +2836,25 @@ swiper-container .swiper-notification {
   .cart_item-top {
     position: relative; }
   .cart_item_img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     height: 420px;
-    text-align: center; }
+    text-align: center;
+    transition: all 0.35s; }
     .cart_item_img img {
-      object-fit: cover;
+      object-fit: contain;
       width: 100%;
-      height: 95%;
-      max-width: 365px; }
+      height: 100%;
+      max-width: 365px;
+      border-radius: 16px; }
+    .cart_item_img.image-on-hover {
+      position: absolute;
+      top: 0;
+      visibility: hidden;
+      opacity: 0;
+      transform: scaleX(-1); }
   .cart_item_new {
     position: absolute;
     top: 0;
@@ -2879,6 +2901,8 @@ swiper-container .swiper-notification {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
+    width: 55px;
+    height: 55px;
     background-color: #a46c46;
     padding: 15px;
     border-radius: 100%;
