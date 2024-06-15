@@ -23,11 +23,13 @@ def index(request):
     # on_sale = ProductAttribute.objects.exclude(discount=None).filter(product__in=products).values_list('product')
     # sale_products = Product.objects.filter(id__in=on_sale)
     try:
+        main_sale_date = ProductSale.objects.get(main_sale=True).date_end
         sale_products = ProductSale.objects.first().products.all()
     except:
+        main_sale_date = None
         sale_products = []
     posts = Article.objects.all()[::-1]
-    return render(request, 'index.html', context={'products': products, 'posts': posts, 'sale_products': sale_products})
+    return render(request, 'index.html', context={'products': products, 'posts': posts, 'sale_products': sale_products, 'main_sale_date': main_sale_date})
 
 
 def about(request):
