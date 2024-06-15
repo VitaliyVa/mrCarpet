@@ -1,6 +1,8 @@
 from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum, Case, When, IntegerField
 from django.urls import reverse
 import decimal
 
@@ -9,6 +11,23 @@ from django.utils import timezone
 from cart.models import CartProduct
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
 from users.models import CustomUser
+
+
+class ProductManager(models.Manager):
+    def get_queryset(self):
+        products = (
+            super().get_queryset().annotate(
+                total_quantity=Sum("product_attr__quantity"),
+                has_attribute_with_quantity_gt_zero=Case(
+                    When(total_quantity__gt=0, then=1),
+                    When(total_quantity=0, then=2),
+                    output_field=IntegerField(),
+                )
+            )
+            .filter(has_attribute_with_quantity_gt_zero__gt=0)
+            .order_by("has_attribute_with_quantity_gt_zero", "-created")
+        )
+        return products
 
 
 # Create your models here.
@@ -50,6 +69,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     #     to=User,
     #     related_name='favourites'
     # )
+    objects = ProductManager()
 
     class Meta:
         verbose_name = "Товар"
@@ -564,9 +584,25 @@ class ProductSale(AbstractCreatedUpdated):
         verbose_name="Товари на акції",
         to=Product,
     )
+    main_sale = models.BooleanField(
+        help_text="Позначати тільки якщо має відображатись на головній сторінці",
+        default=False,
+    )
 
     def __str__(self):
         return f"Акція до {self.date_end}"
+    
+    def clean(self):
+        if self.main_sale:
+            # Check if there is another ProductSale with main_sale = True
+            existing_main_sale = ProductSale.objects.filter(main_sale=True).exclude(pk=self.pk)
+            if existing_main_sale.exists():
+                raise ValidationError("Акція з позначкою main_sale уже існує.")
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Акція"

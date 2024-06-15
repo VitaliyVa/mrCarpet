@@ -15,8 +15,11 @@ from .serializers import (
     FavouriteSerializer,
     FavouriteProductsSerializer,
     ProductReviewSerializer,
+    ProductSaleSerializer,
+    ProductSaleDetailSerializer,
+    SaleSerializer,
 )
-from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode, ProductAttribute
+from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode, ProductAttribute, ProductSale
 from ..utils import get_favourite
 from .filters import ProductFilter
 
@@ -191,3 +194,13 @@ def apply_promocode(request):
         {"promocode_id": promocode.id, "promocode_total_price": f"{promocode_price} грн", "message": "Промокод додано"},
         status=status.HTTP_200_OK
     )
+    
+    
+class SaleProductsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
+    queryset = ProductSale.objects.all()
+    # serializer_class = ProductSaleSerializer
+    
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return ProductSaleDetailSerializer
+        return SaleSerializer
