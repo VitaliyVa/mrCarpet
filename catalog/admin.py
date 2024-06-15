@@ -54,6 +54,7 @@ class SpecificationInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
+    save_as = True
 
     class Meta:
         model = Product

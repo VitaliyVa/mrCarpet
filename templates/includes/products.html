@@ -10,7 +10,11 @@
         <img src="{{ product.image.url }}" alt="{{ product.title }}" />
     </div>
     <div class="cart_item_img image-on-hover">
-      <img src="http://127.0.0.1:8000/media/products/3c5b5cac-b9f3-4398-b6e8-90f9719543e4_uQ5Mi2t.jpeg" alt="{{ product.title }}" />
+      {% if product.images.all %}
+      <img src="{{ product.images.all.0.image.url }}" alt="{{ product.title }}" />
+      {% else %}
+      <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+      {% endif %}
     </div>
     </a>
 
