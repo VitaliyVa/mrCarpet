@@ -507,21 +507,16 @@
             </div>
 
             <div class="basket_right__wrapper">
-                <div class="basket__promocode basket_right">
+                <form class="basket__promocode basket__promocode-form basket_right validation__block">
                     <h3 class="basket__promocode-title">Промокод</h3>
-                    <div class="basket_right_block">
-                        <input
-                                type="text"
-                                class="input-transparent"
-                                placeholder="Введіть промокод"
-                        />
-                        <button
-                                class="basket__promocode-add-btn info_for_product_btn medium color_gold"
-                        >
-                            Додати
+                    <div class="basket_right_block validation_container">
+                        <input id="code" name="code" type="text" class="input-transparent validation_input" placeholder="Введіть промокод" data-type="message"
+                        required />
+                        <button class="basket__promocode-add-btn info_for_product_btn medium color_gold">
+                                Додати
                         </button>
                     </div>
-                </div>
+                </form>
 
                 <div class="basket__calculate basket_right">
                     <h3 class="basket__calculate-title font-size-26 bold">Разом</h3>
@@ -552,8 +547,8 @@
                         </p>
                     </div>
 
-                    <button class="basket__to-order-btn basket_right_btn">
-                        <a href="#" class="btn-gold">Перейти до оформлення</a>
+                    <button class="basket__to-order-btn basket_right_btn btn-gold">
+                        Замовлення підтверджую
                     </button>
 
                     <div class="basket__calculate-info color_black_sub font-size-14">

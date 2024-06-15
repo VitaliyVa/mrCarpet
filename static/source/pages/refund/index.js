@@ -26653,18 +26653,7 @@ var updateBasketItem = /*#__PURE__*/function () {
   return function updateBasketItem(_x5, _x6) {
     return _ref6.apply(this, arguments);
   };
-}(); // export const addPromocode = async (code) => {
-//   try {
-//     showLoader();
-//     const { data } = await instance.post(`/add-promocode/`);
-//     // updateCountBadge(".header_bottom_panel_cart", data?.quantity);
-//     // updateBasket(data);
-//     console.log(data);
-//     return data;
-//   } catch ({ response }) {
-//     bad_modal(response?.data?.message);
-//   }
-// };
+}();
 
 /***/ }),
 

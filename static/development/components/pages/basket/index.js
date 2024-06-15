@@ -1,5 +1,6 @@
 import "./index.scss";
 import "./checkout";
+import "./promo";
 import { removeFromBasket, updateBasketItem } from "../../../api/basket";
 import {
   delete_item,

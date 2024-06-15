@@ -26653,18 +26653,7 @@ var updateBasketItem = /*#__PURE__*/function () {
   return function updateBasketItem(_x5, _x6) {
     return _ref6.apply(this, arguments);
   };
-}(); // export const addPromocode = async (code) => {
-//   try {
-//     showLoader();
-//     const { data } = await instance.post(`/add-promocode/`);
-//     // updateCountBadge(".header_bottom_panel_cart", data?.quantity);
-//     // updateBasket(data);
-//     console.log(data);
-//     return data;
-//   } catch ({ response }) {
-//     bad_modal(response?.data?.message);
-//   }
-// };
+}();
 
 /***/ }),
 
@@ -26860,6 +26849,75 @@ var instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
   },
   baseURL: "/api"
 });
+
+/***/ }),
+
+/***/ "../api/promo.js":
+/*!***********************!*\
+  !*** ../api/promo.js ***!
+  \***********************/
+/*! exports provided: addPromocode */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addPromocode", function() { return addPromocode; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/pages/basket/utils/updateBasket */ "../components/pages/basket/utils/updateBasket.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+
+var addPromocode = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(code) {
+    var _yield$instance$post, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["showLoader"])();
+            _context.next = 4;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/add-promocode/", {
+              code: code
+            });
+
+          case 4:
+            _yield$instance$post = _context.sent;
+            data = _yield$instance$post.data;
+
+            if (data === null || data === void 0 ? void 0 : data.promocode_total_price) {
+              Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_2__["updateBasket"])({
+                total_price: data.promocode_total_price
+              });
+            }
+
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])((data === null || data === void 0 ? void 0 : data.message) || "Промокод додано");
+            return _context.abrupt("return", data);
+
+          case 11:
+            _context.prev = 11;
+            _context.t0 = _context["catch"](0);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Введіть дійсний промокод!");
+
+          case 15:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[0, 11]]);
+  }));
+
+  return function addPromocode(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
 
 /***/ }),
 
@@ -28650,8 +28708,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _checkout__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./checkout */ "../components/pages/basket/checkout.js");
 /* harmony import */ var _checkout__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_checkout__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _api_basket__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../api/basket */ "../api/basket.js");
-/* harmony import */ var _module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../module/shop_scripts/basket_action */ "../components/module/shop_scripts/basket_action.js");
+/* harmony import */ var _promo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./promo */ "../components/pages/basket/promo.js");
+/* harmony import */ var _api_basket__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../api/basket */ "../api/basket.js");
+/* harmony import */ var _module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../module/shop_scripts/basket_action */ "../components/module/shop_scripts/basket_action.js");
+
 
 
 
@@ -28675,29 +28735,29 @@ document.addEventListener("click", function (_ref) {
     };
 
     if (deleteButton) {
-      Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["removeFromBasket"])(productId, function () {
-        return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["delete_item"])(deleteButton, ".basket_item");
+      Object(_api_basket__WEBPACK_IMPORTED_MODULE_3__["removeFromBasket"])(productId, function () {
+        return Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_4__["delete_item"])(deleteButton, ".basket_item");
       });
     }
 
     if (counterMinusButton) {
-      Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
+      Object(_api_basket__WEBPACK_IMPORTED_MODULE_3__["updateBasketItem"])({
         id: productId,
         quantity: 1,
         increment: false
       }, function (basket) {
-        Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["minus"])(".counter", ".counter__value", target);
+        Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_4__["minus"])(".counter", ".counter__value", target);
         updateCardItem(basket);
       });
     }
 
     if (counterPlusButton) {
-      Object(_api_basket__WEBPACK_IMPORTED_MODULE_2__["updateBasketItem"])({
+      Object(_api_basket__WEBPACK_IMPORTED_MODULE_3__["updateBasketItem"])({
         id: productId,
         quantity: 1,
         increment: true
       }, function (basket) {
-        Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_3__["plus"])(".counter", ".counter__value", target);
+        Object(_module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_4__["plus"])(".counter", ".counter__value", target);
         updateCardItem(basket);
       });
     }
@@ -28716,6 +28776,39 @@ document.addEventListener("click", function (_ref) {
 // extracted by mini-css-extract-plugin
     if(false) { var cssReload; }
   
+
+/***/ }),
+
+/***/ "../components/pages/basket/promo.js":
+/*!*******************************************!*\
+  !*** ../components/pages/basket/promo.js ***!
+  \*******************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_promo__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/promo */ "../api/promo.js");
+/* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+
+
+
+document.addEventListener("click", function (event) {
+  event.preventDefault();
+  var addPromoCodeButton = event.target.closest(".basket__promocode-add-btn");
+
+  if (addPromoCodeButton) {
+    var formValues = Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["getFormFields"])(".basket__promocode-form", ".input-transparent");
+    var status = Object(_module_validation__WEBPACK_IMPORTED_MODULE_2__["default"])(addPromoCodeButton);
+
+    if (status) {
+      Object(_api_promo__WEBPACK_IMPORTED_MODULE_0__["addPromocode"])(formValues === null || formValues === void 0 ? void 0 : formValues.code);
+    } else {
+      Object(_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])("Введіть промокод!");
+    }
+  }
+});
 
 /***/ }),
 
