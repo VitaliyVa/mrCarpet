@@ -1,3 +1,7 @@
+import { createOrder } from "../../../api/checkout";
+import { bad_modal, getFormFields } from "../../module/form_action";
+import validation from "../../module/validation";
+
 const checkboxItems = document.querySelectorAll(".basket__checkbox-item");
 
 document.addEventListener("click", ({ target }) => {
@@ -38,5 +42,17 @@ document.addEventListener("click", ({ target }) => {
       bodyBlockEditBtn.classList.add("active");
       bodyBlockFields.forEach((item) => (item.readOnly = false));
     }
+  }
+});
+
+document.addEventListener("click", (event) => {
+  event.preventDefault();
+
+  const submitOrderButton = event.target.closest(".");
+
+  if (submitOrderButton) {
+    const formValues = {};
+
+    // addPromocode(formValues?.code);
   }
 });

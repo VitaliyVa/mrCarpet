@@ -5,18 +5,18 @@ import {
   bad_modal,
 } from "../components/module/form_action";
 
-// export const addPromocode = async (code) => {
-//   try {
-//     showLoader();
-//     const { data } = await instance.post(`/add-promocode/`);
+export const createOrder = async (values) => {
+  try {
+    showLoader();
 
-//     // updateCountBadge(".header_bottom_panel_cart", data?.quantity);
-//     // updateBasket(data);
+    const { data } = await instance.post(`/create-order/`, values);
 
-//     console.log(data);
+    console.log(data);
 
-//     return data;
-//   } catch ({ response }) {
-//     bad_modal(response?.data?.message);
-//   }
-// };
+    accept_modal("Ваше Замовлення прийнято!");
+
+    return data;
+  } catch ({ response }) {
+    bad_modal(response?.data?.message);
+  }
+};

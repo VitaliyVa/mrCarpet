@@ -26657,6 +26657,65 @@ var updateBasketItem = /*#__PURE__*/function () {
 
 /***/ }),
 
+/***/ "../api/checkout.js":
+/*!**************************!*\
+  !*** ../api/checkout.js ***!
+  \**************************/
+/*! exports provided: createOrder */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createOrder", function() { return createOrder; });
+/* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
+/* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
+var createOrder = /*#__PURE__*/function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(values) {
+    var _yield$instance$post, data, _response$data, response;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.prev = 0;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["showLoader"])();
+            _context.next = 4;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/create-order/", values);
+
+          case 4:
+            _yield$instance$post = _context.sent;
+            data = _yield$instance$post.data;
+            console.log(data);
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])("Ваше Замовлення прийнято!");
+            return _context.abrupt("return", data);
+
+          case 11:
+            _context.prev = 11;
+            _context.t0 = _context["catch"](0);
+            response = _context.t0.response;
+            Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
+
+          case 15:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[0, 11]]);
+  }));
+
+  return function createOrder(_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+/***/ }),
+
 /***/ "../api/contacts.js":
 /*!**************************!*\
   !*** ../api/contacts.js ***!
@@ -28653,8 +28712,16 @@ function validation(validation_btn) {
 /*!**********************************************!*\
   !*** ../components/pages/basket/checkout.js ***!
   \**********************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _api_checkout__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/checkout */ "../api/checkout.js");
+/* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
+/* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+
+
 
 var checkboxItems = document.querySelectorAll(".basket__checkbox-item");
 document.addEventListener("click", function (_ref) {
@@ -28692,6 +28759,14 @@ document.addEventListener("click", function (_ref) {
     }
   }
 });
+document.addEventListener("click", function (event) {
+  event.preventDefault();
+  var submitOrderButton = event.target.closest(".");
+
+  if (submitOrderButton) {
+    var formValues = {}; // addPromocode(formValues?.code);
+  }
+});
 
 /***/ }),
 
@@ -28707,7 +28782,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/pages/basket/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _checkout__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./checkout */ "../components/pages/basket/checkout.js");
-/* harmony import */ var _checkout__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_checkout__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _promo__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./promo */ "../components/pages/basket/promo.js");
 /* harmony import */ var _api_basket__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../api/basket */ "../api/basket.js");
 /* harmony import */ var _module_shop_scripts_basket_action__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../module/shop_scripts/basket_action */ "../components/module/shop_scripts/basket_action.js");

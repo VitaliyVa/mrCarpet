@@ -28085,6 +28085,41 @@ function remove_error() {
 
 /***/ }),
 
+/***/ "../components/module/live_timer/index.js":
+/*!************************************************!*\
+  !*** ../components/module/live_timer/index.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var allTimers = document.querySelectorAll(".live-timer");
+allTimers.forEach(function (timerElement) {
+  var endTime = new Date(timerElement.dataset.endTime);
+
+  var updateTimer = function updateTimer() {
+    var now = new Date();
+    var timeRemaining = endTime - now;
+
+    if (timeRemaining <= 0) {
+      timerElement.textContent = "00:00:00";
+      clearInterval(intervalId);
+      return;
+    }
+
+    var days = String(Math.floor(timeRemaining / (1000 * 60 * 60 * 24))).padStart(2, "0");
+    var hours = String(Math.floor(timeRemaining / (1000 * 60 * 60) % 24)).padStart(2, "0");
+    var minutes = String(Math.floor(timeRemaining / (1000 * 60) % 60)).padStart(2, "0");
+    var seconds = String(Math.floor(timeRemaining / 1000 % 60)).padStart(2, "0");
+    timerElement.textContent = "".concat(Number(days) ? "".concat(days, " \u0434\u043D\u0456\u0432 \u0442\u0430") : "", "  ").concat(hours, ":").concat(minutes, ":").concat(seconds);
+  };
+
+  updateTimer(); // Initial call to show the timer immediately
+
+  var intervalId = setInterval(updateTimer, 1000);
+});
+
+/***/ }),
+
 /***/ "../components/module/modal_script/index.js":
 /*!**************************************************!*\
   !*** ../components/module/modal_script/index.js ***!
@@ -28572,10 +28607,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_catalog_slider_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../components/module/catalog_slider/index */ "../components/module/catalog_slider/index.js");
 /* harmony import */ var _components_module_cart_item_index__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../components/module/cart_item/index */ "../components/module/cart_item/index.js");
 /* harmony import */ var _components_module_blog_item_index__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../components/module/blog_item/index */ "../components/module/blog_item/index.js");
-/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../utils/customMask */ "../utils/customMask.js");
-/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_16___default = /*#__PURE__*/__webpack_require__.n(_utils_customMask__WEBPACK_IMPORTED_MODULE_16__);
-/* harmony import */ var _components_pages_index_index__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../components/pages/index/index */ "../components/pages/index/index.js");
+/* harmony import */ var _components_module_live_timer_index__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../components/module/live_timer/index */ "../components/module/live_timer/index.js");
+/* harmony import */ var _components_module_live_timer_index__WEBPACK_IMPORTED_MODULE_16___default = /*#__PURE__*/__webpack_require__.n(_components_module_live_timer_index__WEBPACK_IMPORTED_MODULE_16__);
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../utils/customMask */ "../utils/customMask.js");
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_17___default = /*#__PURE__*/__webpack_require__.n(_utils_customMask__WEBPACK_IMPORTED_MODULE_17__);
+/* harmony import */ var _components_pages_index_index__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../components/pages/index/index */ "../components/pages/index/index.js");
  // script interface
+
 
 
 
