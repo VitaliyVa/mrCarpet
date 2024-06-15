@@ -1,11 +1,25 @@
 from django.shortcuts import render
+from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
 
 # Create your views here.
 def index(request):
     # categories = ProductCategory.objects.all()
-    products = Product.objects.all()[::-1]
+    products = Product.objects.all()
+    # products = (
+    #     Product.objects.annotate(
+    #         total_quantity=Sum("product_attr__quantity"),
+    #         has_attribute_with_quantity_gt_zero=Case(
+    #             When(total_quantity__gt=0, then=1),
+    #             When(total_quantity=0, then=2),
+    #             output_field=IntegerField(),
+    #         )
+    #     )
+    #     .filter(has_attribute_with_quantity_gt_zero__gt=0)
+    #     .order_by("has_attribute_with_quantity_gt_zero", "-created")
+    # )
+    print(products)
     # on_sale = ProductAttribute.objects.exclude(discount=None).filter(product__in=products).values_list('product')
     # sale_products = Product.objects.filter(id__in=on_sale)
     try:

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview
+from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview, ProductSale
 from ..utils import get_favourite
 
 
@@ -93,3 +93,41 @@ class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
         fields = "__all__"
+        
+        
+class ProductSaleSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ProductSale
+        fields = [
+            "id",
+            "date_end",
+        ]
+        
+        
+class ProductSaleDetailSerializer(serializers.ModelSerializer):
+    products = ProductSerializer(read_only=True, many=True)
+    
+    class Meta:
+        model = ProductSale
+        fields = [
+            "id",
+            "date_end",
+            "products"
+        ]
+        
+        
+class SaleSerializer(serializers.Serializer):
+    main_sale_date = serializers.SerializerMethodField()
+    sales = serializers.SerializerMethodField()
+    
+    def get_main_sale_date(self, obj):
+        try:
+            main_sale = ProductSale.objects.get(main_sale=True)
+            return main_sale.date_end
+        except ProductSale.DoesNotExist:
+            return "Немає головного розпродажу"
+        
+    def get_sales(self, obj):
+        sales = ProductSale.objects.all()
+        return ProductSaleSerializer(sales, many=True).data
