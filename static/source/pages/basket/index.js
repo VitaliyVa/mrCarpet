@@ -27519,6 +27519,8 @@ var panel = document.querySelector(".header_bottom_panel_catalog");
 var search = document.querySelector(".header_bottom_panel_search");
 
 function toggleActiveCatalog() {
+  if (!panel) return null;
+
   panel.toggle = function () {
     panel.classList.toggle("active");
     headerMain.classList.toggle("active");
@@ -27637,14 +27639,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 var searchInput = document.querySelector(".header__search input");
 var searchBody = document.querySelector(".header__search-body");
-var searchBodyResults = searchBody.querySelector(".header__search-items");
+var searchBodyResults = searchBody && searchBody.querySelector(".header__search-items");
 
 var renderSearchItem = function renderSearchItem(_ref) {
   var id = _ref.id,
       title = _ref.title,
       image = _ref.image,
       href = _ref.href;
-  return "                \n<div class=\"header__search-product\" data-product-id=\"".concat(id, "\">\n<div class=\"header__search-product-left\">\n  <div class=\"header__search-product-img\">\n    <a href=\"").concat(href, "\">\n      <img src=\"").concat(image, "\" alt=\"").concat(title, "\" />\n    </a>\n  </div>\n  <div class=\"header__search-product-info\">\n    <a href=\"").concat(href, "\">\n      <h4 class=\"header__search-product-title\">\n       ").concat(title, "\n      </h4>\n    </a>\n  </div>\n</div>\n</div>");
+  return "\n<div class=\"header__search-product\" data-product-id=\"".concat(id, "\">\n<div class=\"header__search-product-left\">\n  <div class=\"header__search-product-img\">\n    <a href=\"").concat(href, "\">\n      <img src=\"").concat(image, "\" alt=\"").concat(title, "\" />\n    </a>\n  </div>\n  <div class=\"header__search-product-info\">\n    <a href=\"").concat(href, "\">\n      <h4 class=\"header__search-product-title\">\n       ").concat(title, "\n      </h4>\n    </a>\n  </div>\n</div>\n</div>");
 };
 
 var renderSearchResults = function renderSearchResults(searchResults) {
@@ -27652,10 +27654,12 @@ var renderSearchResults = function renderSearchResults(searchResults) {
     return renderSearchItem(item);
   });
 
-  if (renderedSearchResults === null || renderedSearchResults === void 0 ? void 0 : renderedSearchResults.length) {
-    searchBodyResults.innerHTML = renderedSearchResults.join("");
-  } else {
-    searchBodyResults.innerHTML = "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+  if (searchBodyResults) {
+    if (renderedSearchResults === null || renderedSearchResults === void 0 ? void 0 : renderedSearchResults.length) {
+      searchBodyResults.innerHTML = renderedSearchResults.join("");
+    } else {
+      searchBodyResults.innerHTML = "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+    }
   }
 };
 
@@ -28724,10 +28728,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var checkboxItems = document.querySelectorAll(".basket__checkbox-item");
-document.addEventListener("click", function (_ref) {
-  var target = _ref.target;
-  var accordionTitle = target.closest(".accordion__title");
-  var bodyBlockEditBtn = target.closest(".basket__checkbox-item-body-block-edit-btn"); // Control accordion and checkboxes
+document.addEventListener("click", function (event) {
+  event.preventDefault();
+  var accordionTitle = event.target.closest(".accordion__title");
+  var bodyBlockEditBtn = event.target.closest(".basket__checkbox-item-body-block-edit-btn"); // Control accordion and checkboxes
 
   if (accordionTitle) {
     var accordionContentBlock = accordionTitle.closest(".accordion_content__block");
@@ -28757,15 +28761,35 @@ document.addEventListener("click", function (_ref) {
         return item.readOnly = false;
       });
     }
-  }
-});
-document.addEventListener("click", function (event) {
-  event.preventDefault();
-  var submitOrderButton = event.target.closest(".");
+  } // send order
 
-  if (submitOrderButton) {
-    var formValues = {}; // addPromocode(formValues?.code);
-  }
+
+  var activeDeliveryElement = null;
+  var activePaymentElement = null;
+  checkboxItems.forEach(function (item) {
+    if (item.querySelector(".checkbox__input").checked) {
+      if (item.closest(".basket__delivery-item")) {
+        activeDeliveryElement = item;
+      }
+
+      if (item.closest(".basket__payment-item")) {
+        activePaymentElement = item;
+      }
+    }
+  });
+  var formValues = {
+    name: activeDeliveryElement.querySelector("[id='name']").value,
+    // surname: "",
+    // email: activeDeliveryElement.querySelector("[id='email']").value,
+    phone: activeDeliveryElement.querySelector("[id='phone']").value,
+    address: "",
+    payment_type: activePaymentElement.querySelector(".checkbox__input").id
+  };
+  console.log(formValues); // const submitOrderButton = event.target.closest(".");
+  // if (submitOrderButton) {
+  //   const formValues = {};
+  //   // addPromocode(formValues?.code);
+  // }
 });
 
 /***/ }),

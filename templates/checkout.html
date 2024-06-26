@@ -2,242 +2,222 @@
 <link rel="stylesheet" href="/static/source/pages/basket/index.css" />
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
-    <div class="container">
-        <div class="bread-crumbs">
-            <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
-            <span class="color_black_sub">/</span>
-            <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
-        </div>
+  <div class="container">
+    <div class="bread-crumbs">
+      <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+      <span class="color_black_sub">/</span>
+      <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
+    </div>
 
-        <div class="title">
-            <h1>Кошик</h1>
-            <span>{{ cart_products|length }} товари</span>
-        </div>
+    <div class="title">
+      <h1>Кошик</h1>
+      <span>{{ cart_products|length }} товари</span>
+    </div>
 
-        <div class="basket__center">
-            <div class="basket__left">
-                <div class="basket__checkout accordion_container">
-                    <div class="basket__delivery">
-                        <h3 class="basket__delivery-title font-size-26 bold">
-                            Обрати спосіб доставки
-                        </h3>
-                        <div class="basket__delivery-items">
-                            <div
-                                    class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block active"
-                            >
-                                <div class="basket__checkbox-item-head accordion__title">
-                                    <input
-                                            id="nova-post"
-                                            class="checkbox__input"
-                                            name="delivery"
-                                            type="radio"
-                                            checked
-                                    />
-                                    <div class="basket__checkbox-item-icon">
-                                        <img
-                                                src="/static/utils/assets/basket/nova-post.svg"
-                                                alt="nova-post"
-                                        />
-                                    </div>
-                                    <h4 class="basket__checkbox-item-title">Нова Пошта</h4>
-                                    <div class="basket__checkbox-item-time">Від 3 днів</div>
-                                    <div class="basket__checkbox-item-price medium">
-                                        Від 45 грн.
-                                    </div>
-                                </div>
-                                <div class="basket__checkbox-item-body accordion_content">
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Обраний пункт</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
+    <div class="basket__center">
+      <div class="basket__left">
+        <div class="basket__checkout accordion_container">
+          <div class="basket__delivery">
+            <h3 class="basket__delivery-title font-size-26 bold">
+              Обрати спосіб доставки
+            </h3>
+            <div class="basket__delivery-items">
+              <div
+                class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block active"
+              >
+                <div class="basket__checkbox-item-head accordion__title">
+                  <input
+                    id="nova-post"
+                    class="checkbox__input"
+                    name="delivery"
+                    type="radio"
+                    checked
+                  />
+                  <div class="basket__checkbox-item-icon">
+                    <img
+                      src="/static/utils/assets/basket/nova-post.svg"
+                      alt="nova-post"
+                    />
+                  </div>
+                  <h4 class="basket__checkbox-item-title">Нова Пошта</h4>
+                  <div class="basket__checkbox-item-time">Від 3 днів</div>
+                  <div class="basket__checkbox-item-price medium">
+                    Від 45 грн.
+                  </div>
+                </div>
+                <div class="basket__checkbox-item-body accordion_content">
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Обраний пункт</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="warehouse"
-                                                    class="input-transparent font-size-14"
-                                                    name="warehouse"
-                                                    value="Пункт приймання-видачі"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="settlement"
-                                                    class="input-transparent"
-                                                    name="settlement"
-                                                    value="вул. Центральна, 98 (Котеджне містечко), Осещина"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
+                    </div>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="warehouse"
+                        class="input-transparent font-size-14"
+                        name="warehouse"
+                        value="Пункт приймання-видачі"
+                        readonly
+                      />
+                      <input
+                        id="settlement"
+                        class="input-transparent"
+                        name="settlement"
+                        value="вул. Центральна, 98 (Котеджне містечко), Одеська обл."
+                        readonly
+                      />
+                    </div>
+                  </div>
 
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Інформація для доставки</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Інформація для доставки</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="name"
-                                                    class="input-transparent"
-                                                    name="name"
-                                                    value="Inverness McKenzie"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="phone"
-                                                    class="input-transparent"
-                                                    name="phone"
-                                                    value="+380 87 000 00 00"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
+                    </div>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="name"
+                        class="input-transparent"
+                        name="name"
+                        value="Inverness McKenzie"
+                        readonly
+                      />
+                      <input
+                        id="phone"
+                        class="input-transparent"
+                        name="phone"
+                        value="+380 87 000 00 00"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                            <div
-                                    class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block"
-                            >
-                                <div class="basket__checkbox-item-head accordion__title">
-                                    <input
-                                            id="urk-post"
-                                            class="checkbox__input"
-                                            name="delivery"
-                                            type="radio"
-                                    />
-                                    <div class="basket__checkbox-item-icon">
-                                        <img
-                                                src="/static/utils/assets/basket/urk-post.svg"
-                                                alt="urk-post"
-                                        />
-                                    </div>
-                                    <h4 class="basket__checkbox-item-title">Укрпошта</h4>
-                                    <div class="basket__checkbox-item-time">Від 6 днів</div>
-                                    <div class="basket__checkbox-item-price medium">
-                                        Від 20 грн.
-                                    </div>
-                                </div>
-                                <div class="basket__checkbox-item-body accordion_content">
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Обраний пункт</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
+              <div
+                class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block"
+              >
+                <div class="basket__checkbox-item-head accordion__title">
+                  <input
+                    id="urk-post"
+                    class="checkbox__input"
+                    name="delivery"
+                    type="radio"
+                  />
+                  <div class="basket__checkbox-item-icon">
+                    <img
+                      src="/static/utils/assets/basket/urk-post.svg"
+                      alt="urk-post"
+                    />
+                  </div>
+                  <h4 class="basket__checkbox-item-title">Укрпошта</h4>
+                  <div class="basket__checkbox-item-time">Від 6 днів</div>
+                  <div class="basket__checkbox-item-price medium">
+                    Від 20 грн.
+                  </div>
+                </div>
+                <div class="basket__checkbox-item-body accordion_content">
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Обраний пункт</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="warehouse"
-                                                    class="input-transparent font-size-14"
-                                                    name="warehouse"
-                                                    value="Пункт приймання-видачі"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="settlement"
-                                                    class="input-transparent"
-                                                    name="settlement"
-                                                    value="вул. Центральна, 98 (Котеджне містечко), Осещина"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
+                    </div>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="warehouse"
+                        class="input-transparent font-size-14"
+                        name="warehouse"
+                        value="Пункт приймання-видачі"
+                        readonly
+                      />
+                      <input
+                        id="settlement"
+                        class="input-transparent"
+                        name="settlement"
+                        value="вул. Центральна, 98 (Котеджне містечко), Одеська обл."
+                        readonly
+                      />
+                    </div>
+                  </div>
 
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Інформація для доставки</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Інформація для доставки</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="name"
-                                                    class="input-transparent"
-                                                    name="name"
-                                                    value="Inverness McKenzie"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="phone"
-                                                    class="input-transparent"
-                                                    name="phone"
-                                                    value="+380 87 000 00 00"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
+                    </div>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="name"
+                        class="input-transparent"
+                        name="name"
+                        value="Inverness McKenzie"
+                        readonly
+                      />
+                      <input
+                        id="phone"
+                        class="input-transparent"
+                        name="phone"
+                        value="+380 87 000 00 00"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                            <div
+              <!-- <div
                                     class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block"
                             >
                                 <div class="basket__checkbox-item-head accordion__title">
@@ -295,7 +275,7 @@
                                                     id="settlement"
                                                     class="input-transparent"
                                                     name="settlement"
-                                                    value="вул. Центральна, 98 (Котеджне містечко), Осещина"
+                                                    value="вул. Центральна, 98 (Котеджне містечко), Одеська обл."
                                                     readonly
                                             />
                                         </div>
@@ -342,235 +322,232 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
-                            <div
-                                    class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block"
-                            >
-                                <div class="basket__checkbox-item-head accordion__title">
-                                    <input
-                                            id="courier"
-                                            class="checkbox__input"
-                                            name="delivery"
-                                            type="radio"
-                                    />
-                                    <div class="basket__checkbox-item-icon">
-                                        <img
-                                                src="/static/utils/assets/basket/courier.svg"
-                                                alt="courier"
-                                        />
-                                    </div>
-                                    <h4 class="basket__checkbox-item-title">Кур’єр</h4>
-                                    <div class="basket__checkbox-item-time">Від 3 днів</div>
-                                    <div class="basket__checkbox-item-price medium">
-                                        Від 17 грн.
-                                    </div>
-                                </div>
-                                <div class="basket__checkbox-item-body accordion_content">
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Обраний пункт</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
-
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="warehouse"
-                                                    class="input-transparent font-size-14"
-                                                    name="warehouse"
-                                                    value="Пункт приймання-видачі"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="settlement"
-                                                    class="input-transparent"
-                                                    name="settlement"
-                                                    value="вул. Центральна, 98 (Котеджне містечко), Осещина"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div class="basket__checkbox-item-body-block">
-                                        <div class="basket__checkbox-item-body-block-head">
-                                            <label>Інформація для доставки</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
-
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
-                                        </div>
-                                        <div class="basket__checkbox-item-body-block-fields">
-                                            <input
-                                                    id="name"
-                                                    class="input-transparent"
-                                                    name="name"
-                                                    value="Inverness McKenzie"
-                                                    readonly
-                                            />
-                                            <input
-                                                    id="phone"
-                                                    class="input-transparent"
-                                                    name="phone"
-                                                    value="+380 87 000 00 00"
-                                                    readonly
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="basket__payment">
-                        <h3 class="basket__payment-title font-size-26 bold">
-                            Обрати спосіб оплати
-                        </h3>
-                        <div class="basket__payment-items">
-                            <div
-                                    class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block active"
-                            >
-                                <div class="basket__checkbox-item-head accordion__title">
-                                    <input
-                                            id="cash"
-                                            class="checkbox__input"
-                                            name="payment"
-                                            type="radio"
-                                            checked
-                                    />
-                                    <div class="basket__checkbox-item-icon">
-                                        <img
-                                                src="/static/utils/assets/basket/cash.svg"
-                                                alt="cash"
-                                        />
-                                    </div>
-                                    <h4 class="basket__checkbox-item-title">
-                                        Оплата готівкою при доставці
-                                    </h4>
-                                </div>
-                            </div>
-
-                            <div
-                                    class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block"
-                            >
-                                <div class="basket__checkbox-item-head accordion__title">
-                                    <input
-                                            id="card"
-                                            class="checkbox__input"
-                                            name="payment"
-                                            type="radio"
-                                    />
-                                    <div class="basket__checkbox-item-icon">
-                                        <img
-                                                src="/static/utils/assets/basket/card.svg"
-                                                alt="card"
-                                        />
-                                    </div>
-                                    <h4 class="basket__checkbox-item-title">
-                                        Онлайн оплата картою
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+              <div
+                class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block"
+              >
+                <div class="basket__checkbox-item-head accordion__title">
+                  <input
+                    id="courier"
+                    class="checkbox__input"
+                    name="delivery"
+                    type="radio"
+                  />
+                  <div class="basket__checkbox-item-icon">
+                    <img
+                      src="/static/utils/assets/basket/courier.svg"
+                      alt="courier"
+                    />
+                  </div>
+                  <h4 class="basket__checkbox-item-title">Кур’єр</h4>
+                  <div class="basket__checkbox-item-time">Від 3 днів</div>
+                  <div class="basket__checkbox-item-price medium">
+                    Від 17 грн.
+                  </div>
                 </div>
-            </div>
+                <div class="basket__checkbox-item-body accordion_content">
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Адреса доставки</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-            <div class="basket_right__wrapper">
-                <form class="basket__promocode basket__promocode-form basket_right validation__block">
-                    <h3 class="basket__promocode-title">Промокод</h3>
-                    <div class="basket_right_block validation_container">
-                        <input id="code" name="code" type="text" class="input-transparent validation_input" placeholder="Введіть промокод" data-type="message"
-                        required />
-                        <button class="basket__promocode-add-btn info_for_product_btn medium color_gold">
-                                Додати
-                        </button>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
                     </div>
-                </form>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="address"
+                        class="input-transparent"
+                        name="address"
+                        value=""
+                        placeholder="вул. Центральна, 98 (Котеджне містечко), Одеська обл."
+                        readonly
+                      />
+                    </div>
+                  </div>
 
-                <div class="basket__calculate basket_right">
-                    <h3 class="basket__calculate-title font-size-26 bold">Разом</h3>
-                    <div class="basket__calculate-sum-products basket_right_block">
-                        <p class="basket__calculate-sum-products-title">
-                            Ціна товарів на суму
-                        </p>
-                        <p class="basket__calculate-sum-products-cost">{{ cart.get_total_price }} грн.</p>
-                    </div>
-                    <div class="basket__calculate-delivery basket_right_block">
-                        <p class="basket__calculate-delivery-title">
-                            Вартість
-                            <br/>
-                            доставки
-                        </p>
-                        <p class="basket__calculate-delivery-price">
-                            за тарифами
-                            <br/>
-                            перевізника
-                        </p>
-                    </div>
-                    <div class="basket__calculate-total-price basket_right_block">
-                        <p class="basket__calculate-total-price-title">До сплати</p>
-                        <p
-                                class="basket__calculate-total-price-value font-size-26 bold color_gold"
-                        >
-                            {{ cart.get_total_price }} грн.
-                        </p>
-                    </div>
+                  <div class="basket__checkbox-item-body-block">
+                    <div class="basket__checkbox-item-body-block-head">
+                      <label>Інформація для доставки</label>
+                      <button class="basket__checkbox-item-body-block-edit-btn">
+                        <span class="is-completed">
+                          <img src="/static/utils/assets/edit.svg" alt="edit" />
+                          <span>Змінити</span>
+                        </span>
 
-                    <button class="basket__to-order-btn basket_right_btn btn-gold">
-                        Замовлення підтверджую
-                    </button>
-
-                    <div class="basket__calculate-info color_black_sub font-size-14">
-                        <p>
-                  <span>
-                    Оформляючи замовлення на сайті, Ви погоджуєтесь з нашими
-                  </span>
-                            <a href="#">
-                                <b>Умовами і положеннями</b>
-                            </a>
-                        </p>
-                        <p>
-                            <b>
-                                Просимо надавати достовірні дані для успішного отримання
-                                замовлення
-                            </b>
-                        </p>
+                        <span class="is-edited">
+                          <img
+                            src="/static/utils/assets/check.svg"
+                            alt="check"
+                          />
+                          <span>Готово</span>
+                        </span>
+                      </button>
                     </div>
+                    <div class="basket__checkbox-item-body-block-fields">
+                      <input
+                        id="name"
+                        class="input-transparent"
+                        name="name"
+                        value="Inverness McKenzie"
+                        readonly
+                      />
+                      <input
+                        id="phone"
+                        class="input-transparent"
+                        name="phone"
+                        value="+380 87 000 00 00"
+                        readonly
+                      />
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
+          <div class="basket__payment">
+            <h3 class="basket__payment-title font-size-26 bold">
+              Обрати спосіб оплати
+            </h3>
+            <div class="basket__payment-items">
+              <div
+                class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block active"
+              >
+                <div class="basket__checkbox-item-head accordion__title">
+                  <input
+                    id="cash"
+                    class="checkbox__input"
+                    name="payment"
+                    type="radio"
+                    checked
+                  />
+                  <div class="basket__checkbox-item-icon">
+                    <img
+                      src="/static/utils/assets/basket/cash.svg"
+                      alt="cash"
+                    />
+                  </div>
+                  <h4 class="basket__checkbox-item-title">
+                    Оплата готівкою при доставці
+                  </h4>
+                </div>
+              </div>
+
+              <div
+                class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block"
+              >
+                <div class="basket__checkbox-item-head accordion__title">
+                  <input
+                    id="card"
+                    class="checkbox__input"
+                    name="payment"
+                    type="radio"
+                  />
+                  <div class="basket__checkbox-item-icon">
+                    <img
+                      src="/static/utils/assets/basket/card.svg"
+                      alt="card"
+                    />
+                  </div>
+                  <h4 class="basket__checkbox-item-title">
+                    Онлайн оплата картою
+                  </h4>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div class="basket_right__wrapper">
+        <form
+          class="basket__promocode basket__promocode-form basket_right validation__block"
+        >
+          <h3 class="basket__promocode-title">Промокод</h3>
+          <div class="basket_right_block validation_container">
+            <input
+              id="code"
+              name="code"
+              type="text"
+              class="input-transparent validation_input"
+              placeholder="Введіть промокод"
+              data-type="message"
+              required
+            />
+            <button
+              class="basket__promocode-add-btn info_for_product_btn medium color_gold"
+            >
+              Додати
+            </button>
+          </div>
+        </form>
+
+        <div class="basket__calculate basket_right">
+          <h3 class="basket__calculate-title font-size-26 bold">Разом</h3>
+          <div class="basket__calculate-sum-products basket_right_block">
+            <p class="basket__calculate-sum-products-title">
+              Ціна товарів на суму
+            </p>
+            <p class="basket__calculate-sum-products-cost">
+              {{ cart.get_total_price }} грн.
+            </p>
+          </div>
+          <div class="basket__calculate-delivery basket_right_block">
+            <p class="basket__calculate-delivery-title">
+              Вартість
+              <br />
+              доставки
+            </p>
+            <p class="basket__calculate-delivery-price">
+              за тарифами
+              <br />
+              перевізника
+            </p>
+          </div>
+          <div class="basket__calculate-total-price basket_right_block">
+            <p class="basket__calculate-total-price-title">До сплати</p>
+            <p
+              class="basket__calculate-total-price-value font-size-26 bold color_gold"
+            >
+              {{ cart.get_total_price }} грн.
+            </p>
+          </div>
+
+          <button class="basket__to-order-btn basket_right_btn btn-gold">
+            Замовлення підтверджую
+          </button>
+
+          <div class="basket__calculate-info color_black_sub font-size-14">
+            <p>
+              <span>
+                Оформляючи замовлення на сайті, Ви погоджуєтесь з нашими
+              </span>
+              <a href="#">
+                <b>Умовами і положеннями</b>
+              </a>
+            </p>
+            <p>
+              <b>
+                Просимо надавати достовірні дані для успішного отримання
+                замовлення
+              </b>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/basket/index.js"></script>

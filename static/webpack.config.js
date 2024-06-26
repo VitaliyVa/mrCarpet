@@ -38,6 +38,7 @@ module.exports = {
     catalog: "./catalog.js",
     catalog_inside: "./catalog_inside.js",
     product: "./product.js",
+    sales: "./sales.js",
     basket: "./basket.js",
     profile: "./profile.js",
     success: "./success.js",

@@ -4,9 +4,11 @@ import validation from "../../module/validation";
 
 const checkboxItems = document.querySelectorAll(".basket__checkbox-item");
 
-document.addEventListener("click", ({ target }) => {
-  const accordionTitle = target.closest(".accordion__title");
-  const bodyBlockEditBtn = target.closest(
+document.addEventListener("click", (event) => {
+  event.preventDefault();
+
+  const accordionTitle = event.target.closest(".accordion__title");
+  const bodyBlockEditBtn = event.target.closest(
     ".basket__checkbox-item-body-block-edit-btn"
   );
 
@@ -43,16 +45,40 @@ document.addEventListener("click", ({ target }) => {
       bodyBlockFields.forEach((item) => (item.readOnly = false));
     }
   }
-});
 
-document.addEventListener("click", (event) => {
-  event.preventDefault();
+  // send order
 
-  const submitOrderButton = event.target.closest(".");
+  let activeDeliveryElement = null;
+  let activePaymentElement = null;
 
-  if (submitOrderButton) {
-    const formValues = {};
+  checkboxItems.forEach((item) => {
+    if (item.querySelector(".checkbox__input").checked) {
+      if (item.closest(".basket__delivery-item")) {
+        activeDeliveryElement = item;
+      }
 
-    // addPromocode(formValues?.code);
-  }
+      if (item.closest(".basket__payment-item")) {
+        activePaymentElement = item;
+      }
+    }
+  });
+
+  const formValues = {
+    name: activeDeliveryElement.querySelector("[id='name']").value,
+    // surname: "",
+    // email: activeDeliveryElement.querySelector("[id='email']").value,
+    phone: activeDeliveryElement.querySelector("[id='phone']").value,
+    address: "",
+    payment_type: activePaymentElement.querySelector(".checkbox__input").id,
+  };
+
+  console.log(formValues);
+
+  // const submitOrderButton = event.target.closest(".");
+
+  // if (submitOrderButton) {
+  //   const formValues = {};
+
+  //   // addPromocode(formValues?.code);
+  // }
 });

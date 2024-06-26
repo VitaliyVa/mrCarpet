@@ -348,9 +348,14 @@
     margin-bottom: 25px;
 
     &_block {
+      position: relative;
       display: flex;
       justify-content: space-between;
       margin-top: 15px;
+
+      .validation_error {
+        bottom: -18px;
+      }
 
       input {
         margin-right: 10px;

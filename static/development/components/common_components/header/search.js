@@ -2,9 +2,10 @@ import { getProductsBySearchQuery } from "../../../api/search";
 
 const searchInput = document.querySelector(".header__search input");
 const searchBody = document.querySelector(".header__search-body");
-const searchBodyResults = searchBody.querySelector(".header__search-items");
+const searchBodyResults =
+  searchBody && searchBody.querySelector(".header__search-items");
 
-const renderSearchItem = ({ id, title, image, href }) => `                
+const renderSearchItem = ({ id, title, image, href }) => `
 <div class="header__search-product" data-product-id="${id}">
 <div class="header__search-product-left">
   <div class="header__search-product-img">
@@ -27,11 +28,13 @@ const renderSearchResults = (searchResults) => {
     renderSearchItem(item)
   );
 
-  if (renderedSearchResults?.length) {
-    searchBodyResults.innerHTML = renderedSearchResults.join("");
-  } else {
-    searchBodyResults.innerHTML =
-      "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+  if (searchBodyResults) {
+    if (renderedSearchResults?.length) {
+      searchBodyResults.innerHTML = renderedSearchResults.join("");
+    } else {
+      searchBodyResults.innerHTML =
+        "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+    }
   }
 };
 

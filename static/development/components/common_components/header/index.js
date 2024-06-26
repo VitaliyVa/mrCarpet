@@ -16,6 +16,8 @@ const panel = document.querySelector(".header_bottom_panel_catalog");
 const search = document.querySelector(".header_bottom_panel_search");
 
 function toggleActiveCatalog() {
+  if (!panel) return null;
+
   panel.toggle = function () {
     panel.classList.toggle("active");
     headerMain.classList.toggle("active");
