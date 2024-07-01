@@ -3124,6 +3124,12 @@ swiper-container .swiper-notification {
       .catalog_inside_filter-body-item:first-child {
         margin-top: 8px; }
 
+.catalog_inside__filters-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px; }
+
 .pagination {
   display: flex;
   align-items: center;

@@ -53,19 +53,32 @@
                         </span>
                     </span>
 
-                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block" 
+                    data-slug="size"
+                    >
                         <a class="color_black accordion__title"> Розмір </a>
                         <span class="accordion_content content_column">
                             {% for size in sizes %}
                             <div class="accordion_content_item">
                                 <label for="{{ size.id }}">
-                                    <input type="checkbox" name="" id="{{ size.id }}" />
+                                    <input type="checkbox" name="size" id="{{ size.id }}" value="{{size.id}}" />
                                     {{ size.title }}
                                 </label>
                             </div>
                             {% endfor %}
                         </span>
                     </span>
+
+                   
+                </div>
+                <div class="catalog_inside__filters-buttons">
+                    <button class="submit-filters-btn btn-gold">
+                        Застосувати фільтри
+                    </button>
+
+                    <button class="reset-filters-btn btn-gold btn-gold-bordered">
+                        Скинути фільтри
+                    </button>
                 </div>
             </div>
             <div class="catalog_section_bottom cart_item_wrapper">

@@ -28513,6 +28513,12 @@ var updateBasket = function updateBasket(basket) {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
+function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 var filters = document.querySelector(".catalog_inside_filter");
 document.addEventListener("click", function (_ref) {
   var target = _ref.target;
@@ -28525,6 +28531,65 @@ document.addEventListener("click", function (_ref) {
     filters.classList.remove("active");
   }
 });
+
+function update_filter() {
+  var params = window.location.search.replace("?", "").split("&").reduce(function (p, e) {
+    if (e.length) {
+      var a = e.split("=");
+      p[decodeURIComponent(a[0])] = decodeURIComponent(a[1]);
+      return p;
+    }
+  }, {});
+
+  for (var key in params) {
+    if (key !== "page") {
+      var values = params[key].split(",");
+
+      var _iterator = _createForOfIteratorHelper(values),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var value = _step.value;
+          var input = document.querySelector("[data-slug=\"".concat(key, "\"] input[value=\"").concat(value, "\"]"));
+
+          if (input) {
+            input.checked = true;
+            input.closest(".catalog_inside_filter-body-item").classList.add("active");
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }
+  }
+}
+
+update_filter();
+
+function filtration() {
+  var filters = document.querySelectorAll(".catalog_inside_filter-body-item");
+  var url_arr = [];
+  var url;
+  filters.forEach(function (filter) {
+    var select_options = filter.querySelectorAll("input:checked");
+
+    if (select_options.length) {
+      var select_options_value = [];
+      select_options.forEach(function (option) {
+        return select_options_value.push(option.value);
+      });
+      var param_str = "".concat([filter.dataset.slug], "=").concat([].concat(select_options_value));
+      url_arr.push(param_str);
+    }
+  });
+  url = url_arr.join("&");
+  window.location = "?".concat(url);
+}
+
+filters.addEventListener("click", filtration);
 
 /***/ }),
 

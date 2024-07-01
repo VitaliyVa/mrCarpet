@@ -106,11 +106,13 @@
             class="header_bottom_panel_catalog_content header_content__block"
           >
             {% for category in categories %}
-            <div
+            <a href="/catalog/categorie/{{ category.title }}">
+              <div
               class="header_bottom_panel_catalog_content_item small color_black"
             >
               {{ category.title }}
             </div>
+            </a>
             {% endfor %}
           </div>
           <div class="header_bottom_panel_catalog_bg catalog_bg_left"></div>
