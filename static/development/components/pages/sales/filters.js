@@ -64,4 +64,10 @@ function filtration() {
   window.location = `?${url}`;
 }
 
-filters.addEventListener("click", filtration);
+document
+  .querySelector(".submit-filters-btn")
+  .addEventListener("click", filtration);
+
+document
+  .querySelector(".reset-filters-btn")
+  .addEventListener("click", () => (window.location = ""));

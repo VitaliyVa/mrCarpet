@@ -26661,12 +26661,14 @@ var updateBasketItem = /*#__PURE__*/function () {
 /*!**************************!*\
   !*** ../api/checkout.js ***!
   \**************************/
-/*! exports provided: createOrder */
+/*! exports provided: createOrder, getSettlements, getWarehouses */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createOrder", function() { return createOrder; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getSettlements", function() { return getSettlements; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getWarehouses", function() { return getWarehouses; });
 /* harmony import */ var _instance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./instance */ "../api/instance.js");
 /* harmony import */ var _components_module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/module/form_action */ "../components/module/form_action/index.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -26693,26 +26695,100 @@ var createOrder = /*#__PURE__*/function () {
             data = _yield$instance$post.data;
             console.log(data);
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["accept_modal"])("Ваше Замовлення прийнято!");
+            setTimeout(function () {
+              document.location.href = "/success";
+            }, 500);
             return _context.abrupt("return", data);
 
-          case 11:
-            _context.prev = 11;
+          case 12:
+            _context.prev = 12;
             _context.t0 = _context["catch"](0);
             response = _context.t0.response;
             Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["bad_modal"])(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message);
 
-          case 15:
+          case 16:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 11]]);
+    }, _callee, null, [[0, 12]]);
   }));
 
   return function createOrder(_x) {
     return _ref.apply(this, arguments);
   };
 }();
+function getSettlements(_x2) {
+  return _getSettlements.apply(this, arguments);
+}
+
+function _getSettlements() {
+  _getSettlements = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(value) {
+    var _yield$instance$get, data;
+
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.prev = 0;
+            _context2.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].get("/offices/?q=".concat(value));
+
+          case 3:
+            _yield$instance$get = _context2.sent;
+            data = _yield$instance$get.data;
+            return _context2.abrupt("return", data);
+
+          case 8:
+            _context2.prev = 8;
+            _context2.t0 = _context2["catch"](0);
+            console.log(_context2.t0);
+
+          case 11:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2, null, [[0, 8]]);
+  }));
+  return _getSettlements.apply(this, arguments);
+}
+
+function getWarehouses(_x3) {
+  return _getWarehouses.apply(this, arguments);
+}
+
+function _getWarehouses() {
+  _getWarehouses = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(value) {
+    var _yield$instance$get2, data;
+
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.prev = 0;
+            _context3.next = 3;
+            return _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].get("/warehouses?q=".concat(value));
+
+          case 3:
+            _yield$instance$get2 = _context3.sent;
+            data = _yield$instance$get2.data;
+            return _context3.abrupt("return", data);
+
+          case 8:
+            _context3.prev = 8;
+            _context3.t0 = _context3["catch"](0);
+            console.log(_context3.t0);
+
+          case 11:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, null, [[0, 8]]);
+  }));
+  return _getWarehouses.apply(this, arguments);
+}
 
 /***/ }),
 
@@ -28173,6 +28249,93 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "../components/module/custom_select/index.js":
+/*!***************************************************!*\
+  !*** ../components/module/custom_select/index.js ***!
+  \***************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/module/custom_select/index.scss");
+/* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
+
+var customSelects = document.querySelectorAll(".custom-select");
+customSelects.forEach(function (customSelect) {
+  var headCustomSelect = customSelect.querySelector(".custom-select__head");
+  var spanHeadCustomSelect = headCustomSelect.querySelector("span");
+  var inputHeadCustomSelect = headCustomSelect.querySelector("input");
+
+  var toogleSelect = function toogleSelect() {
+    customSelect.classList.toggle("active");
+  };
+
+  var openSelect = function openSelect() {
+    customSelect.classList.add("active");
+  };
+
+  var closeSelect = function closeSelect() {
+    customSelect.classList.remove("active");
+  };
+
+  customSelect.addEventListener("click", function (_ref) {
+    var target = _ref.target;
+    var allListItems = customSelect.querySelectorAll(".custom-select__list-item");
+    var listItem = target.closest(".custom-select__list-item");
+
+    if (target.closest(".custom-select__head")) {
+      toogleSelect();
+    }
+
+    if (inputHeadCustomSelect) {
+      inputHeadCustomSelect.addEventListener("input", function () {
+        return openSelect();
+      });
+    }
+
+    if (listItem) {
+      allListItems.forEach(function (item) {
+        item.classList.remove("active");
+      });
+
+      if (spanHeadCustomSelect) {
+        spanHeadCustomSelect.textContent = listItem.textContent;
+      }
+
+      if (inputHeadCustomSelect) {
+        inputHeadCustomSelect.value = listItem.textContent;
+        inputHeadCustomSelect.dataset.listItemId = listItem === null || listItem === void 0 ? void 0 : listItem.id;
+      }
+
+      listItem.classList.add("active");
+      closeSelect();
+    }
+  });
+  document.addEventListener("click", function (e) {
+    var path = (e === null || e === void 0 ? void 0 : e.path) || (e === null || e === void 0 ? void 0 : e.composedPath) && (e === null || e === void 0 ? void 0 : e.composedPath());
+
+    if (!path.includes(customSelect)) {
+      closeSelect();
+    }
+  });
+});
+
+/***/ }),
+
+/***/ "../components/module/custom_select/index.scss":
+/*!*****************************************************!*\
+  !*** ../components/module/custom_select/index.scss ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
+    if(false) { var cssReload; }
+  
+
+/***/ }),
+
 /***/ "../components/module/form_action/index.js":
 /*!*************************************************!*\
   !*** ../components/module/form_action/index.js ***!
@@ -28716,14 +28879,19 @@ function validation(validation_btn) {
 /*!**********************************************!*\
   !*** ../components/pages/basket/checkout.js ***!
   \**********************************************/
-/*! no exports provided */
+/*! exports provided: renderSelectItems */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "renderSelectItems", function() { return renderSelectItems; });
 /* harmony import */ var _api_checkout__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../api/checkout */ "../api/checkout.js");
 /* harmony import */ var _module_form_action__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../module/form_action */ "../components/module/form_action/index.js");
 /* harmony import */ var _module_validation__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../module/validation */ "../components/module/validation/index.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 
 
 
@@ -28785,12 +28953,144 @@ document.addEventListener("click", function (event) {
     address: "",
     payment_type: activePaymentElement.querySelector(".checkbox__input").id
   };
-  console.log(formValues); // const submitOrderButton = event.target.closest(".");
-  // if (submitOrderButton) {
-  //   const formValues = {};
-  //   // addPromocode(formValues?.code);
-  // }
-});
+  console.log(formValues);
+  var submitOrderButton = event.target.closest(".basket__to-order-btn");
+
+  if (submitOrderButton) {
+    Object(_api_checkout__WEBPACK_IMPORTED_MODULE_0__["createOrder"])(formValues);
+  }
+}); // render select items, отримання міст та відділень та їх додаванно до списку
+
+var renderSelectItem = function renderSelectItem(_ref) {
+  var id = _ref.id,
+      title = _ref.title;
+  return "<li id=".concat(id, " class=\"custom-select__list-item\">").concat(title, "</li>");
+};
+
+var renderSelectItems = function renderSelectItems(items, classNameSelect) {
+  var select = document.querySelector(classNameSelect);
+  var selectList = select.querySelector(".custom-select__list");
+  var newSelectItems = items === null || items === void 0 ? void 0 : items.map(function (item) {
+    return renderSelectItem(item);
+  });
+
+  if (newSelectItems) {
+    selectList.innerHTML = newSelectItems.join("");
+  } else {
+    selectList.innerHTML = "";
+  }
+};
+var selectSettlement = document.querySelector(".select-settlement");
+var selectWarehouse = document.querySelector(".select-warehouse");
+var selectSettlementInput = selectSettlement.querySelector("input");
+var selectWarehouseInput = selectWarehouse.querySelector("input");
+selectSettlementInput.addEventListener("input", /*#__PURE__*/function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(_ref2) {
+    var target, data;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            target = _ref2.target;
+
+            if (!target.value.length) {
+              _context.next = 7;
+              break;
+            }
+
+            _context.next = 4;
+            return Object(_api_checkout__WEBPACK_IMPORTED_MODULE_0__["getSettlements"])(target.value);
+
+          case 4:
+            data = _context.sent;
+            console.log("test");
+            renderSelectItems(data === null || data === void 0 ? void 0 : data.results, ".select-settlement");
+
+          case 7:
+            selectWarehouse.querySelector(".custom-select__list").innerHTML = "";
+
+          case 8:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee);
+  }));
+
+  return function (_x) {
+    return _ref3.apply(this, arguments);
+  };
+}());
+selectSettlement.addEventListener("click", /*#__PURE__*/function () {
+  var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(_ref4) {
+    var target, data;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            target = _ref4.target;
+
+            if (!target.closest(".custom-select__list-item")) {
+              _context2.next = 6;
+              break;
+            }
+
+            _context2.next = 4;
+            return Object(_api_checkout__WEBPACK_IMPORTED_MODULE_0__["getWarehouses"])(target.id);
+
+          case 4:
+            data = _context2.sent;
+            renderSelectItems(data, ".select-warehouse");
+
+          case 6:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+
+  return function (_x2) {
+    return _ref5.apply(this, arguments);
+  };
+}());
+selectWarehouseInput.addEventListener("input", /*#__PURE__*/function () {
+  var _ref7 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(_ref6) {
+    var target, resetExtraSymbols, searchValue, warehouses, filteredWarehouses;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            target = _ref6.target;
+
+            resetExtraSymbols = function resetExtraSymbols(str) {
+              return str.toLocaleLowerCase().replaceAll("нова пошта", "").replaceAll("вулиця", "").replaceAll("вул", "").replaceAll("№", "").replaceAll('"', "").replaceAll(":", "").replaceAll("(", "").replaceAll(")", "").replaceAll(".", "").replaceAll(",", "").replaceAll(" ", "");
+            };
+
+            searchValue = resetExtraSymbols(target.value);
+            _context3.next = 5;
+            return Object(_api_checkout__WEBPACK_IMPORTED_MODULE_0__["getWarehouses"])(selectSettlementInput.dataset.listItemId);
+
+          case 5:
+            warehouses = _context3.sent;
+            filteredWarehouses = warehouses === null || warehouses === void 0 ? void 0 : warehouses.filter(function (item) {
+              var itemTitle = resetExtraSymbols(item.title);
+              return itemTitle.includes(searchValue);
+            });
+            renderSelectItems(filteredWarehouses, ".select-warehouse");
+
+          case 8:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+
+  return function (_x3) {
+    return _ref7.apply(this, arguments);
+  };
+}());
 
 /***/ }),
 
@@ -29012,10 +29312,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_module_accordion_index_scss__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../components/module/accordion/index.scss */ "../components/module/accordion/index.scss");
 /* harmony import */ var _components_module_accordion_index_scss__WEBPACK_IMPORTED_MODULE_17___default = /*#__PURE__*/__webpack_require__.n(_components_module_accordion_index_scss__WEBPACK_IMPORTED_MODULE_17__);
 /* harmony import */ var _components_module_counter_index__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../components/module/counter/index */ "../components/module/counter/index.js");
-/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../utils/customMask */ "../utils/customMask.js");
-/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_19___default = /*#__PURE__*/__webpack_require__.n(_utils_customMask__WEBPACK_IMPORTED_MODULE_19__);
-/* harmony import */ var _components_pages_basket_index__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../components/pages/basket/index */ "../components/pages/basket/index.js");
+/* harmony import */ var _components_module_custom_select_index__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../components/module/custom_select/index */ "../components/module/custom_select/index.js");
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../utils/customMask */ "../utils/customMask.js");
+/* harmony import */ var _utils_customMask__WEBPACK_IMPORTED_MODULE_20___default = /*#__PURE__*/__webpack_require__.n(_utils_customMask__WEBPACK_IMPORTED_MODULE_20__);
+/* harmony import */ var _components_pages_basket_index__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../components/pages/basket/index */ "../components/pages/basket/index.js");
  // script interface
+
 
 
 

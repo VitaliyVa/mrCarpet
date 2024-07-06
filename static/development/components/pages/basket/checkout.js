@@ -1,4 +1,8 @@
-import { createOrder } from "../../../api/checkout";
+import {
+  createOrder,
+  getSettlements,
+  getWarehouses,
+} from "../../../api/checkout";
 import { bad_modal, getFormFields } from "../../module/form_action";
 import validation from "../../module/validation";
 
@@ -74,11 +78,83 @@ document.addEventListener("click", (event) => {
 
   console.log(formValues);
 
-  // const submitOrderButton = event.target.closest(".");
+  const submitOrderButton = event.target.closest(".basket__to-order-btn");
 
-  // if (submitOrderButton) {
-  //   const formValues = {};
+  if (submitOrderButton) {
+    createOrder(formValues);
+  }
+});
 
-  //   // addPromocode(formValues?.code);
-  // }
+// render select items, отримання міст та відділень та їх додаванно до списку
+const renderSelectItem = ({ id, title }) => {
+  return `<li id=${id} class="custom-select__list-item">${title}</li>`;
+};
+
+export const renderSelectItems = (items, classNameSelect) => {
+  const select = document.querySelector(classNameSelect);
+  const selectList = select.querySelector(".custom-select__list");
+  const newSelectItems = items?.map((item) => renderSelectItem(item));
+
+  if (newSelectItems) {
+    selectList.innerHTML = newSelectItems.join("");
+  } else {
+    selectList.innerHTML = "";
+  }
+};
+
+const selectSettlement = document.querySelector(".select-settlement");
+const selectWarehouse = document.querySelector(".select-warehouse");
+const selectSettlementInput = selectSettlement.querySelector("input");
+const selectWarehouseInput = selectWarehouse.querySelector("input");
+
+selectSettlementInput.addEventListener("input", async ({ target }) => {
+  if (target.value.length) {
+    const data = await getSettlements(target.value);
+
+    console.log("test");
+
+    renderSelectItems(data?.results, ".select-settlement");
+  }
+
+  selectWarehouse.querySelector(".custom-select__list").innerHTML = "";
+});
+
+selectSettlement.addEventListener("click", async ({ target }) => {
+  if (target.closest(".custom-select__list-item")) {
+    const data = await getWarehouses(target.id);
+
+    renderSelectItems(data, ".select-warehouse");
+  }
+});
+
+selectWarehouseInput.addEventListener("input", async ({ target }) => {
+  const resetExtraSymbols = (str) => {
+    return str
+      .toLocaleLowerCase()
+      .replaceAll("нова пошта", "")
+      .replaceAll("вулиця", "")
+      .replaceAll("вул", "")
+      .replaceAll("№", "")
+      .replaceAll('"', "")
+      .replaceAll(":", "")
+      .replaceAll("(", "")
+      .replaceAll(")", "")
+      .replaceAll(".", "")
+      .replaceAll(",", "")
+      .replaceAll(" ", "");
+  };
+
+  const searchValue = resetExtraSymbols(target.value);
+
+  const warehouses = await getWarehouses(
+    selectSettlementInput.dataset.listItemId
+  );
+
+  const filteredWarehouses = warehouses?.filter((item) => {
+    const itemTitle = resetExtraSymbols(item.title);
+
+    return itemTitle.includes(searchValue);
+  });
+
+  renderSelectItems(filteredWarehouses, ".select-warehouse");
 });

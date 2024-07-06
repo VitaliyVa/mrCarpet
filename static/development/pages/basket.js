@@ -21,6 +21,7 @@ import "../components/module/cart_item";
 import "../components/module/blog_item/index";
 import "../components/module/accordion/index.scss";
 import "../components/module/counter/index";
+import "../components/module/custom_select/index";
 
 import "../utils/customMask";
 

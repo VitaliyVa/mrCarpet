@@ -28589,7 +28589,10 @@ function filtration() {
   window.location = "?".concat(url);
 }
 
-filters.addEventListener("click", filtration);
+document.querySelector(".submit-filters-btn").addEventListener("click", filtration);
+document.querySelector(".reset-filters-btn").addEventListener("click", function () {
+  return window.location = "";
+});
 
 /***/ }),
 
