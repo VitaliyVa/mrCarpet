@@ -1,4 +1,6 @@
 {% extends '_base.html' %}{% block styles %}
+{% load cart_tags %}
+
 <link rel="stylesheet" href="/static/source/pages/basket/index.css" />
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
@@ -11,7 +13,7 @@
 
         <div class="title">
             <h1>Кошик</h1>
-            <span>{{ cart_products|length }} товари</span>
+                <span>{{ cart_products|length }} {% get_quantity_title quantity=cart_products|length %}</span>
         </div>
 
         <div class="basket__center">
