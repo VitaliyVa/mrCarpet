@@ -196,13 +196,15 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_black_sub"
-        >Килими українського виробництва</a
+      {% with category=product.categories.all.0 %}
+      <a href="{% url 'categorie' category.slug %}" class="color_black_sub"
+        >{{category.title}}</a
       >
       <span class="color_black_sub">/</span>
       <a href="#" class="color_gold"
-        >Килим Layered OVALS WOOL RUG OATMEAL</a
+        >{{product.title}}</a
       >
+      {% endwith %}
     </div>
 
     <div class="product" data-product-id="{{ product.product_attr.first.id }}">
