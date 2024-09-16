@@ -1,0 +1,30 @@
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Назад</a>
+    {% else %}
+        <a href="#">Назад</a>
+    {% endif %}
+
+    {% for page in paginator.page_range %}
+        {% if page == page_obj.number %}
+            <a href="#" class="active">{{ page }}</a>
+        {% elif page_obj.number <= 2 and page <= 4 %}
+            <!-- If current page is 1 or 2, show first 4 pages -->
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% elif page_obj.number >= paginator.num_pages|add:-1 and page >= paginator.num_pages|add:-3 %}
+            <!-- If on last or second last page, show last 4 pages -->
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% elif page >= page_obj.number|add:-1 and page <= page_obj.number|add:2 %}
+            <!-- Show current page and 1 before and 2 after -->
+            <a href="?page={{ page }}">{{ page }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Далі</a>
+    {% else %}
+        <a href="#">Далі</a>
+    {% endif %}
+</div>
+{% endif %}

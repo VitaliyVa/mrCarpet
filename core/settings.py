@@ -178,3 +178,5 @@ CELERY_BEAT_SCHEDULE = { # scheduler configuration
         'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
     },
 }
+
+MAX_PAGE_SIZE = 16

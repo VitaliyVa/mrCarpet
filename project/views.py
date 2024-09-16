@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
+from django.core.paginator import Paginator
+
+def get_paginator(products: Product, page=1):
+    pass
 
 # Create your views here.
 def index(request):

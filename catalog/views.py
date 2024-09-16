@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -11,28 +12,53 @@ from .models import (
     Size, ProductImage,
 )
 
+from django.core.paginator import Paginator
+
+def get_paginator(products: Product, request):
+    paginator = Paginator(products, settings.MAX_PAGE_SIZE)
+    paginator.allow_empty_first_page = True
+    page = request.GET.get('page')
+    if not page or not page.isdigit():
+        page = 1
+    else:
+        page = int(page)
+
+    page_obj = paginator.page(page)
+
+    return paginator, page_obj
+
+
 
 # Create your views here.
 def catalog_detail(request, slug):
     categorie = ProductCategory.objects.get(slug=slug)
     filter_set = ProductFilter(request.GET, categorie.products.all())
     products = filter_set.qs
+    paginator, page_obj = get_paginator(products, request)
     sizes = Size.objects.all()
     return render(
         request,
         "catalog_inside.html",
-        {"categorie": categorie, "products": products, "sizes": sizes},
+        {"categorie": categorie,'paginator':paginator,'page_obj':page_obj, "products": products, "sizes": sizes},
     )
 
 def sale(request):
     products = Product.objects.filter(product_sale__isnull=False)
     filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
+    paginator, page_obj = get_paginator(products, request)
+
+
     sizes = Size.objects.filter(product_attr__product__in=products)
     return render(
         request,
         "sale_inside.html",
-        {"products": products, "sizes": sizes},
+        {
+         'products': products,
+         "paginator": paginator,
+         'page_obj':page_obj,
+         "sizes": sizes
+        },
     )
 
 
