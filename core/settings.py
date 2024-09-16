@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'colorfield',
     "django_celery_beat",
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
