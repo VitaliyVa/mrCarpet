@@ -1,0 +1,91 @@
+{% extends '_base.html' %}{% block styles %}
+<link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css" />
+{% endblock styles %}{% block content %}
+<section class="catalog_inside first_section">
+    <div class="container">
+        <div class="bread-crumbs">
+            <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+            <span class="color_black_sub">/</span>
+            <a class="color_gold">Акційні</a>
+        </div>
+        <div class="catalog_inside-top">
+            <div class="title">
+                <h1 class="catalog_inside__title">
+                    Акційні
+                </h1>
+                <span>{{ products|length }} товари</span>
+            </div>
+
+            <button class="catalog_inside_filter-btn">
+                <img src="/static/utils/assets/filters.svg" alt="filters" />
+            </button>
+        </div>
+
+        <div class="catalog_inside__content">
+            <div class="catalog_inside_filter accordion_container">
+                <div class="catalog_inside_filter-head">
+                    <h3 class="catalog_inside_filter-title color_black bold">
+                        Фільтри
+                    </h3>
+                    <button class="catalog_inside_filter-close-btn">
+                        <img src="/static/utils/assets/close.svg" alt="close" />
+                    </button>
+                </div>
+                <div class="catalog_inside_filter-body">
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> Сортувати за </a>
+                        <span class="accordion_content content_column">
+                            <a href="#" class="active accordion_content_item">
+                                За замовчуванням
+                            </a>
+
+                            <a href="#" class="accordion_content_item"> За ім’ям А–Я </a>
+
+                            <a href="#" class="accordion_content_item"> За ім’ям Я–А </a>
+
+                            <a href="#" class="accordion_content_item">
+                                Ціна за зростанням
+                            </a>
+
+                            <a href="#" class="accordion_content_item">
+                                Ціна за спаданням
+                            </a>
+                        </span>
+                    </span>
+
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> Розмір </a>
+                        <span class="accordion_content content_column">
+                            {% for size in sizes %}
+                            <div class="accordion_content_item">
+                                <label for="{{ size.id }}">
+                                    <input type="checkbox" name="" id="{{ size.id }}" />
+                                    {{ size.title }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </span>
+                    </span>
+                </div>
+            </div>
+            <div class="catalog_section_bottom cart_item_wrapper">
+                {% for product in products %}
+                <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
+                    {% include 'includes/products.html' %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="pagination">
+            <a href="#" class="active">1</a>
+            <a href="#">2</a>
+            <a href="#">3</a>
+            <a href="#">4</a>
+            <a href="#">Далі</a>
+        </div>
+    </div>
+</section>
+{% endblock content %}{% block scripts %}
+<script src="/static/source/pages/catalog_inside/index.js"></script>
+{% endblock scripts %}

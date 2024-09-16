@@ -583,6 +583,7 @@ class ProductSale(AbstractCreatedUpdated):
     products = models.ManyToManyField(
         verbose_name="Товари на акції",
         to=Product,
+        related_name='product_sale'
     )
     main_sale = models.BooleanField(
         help_text="Позначати тільки якщо має відображатись на головній сторінці",
