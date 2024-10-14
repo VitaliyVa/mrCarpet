@@ -1,5 +1,12 @@
-from .models import Favourite
+from django.db.models import QuerySet
 
+from .models import Favourite, Product, ProductAttribute, Size
+
+
+def get_attributes(products: QuerySet[Product]):
+    # attributes = ProductAttribute.objects.filter(product__in=products)
+    sizes = Size.objects.filter(product_attr__product__in=products).distinct()
+    return sizes
 
 def get_favourite(request) -> Favourite:
     if request.user.is_authenticated:

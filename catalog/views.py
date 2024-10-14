@@ -14,6 +14,9 @@ from .models import (
 
 from django.core.paginator import Paginator
 
+from .utils import get_attributes
+
+
 def get_paginator(products: Product, request):
     paginator = Paginator(products, settings.MAX_PAGE_SIZE)
     paginator.allow_empty_first_page = True
@@ -35,7 +38,8 @@ def catalog_detail(request, slug):
     filter_set = ProductFilter(request.GET, categorie.products.all())
     products = filter_set.qs
     paginator, page_obj = get_paginator(products, request)
-    sizes = Size.objects.all()
+    sizes = get_attributes(products=products)
+
     return render(
         request,
         "catalog_inside.html",
@@ -48,8 +52,7 @@ def sale(request):
     products = filter_set.qs
     paginator, page_obj = get_paginator(products, request)
 
-
-    sizes = Size.objects.filter(product_attr__product__in=products)
+    sizes = get_attributes(products=products)
     return render(
         request,
         "sale_inside.html",
