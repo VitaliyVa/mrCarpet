@@ -179,4 +179,4 @@ CELERY_BEAT_SCHEDULE = { # scheduler configuration
     },
 }
 
-MAX_PAGE_SIZE = 16
+MAX_PAGE_SIZE = 25
