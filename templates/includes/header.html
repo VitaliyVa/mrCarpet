@@ -109,7 +109,9 @@
             <div
               class="header_bottom_panel_catalog_content_item small color_black"
             >
-              {{ category.title }}
+            <a href="{% url 'categorie' category.slug %}">
+            {{ category.title }}
+            </a>
             </div>
             {% endfor %}
           </div>
