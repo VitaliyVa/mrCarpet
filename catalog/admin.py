@@ -55,6 +55,13 @@ class SpecificationInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
     save_as = True
+    list_display = ['title', 'is_new', 'has_discount', 'created', 'updated']
+    list_filter = ['is_new', 'has_discount', 'created', 'categories']
+    search_fields = ['title', 'description']
+    
+    def get_queryset(self, request):
+        """Використовуємо admin_objects менеджер для показу всіх товарів в адмінці"""
+        return self.model.admin_objects.all()
 
     class Meta:
         model = Product
@@ -66,6 +73,16 @@ class ProductColorAdmin(admin.ModelAdmin):
         "title",
         "color",
     ]
+    
+    def save_model(self, request, obj, form, change):
+        # Перевіряємо чи title не порожній
+        if not obj.title or obj.title.strip() == '':
+            # Якщо title порожній, встановлюємо його на основі кольору
+            if obj.color:
+                obj.title = f"Колір {str(obj.color)}"
+            else:
+                obj.title = "Без назви"
+        super().save_model(request, obj, form, change)
 
 
 admin.site.register(Product, ProductAdmin)

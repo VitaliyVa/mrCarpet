@@ -45,3 +45,8 @@ def product(request, slug):
     images = ProductImage.objects.filter(product=product)
     # product_attr = ProductAttribute.objects.filter(product=prod)
     return render(request, "product.html", {"product": product, "images": images})
+
+
+def stock(request):
+    products = Product.objects.filter(has_discount=True)
+    return render(request, "catalog.html", {"products": products})

@@ -30,6 +30,12 @@ class ProductManager(models.Manager):
         return products
 
 
+class ProductAdminManager(models.Manager):
+    """Менеджер для адмінки, який показує всі товари"""
+    def get_queryset(self):
+        return super().get_queryset().order_by("-created")
+
+
 # Create your models here.
 class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     description = models.TextField(verbose_name="Description", blank=True, null=True)
@@ -70,6 +76,7 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     #     related_name='favourites'
     # )
     objects = ProductManager()
+    admin_objects = ProductAdminManager()
 
     class Meta:
         verbose_name = "Товар"

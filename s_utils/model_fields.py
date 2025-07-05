@@ -23,6 +23,18 @@ def check_s_availability(instance, origin_value):
     return new_slug
 
 def generate_slug(instance):
-    origin_value = slugify(unidecode(instance.title))
+    # Перевіряємо чи title не є None або порожнім
+    if not instance.title or instance.title.strip() == '':
+        # Якщо title порожній, генеруємо slug на основі ID або інших полів
+        if hasattr(instance, 'color') and instance.color:
+            # Для ProductColor використовуємо hex код кольору
+            origin_value = slugify(str(instance.color).replace('#', 'color-'))
+        else:
+            # Для інших моделей використовуємо назву моделі + timestamp
+            import time
+            origin_value = slugify(f"{instance._meta.model_name}-{int(time.time())}")
+    else:
+        origin_value = slugify(unidecode(instance.title))
+    
     generated_slug = check_s_availability(instance, origin_value)
     return generated_slug
