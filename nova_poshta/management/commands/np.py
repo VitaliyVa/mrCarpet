@@ -94,7 +94,8 @@ def create_cities():
         settlement = Settlement.objects.filter(ref=ref).first()
         if settlement:
             settlement.title = title
-            settlement.ref = ref
+            settlement.type = type
+            settlement.area = area
             bulk_update_list.append(settlement)
             print("Update")
         else:
@@ -103,7 +104,9 @@ def create_cities():
             )
             print("Create")
     Settlement.objects.bulk_create(bulk_create_list)
-    Settlement.objects.bulk_update(bulk_update_list, fields=["title", "ref"])
+    Settlement.objects.bulk_update(
+        bulk_update_list, fields=["title", "type", "area"]
+    )
     print("Settlement bulk_create", len(bulk_create_list))
     print("Settlement bulk_update", len(bulk_update_list))
 

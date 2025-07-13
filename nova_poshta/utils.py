@@ -1,5 +1,6 @@
 import datetime
 import time
+import os
 
 import requests
 
@@ -7,7 +8,7 @@ from decouple import config
 
 
 url = "https://api.novaposhta.ua/v2.0/json/"
-api_key = "75e54d771582e1d7d1a29aeddabcea02"
+api_key = os.getenv("NOVA_POSHTA_API_KEY")
 
 
 def get_full_response(model: str, method: str, properties: dict = None):
