@@ -128,6 +128,7 @@
                 class="header_bottom_panel_search_input"
                 id="header_bottom_panel_search_input"
                 placeholder="Я шукаю.."
+                autocomplete="off"
               />
               <label
                 for="header_bottom_panel_search_input"
@@ -763,6 +764,171 @@
   </div>
   <!-- /.container -->
 </header>
+
+<script>
+// Пошук товарів
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('#header_bottom_panel_search_input');
+    const searchBody = document.querySelector('.header__search-body');
+    const searchBodyResults = document.querySelector('.header__search-items');
+    
+    if (!searchInput || !searchBody || !searchBodyResults) return;
+    
+    let searchTimeout;
+    
+    // Функція для рендерингу результату пошуку
+    const renderSearchItem = ({ id, title, image, href, price, discount, categories, is_new, has_discount }) => {
+        let priceHtml = '';
+        if (price) {
+            if (discount && discount > 0) {
+                const discountedPrice = Math.round(price * (1 - discount / 100));
+                priceHtml = `
+                    <span class="header__search-product-price-current">${discountedPrice} грн</span>
+                    <span class="header__search-product-price-discount">-${discount}%</span>
+                    <span class="header__search-product-price-old">${price} грн</span>
+                `;
+            } else {
+                priceHtml = `<span class="header__search-product-price-current">${price} грн</span>`;
+            }
+        }
+        
+        let badges = '';
+        if (is_new) {
+            badges += '<span class="product-badge new">Новинка</span>';
+        }
+        if (has_discount) {
+            badges += '<span class="product-badge discount">Акція</span>';
+        }
+        
+        return `
+            <div class="header__search-product" data-product-id="${id}">
+                <div class="header__search-product-left">
+                    <div class="header__search-product-img">
+                        <a href="${href}">
+                            <img src="${image}" alt="${title}" />
+                            ${badges ? `<div class="product-badges">${badges}</div>` : ''}
+                        </a>
+                    </div>
+                    <div class="header__search-product-info">
+                        <a href="${href}">
+                            <h4 class="header__search-product-title">
+                                ${title}
+                            </h4>
+                            ${categories ? `<p class="header__search-product-category">${categories}</p>` : ''}
+                        </a>
+                    </div>
+                </div>
+                ${priceHtml ? `
+                <div class="header__search-product-right">
+                    <p class="header__search-product-price">
+                        ${priceHtml}
+                    </p>
+                </div>
+                ` : ''}
+            </div>`;
+    };
+    
+    // Функція для рендерингу результатів
+    const renderSearchResults = (searchResults) => {
+        if (searchResults && searchResults.length > 0) {
+            const renderedResults = searchResults.map(item => renderSearchItem(item)).join('');
+            searchBodyResults.innerHTML = renderedResults;
+        } else {
+            searchBodyResults.innerHTML = '<p class="header__search-text">Товарів не знайдено 🥲</p>';
+        }
+    };
+    
+    // Функція для показу завантаження
+    const showLoading = () => {
+        searchBodyResults.innerHTML = '<p class="header__search-text">Шукаємо товари...</p>';
+    };
+    
+    // Функція для пошуку
+    const performSearch = async (query) => {
+        try {
+            showLoading();
+            const response = await fetch(`/catalog/api/search/?search_query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            renderSearchResults(data);
+        } catch (error) {
+            console.error('Помилка пошуку:', error);
+            searchBodyResults.innerHTML = '<p class="header__search-text">Помилка пошуку</p>';
+        }
+    };
+    
+    // Обробник введення в поле пошуку
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Показуємо результат пошуку
+        searchBody.classList.add('active');
+        
+        // Очищаємо попередній таймер
+        clearTimeout(searchTimeout);
+        
+        if (query.length === 0) {
+            searchBodyResults.innerHTML = '<p class="header__search-text">Введіть ваш пошуковий запит!</p>';
+        } else if (query.length === 1) {
+            searchBodyResults.innerHTML = '<p class="header__search-text">Введіть щонайменше 2 символи для пошуку</p>';
+        } else {
+            // Встановлюємо затримку для пошуку
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        }
+    });
+    
+    // Обробник кліків для закриття/відкриття пошуку
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.header__search-head')) {
+            searchBody.classList.toggle('active');
+        } else if (!event.target.closest('.header__search')) {
+            searchBody.classList.remove('active');
+        }
+    });
+    
+    // Обробник Enter для переходу до першого результату
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const firstResult = searchBodyResults.querySelector('.header__search-product a');
+            if (firstResult) {
+                window.location.href = firstResult.href;
+            } else if (this.value.trim().length >= 2) {
+                // Якщо немає результатів, але є запит, можна перенаправити на сторінку каталогу з пошуком
+                window.location.href = `/catalog/?search=${encodeURIComponent(this.value.trim())}`;
+            }
+        }
+        
+        // Навігація стрілками по результатах
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const results = searchBodyResults.querySelectorAll('.header__search-product');
+            const currentActive = searchBodyResults.querySelector('.header__search-product.active');
+            
+            if (results.length === 0) return;
+            
+            let nextIndex = 0;
+            if (currentActive) {
+                const currentIndex = Array.from(results).indexOf(currentActive);
+                if (event.key === 'ArrowDown') {
+                    nextIndex = (currentIndex + 1) % results.length;
+                } else {
+                    nextIndex = currentIndex === 0 ? results.length - 1 : currentIndex - 1;
+                }
+            }
+            
+            // Видаляємо попередній активний елемент
+            if (currentActive) {
+                currentActive.classList.remove('active');
+            }
+            
+            // Додаємо активний клас до нового елемента
+            results[nextIndex].classList.add('active');
+        }
+    });
+});
+</script>
 
 <div class="modal_loading__block">
   <div class="loader"></div>
