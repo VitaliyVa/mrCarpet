@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .filters import ProductFilter
 from .models import (
@@ -18,6 +19,18 @@ def catalog_detail(request, slug):
     filter_set = ProductFilter(request.GET, categorie.products.all())
     products = filter_set.qs
     sizes = Size.objects.all()
+    
+    # Пагінація
+    paginator = Paginator(products, 12)  # 12 товарів на сторінку
+    page = request.GET.get('page')
+    
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    
     return render(
         request,
         "catalog_inside.html",
@@ -29,6 +42,18 @@ def catalog(request):
     products = Product.objects.all()
     # filter_set = ProductFilter(request.GET, products)
     # products = filter_set.qs
+    
+    # Пагінація
+    paginator = Paginator(products, 12)  # 12 товарів на сторінку
+    page = request.GET.get('page')
+    
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    
     return render(request, "catalog.html", {"products": products})
 
 
@@ -49,4 +74,16 @@ def product(request, slug):
 
 def stock(request):
     products = Product.objects.filter(has_discount=True)
+    
+    # Пагінація
+    paginator = Paginator(products, 12)  # 12 товарів на сторінку
+    page = request.GET.get('page')
+    
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    
     return render(request, "catalog.html", {"products": products})

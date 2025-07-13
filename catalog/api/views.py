@@ -18,10 +18,12 @@ from .serializers import (
     ProductSaleSerializer,
     ProductSaleDetailSerializer,
     SaleSerializer,
+    ProductCategorySerializer,
 )
-from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode, ProductAttribute, ProductSale
+from ..models import Product, Favourite, FavouriteProducts, ProductReview, PromoCode, ProductAttribute, ProductSale, ProductCategory
 from ..utils import get_favourite
 from .filters import ProductFilter
+from .pagination import CustomPagination
 
 
 class FavouriteProductPermission(permissions.BasePermission):
@@ -168,12 +170,19 @@ class FavouriteProductViewSet(ModelViewSet):
 class ProductViewSet(mixins.ListModelMixin, GenericViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    pagination_class = CustomPagination
     # filter_backends = [filters.OrderingFilter, rest_filters.DjangoFilterBackend]
     filter_backends = [rest_filters.DjangoFilterBackend]
     filterset_class = ProductFilter
     # ordering_fields = ["title", "product_attr__price"]
     # ordering = ["-id"]
     # ordering_param = "sort"
+
+
+class ProductCategoryViewSet(mixins.ListModelMixin, GenericViewSet):
+    queryset = ProductCategory.objects.all()
+    serializer_class = ProductCategorySerializer
+    pagination_class = CustomPagination
 
 
 @api_view(["POST"])

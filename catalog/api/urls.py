@@ -12,6 +12,7 @@ router.register(r"product-reviews", views.ProductReviewViewSet, basename="produc
 router.register(r"favourite-products", views.FavouriteProductViewSet, basename="favourite_products")
 router.register(r"sale", views.SaleProductsViewSet, basename="sale")
 router.register("products", views.ProductViewSet, basename="products")
+router.register("categories", views.ProductCategoryViewSet, basename="categories")
 
 urlpatterns = [
     # path('products/', views.ProductApiView.as_view(), name='products-api'),

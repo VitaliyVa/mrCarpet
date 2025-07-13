@@ -163,6 +163,8 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 REST_FRAMEWORK = {
     'ORDERING_PARAM': 'sort',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 12,
 }
 
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
