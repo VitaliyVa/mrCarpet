@@ -1,4 +1,6 @@
-{% extends '_base.html' %}{% block styles %}
+{% extends '_base.html' %}
+{% load catalog_filters %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css" />
 {% endblock styles %}{% block content %}
 <section class="catalog_inside first_section">
@@ -32,40 +34,113 @@
                     </button>
                 </div>
                 <div class="catalog_inside_filter-body">
+                    <!-- Сортування -->
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
                         <a class="color_black accordion__title"> Сортувати за </a>
                         <span class="accordion_content content_column">
-                            <a href="#" class="active accordion_content_item">
+                            <a href="?{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                               class="{% if not current_filters.sort %}active{% endif %} accordion_content_item">
                                 За замовчуванням
                             </a>
-
-                            <a href="#" class="accordion_content_item"> За ім’ям А–Я </a>
-
-                            <a href="#" class="accordion_content_item"> За ім’ям Я–А </a>
-
-                            <a href="#" class="accordion_content_item">
+                            <a href="?sort=title&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                               class="{% if current_filters.sort == 'title' %}active{% endif %} accordion_content_item">
+                                За ім'ям А–Я
+                            </a>
+                            <a href="?sort=-title&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                               class="{% if current_filters.sort == '-title' %}active{% endif %} accordion_content_item">
+                                За ім'ям Я–А
+                            </a>
+                            <a href="?sort=price&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                               class="{% if current_filters.sort == 'price' %}active{% endif %} accordion_content_item">
                                 Ціна за зростанням
                             </a>
-
-                            <a href="#" class="accordion_content_item">
+                            <a href="?sort=-price&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                               class="{% if current_filters.sort == '-price' %}active{% endif %} accordion_content_item">
                                 Ціна за спаданням
                             </a>
                         </span>
                     </span>
 
+                    <!-- Розміри -->
+                    {% if available_filters.sizes %}
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
                         <a class="color_black accordion__title"> Розмір </a>
                         <span class="accordion_content content_column">
-                            {% for size in sizes %}
+                            {% for size in available_filters.sizes %}
                             <div class="accordion_content_item">
-                                <label for="{{ size.id }}">
-                                    <input type="checkbox" name="" id="{{ size.id }}" />
-                                    {{ size.title }}
+                                <label for="size_{{ size.id }}">
+                                    <input type="checkbox" name="size" value="{{ size.title }}" 
+                                           id="size_{{ size.id }}" 
+                                           {% if size.title|is_in_list:current_filters.size %}checked{% endif %} />
+                                    {{ size.title }} ({{ size.count }})
                                 </label>
                             </div>
                             {% endfor %}
                         </span>
                     </span>
+                    {% endif %}
+
+                    <!-- Кольори -->
+                    {% if available_filters.colors %}
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> Колір </a>
+                        <span class="accordion_content content_column">
+                            {% for color in available_filters.colors %}
+                            <div class="accordion_content_item">
+                                <label for="color_{{ color.id }}">
+                                    <input type="checkbox" name="color" value="{{ color.title }}" 
+                                           id="color_{{ color.id }}" 
+                                           {% if color.title|is_in_list:current_filters.color %}checked{% endif %} />
+                                    <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ color.color }}; margin-right: 8px; border-radius: 3px;"></span>
+                                    {{ color.title }} ({{ color.count }})
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </span>
+                    </span>
+                    {% endif %}
+
+                    <!-- Специфікації -->
+                    {% for spec_title, spec_values in available_filters.specifications.items %}
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> {{ spec_title }} </a>
+                        <span class="accordion_content content_column">
+                            {% for spec_value in spec_values %}
+                            <div class="accordion_content_item">
+                                <label for="spec_{{ spec_value.id }}">
+                                    <input type="checkbox" name="{{ spec_title|lower }}" value="{{ spec_value.title }}" 
+                                           id="spec_{{ spec_value.id }}" 
+                                           {% if spec_value.title|is_in_list:current_filters|get_item:spec_title|lower %}checked{% endif %} />
+                                    {{ spec_value.title }} ({{ spec_value.count }})
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </span>
+                    </span>
+                    {% endfor %}
+
+                    <!-- Діапазон цін -->
+                    {% if available_filters.price_range.min_price and available_filters.price_range.max_price %}
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> Ціна </a>
+                        <span class="accordion_content content_column">
+                            <div class="price-range">
+                                <input type="range" id="price_min" name="price_min" 
+                                       min="{{ available_filters.price_range.min_price }}" 
+                                       max="{{ available_filters.price_range.max_price }}" 
+                                       value="{{ current_filters.price_min|default:available_filters.price_range.min_price }}" />
+                                <input type="range" id="price_max" name="price_max" 
+                                       min="{{ available_filters.price_range.min_price }}" 
+                                       max="{{ available_filters.price_range.max_price }}" 
+                                       value="{{ current_filters.price_max|default:available_filters.price_range.max_price }}" />
+                                <div class="price-labels">
+                                    <span id="price_min_label">{{ current_filters.price_min|default:available_filters.price_range.min_price }} грн</span>
+                                    <span id="price_max_label">{{ current_filters.price_max|default:available_filters.price_range.max_price }} грн</span>
+                                </div>
+                            </div>
+                        </span>
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             <div class="catalog_section_bottom cart_item_wrapper">

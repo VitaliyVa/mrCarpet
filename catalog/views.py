@@ -11,6 +11,7 @@ from .models import (
     ProductAttribute,
     Size, ProductImage,
 )
+from .utils import get_available_filters, get_filter_counts
 
 
 # Create your views here.
@@ -18,7 +19,9 @@ def catalog_detail(request, slug):
     categorie = ProductCategory.objects.get(slug=slug)
     filter_set = ProductFilter(request.GET, categorie.products.all())
     products = filter_set.qs
-    sizes = Size.objects.all()
+    
+    # Отримуємо актуальні фільтри на основі поточних товарів
+    available_filters = get_available_filters(products)
     
     # Пагінація
     paginator = Paginator(products, 12)  # 12 товарів на сторінку
@@ -34,7 +37,12 @@ def catalog_detail(request, slug):
     return render(
         request,
         "catalog_inside.html",
-        {"categorie": categorie, "products": products, "sizes": sizes},
+        {
+            "categorie": categorie, 
+            "products": products, 
+            "available_filters": available_filters,
+            "current_filters": request.GET,
+        },
     )
 
 
