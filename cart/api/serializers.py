@@ -27,7 +27,13 @@ class CartProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_total_price(self, obj):
-        return f"{obj.total_price} грн" if obj.total_price else f"{obj.cart_product_total_price()} грн"
+        try:
+            if obj.total_price is not None:
+                return f"{obj.total_price} грн"
+            else:
+                return f"{obj.cart_product_total_price()} грн"
+        except (TypeError, ValueError):
+            return "0 грн"
 
 
 class CartSerializer(serializers.ModelSerializer):
