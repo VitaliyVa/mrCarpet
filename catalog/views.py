@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Min
 
 from .filters import ProductFilter
 from .models import (
@@ -17,7 +18,22 @@ from .utils import get_available_filters, get_filter_counts
 # Create your views here.
 def catalog_detail(request, slug):
     categorie = ProductCategory.objects.get(slug=slug)
-    filter_set = ProductFilter(request.GET, categorie.products.all())
+    products = categorie.products.all()
+    
+    # Застосовуємо сортування
+    sort_param = request.GET.get('sort')
+    if sort_param:
+        if sort_param == 'title':
+            products = products.order_by('title')
+        elif sort_param == '-title':
+            products = products.order_by('-title')
+        elif sort_param == 'price':
+            products = products.annotate(min_price=Min('product_attr__price')).order_by('min_price')
+        elif sort_param == '-price':
+            products = products.annotate(min_price=Min('product_attr__price')).order_by('-min_price')
+    
+    # Застосовуємо фільтри
+    filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
     
     # Отримуємо актуальні фільтри на основі поточних товарів

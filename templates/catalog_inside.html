@@ -29,32 +29,37 @@
                     <h3 class="catalog_inside_filter-title color_black bold">
                         Фільтри
                     </h3>
-                    <button class="catalog_inside_filter-close-btn">
-                        <img src="/static/utils/assets/close.svg" alt="close" />
-                    </button>
+                    <div class="filter-controls">
+                        <button type="button" class="reset-filters-btn" onclick="resetFilters()">
+                            Скинути
+                        </button>
+                        <button class="catalog_inside_filter-close-btn">
+                            <img src="/static/utils/assets/close.svg" alt="close" />
+                        </button>
+                    </div>
                 </div>
-                <div class="catalog_inside_filter-body">
+                <form id="filters-form" method="get" class="catalog_inside_filter-body">
                     <!-- Сортування -->
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
                         <a class="color_black accordion__title"> Сортувати за </a>
                         <span class="accordion_content content_column">
-                            <a href="?{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                            <a href="javascript:void(0)" onclick="setSort('')" 
                                class="{% if not current_filters.sort %}active{% endif %} accordion_content_item">
                                 За замовчуванням
                             </a>
-                            <a href="?sort=title&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                            <a href="javascript:void(0)" onclick="setSort('title')" 
                                class="{% if current_filters.sort == 'title' %}active{% endif %} accordion_content_item">
                                 За ім'ям А–Я
                             </a>
-                            <a href="?sort=-title&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                            <a href="javascript:void(0)" onclick="setSort('-title')" 
                                class="{% if current_filters.sort == '-title' %}active{% endif %} accordion_content_item">
                                 За ім'ям Я–А
                             </a>
-                            <a href="?sort=price&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                            <a href="javascript:void(0)" onclick="setSort('price')" 
                                class="{% if current_filters.sort == 'price' %}active{% endif %} accordion_content_item">
                                 Ціна за зростанням
                             </a>
-                            <a href="?sort=-price&{% for key, value in current_filters.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}" 
+                            <a href="javascript:void(0)" onclick="setSort('-price')" 
                                class="{% if current_filters.sort == '-price' %}active{% endif %} accordion_content_item">
                                 Ціна за спаданням
                             </a>
@@ -69,9 +74,10 @@
                             {% for size in available_filters.sizes %}
                             <div class="accordion_content_item">
                                 <label for="size_{{ size.id }}">
-                                    <input type="checkbox" name="size" value="{{ size.title }}" 
+                                    <input type="checkbox" name="size" value="{{ size.id }}" 
                                            id="size_{{ size.id }}" 
-                                           {% if size.title|is_in_list:current_filters.size %}checked{% endif %} />
+                                           {% if size.id|stringformat:'s' in current_filters|getlist:size %}checked{% endif %} />
+
                                     {{ size.title }} ({{ size.count }})
                                 </label>
                             </div>
@@ -90,7 +96,8 @@
                                 <label for="color_{{ color.id }}">
                                     <input type="checkbox" name="color" value="{{ color.title }}" 
                                            id="color_{{ color.id }}" 
-                                           {% if color.title|is_in_list:current_filters.color %}checked{% endif %} />
+                                           {% if color.title in current_filters|getlist:color %}checked{% endif %} />
+
                                     <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ color.color }}; margin-right: 8px; border-radius: 3px;"></span>
                                     {{ color.title }} ({{ color.count }})
                                 </label>
@@ -110,7 +117,8 @@
                                 <label for="spec_{{ spec_value.id }}">
                                     <input type="checkbox" name="{{ spec_title|lower }}" value="{{ spec_value.title }}" 
                                            id="spec_{{ spec_value.id }}" 
-                                           {% if spec_value.title|is_in_list:current_filters|get_item:spec_title|lower %}checked{% endif %} />
+                                           {% if spec_value.title in current_filters|getlist:spec_title|lower %}checked{% endif %} />
+
                                     {{ spec_value.title }} ({{ spec_value.count }})
                                 </label>
                             </div>
@@ -141,7 +149,7 @@
                         </span>
                     </span>
                     {% endif %}
-                </div>
+                </form>
             </div>
             <div class="catalog_section_bottom cart_item_wrapper">
                 {% for product in products %}
@@ -175,4 +183,127 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/catalog_inside/index.js"></script>
+<script>
+// Автоматичний submit при зміні чекбокса чи повзунка
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filters-form');
+    if (form) {
+        // Відновлюємо стан чекбоксів з URL параметрів
+        restoreCheckboxState();
+        
+        // Обробка чекбоксів з затримкою для множинного вибору
+        const checkboxes = form.querySelectorAll('input[type=checkbox]');
+        let submitTimeout;
+        
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                // Очищаємо попередній таймер
+                clearTimeout(submitTimeout);
+                
+                // Встановлюємо новий таймер на 500мс
+                submitTimeout = setTimeout(function() {
+                    form.submit();
+                }, 500);
+            });
+        });
+        
+        // Обробка повзунків ціни
+        const rangeInputs = form.querySelectorAll('input[type=range]');
+        rangeInputs.forEach(function(input) {
+            input.addEventListener('change', function() {
+                form.submit();
+            });
+        });
+        
+        // Оновлення лейблів ціни в реальному часі
+        const priceMin = document.getElementById('price_min');
+        const priceMax = document.getElementById('price_max');
+        const priceMinLabel = document.getElementById('price_min_label');
+        const priceMaxLabel = document.getElementById('price_max_label');
+        
+        if (priceMin && priceMinLabel) {
+            priceMin.addEventListener('input', function() {
+                priceMinLabel.textContent = this.value + ' грн';
+            });
+        }
+        
+        if (priceMax && priceMaxLabel) {
+            priceMax.addEventListener('input', function() {
+                priceMaxLabel.textContent = this.value + ' грн';
+            });
+        }
+    }
+});
+
+// Функція для відновлення стану чекбоксів з URL
+function restoreCheckboxState() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Відновлюємо розміри
+    const sizes = urlParams.getAll('size');
+    sizes.forEach(function(sizeId) {
+        const checkbox = document.querySelector(`input[name="size"][value="${sizeId}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Відновлюємо кольори
+    const colors = urlParams.getAll('color');
+    colors.forEach(function(colorTitle) {
+        const checkbox = document.querySelector(`input[name="color"][value="${colorTitle}"]`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Відновлюємо специфікації
+    const specKeys = ['матеріал', 'стиль', 'тип', 'бренд', 'країна виробник'];
+    specKeys.forEach(function(specKey) {
+        const values = urlParams.getAll(specKey);
+        values.forEach(function(value) {
+            const checkbox = document.querySelector(`input[name="${specKey}"][value="${value}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+    });
+}
+
+// Функція для встановлення сортування
+function setSort(sortValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (sortValue) {
+        urlParams.set('sort', sortValue);
+    } else {
+        urlParams.delete('sort');
+    }
+    
+    // Перенаправляємо з новими параметрами
+    const newUrl = window.location.pathname + '?' + urlParams.toString();
+    window.location.href = newUrl;
+}
+
+// Функція для скидання всіх фільтрів
+function resetFilters() {
+    // Очищаємо всі чекбокси
+    const checkboxes = document.querySelectorAll('#filters-form input[type=checkbox]');
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = false;
+    });
+    
+    // Скидаємо повзунки ціни до початкових значень
+    const priceMin = document.getElementById('price_min');
+    const priceMax = document.getElementById('price_max');
+    const priceMinLabel = document.getElementById('price_min_label');
+    const priceMaxLabel = document.getElementById('price_max_label');
+    
+    if (priceMin && priceMax) {
+        priceMin.value = priceMin.min;
+        priceMax.value = priceMax.max;
+        
+        if (priceMinLabel) priceMinLabel.textContent = priceMin.value + ' грн';
+        if (priceMaxLabel) priceMaxLabel.textContent = priceMax.value + ' грн';
+    }
+    
+    // Перенаправляємо на чисту сторінку каталогу
+    const currentUrl = window.location.pathname;
+    window.location.href = currentUrl;
+}
+</script>
 {% endblock scripts %}

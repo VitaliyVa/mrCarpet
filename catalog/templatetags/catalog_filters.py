@@ -18,4 +18,12 @@ def is_in_list(value, list_str):
         return False
     if isinstance(list_str, str):
         return value in list_str.split(',')
-    return value in list_str 
+    return value in list_str
+
+
+@register.filter
+def getlist(querydict, key):
+    """Отримує список значень з QueryDict за ключем"""
+    if hasattr(querydict, 'getlist'):
+        return querydict.getlist(key)
+    return [] 
