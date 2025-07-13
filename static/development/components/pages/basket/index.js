@@ -6,6 +6,9 @@ import {
   minus,
   plus,
 } from "../../module/shop_scripts/basket_action";
+import { initPromocode, restorePromocode } from "./promocode";
+
+console.log("Basket index.js loaded"); // Логування
 
 document.addEventListener("click", ({ target }) => {
   const product = target.closest(".basket_item");
@@ -25,7 +28,10 @@ document.addEventListener("click", ({ target }) => {
         (basketItem) => basketItem.id === productId
       );
 
-      productTotalPrice.textContent = basketProduct.total_price;
+      if (basketProduct) {
+        // Використовуємо total_price з серіалізатора, який вже містить правильну ціну
+        productTotalPrice.textContent = basketProduct.total_price;
+      }
     };
 
     if (deleteButton) {
@@ -54,4 +60,15 @@ document.addEventListener("click", ({ target }) => {
       );
     }
   }
+});
+
+// Ініціалізуємо функціональність промокоду
+console.log("Calling initPromocode..."); // Логування
+initPromocode();
+console.log("initPromocode called successfully"); // Логування
+
+// Відновлюємо застосований промокод при завантаженні сторінки
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOMContentLoaded event fired"); // Логування
+  restorePromocode();
 });

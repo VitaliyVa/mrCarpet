@@ -1,5 +1,6 @@
 {% extends '_base.html' %}{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/basket/index.css" />
+<link rel="stylesheet" href="/static/development/pages/promocode.css" />
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
     <div class="container">
@@ -126,7 +127,7 @@
                     </div>
 
                     <button class="basket__confirm-order-btn basket_right_btn">
-                        <a href="#" class="btn-gold">Замовлення підтверджую</a>
+                        <a href="{% url 'checkout' %}" class="btn-gold">Замовлення підтверджую</a>
                     </button>
 
                     <div class="basket__calculate-info color_black_sub font-size-14">
@@ -152,4 +153,5 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/basket/index.js"></script>
+<script src="/static/development/pages/promocode.js"></script>
 {% endblock scripts %}

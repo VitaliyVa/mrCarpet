@@ -25,30 +25,45 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
         cart = get_cart(request)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.validated_data["total_price"] = cart.get_total_price()
+        
+        # Отримуємо промокод з запиту або з сесії
         promo = serializer.validated_data.pop("promocode", None)
+        
+        # Якщо промокод не передано в запиті, перевіряємо чи є застосований промокод
+        if not promo and hasattr(request, 'session'):
+            promo = request.session.get("applied_promocode")
+        
+        # Розраховуємо загальну ціну
+        total_price = cart.get_total_price()
+        
         try:
             with transaction.atomic():
                 order = Order.objects.create(**serializer.validated_data)
                 cart.order = order
+                
                 if promo:
                     try:
                         promocode = PromoCode.objects.get(code=promo)
                         order.promocode = promocode
+                        # Розраховуємо ціну зі знижкою
                         order.total_price = float(cart.get_total_price(promo=promocode.discount))
+                        # Очищаємо промокод з сесії
+                        if hasattr(request, 'session'):
+                            request.session.pop("applied_promocode", None)
                     except PromoCode.DoesNotExist:
                         raise ValueError("Неправильний промокод.")
+                else:
+                    order.total_price = float(total_price)
+                
                 if order.payment_type == "liqpay":
                     order.status = "Не оплачено"
                     order.save()
                     cart.apply_quantity()
-                    # cart.save()
                     return redirect("payment")
                 elif order.payment_type == "cash":
                     order.save()
                     cart.ordered = True
                     cart.apply_quantity()
-                    # cart.save()
                 else:
                     raise ValueError("Неправильний спосіб оплати.")
         except ValueError as e:

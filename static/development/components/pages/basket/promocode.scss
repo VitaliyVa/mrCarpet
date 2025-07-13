@@ -1,0 +1,33 @@
+.basket__promocode-add-btn {
+  &.applied {
+    background-color: #28a745;
+    color: white;
+    
+    &:hover {
+      background-color: #218838;
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.basket__calculate-discount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #e9ecef;
+  
+  .basket__calculate-discount-title {
+    color: #6c757d;
+    font-size: 14px;
+  }
+  
+  .basket__calculate-discount-value {
+    font-weight: bold;
+    font-size: 16px;
+  }
+} 

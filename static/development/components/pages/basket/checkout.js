@@ -1,3 +1,5 @@
+import { initPromocode, restorePromocode } from "./promocode";
+
 const checkboxItems = document.querySelectorAll(".basket__checkbox-item");
 
 document.addEventListener("click", ({ target }) => {
@@ -39,4 +41,12 @@ document.addEventListener("click", ({ target }) => {
       bodyBlockFields.forEach((item) => (item.readOnly = false));
     }
   }
+});
+
+// Ініціалізуємо функціональність промокоду
+initPromocode();
+
+// Відновлюємо застосований промокод при завантаженні сторінки
+document.addEventListener("DOMContentLoaded", () => {
+  restorePromocode();
 });

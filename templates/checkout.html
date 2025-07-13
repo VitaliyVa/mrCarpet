@@ -1,5 +1,38 @@
 {% extends '_base.html' %}{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/basket/index.css" />
+<style>
+.basket__promocode-add-btn.applied {
+    background-color: #28a745;
+    color: white;
+}
+
+.basket__promocode-add-btn.applied:hover {
+    background-color: #218838;
+}
+
+.basket__promocode-add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.basket__calculate-discount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.basket__calculate-discount-title {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.basket__calculate-discount-value {
+    font-weight: bold;
+    font-size: 16px;
+}
+</style>
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
     <div class="container">
@@ -514,9 +547,11 @@
                                 type="text"
                                 class="input-transparent"
                                 placeholder="Введіть промокод"
+                                id="promocode-input"
                         />
                         <button
                                 class="basket__promocode-add-btn info_for_product_btn medium color_gold"
+                                id="promocode-btn"
                         >
                             Додати
                         </button>
@@ -553,7 +588,7 @@
                     </div>
 
                     <button class="basket__to-order-btn basket_right_btn">
-                        <a href="#" class="btn-gold">Перейти до оформлення</a>
+                        <a href="/api/orders/" class="btn-gold">Перейти до оформлення</a>
                     </button>
 
                     <div class="basket__calculate-info color_black_sub font-size-14">
@@ -561,7 +596,7 @@
                   <span>
                     Оформляючи замовлення на сайті, Ви погоджуєтесь з нашими
                   </span>
-                            <a href="#">
+                            <a href="{% url 'terms' %}">
                                 <b>Умовами і положеннями</b>
                             </a>
                         </p>
@@ -579,4 +614,121 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/basket/index.js"></script>
+
+<script>
+// Функціональність для промокоду
+document.addEventListener('DOMContentLoaded', function() {
+    const promocodeBtn = document.getElementById('promocode-btn');
+    const promocodeInput = document.getElementById('promocode-input');
+    
+    if (promocodeBtn && promocodeInput) {
+        promocodeBtn.addEventListener('click', function() {
+            const promocode = promocodeInput.value.trim();
+            
+            if (!promocode) {
+                alert('Введіть промокод');
+                return;
+            }
+            
+            // Показуємо індикатор завантаження
+            promocodeBtn.textContent = 'Перевіряємо...';
+            promocodeBtn.disabled = true;
+            
+            // Відправляємо запит на перевірку промокоду
+            fetch('/api/check-promocode/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ promocode: promocode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Оновлюємо ціни на сторінці
+                    updatePricesWithDiscount(data);
+                    
+                    // Показуємо повідомлення про успіх
+                    alert(data.message);
+                    
+                    // Зберігаємо промокод в localStorage
+                    localStorage.setItem('applied_promocode', promocode);
+                    
+                    // Змінюємо вигляд кнопки
+                    promocodeBtn.textContent = 'Застосовано';
+                    promocodeBtn.classList.add('applied');
+                } else {
+                    throw new Error(data.error || 'Помилка при перевірці промокоду');
+                }
+            })
+            .catch(error => {
+                // Показуємо повідомлення про помилку
+                alert(error.message);
+                
+                // Повертаємо кнопку в початковий стан
+                promocodeBtn.textContent = 'Додати';
+                promocodeBtn.disabled = false;
+            });
+        });
+    }
+    
+    // Функція для отримання CSRF токена
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Функція для оновлення цін зі знижкою
+    function updatePricesWithDiscount(data) {
+        const { final_price, discount_percent } = data;
+        
+        // Оновлюємо загальну ціну товарів
+        const totalPriceElements = document.querySelectorAll('.basket__calculate-sum-products-cost, .basket__calculate-total-price-value');
+        totalPriceElements.forEach(element => {
+            element.textContent = final_price + ' грн.';
+        });
+        
+        // Додаємо інформацію про знижку
+        const calculateBlock = document.querySelector('.basket__calculate');
+        if (calculateBlock) {
+            // Перевіряємо чи вже є блок зі знижкою
+            let discountBlock = calculateBlock.querySelector('.basket__calculate-discount');
+            
+            if (!discountBlock) {
+                discountBlock = document.createElement('div');
+                discountBlock.className = 'basket__calculate-discount basket_right_block';
+                discountBlock.innerHTML = `
+                    <p class="basket__calculate-discount-title">Знижка</p>
+                    <p class="basket__calculate-discount-value color_gold">-${discount_percent}%</p>
+                `;
+                
+                // Вставляємо блок зі знижкою після блоку з ціною товарів
+                const sumProductsBlock = calculateBlock.querySelector('.basket__calculate-sum-products');
+                sumProductsBlock.after(discountBlock);
+            } else {
+                discountBlock.querySelector('.basket__calculate-discount-value').textContent = `-${discount_percent}%`;
+            }
+        }
+    }
+    
+    // Відновлюємо застосований промокод при завантаженні сторінки
+    const appliedPromocode = localStorage.getItem('applied_promocode');
+    if (appliedPromocode && promocodeBtn && promocodeInput) {
+        promocodeBtn.textContent = 'Застосовано';
+        promocodeBtn.classList.add('applied');
+        promocodeInput.value = appliedPromocode;
+    }
+});
+</script>
 {% endblock scripts %}

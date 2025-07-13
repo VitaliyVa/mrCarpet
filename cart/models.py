@@ -100,11 +100,14 @@ class CartProduct(AbstractCreatedUpdated):
     
     def cart_product_total_price(self):
         product_price = self.product_attr.get_total_price()
+        
         if self.product_attr.custom_attribute:
-            if self.total_price is None:
-                return 0
-            product_price = float(self.total_price)
+            if self.total_price is not None:
+                product_price = float(self.total_price)
+            # Якщо total_price не встановлений для кастомного продукту, використовуємо звичайну ціну
+        
         price = product_price * self.quantity
+        
         if price % 1 == 0:
             return int(price)
         return price

@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
+from cart.utils import get_cart
 
 # Create your views here.
 def index(request):
@@ -37,7 +38,11 @@ def about(request):
 
 
 def checkout(request):
-    return render(request, 'checkout.html')
+    cart = get_cart(request)
+    context = {
+        'cart': cart,
+    }
+    return render(request, 'checkout.html', context)
 
 
 def delivery(request):

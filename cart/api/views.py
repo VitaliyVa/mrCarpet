@@ -67,12 +67,17 @@ class CartProductViewSet(
             cart_product.save()
         elif not cart_product and quantity <= product.quantity:
             cart_product = CartProduct.objects.create(**serializer.validated_data)
-            if length and width:
+            if length and width and product.custom_attribute:
                 print("yes")
                 cart_product.total_price = (
                     Decimal(width.width) * Decimal(length) * product.custom_price
                 )
                 print(cart_product.total_price)
+                cart_product.save()
+            elif product.custom_attribute and (not length or not width):
+                # Якщо продукт кастомний, але розміри не вказані, використовуємо звичайну ціну
+                print(f"Custom product without dimensions, using base price: {product.get_total_price()}")
+                cart_product.total_price = product.get_total_price()
                 cart_product.save()
         else:
             return Response(
@@ -101,6 +106,14 @@ class CartProductViewSet(
                 request.data["quantity"] = 1
             else:
                 request.data["quantity"] = instance.quantity - quantity
+        
+        # Оновлюємо total_price для кастомних продуктів
+        if instance.product_attr.custom_attribute and instance.total_price is not None:
+            new_quantity = request.data.get("quantity", instance.quantity)
+            # Розраховуємо ціну за одиницю
+            price_per_unit = instance.total_price / instance.quantity
+            request.data["total_price"] = price_per_unit * new_quantity
+        
         super().update(request, *args, **kwargs)
         return Response(
             CartSerializer(get_cart(request), context={"request": request}).data,
