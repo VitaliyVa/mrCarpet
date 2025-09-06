@@ -15,3 +15,7 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        verbose_name = "Стаття блогу"
+        verbose_name_plural = "Статті блогу"
