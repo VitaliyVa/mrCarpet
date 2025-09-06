@@ -1,18 +1,47 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from catalog.models import PromoCode
 from cart.utils import get_cart
+from django.core.mail import send_mail, get_connection
 
 from .serializers import ContactRequestSerializer, SubscriptionSerializer
-from ..models import ContactRequest, Subscription
+from ..models import ContactRequest, Subscription, SMTPSettings
 
 
-class ContactRequestCreateView(CreateAPIView):
+class ContactRequestCreateView(APIView):
     queryset = ContactRequest.objects.all()
     serializer_class = ContactRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = ContactRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        from_email = serializer.save()
+        try:
+            smtp = SMTPSettings.load()
+            connection = get_connection(
+                host=smtp.host,
+                port=smtp.port,
+                username=smtp.username or None,
+                password=smtp.email_host_password or None,
+                use_tls=bool(smtp.use_tls),
+                use_ssl=bool(smtp.use_ssl),
+            )
+            send_mail(
+                "Нова контактна форма",
+                f"Ім'я: {from_email.name}\nПошта: {from_email.email}\nКоментар: {from_email.text}",
+                smtp.server_email,
+                [from_email.email],
+                fail_silently=False,
+                connection=connection,
+            )
+        except Exception as e:
+            print(e)
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class SubscriptionCreateView(CreateAPIView):
@@ -25,7 +54,7 @@ class SubscriptionCreateView(CreateAPIView):
                 {"message": "Ви уже підписані."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = self.get_serializer(data=request.data)
+        serializer = SubscriptionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(

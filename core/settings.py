@@ -179,3 +179,9 @@ CELERY_BEAT_SCHEDULE = { # scheduler configuration
         'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
     },
 }
+
+
+# SMTP settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
