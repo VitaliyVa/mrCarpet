@@ -104,3 +104,14 @@ class Settlement(models.Model):
         verbose_name = "Населений пункт"
         verbose_name_plural = "Населені пункти"
         ordering = ["title"]
+
+
+class NovaPoshtaSettings(models.Model):
+    api_key = models.CharField(verbose_name="API ключ", max_length=255)
+
+    def __str__(self):
+        return "Налаштування Nova Poshta"
+    
+    class Meta:
+        verbose_name = "Налаштування Nova Poshta"
+        verbose_name_plural = "Налаштування Nova Poshta"

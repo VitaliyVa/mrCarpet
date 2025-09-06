@@ -6,9 +6,18 @@ import requests
 
 from decouple import config
 
+from .models import NovaPoshtaSettings
 
 url = "https://api.novaposhta.ua/v2.0/json/"
-api_key = os.getenv("NOVA_POSHTA_API_KEY")
+# api_key = os.getenv("NOVA_POSHTA_API_KEY")
+
+
+def get_api_key():
+    settings_obj = NovaPoshtaSettings.objects.first()
+    key = settings_obj.api_key if settings_obj and settings_obj.api_key else os.getenv("NOVA_POSHTA_API_KEY")
+    if not key:
+        raise RuntimeError("Nova Poshta API key is not configured (DB or NOVA_POSHTA_API_KEY).")
+    return key
 
 
 def get_full_response(model: str, method: str, properties: dict = None):
@@ -16,7 +25,7 @@ def get_full_response(model: str, method: str, properties: dict = None):
     if not properties:
         properties = {}
     data = {
-        "apiKey": api_key,
+        "apiKey": get_api_key(),
         "modelName": model,
         "calledMethod": method,
         "methodProperties": properties,
@@ -38,7 +47,7 @@ def get_full_response(model: str, method: str, properties: dict = None):
 
 def get_response(model: str, method: str, properties: dict = {}, url: str = url):
     data = {
-        "apiKey": api_key,
+        "apiKey": get_api_key(),
         "modelName": model,
         "calledMethod": method,
         "methodProperties": properties,
