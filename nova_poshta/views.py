@@ -26,8 +26,11 @@ class WarehousesList(generics.ListAPIView):
         if not query:
             return Warehouse.objects.none()
 
-        queryset = self.queryset.filter(settlement=query)
-        return queryset
+        try:
+            settlement_id = int(query)
+            return self.queryset.filter(settlement_id=settlement_id)
+        except (TypeError, ValueError):
+            return self.queryset.filter(settlement__ref=query)
 
 
 class SettlementsList(generics.ListAPIView):
