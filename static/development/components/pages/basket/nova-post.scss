@@ -1,0 +1,270 @@
+// Nova Post Dropdown Styles
+.nova-post-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: -1px;
+
+  &-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.loading,
+    &.no-results,
+    &.error {
+      cursor: default;
+      color: #666;
+      text-align: center;
+      font-style: italic;
+
+      &:hover {
+        background-color: white;
+      }
+    }
+
+    &.error {
+      color: #d32f2f;
+    }
+  }
+}
+
+.nova-post-city-wrapper,
+.nova-post-warehouse-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  input,
+  select {
+    width: 100%;
+  }
+}
+
+// Стилі для readonly полів
+#nova-post-city-input[readonly] {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+}
+
+#nova-post-city-input:not([readonly]) {
+  background-color: white;
+  cursor: text;
+}
+
+// Стилі для disabled select
+#nova-post-warehouse-select:disabled {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+#nova-post-warehouse-select:not(:disabled) {
+  background-color: white;
+  cursor: pointer;
+}
+
+// Анімація для випадаючого списку
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nova-post-dropdown[style*="display: block"] {
+  animation: slideDown 0.2s ease;
+}
+
+// Scrollbar стилі для dropdown
+.nova-post-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.nova-post-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 0 4px 0;
+}
+
+.nova-post-dropdown::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+
+  &:hover {
+    background: #555;
+  }
+}
+
+// Стилі для валідації форми
+.input-error {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5 !important;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
+
+// Стилі для кнопки замовлення
+.basket__to-order-btn {
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Стилі для промокоду
+.basket__promocode-add-btn {
+  &.applied {
+    background-color: #28a745;
+    color: white;
+
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.basket__calculate-discount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #e9ecef;
+
+  &-title {
+    color: #6c757d;
+    font-size: 14px;
+  }
+
+  &-value {
+    font-weight: bold;
+    font-size: 16px;
+  }
+}
+
+// Кастомізація Choices.js під стиль сайту
+.choices__inner {
+  background-color: #ffffff !important; // Білий фон як у стандартних інпутів
+  border: none !important; // Забираємо всі бордери
+  border-bottom: 1px solid #89817c !important; // Нижній бордер як у стандартних інпутів
+  border-radius: 0; // Забираємо заокруглення
+  padding: 10px;
+  min-height: 44px;
+}
+
+.choices__list--dropdown {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-top: 4px;
+  max-height: 350px; // Збільшуємо висоту для пошуку
+
+  .choices__item--selectable {
+    padding: 14px 18px; // Більше відступів для зручності
+    
+    &.is-highlighted {
+      background-color: #f5f5f5;
+    }
+  }
+}
+
+.choices[data-type*="select-one"] .choices__input {
+  background-color: transparent;
+  border: none;
+  padding: 8px 0; // Додаємо відступи для пошуку
+  margin-bottom: 8px;
+}
+
+.choices__placeholder {
+  opacity: 0.5;
+}
+
+// Додатковий padding для поля пошуку в dropdown
+.choices__list--dropdown .choices__input {
+  padding: 12px 15px !important;
+  margin: 8px 8px 12px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+// Індикатор завантаження для селекту відділень
+.warehouse-loading {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #89817c;
+  pointer-events: none;
+  z-index: 10;
+
+  span {
+    white-space: nowrap;
+  }
+}
+
+.warehouse-loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top-color: #a46c46;
+  border-radius: 50%;
+  animation: warehouse-spin 0.8s linear infinite;
+}
+
+@keyframes warehouse-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+//Ховаємо селект коли показується індикатор завантаження
+.nova-post-warehouse-wrapper.loading {
+  .choices {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+

@@ -1,5 +1,6 @@
 import "./promocode.scss";
 import { instance } from "../../../api/instance";
+import { showSuccess, showError } from "./notification";
 
 // Функціональність для промокоду
 export function initPromocode() {
@@ -20,7 +21,7 @@ export function initPromocode() {
       console.log("Promocode value:", promocode); // Логування
       
       if (!promocode) {
-        alert("Введіть промокод");
+        showError("Будь ласка, введіть промокод");
         return;
       }
       
@@ -40,7 +41,7 @@ export function initPromocode() {
             updatePricesWithDiscount(data);
             
             // Показуємо повідомлення про успіх
-            alert(data.message);
+            showSuccess(data.message || "Промокод успішно застосовано!");
             
             // Зберігаємо промокод в localStorage для подальшого використання
             localStorage.setItem('applied_promocode', promocode);
@@ -55,7 +56,7 @@ export function initPromocode() {
           
           // Показуємо повідомлення про помилку
           const errorMessage = response?.data?.error || "Помилка при перевірці промокоду";
-          alert(errorMessage);
+          showError(errorMessage);
           
           // Повертаємо кнопку в початковий стан
           promocodeButton.textContent = "Додати";

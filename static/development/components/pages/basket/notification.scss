@@ -1,0 +1,100 @@
+// Notification стилі
+.checkout-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10000;
+  transform: translateX(450px);
+  opacity: 0;
+  transition: all 0.3s ease;
+
+  &--show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #453f3a;
+  }
+
+  &__close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #89817c;
+    transition: color 0.2s ease;
+    padding: 0;
+
+    &:hover {
+      color: #453f3a;
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  // Success варіант
+  &--success {
+    border-left: 4px solid #28a745;
+
+    .checkout-notification__icon {
+      color: #28a745;
+    }
+  }
+
+  // Error варіант
+  &--error {
+    border-left: 4px solid #dc3545;
+
+    .checkout-notification__icon {
+      color: #dc3545;
+    }
+  }
+
+  // Info варіант
+  &--info {
+    border-left: 4px solid #a46c46;
+
+    .checkout-notification__icon {
+      color: #a46c46;
+    }
+  }
+
+  // Адаптив
+  @media (max-width: 768px) {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+    max-width: none;
+  }
+}
+

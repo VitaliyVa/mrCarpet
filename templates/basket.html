@@ -15,7 +15,22 @@
             <span>{{ cart_products|length }} товари</span>
         </div>
 
-        <div class="basket__center">
+        <!-- Блок порожньої корзини -->
+        <div class="basket__empty" id="empty-cart-block" style="{% if cart_products|length == 0 %}display: flex;{% else %}display: none;{% endif %}">
+            <div class="basket__empty-icon">
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="60" r="60" fill="#F5F5F5"/>
+                    <path d="M40 40L80 80M80 40L40 80" stroke="#89817C" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2 class="basket__empty-title">Ваш кошик порожній</h2>
+            <p class="basket__empty-text">Додайте товари до кошика, щоб почати покупки</p>
+            <a href="{% url 'catalog' %}" class="basket__empty-btn btn-gold">
+                Перейти до каталогу
+            </a>
+        </div>
+
+        <div class="basket__center" style="{% if cart_products|length == 0 %}display: none;{% endif %}">
             <div class="basket__left">
                 <div class="basket__items">
                     {% for cart_product in cart_products %}

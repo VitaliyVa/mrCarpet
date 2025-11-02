@@ -1,9 +1,6 @@
 import { instance } from "./instance";
-import {
-  showLoader,
-  accept_modal,
-  bad_modal,
-} from "../components/module/form_action";
+import { showLoader, hideLoader } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 
 export const loginUser = async (values) => {
   showLoader();
@@ -11,12 +8,14 @@ export const loginUser = async (values) => {
   try {
     const { data } = await instance.post("/users/user_login/", values);
 
-    accept_modal();
-    window.location.reload();
+    hideLoader();
+    showSuccess("Успішно!");
+    setTimeout(() => window.location.reload(), 1500);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    hideLoader();
+    showError(response?.data?.message || "Помилка авторизації");
   }
 };
 
@@ -26,11 +25,13 @@ export const registerUser = async (values) => {
   try {
     const { data } = await instance.post("/users/register/", values);
 
-    accept_modal();
-    window.location.reload();
+    hideLoader();
+    showSuccess("Успішно!");
+    setTimeout(() => window.location.reload(), 1500);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    hideLoader();
+    showError(response?.data?.message || "Помилка реєстрації");
   }
 };

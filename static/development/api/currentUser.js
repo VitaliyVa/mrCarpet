@@ -1,9 +1,6 @@
 import { instance } from "./instance";
-import {
-  showLoader,
-  accept_modal,
-  bad_modal,
-} from "../components/module/form_action";
+import { showLoader, hideLoader } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 
 export const updateCurrentUser = async (values) => {
   showLoader();
@@ -11,11 +8,13 @@ export const updateCurrentUser = async (values) => {
   try {
     const { data } = await instance.patch("/users/update_profile/", values);
 
-    accept_modal();
-    window.location.reload();
+    hideLoader();
+    showSuccess("Зміни успішно збережено!");
+    setTimeout(() => window.location.reload(), 1500);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    hideLoader();
+    showError(response?.data?.message || "Помилка збереження змін");
   }
 };

@@ -183,7 +183,22 @@
           <h1 class="profile__title bold">Мої замовлення</h1>
         </div>
 
-        <div class="orders__items accordion_container">
+        <!-- Блок порожніх замовлень -->
+        <div class="basket__empty" id="empty-orders-block" style="{% if orders|length == 0 %}display: flex;{% else %}display: none;{% endif %}">
+          <div class="basket__empty-icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="60" cy="60" r="60" fill="#F5F5F5"/>
+              <path d="M30 50H90M40 50V35C40 32.2386 42.2386 30 45 30H75C77.7614 30 80 32.2386 80 35V50M50 65V75M70 65V75M35 50H85L80 90H40L35 50Z" stroke="#89817C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="basket__empty-title">У вас ще немає замовлень</h2>
+          <p class="basket__empty-text">Оберіть товари з каталогу та оформіть перше замовлення</p>
+          <a href="{% url 'catalog' %}" class="basket__empty-btn btn-gold">
+            Перейти до каталогу
+          </a>
+        </div>
+
+        <div class="orders__items accordion_container" style="{% if orders|length == 0 %}display: none;{% endif %}">
           {% for order in orders %}
           <div class="orders__block accordion accordion_content__block">
             <div class="orders__block-head accordion__title">

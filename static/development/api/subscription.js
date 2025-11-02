@@ -1,9 +1,6 @@
 import { instance } from "./instance";
-import {
-  showLoader,
-  accept_modal,
-  bad_modal,
-} from "../components/module/form_action";
+import { showLoader, hideLoader } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 
 export const subscribeToNewsletter = async (email) => {
   try {
@@ -13,13 +10,15 @@ export const subscribeToNewsletter = async (email) => {
       email,
     });
 
-    accept_modal(
+    hideLoader();
+    showSuccess(
       data?.message ||
-        "Ви успішно підписалися на розсилку новин та акцій 🎉🎉🎉"
+        "Ви успішно підписалися на розсилку новин та акцій 🎉"
     );
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message || "Упс... щось пішло не так🥲");
+    hideLoader();
+    showError(response?.data?.message || "Упс... щось пішло не так");
   }
 };

@@ -1,9 +1,6 @@
 import { instance } from "./instance";
-import {
-  showLoader,
-  accept_modal,
-  bad_modal,
-} from "../components/module/form_action";
+import { showLoader } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
 import { updateBasket } from "../components/pages/basket/utils/updateBasket";
 
@@ -15,14 +12,14 @@ export const addToBasket = async (product, onSucces) => {
       onSucces();
     }
 
-    accept_modal(data?.message || "Додано в корзину!");
+    showSuccess(data?.message || "Додано в корзину!");
 
     updateCountBadge(".header_bottom_panel_cart", data?.quantity);
     updateBasket(data);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    showError(response?.data?.message || "Помилка при додаванні в кошик");
   }
 };
 
@@ -39,7 +36,7 @@ export const removeFromBasket = async (productId, onSucces) => {
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    showError(response?.data?.message || "Помилка при додаванні в кошик");
   }
 };
 
@@ -56,7 +53,7 @@ export const updateBasketItem = async ({ id, ...product }, onSucces) => {
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    showError(response?.data?.message || "Помилка при додаванні в кошик");
   }
 };
 

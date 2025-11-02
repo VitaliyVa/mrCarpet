@@ -1,5 +1,6 @@
 .profile {
   padding-bottom: 104px;
+  min-height: 100vh;
 
   &__center {
     display: flex;
@@ -135,6 +136,73 @@
           transform: scale(1);
         }
       }
+    }
+  }
+}
+
+// Стилі для порожньої сторінки замовлень
+.basket__empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  margin-top: 60px;
+  text-align: center;
+
+  &-icon {
+    margin-bottom: 30px;
+    
+    svg {
+      width: 120px;
+      height: 120px;
+    }
+  }
+
+  &-title {
+    margin: 0 0 15px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #453f3a;
+  }
+
+  &-text {
+    margin: 0 0 40px;
+    font-size: 18px;
+    color: #89817c;
+    max-width: 400px;
+  }
+
+  &-btn {
+    display: inline-block;
+    padding: 16px 40px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(164, 108, 70, 0.3);
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+    margin-top: 40px;
+
+    &-title {
+      font-size: 24px;
+    }
+
+    &-text {
+      font-size: 16px;
+    }
+
+    &-icon svg {
+      width: 80px;
+      height: 80px;
     }
   }
 }

@@ -1,9 +1,6 @@
 import { instance } from "./instance";
-import {
-  showLoader,
-  accept_modal,
-  bad_modal,
-} from "../components/module/form_action";
+import { showLoader, hideLoader } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 
 export const sendReview = async (values) => {
   showLoader();
@@ -11,11 +8,13 @@ export const sendReview = async (values) => {
   try {
     const { data } = await instance.post("/product-reviews/", values);
 
-    accept_modal(data?.message || "Ваш відгук успішно відправлено 🎉🎉🎉");
-    window.location.reload();
+    hideLoader();
+    showSuccess(data?.message || "Ваш відгук успішно відправлено 🎉");
+    setTimeout(() => window.location.reload(), 1500);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message || "Упс... щось пішло не так🥲");
+    hideLoader();
+    showError(response?.data?.message || "Упс... щось пішло не так");
   }
 };

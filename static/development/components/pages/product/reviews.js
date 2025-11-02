@@ -1,5 +1,6 @@
 import { sendReview } from "../../../api/reviews";
-import { bad_modal, getFormFields } from "../../module/form_action";
+import { getFormFields } from "../../module/form_action";
+import { showError } from "../../../utils/notifications";
 import validation from "../../module/validation";
 
 const sendReviewButton = document.querySelector(
@@ -30,7 +31,7 @@ if (sendReviewButton) {
         if (rating) {
           await sendReview(formValues);
         } else {
-          bad_modal("Додайте вашу оцінку!");
+          showError("Додайте вашу оцінку!");
         }
       }
     }

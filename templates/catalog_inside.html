@@ -2,6 +2,7 @@
 {% load catalog_filters %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
 {% endblock styles %}{% block content %}
 <section class="catalog_inside first_section">
     <div class="container">
@@ -26,19 +27,23 @@
         <div class="catalog_inside__content">
             <div class="catalog_inside_filter accordion_container">
                 <div class="catalog_inside_filter-head">
-                    <h3 class="catalog_inside_filter-title color_black bold">
-                        Фільтри
-                    </h3>
-                    <div class="filter-controls">
-                        <button type="button" class="reset-filters-btn" onclick="resetFilters()">
-                            Скинути
-                        </button>
-                        <button class="catalog_inside_filter-close-btn">
-                            <img src="/static/utils/assets/close.svg" alt="close" />
-                        </button>
+                    <div class="catalog_inside_filter-head-left">
+                        <h3 class="catalog_inside_filter-title color_black bold">
+                            Фільтри
+                        </h3>
                     </div>
+                    <button class="catalog_inside_filter-close-btn">
+                        <img src="/static/utils/assets/close.svg" alt="close" />
+                    </button>
                 </div>
                 <form id="filters-form" method="get" class="catalog_inside_filter-body">
+                    <!-- Кнопка застосувати для десктопу -->
+                    <div class="apply-filters-desktop">
+                        <button type="button" class="apply-filters-btn-desktop" onclick="applyFilters()">
+                            Застосувати фільтри
+                        </button>
+                    </div>
+                    
                     <!-- Сортування -->
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
                         <a class="color_black accordion__title"> Сортувати за </a>
@@ -66,6 +71,31 @@
                         </span>
                     </span>
 
+                    <!-- Діапазон цін -->
+                    {% if available_filters.price_range.min_price and available_filters.price_range.max_price %}
+                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
+                        <a class="color_black accordion__title"> Ціна </a>
+                        <span class="accordion_content content_column">
+                            <div class="price-range">
+                                <div class="price-inputs">
+                                    <input type="number" id="price_min_input" name="price_min" 
+                                           min="{{ available_filters.price_range.min_price }}" 
+                                           max="{{ available_filters.price_range.max_price }}" 
+                                           value="{{ current_filters.price_min|default:available_filters.price_range.min_price }}"
+                                           placeholder="Від" />
+                                    <span class="price-separator">—</span>
+                                    <input type="number" id="price_max_input" name="price_max" 
+                                           min="{{ available_filters.price_range.min_price }}" 
+                                           max="{{ available_filters.price_range.max_price }}" 
+                                           value="{{ current_filters.price_max|default:available_filters.price_range.max_price }}"
+                                           placeholder="До" />
+                                </div>
+                                <div id="price-slider"></div>
+                            </div>
+                        </span>
+                    </span>
+                    {% endif %}
+
                     <!-- Розміри -->
                     {% if available_filters.sizes %}
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
@@ -77,7 +107,7 @@
                                     <input type="checkbox" name="size" value="{{ size.id }}" 
                                            id="size_{{ size.id }}" 
                                            {% if size.id|stringformat:'s' in current_filters|getlist:size %}checked{% endif %} />
-
+                                    <span class="checkbox-custom"></span>
                                     {{ size.title }} ({{ size.count }})
                                 </label>
                             </div>
@@ -97,8 +127,8 @@
                                     <input type="checkbox" name="color" value="{{ color.title }}" 
                                            id="color_{{ color.id }}" 
                                            {% if color.title in current_filters|getlist:color %}checked{% endif %} />
-
-                                    <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ color.color }}; margin-right: 8px; border-radius: 3px;"></span>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="color-preview" style="background-color: {{ color.color }};"></span>
                                     {{ color.title }} ({{ color.count }})
                                 </label>
                             </div>
@@ -118,7 +148,7 @@
                                     <input type="checkbox" name="{{ spec_title|lower }}" value="{{ spec_value.title }}" 
                                            id="spec_{{ spec_value.id }}" 
                                            {% if spec_value.title in current_filters|getlist:spec_title|lower %}checked{% endif %} />
-
+                                    <span class="checkbox-custom"></span>
                                     {{ spec_value.title }} ({{ spec_value.count }})
                                 </label>
                             </div>
@@ -126,37 +156,42 @@
                         </span>
                     </span>
                     {% endfor %}
-
-                    <!-- Діапазон цін -->
-                    {% if available_filters.price_range.min_price and available_filters.price_range.max_price %}
-                    <span class="catalog_inside_filter-body-item accordion accordion_content__block">
-                        <a class="color_black accordion__title"> Ціна </a>
-                        <span class="accordion_content content_column">
-                            <div class="price-range">
-                                <input type="range" id="price_min" name="price_min" 
-                                       min="{{ available_filters.price_range.min_price }}" 
-                                       max="{{ available_filters.price_range.max_price }}" 
-                                       value="{{ current_filters.price_min|default:available_filters.price_range.min_price }}" />
-                                <input type="range" id="price_max" name="price_max" 
-                                       min="{{ available_filters.price_range.min_price }}" 
-                                       max="{{ available_filters.price_range.max_price }}" 
-                                       value="{{ current_filters.price_max|default:available_filters.price_range.max_price }}" />
-                                <div class="price-labels">
-                                    <span id="price_min_label">{{ current_filters.price_min|default:available_filters.price_range.min_price }} грн</span>
-                                    <span id="price_max_label">{{ current_filters.price_max|default:available_filters.price_range.max_price }} грн</span>
-                                </div>
-                            </div>
-                        </span>
-                    </span>
-                    {% endif %}
                 </form>
+                <!-- Кнопки фільтрів (десктоп і мобільний) -->
+                <div class="catalog_inside_filter-footer">
+                    <button type="button" class="filter-footer-btn reset-filters-btn" onclick="resetFilters()">
+                        Скинути фільтри
+                    </button>
+                    <button type="button" class="filter-footer-btn apply-filters-btn" onclick="applyFilters()">
+                        Застосувати фільтри
+                    </button>
+                </div>
             </div>
             <div class="catalog_section_bottom cart_item_wrapper">
+                {% if products %}
                 {% for product in products %}
                 <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
                     {% include 'includes/products.html' %}
                 </div>
                 {% endfor %}
+                {% else %}
+                <!-- Блок порожнього каталогу -->
+                <div class="catalog__empty">
+                    <div class="catalog__empty-icon">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="60" cy="60" r="60" fill="#F5F5F5"/>
+                            <path d="M40 45H80M40 60H80M40 75H65" stroke="#89817C" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="75" cy="75" r="8" stroke="#89817C" stroke-width="3" fill="none"/>
+                            <line x1="81" y1="81" x2="88" y2="88" stroke="#89817C" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h2 class="catalog__empty-title">Товарів не знайдено</h2>
+                    <p class="catalog__empty-text">Спробуйте змінити параметри фільтрації або скиньте всі фільтри</p>
+                    <button onclick="resetFilters()" class="catalog__empty-btn btn-gold">
+                        Скинути фільтри
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -182,54 +217,83 @@
     </div>
 </section>
 {% endblock content %}{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
 <script src="/static/source/pages/catalog_inside/index.js"></script>
 <script>
-// Автоматичний submit при зміні чекбокса чи повзунка
+// Ініціалізація фільтрів без автоматичного submit
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filters-form');
     if (form) {
         // Відновлюємо стан чекбоксів з URL параметрів
         restoreCheckboxState();
         
-        // Обробка чекбоксів з затримкою для множинного вибору
-        const checkboxes = form.querySelectorAll('input[type=checkbox]');
-        let submitTimeout;
+        // Ініціалізація noUiSlider для цін
+        const priceSlider = document.getElementById('price-slider');
+        const priceMinInput = document.getElementById('price_min_input');
+        const priceMaxInput = document.getElementById('price_max_input');
         
-        checkboxes.forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                // Очищаємо попередній таймер
-                clearTimeout(submitTimeout);
+        if (priceSlider && priceMinInput && priceMaxInput) {
+            const minPrice = Number(priceMinInput.getAttribute('min')) || 0;
+            const maxPrice = Number(priceMaxInput.getAttribute('max')) || 10000;
+            const currentMin = Number(priceMinInput.value) || minPrice;
+            const currentMax = Number(priceMaxInput.value) || maxPrice;
+            
+            // Флаг для запобігання циклічним оновленням
+            let isUpdatingFromSlider = false;
+            
+            noUiSlider.create(priceSlider, {
+                start: [currentMin, currentMax],
+                connect: true,
+                range: {
+                    'min': minPrice,
+                    'max': maxPrice
+                },
+                step: 1,
+                tooltips: false
+            });
+            
+            // Синхронізація slider -> inputs (тільки коли користувач рухає слайдер)
+            priceSlider.noUiSlider.on('slide', function(values, handle) {
+                isUpdatingFromSlider = true;
+                priceMinInput.value = Math.round(values[0]);
+                priceMaxInput.value = Math.round(values[1]);
+                setTimeout(() => { isUpdatingFromSlider = false; }, 10);
+            });
+            
+            priceSlider.noUiSlider.on('change', function(values, handle) {
+                isUpdatingFromSlider = true;
+                priceMinInput.value = Math.round(values[0]);
+                priceMaxInput.value = Math.round(values[1]);
+                setTimeout(() => { isUpdatingFromSlider = false; }, 10);
+            });
+            
+            // Синхронізація inputs -> slider (коли вводимо вручну)
+            priceMinInput.addEventListener('change', function() {
+                if (isUpdatingFromSlider) return;
                 
-                // Встановлюємо новий таймер на 500мс
-                submitTimeout = setTimeout(function() {
-                    form.submit();
-                }, 500);
+                let val = Number(this.value);
+                if (isNaN(val) || val < minPrice) val = minPrice;
+                if (val > maxPrice) val = maxPrice;
+                
+                const currentMax = Number(priceMaxInput.value);
+                if (val > currentMax) val = currentMax;
+                
+                this.value = val;
+                priceSlider.noUiSlider.set([val, null]);
             });
-        });
-        
-        // Обробка повзунків ціни
-        const rangeInputs = form.querySelectorAll('input[type=range]');
-        rangeInputs.forEach(function(input) {
-            input.addEventListener('change', function() {
-                form.submit();
-            });
-        });
-        
-        // Оновлення лейблів ціни в реальному часі
-        const priceMin = document.getElementById('price_min');
-        const priceMax = document.getElementById('price_max');
-        const priceMinLabel = document.getElementById('price_min_label');
-        const priceMaxLabel = document.getElementById('price_max_label');
-        
-        if (priceMin && priceMinLabel) {
-            priceMin.addEventListener('input', function() {
-                priceMinLabel.textContent = this.value + ' грн';
-            });
-        }
-        
-        if (priceMax && priceMaxLabel) {
-            priceMax.addEventListener('input', function() {
-                priceMaxLabel.textContent = this.value + ' грн';
+            
+            priceMaxInput.addEventListener('change', function() {
+                if (isUpdatingFromSlider) return;
+                
+                let val = Number(this.value);
+                if (isNaN(val) || val > maxPrice) val = maxPrice;
+                if (val < minPrice) val = minPrice;
+                
+                const currentMin = Number(priceMinInput.value);
+                if (val < currentMin) val = currentMin;
+                
+                this.value = val;
+                priceSlider.noUiSlider.set([null, val]);
             });
         }
     }
@@ -264,7 +328,15 @@ function restoreCheckboxState() {
     });
 }
 
-// Функція для встановлення сортування
+// Функція для застосування фільтрів
+function applyFilters() {
+    const form = document.getElementById('filters-form');
+    if (form) {
+        form.submit();
+    }
+}
+
+// Функція для встановлення сортування (працює одразу)
 function setSort(sortValue) {
     const urlParams = new URLSearchParams(window.location.search);
     

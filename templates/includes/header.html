@@ -333,7 +333,8 @@
     </div>
     <div class="mobile header_content__block">
       <div class="header_mob_icon__block">
-        <!-- <a href="#" class="header_mob_icon_item">
+        {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="header_mob_icon_item">
           <span class="header_mob_icon">
             <svg
               width="18"
@@ -351,8 +352,8 @@
           <span class="header_mob_icon_text small color_white">
             Профіль
           </span>
-        </a> -->
-
+        </a>
+        {% else %}
         <button class="header_mob_icon_item modal_open" data-href="login-modal">
           <span class="header_mob_icon">
             <svg
@@ -370,8 +371,9 @@
           </span>
           <span class="header_mob_icon_text small color_white"> Увійти </span>
         </button>
+        {% endif %}
 
-        <a href="#" class="header_mob_icon_item">
+        <a href="{% url 'favourites' %}" class="header_mob_icon_item">
           <span class="header_mob_icon">
             <svg
               width="18"
@@ -389,7 +391,7 @@
               />
             </svg>
 
-            <span class="header_mob_icon_count small color_white">4</span>
+            <span class="header_mob_icon_count small color_white">{{ favourites|length }}</span>
           </span>
           <span class="header_mob_icon_text small color_white"> Вибране </span>
         </a>

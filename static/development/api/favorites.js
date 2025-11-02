@@ -1,5 +1,5 @@
 import { instance } from "./instance";
-import { accept_modal, bad_modal } from "../components/module/form_action";
+import { showSuccess, showError } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
 
 export const addToFavorite = async (productId, onSucces) => {
@@ -12,13 +12,13 @@ export const addToFavorite = async (productId, onSucces) => {
       onSucces();
     }
 
-    accept_modal(data?.message);
+    showSuccess(data?.message || "Додано в обране!");
 
     updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    showError(response?.data?.message || "Помилка");
   }
 };
 
@@ -30,12 +30,12 @@ export const removeFromFavorite = async (productId, onSucces) => {
       onSucces();
     }
 
-    accept_modal(data?.message || "Товар видалено!");
+    showSuccess(data?.message || "Товар видалено!");
 
     updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
 
     return data;
   } catch ({ response }) {
-    bad_modal(response?.data?.message);
+    showError(response?.data?.message || "Помилка");
   }
 };
