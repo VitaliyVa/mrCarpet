@@ -8,6 +8,16 @@ class ContactRequest(AbstractCreatedUpdated):
     name = models.CharField(max_length=115, verbose_name="Ім'я")
     email = models.EmailField(verbose_name="Пошта")
     text = models.TextField(verbose_name="Коментар")
+    created = models.DateTimeField(
+        verbose_name="Дата створення",
+        auto_now_add=True,
+        null=True,
+        blank=True
+    )
+    is_processed = models.BooleanField(
+        verbose_name="Оброблено",
+        default=False
+    )
 
     class Meta:
         verbose_name = "Контактна форма"
