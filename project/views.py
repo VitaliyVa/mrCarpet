@@ -63,3 +63,6 @@ def terms(request):
 
 def policy(request):
     return render(request, 'policy.html')
+
+def success(request):
+    return render(request, 'success.html')
