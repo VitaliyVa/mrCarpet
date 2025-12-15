@@ -33,8 +33,30 @@ function showNotification(message, type = "success") {
     </button>
   `;
 
-  // Додаємо в body
-  document.body.appendChild(notification);
+  // Додаємо notification, перевіряючи чи є активне модальне вікно
+  const modalOverlay = document.querySelector('.modal-overlay.active');
+  const loginModal = document.querySelector('.login-modal');
+  const registerModal = document.querySelector('.register-modal');
+  
+  if (modalOverlay && (loginModal || registerModal)) {
+    // Якщо є активне модальне вікно логіну/реєстрації, додаємо notification всередину модального вікна
+    const modalContent = loginModal?.querySelector('.modal__content') || registerModal?.querySelector('.modal__content');
+    if (modalContent) {
+      // Додаємо notification на початок modal__content
+      modalContent.insertBefore(notification, modalContent.firstChild);
+      // Змінюємо позиціонування для модального вікна
+      notification.style.position = 'relative';
+      notification.style.top = '0';
+      notification.style.right = '0';
+      notification.style.marginBottom = '20px';
+    } else {
+      // Fallback - додаємо в modal-overlay
+      modalOverlay.appendChild(notification);
+    }
+  } else {
+    // Якщо немає модального вікна, додаємо в body
+    document.body.appendChild(notification);
+  }
 
   // Анімація появи
   setTimeout(() => {
