@@ -11,8 +11,28 @@ from ..utils import get_liqpay_response, create_payment
 
 
 @csrf_exempt
+@api_view(['POST'])
 def pay_callback(request):
-    print("pay callback")
-    response = get_liqpay_response(request)
-    create_payment(request, response)
-    return redirect("index")
+    """
+    Callback endpoint для отримання результатів оплати від LiqPay
+    """
+    try:
+        response = get_liqpay_response(request)
+        payment = create_payment(request, response)
+        
+        status = response.get("status")
+        
+        # Повертаємо успішну відповідь для LiqPay
+        if status in ["success", "sandbox"]:
+            return JsonResponse({"status": "ok"})
+        else:
+            return JsonResponse({"status": "error", "message": "Payment failed"})
+            
+    except Exception as e:
+        # Логуємо помилку
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Помилка в pay_callback: {str(e)}")
+        
+        # Повертаємо помилку для LiqPay
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)

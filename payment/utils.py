@@ -14,64 +14,106 @@ import logging
 
 def get_liqpay_context(request):
     cart = get_cart(request)
+    
+    # Перевіряємо, чи є замовлення
+    if not cart.order:
+        raise ValueError("Немає замовлення для оплати")
+    
     order = cart.order
-    print(order.id)
     total_price = order.total_price
-    # promo = request.session.pop("promocode", None)
-    # if promo:
-    #     total_price = total_price - total_price * (promo / 100)
-    #     order.total_price = float(total_price)
-    #     order.save()
+    
+    # Перевіряємо, чи є ціна
+    if not total_price or total_price <= 0:
+        raise ValueError("Невірна сума замовлення")
+    
+    # Перевіряємо наявність ключів LiqPay
+    if not settings.LIQPAY_PUBLIC_KEY or not settings.LIQPAY_PRIVATE_KEY:
+        raise ValueError("LiqPay ключі не налаштовані")
+    
     liqpay = LiqPay(settings.LIQPAY_PUBLIC_KEY, settings.LIQPAY_PRIVATE_KEY)
+    
+    # Формуємо опис замовлення
+    description = f"Оплата замовлення №{order.order_number}"
+    
+    # Отримуємо URL для callback (використовуємо request для отримання домену)
+    from django.urls import reverse
+    server_url = request.build_absolute_uri(reverse('pay_callback'))
+    
     params = {
         'action': 'pay',
         'amount': float(total_price),
         'currency': 'UAH',
-        'description': 'Payment for clothes',
+        'description': description,
         'order_id': str(order.id),
         'version': '3',
-        'sandbox': 1,  # sandbox mode, set to 1 to enable it
-        'server_url': 'https://mrcarpet.shop/api/pay-callback/',
+        'sandbox': 1 if settings.DEBUG else 0,  # sandbox mode тільки в режимі розробки
+        'server_url': server_url,
+        'result_url': request.build_absolute_uri('/success/'),  # URL після успішної оплати
     }
+    
     signature = liqpay.cnb_signature(params)
     data = liqpay.cnb_data(params)
-    print(signature, data)
+    
     return signature, data
 
 def get_liqpay_response(request):
+    """
+    Отримує та перевіряє відповідь від LiqPay
+    """
+    if not settings.LIQPAY_PUBLIC_KEY or not settings.LIQPAY_PRIVATE_KEY:
+        raise ValueError("LiqPay ключі не налаштовані")
+    
     liqpay = LiqPay(settings.LIQPAY_PUBLIC_KEY, settings.LIQPAY_PRIVATE_KEY)
     signature = request.POST.get("signature")
     data = request.POST.get("data")
-    sign = liqpay.str_to_sign(settings.LIQPAY_PRIVATE_KEY + data + settings.LIQPAY_PRIVATE_KEY)
-    response = liqpay.decode_data_from_str(data)
-    print(response)
-    if sign == signature:
-        print("callback is valid")
+    
+    if not signature or not data:
+        raise ValueError("Відсутні дані від LiqPay")
+    
+    # Декодуємо дані
+    try:
+        response = liqpay.decode_data_from_str(data, signature)
+    except Exception as e:
+        raise ValueError(f"Помилка декодування даних від LiqPay: {str(e)}")
+    
     return response
 
 
 def create_payment(request, response):
+    """
+    Створює запис про оплату на основі відповіді від LiqPay
+    """
     status = response.get("status")
     order_id = response.get("order_id")
-    print(status, order_id)
-    if status == "failure":
-        return redirect("index")
-    order = Order.objects.get(id=int(order_id))
-    cart = order.cart
+    
+    if not order_id:
+        raise ValueError("Відсутній ID замовлення в відповіді від LiqPay")
+    
+    try:
+        order = Order.objects.get(id=int(order_id))
+    except Order.DoesNotExist:
+        raise ValueError(f"Замовлення з ID {order_id} не знайдено")
+    
+    # Створюємо запис про оплату
     form = PaymentForm(response)
     payment = form.save(commit=False)
     payment.order = order
     payment.save()
-    cart.ordered = True
+    
+    # Оновлюємо статус замовлення та корзини
+    cart = order.cart
+    
+    if status == "success":
+        order.status = "Комплектується"  # Змінюємо статус на "Комплектується" після успішної оплати
+        cart.ordered = True
+    elif status == "failure":
+        order.status = "Не оплачено"
+    elif status == "sandbox":
+        # В sandbox режимі також вважаємо оплату успішною
+        order.status = "Комплектується"
+        cart.ordered = True
+    
+    order.save()
     cart.save()
-    print(cart.id, cart.ordered)
-    # recipients = settings.DEFAULT_RECIPIENT_LIST.copy()
-    # recipients.append(order.email)
-    # send_mail(
-    #     subject="Dunlop - оформлення замовлення",
-    #     message="Dunlop - оформлення замовлення",
-    #     html_message=render_to_string("includes/mail/make_order.html", locals()),
-    #     from_email=settings.DEFAULT_FROM_EMAIL,
-    #     recipient_list=recipients,
-    #     fail_silently=False,
-    # )
+    
+    return payment
