@@ -6,6 +6,6 @@ from .views import OrderCreateViewSet
 
 
 router = DefaultRouter()
-router.register(r"create-order", OrderCreateViewSet, basename="order")
+router.register(r"create-order", OrderCreateViewSet, basename="orders")
 
 urlpatterns = [path("", include(router.urls))]
