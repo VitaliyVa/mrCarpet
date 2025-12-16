@@ -31,6 +31,19 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# CSRF налаштування для webhook від LiqPay через ngrok
+# Додайте ваш ngrok URL сюди
+CSRF_TRUSTED_ORIGINS = [
+    "https://21f997f18ee0.ngrok-free.app",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# Для додавання нових ngrok URL через змінну оточення (опціонально):
+# Додайте в .env: CSRF_TRUSTED_ORIGINS=https://your-ngrok-url.ngrok-free.app,http://localhost:8000
+# І розкоментуйте наступний рядок:
+# CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',') if config('CSRF_TRUSTED_ORIGINS', default='') else CSRF_TRUSTED_ORIGINS
+
 
 # Application definition
 
