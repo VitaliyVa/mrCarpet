@@ -110,6 +110,7 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                     order.save()
                     cart.apply_quantity()
                     cart.save()
+                    
                     return Response(
                         {"success": True, "redirect_url": "/payment/"},
                         status=status.HTTP_201_CREATED
