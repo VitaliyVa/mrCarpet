@@ -18,11 +18,13 @@
 
       <div class="success__info-bottom">
         <button class="success__back-to-main-btn btn btn-gold medium">
-          Повернутися на головну
+          <a href="/">Повернутися на головну</a>
         </button>
-        <button class="success__cabinet-btn btn btn-underline medium">
-          Перейти в особистий кабінет
-        </button>
+        {% if user.is_authenticated %}
+          <a href="/profile/" class="success__cabinet-btn btn btn-underline medium">
+            Перейти в особистий кабінет
+          </a>
+        {% endif %}
       </div>
     </div>
   </div>

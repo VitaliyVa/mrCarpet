@@ -36652,15 +36652,89 @@ const loginUser = async values => {
       data
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/users/user_login/", values);
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showSuccess"])("Успішно!");
-    setTimeout(() => window.location.reload(), 1500);
+
+    // Закриваємо модальне вікно одразу без повідомлення про успіх
+    const loginModal = document.querySelector('.login-modal');
+    const modalOverlay = loginModal === null || loginModal === void 0 ? void 0 : loginModal.closest('.modal-overlay');
+    if (loginModal && modalOverlay) {
+      // Видаляємо клас active з модального вікна та overlay
+      loginModal.classList.remove('active');
+      modalOverlay.classList.remove('active');
+      // Повертаємо прокрутку body
+      document.body.style.overflowY = 'initial';
+    }
+
+    // Перезавантажуємо сторінку одразу без затримок
+    window.location.reload();
     return data;
-  } catch ({
-    response
-  }) {
-    var _response$data;
+  } catch (error) {
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Помилка авторизації");
+
+    // Обробка помилок від axios
+    if (error.response) {
+      // Сервер повернув помилку (4xx, 5xx)
+      const responseData = error.response.data;
+
+      // Отримуємо повідомлення про помилку
+      let errorMessage = "Помилка авторизації";
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          errorMessage = responseData;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.error) {
+          errorMessage = responseData.error;
+        } else if (Array.isArray(responseData) && responseData.length > 0) {
+          errorMessage = responseData[0];
+        }
+      }
+
+      // Перекладаємо повідомлення на українську
+      let ukrainianMessage = errorMessage;
+      if (errorMessage === "User with these credentials doesn't exist") {
+        ukrainianMessage = "Користувача з такими даними не існує";
+      } else if (errorMessage.includes("User with these credentials")) {
+        ukrainianMessage = "Користувача з такими даними не існує";
+      } else if (errorMessage.includes("credentials")) {
+        ukrainianMessage = "Невірні дані для входу";
+      }
+
+      // Додаємо помилку безпосередньо в форму логіну
+      const loginForm = document.querySelector('.login-modal__form');
+      if (loginForm) {
+        // Видаляємо попередні помилки
+        const existingError = loginForm.querySelector('.login-form-error');
+        if (existingError) {
+          existingError.remove();
+        }
+
+        // Створюємо блок помилки
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'login-form-error';
+        errorDiv.style.cssText = 'color: #dc3545; padding: 12px; margin-bottom: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; font-size: 14px;';
+        errorDiv.textContent = ukrainianMessage;
+
+        // Додаємо на початок форми
+        loginForm.insertBefore(errorDiv, loginForm.firstChild);
+
+        // Автоматично видаляємо через 5 секунд
+        setTimeout(() => {
+          if (errorDiv.parentElement) {
+            errorDiv.remove();
+          }
+        }, 5000);
+      }
+    } else if (error.request) {
+      // Запит був зроблений, але відповіді не отримано
+      console.error("Помилка мережі:", error.request);
+      Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])("Не вдалося з'єднатися з сервером. Перевірте інтернет-з'єднання.");
+    } else {
+      // Помилка при налаштуванні запиту
+      console.error("Помилка налаштування:", error.message);
+      Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])("Помилка при відправці запиту");
+    }
   }
 };
 const registerUser = async values => {
@@ -36676,9 +36750,9 @@ const registerUser = async values => {
   } catch ({
     response
   }) {
-    var _response$data2;
+    var _response$data;
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message) || "Помилка реєстрації");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Помилка реєстрації");
   }
 };
 
@@ -38597,8 +38671,29 @@ function showNotification(message) {
   const icon = type === "success" ? '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="currentColor"/></svg>' : '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z" fill="currentColor"/></svg>';
   notification.innerHTML = "\n    <div class=\"checkout-notification__icon\">".concat(icon, "</div>\n    <div class=\"checkout-notification__message\">").concat(message, "</div>\n    <button class=\"checkout-notification__close\" aria-label=\"\u0417\u0430\u043A\u0440\u0438\u0442\u0438\">\n      <svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\">\n        <path d=\"M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z\" fill=\"currentColor\"/>\n      </svg>\n    </button>\n  ");
 
-  // Додаємо в body
-  document.body.appendChild(notification);
+  // Додаємо notification, перевіряючи чи є активне модальне вікно
+  const modalOverlay = document.querySelector('.modal-overlay.active');
+  const loginModal = document.querySelector('.login-modal');
+  const registerModal = document.querySelector('.register-modal');
+  if (modalOverlay && (loginModal || registerModal)) {
+    // Якщо є активне модальне вікно логіну/реєстрації, додаємо notification всередину модального вікна
+    const modalContent = (loginModal === null || loginModal === void 0 ? void 0 : loginModal.querySelector('.modal__content')) || (registerModal === null || registerModal === void 0 ? void 0 : registerModal.querySelector('.modal__content'));
+    if (modalContent) {
+      // Додаємо notification на початок modal__content
+      modalContent.insertBefore(notification, modalContent.firstChild);
+      // Змінюємо позиціонування для модального вікна
+      notification.style.position = 'relative';
+      notification.style.top = '0';
+      notification.style.right = '0';
+      notification.style.marginBottom = '20px';
+    } else {
+      // Fallback - додаємо в modal-overlay
+      modalOverlay.appendChild(notification);
+    }
+  } else {
+    // Якщо немає модального вікна, додаємо в body
+    document.body.appendChild(notification);
+  }
 
   // Анімація появи
   setTimeout(() => {
@@ -39063,7 +39158,7 @@ async function getCartProducts() {
 
 // Відправка замовлення
 async function submitOrder() {
-  var _novaPostData$settlem, _novaPostData$warehou, _novaPostData$warehou2;
+  var _novaPostData$warehou;
   // Валідація форми
   if (!validateOrderForm()) {
     return;
@@ -39074,6 +39169,12 @@ async function submitOrder() {
 
   // Отримуємо обраний спосіб оплати
   const paymentMethod = document.querySelector('input[name="payment"]:checked');
+
+  // Перевіряємо, чи обрано спосіб оплати
+  if (!paymentMethod) {
+    Object(_notification__WEBPACK_IMPORTED_MODULE_3__["showError"])("Будь ласка, оберіть спосіб оплати");
+    return;
+  }
 
   // Отримуємо дані Нової Пошти
   const novaPostData = Object(_nova_post__WEBPACK_IMPORTED_MODULE_2__["getNovaPostData"])();
@@ -39087,20 +39188,35 @@ async function submitOrder() {
     quantity: item.quantity
   }));
 
+  // Розділяємо ім'я на name та surname
+  const fullName = nameInput.value.trim().split(" ");
+  const firstName = fullName[0] || "";
+  const lastName = fullName.slice(1).join(" ") || "";
+
+  // Формуємо адресу з даних Нової Пошти
+  const warehouseTitle = ((_novaPostData$warehou = novaPostData.warehouse) === null || _novaPostData$warehou === void 0 ? void 0 : _novaPostData$warehou.title) || "";
+  const cityName = capitalizeFirstLetter(cityInput.value.trim());
+  const address = warehouseTitle ? "".concat(cityName, ", ").concat(warehouseTitle) : cityName;
+
+  // Визначаємо payment_type на основі обраного способу оплати
+  let paymentType = "cash"; // Значення за замовчуванням
+  if (paymentMethod.id === "card") {
+    paymentType = "liqpay";
+  } else if (paymentMethod.id === "cash") {
+    paymentType = "cash";
+  }
+
   // Формуємо дані для відправки
   const orderData = {
-    name: nameInput.value.trim(),
+    name: firstName,
+    surname: lastName || firstName,
+    // Якщо прізвище не вказано, використовуємо ім'я
     phone: phoneInput.value.trim(),
-    city: capitalizeFirstLetter(cityInput.value.trim()),
-    // Капіталізуємо першу літеру
-    settlement_ref: ((_novaPostData$settlem = novaPostData.settlement) === null || _novaPostData$settlem === void 0 ? void 0 : _novaPostData$settlem.ref) || "",
-    warehouse_ref: ((_novaPostData$warehou = novaPostData.warehouse) === null || _novaPostData$warehou === void 0 ? void 0 : _novaPostData$warehou.ref) || "",
-    warehouse_title: ((_novaPostData$warehou2 = novaPostData.warehouse) === null || _novaPostData$warehou2 === void 0 ? void 0 : _novaPostData$warehou2.title) || "",
-    payment_method: (paymentMethod === null || paymentMethod === void 0 ? void 0 : paymentMethod.id) || "cash",
+    address: address,
+    payment_type: paymentType,
+    // Обов'язкове поле
     // Додаємо промокод якщо він був застосований
-    promocode: localStorage.getItem("applied_promocode") || "",
-    // Додаємо товари
-    products: products
+    promocode: localStorage.getItem("applied_promocode") || ""
   };
 
   // Показуємо індикатор завантаження
@@ -39109,8 +39225,9 @@ async function submitOrder() {
   submitBtn.innerHTML = '<span class="btn-gold">Обробка замовлення...</span>';
   submitBtn.disabled = true;
   try {
-    // Відправляємо запит через axios
-    const response = await axios__WEBPACK_IMPORTED_MODULE_0__["default"].post("/api/orders/", orderData, {
+    var _response$data;
+    // Відправляємо запит через axios на правильний endpoint
+    const response = await axios__WEBPACK_IMPORTED_MODULE_0__["default"].post("/api/create-order/", orderData, {
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": js_cookie__WEBPACK_IMPORTED_MODULE_1___default.a.get("csrftoken")
@@ -39118,19 +39235,39 @@ async function submitOrder() {
     });
 
     // Обробляємо успішну відповідь
-    if (response.data.success || response.status === 200 || response.status === 201) {
+    console.log("Відповідь від сервера:", response.data);
+    console.log("Payment type:", orderData.payment_type);
+    if (response.status === 200 || response.status === 201 || (_response$data = response.data) !== null && _response$data !== void 0 && _response$data.success) {
+      var _response$data2;
       // Очищаємо промокод з localStorage
       localStorage.removeItem("applied_promocode");
 
-      // Перенаправляємо на сторінку успіху або показуємо повідомлення
-      if (response.data.redirect_url) {
-        window.location.href = response.data.redirect_url;
+      // Визначаємо куди перенаправляти на основі payment_type або redirect_url
+      let redirectUrl = null;
+
+      // Спочатку перевіряємо redirect_url з відповіді сервера
+      if ((_response$data2 = response.data) !== null && _response$data2 !== void 0 && _response$data2.redirect_url) {
+        redirectUrl = response.data.redirect_url;
+        console.log("Використовуємо redirect_url з відповіді:", redirectUrl);
+      }
+      // Якщо немає redirect_url, перевіряємо payment_type
+      else if (orderData.payment_type === "liqpay") {
+        redirectUrl = "/payment/";
+        console.log("Payment type = liqpay, перенаправляємо на /payment/");
+      }
+      // Для готівкової оплати перенаправляємо на success
+      else {
+        redirectUrl = "/success/";
+        console.log("Payment type = cash, перенаправляємо на /success/");
+      }
+
+      // Перенаправляємо одразу
+      if (redirectUrl) {
+        console.log("Перенаправляємо на:", redirectUrl);
+        window.location.href = redirectUrl;
+        return;
       } else {
-        Object(_notification__WEBPACK_IMPORTED_MODULE_3__["showSuccess"])("Замовлення успішно оформлено!");
-        // Перенаправляємо через 2 секунди
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 2000);
+        console.error("Не вдалося визначити URL для перенаправлення");
       }
     }
   } catch (error) {
@@ -39152,7 +39289,9 @@ async function submitOrder() {
       }
 
       // Загальна помилка
-      if (serverErrors.error || serverErrors.detail) {
+      if (serverErrors.message) {
+        Object(_notification__WEBPACK_IMPORTED_MODULE_3__["showError"])(serverErrors.message);
+      } else if (serverErrors.error || serverErrors.detail) {
         Object(_notification__WEBPACK_IMPORTED_MODULE_3__["showError"])(serverErrors.error || serverErrors.detail);
       }
     } else {

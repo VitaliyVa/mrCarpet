@@ -31,6 +31,19 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# CSRF налаштування для webhook від LiqPay через ngrok
+# Додайте ваш ngrok URL сюди
+CSRF_TRUSTED_ORIGINS = [
+    "https://21f997f18ee0.ngrok-free.app",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# Для додавання нових ngrok URL через змінну оточення (опціонально):
+# Додайте в .env: CSRF_TRUSTED_ORIGINS=https://your-ngrok-url.ngrok-free.app,http://localhost:8000
+# І розкоментуйте наступний рядок:
+# CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',') if config('CSRF_TRUSTED_ORIGINS', default='') else CSRF_TRUSTED_ORIGINS
+
 
 # Application definition
 
@@ -56,7 +69,7 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_yasg',
     'colorfield',
-    "django_celery_beat",
+    # "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -170,15 +183,15 @@ REST_FRAMEWORK = {
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
 LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")
+# CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
+# CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")
 
-CELERY_BEAT_SCHEDULE = { # scheduler configuration
-    'Task_one_schedule' : {  # whatever the name you want
-        'task': 'order.tasks.remove_orders', # name of task with path
-        'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
-    },
-}
+# CELERY_BEAT_SCHEDULE = { # scheduler configuration
+#     'Task_one_schedule' : {  # whatever the name you want
+#         'task': 'order.tasks.remove_orders', # name of task with path
+#         'schedule': crontab(hour=0, minute=0), # crontab() runs the tasks every minute
+#     },
+# }
 
 
 # SMTP settings

@@ -27006,15 +27006,89 @@ const loginUser = async values => {
       data
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/users/user_login/", values);
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showSuccess"])("Успішно!");
-    setTimeout(() => window.location.reload(), 1500);
+
+    // Закриваємо модальне вікно одразу без повідомлення про успіх
+    const loginModal = document.querySelector('.login-modal');
+    const modalOverlay = loginModal === null || loginModal === void 0 ? void 0 : loginModal.closest('.modal-overlay');
+    if (loginModal && modalOverlay) {
+      // Видаляємо клас active з модального вікна та overlay
+      loginModal.classList.remove('active');
+      modalOverlay.classList.remove('active');
+      // Повертаємо прокрутку body
+      document.body.style.overflowY = 'initial';
+    }
+
+    // Перезавантажуємо сторінку одразу без затримок
+    window.location.reload();
     return data;
-  } catch ({
-    response
-  }) {
-    var _response$data;
+  } catch (error) {
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Помилка авторизації");
+
+    // Обробка помилок від axios
+    if (error.response) {
+      // Сервер повернув помилку (4xx, 5xx)
+      const responseData = error.response.data;
+
+      // Отримуємо повідомлення про помилку
+      let errorMessage = "Помилка авторизації";
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          errorMessage = responseData;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.error) {
+          errorMessage = responseData.error;
+        } else if (Array.isArray(responseData) && responseData.length > 0) {
+          errorMessage = responseData[0];
+        }
+      }
+
+      // Перекладаємо повідомлення на українську
+      let ukrainianMessage = errorMessage;
+      if (errorMessage === "User with these credentials doesn't exist") {
+        ukrainianMessage = "Користувача з такими даними не існує";
+      } else if (errorMessage.includes("User with these credentials")) {
+        ukrainianMessage = "Користувача з такими даними не існує";
+      } else if (errorMessage.includes("credentials")) {
+        ukrainianMessage = "Невірні дані для входу";
+      }
+
+      // Додаємо помилку безпосередньо в форму логіну
+      const loginForm = document.querySelector('.login-modal__form');
+      if (loginForm) {
+        // Видаляємо попередні помилки
+        const existingError = loginForm.querySelector('.login-form-error');
+        if (existingError) {
+          existingError.remove();
+        }
+
+        // Створюємо блок помилки
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'login-form-error';
+        errorDiv.style.cssText = 'color: #dc3545; padding: 12px; margin-bottom: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; font-size: 14px;';
+        errorDiv.textContent = ukrainianMessage;
+
+        // Додаємо на початок форми
+        loginForm.insertBefore(errorDiv, loginForm.firstChild);
+
+        // Автоматично видаляємо через 5 секунд
+        setTimeout(() => {
+          if (errorDiv.parentElement) {
+            errorDiv.remove();
+          }
+        }, 5000);
+      }
+    } else if (error.request) {
+      // Запит був зроблений, але відповіді не отримано
+      console.error("Помилка мережі:", error.request);
+      Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])("Не вдалося з'єднатися з сервером. Перевірте інтернет-з'єднання.");
+    } else {
+      // Помилка при налаштуванні запиту
+      console.error("Помилка налаштування:", error.message);
+      Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])("Помилка при відправці запиту");
+    }
   }
 };
 const registerUser = async values => {
@@ -27030,9 +27104,9 @@ const registerUser = async values => {
   } catch ({
     response
   }) {
-    var _response$data2;
+    var _response$data;
     Object(_components_module_form_action__WEBPACK_IMPORTED_MODULE_1__["hideLoader"])();
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message) || "Помилка реєстрації");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Помилка реєстрації");
   }
 };
 
@@ -28606,8 +28680,29 @@ function showNotification(message) {
   const icon = type === "success" ? '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="currentColor"/></svg>' : '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z" fill="currentColor"/></svg>';
   notification.innerHTML = "\n    <div class=\"checkout-notification__icon\">".concat(icon, "</div>\n    <div class=\"checkout-notification__message\">").concat(message, "</div>\n    <button class=\"checkout-notification__close\" aria-label=\"\u0417\u0430\u043A\u0440\u0438\u0442\u0438\">\n      <svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\">\n        <path d=\"M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z\" fill=\"currentColor\"/>\n      </svg>\n    </button>\n  ");
 
-  // Додаємо в body
-  document.body.appendChild(notification);
+  // Додаємо notification, перевіряючи чи є активне модальне вікно
+  const modalOverlay = document.querySelector('.modal-overlay.active');
+  const loginModal = document.querySelector('.login-modal');
+  const registerModal = document.querySelector('.register-modal');
+  if (modalOverlay && (loginModal || registerModal)) {
+    // Якщо є активне модальне вікно логіну/реєстрації, додаємо notification всередину модального вікна
+    const modalContent = (loginModal === null || loginModal === void 0 ? void 0 : loginModal.querySelector('.modal__content')) || (registerModal === null || registerModal === void 0 ? void 0 : registerModal.querySelector('.modal__content'));
+    if (modalContent) {
+      // Додаємо notification на початок modal__content
+      modalContent.insertBefore(notification, modalContent.firstChild);
+      // Змінюємо позиціонування для модального вікна
+      notification.style.position = 'relative';
+      notification.style.top = '0';
+      notification.style.right = '0';
+      notification.style.marginBottom = '20px';
+    } else {
+      // Fallback - додаємо в modal-overlay
+      modalOverlay.appendChild(notification);
+    }
+  } else {
+    // Якщо немає модального вікна, додаємо в body
+    document.body.appendChild(notification);
+  }
 
   // Анімація появи
   setTimeout(() => {

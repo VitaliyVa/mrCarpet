@@ -16,11 +16,19 @@ class CartProductViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
     GenericViewSet,
 ):
     queryset = CartProduct.objects.all()
     serializer_class = CartProductSerializer
     lookup_field = "id"
+    
+    def list(self, request, *args, **kwargs):
+        """Повертає товари з поточної корзини користувача"""
+        cart = get_cart(request)
+        cart_products = cart.cart_products.all()
+        serializer = self.get_serializer(cart_products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         try:

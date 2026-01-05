@@ -147,6 +147,12 @@ export async function submitOrder() {
   // Отримуємо обраний спосіб оплати
   const paymentMethod = document.querySelector('input[name="payment"]:checked');
   
+  // Перевіряємо, чи обрано спосіб оплати
+  if (!paymentMethod) {
+    showError("Будь ласка, оберіть спосіб оплати");
+    return;
+  }
+  
   // Отримуємо дані Нової Пошти
   const novaPostData = getNovaPostData();
 
@@ -159,19 +165,33 @@ export async function submitOrder() {
     quantity: item.quantity,
   }));
 
+  // Розділяємо ім'я на name та surname
+  const fullName = nameInput.value.trim().split(" ");
+  const firstName = fullName[0] || "";
+  const lastName = fullName.slice(1).join(" ") || "";
+  
+  // Формуємо адресу з даних Нової Пошти
+  const warehouseTitle = novaPostData.warehouse?.title || "";
+  const cityName = capitalizeFirstLetter(cityInput.value.trim());
+  const address = warehouseTitle ? `${cityName}, ${warehouseTitle}` : cityName;
+
+  // Визначаємо payment_type на основі обраного способу оплати
+  let paymentType = "cash"; // Значення за замовчуванням
+  if (paymentMethod.id === "card") {
+    paymentType = "liqpay";
+  } else if (paymentMethod.id === "cash") {
+    paymentType = "cash";
+  }
+
   // Формуємо дані для відправки
   const orderData = {
-    name: nameInput.value.trim(),
+    name: firstName,
+    surname: lastName || firstName, // Якщо прізвище не вказано, використовуємо ім'я
     phone: phoneInput.value.trim(),
-    city: capitalizeFirstLetter(cityInput.value.trim()), // Капіталізуємо першу літеру
-    settlement_ref: novaPostData.settlement?.ref || "",
-    warehouse_ref: novaPostData.warehouse?.ref || "",
-    warehouse_title: novaPostData.warehouse?.title || "",
-    payment_method: paymentMethod?.id || "cash",
+    address: address,
+    payment_type: paymentType, // Обов'язкове поле
     // Додаємо промокод якщо він був застосований
     promocode: localStorage.getItem("applied_promocode") || "",
-    // Додаємо товари
-    products: products,
   };
 
   // Показуємо індикатор завантаження
@@ -181,8 +201,8 @@ export async function submitOrder() {
   submitBtn.disabled = true;
 
   try {
-    // Відправляємо запит через axios
-    const response = await axios.post("/api/orders/", orderData, {
+    // Відправляємо запит через axios на правильний endpoint
+    const response = await axios.post("/api/create-order/", orderData, {
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": Cookies.get("csrftoken"),
@@ -190,19 +210,39 @@ export async function submitOrder() {
     });
 
     // Обробляємо успішну відповідь
-      if (response.data.success || response.status === 200 || response.status === 201) {
+    console.log("Відповідь від сервера:", response.data);
+    console.log("Payment type:", orderData.payment_type);
+    
+    if (response.status === 200 || response.status === 201 || response.data?.success) {
       // Очищаємо промокод з localStorage
       localStorage.removeItem("applied_promocode");
       
-      // Перенаправляємо на сторінку успіху або показуємо повідомлення
-      if (response.data.redirect_url) {
-        window.location.href = response.data.redirect_url;
+      // Визначаємо куди перенаправляти на основі payment_type або redirect_url
+      let redirectUrl = null;
+      
+      // Спочатку перевіряємо redirect_url з відповіді сервера
+      if (response.data?.redirect_url) {
+        redirectUrl = response.data.redirect_url;
+        console.log("Використовуємо redirect_url з відповіді:", redirectUrl);
+      } 
+      // Якщо немає redirect_url, перевіряємо payment_type
+      else if (orderData.payment_type === "liqpay") {
+        redirectUrl = "/payment/";
+        console.log("Payment type = liqpay, перенаправляємо на /payment/");
+      }
+      // Для готівкової оплати перенаправляємо на success
+      else {
+        redirectUrl = "/success/";
+        console.log("Payment type = cash, перенаправляємо на /success/");
+      }
+      
+      // Перенаправляємо одразу
+      if (redirectUrl) {
+        console.log("Перенаправляємо на:", redirectUrl);
+        window.location.href = redirectUrl;
+        return;
       } else {
-        showSuccess("Замовлення успішно оформлено!");
-        // Перенаправляємо через 2 секунди
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 2000);
+        console.error("Не вдалося визначити URL для перенаправлення");
       }
     }
   } catch (error) {
@@ -224,7 +264,9 @@ export async function submitOrder() {
       }
       
       // Загальна помилка
-      if (serverErrors.error || serverErrors.detail) {
+      if (serverErrors.message) {
+        showError(serverErrors.message);
+      } else if (serverErrors.error || serverErrors.detail) {
         showError(serverErrors.error || serverErrors.detail);
       }
     } else {

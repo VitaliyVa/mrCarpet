@@ -87,9 +87,15 @@
 /******/ ({
 
 /***/ "../../node_modules/regenerator-runtime/runtime.js":
+<<<<<<< HEAD
 /*!**************************************************************************!*\
   !*** D:/GIT/mrCarpet/static/node_modules/regenerator-runtime/runtime.js ***!
   \**************************************************************************/
+=======
+/*!****************************************************************************!*\
+  !*** C:/test2/mrCarpet/static/node_modules/regenerator-runtime/runtime.js ***!
+  \****************************************************************************/
+>>>>>>> 07065322df466f4153dd50c9baf97434a8557145
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 

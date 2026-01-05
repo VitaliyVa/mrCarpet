@@ -114,3 +114,7 @@ class CartProduct(AbstractCreatedUpdated):
 
     def able_add_to_cart(self, quantity: int) -> bool:
         return quantity <= self.product_attr.quantity
+    
+    class Meta:
+        verbose_name = "Товар в корзині"
+        verbose_name_plural = "Товари в корзині"
