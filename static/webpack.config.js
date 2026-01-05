@@ -50,6 +50,7 @@ module.exports = {
     refund: "./refund.js",
     terms: "./terms.js",
     faq: "./faq.js",
+    password_reset: "./password_reset.js",
   },
   output: {
     filename: "[name]/index.js",
