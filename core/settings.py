@@ -195,6 +195,12 @@ LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
 
 
 # SMTP settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+EMAIL_PORT = 587
+EMAIL_HOST = "smtp.gmail.com"
+SERVER_EMAIL = config('EMAIL_HOST_USER')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

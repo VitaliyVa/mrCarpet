@@ -66,3 +66,6 @@ def policy(request):
 
 def success(request):
     return render(request, 'success.html')
+
+def reset_password(request):
+    return render(request, 'reset_password.html')
