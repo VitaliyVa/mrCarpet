@@ -1,0 +1,63 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'README*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Add server to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to server
+      run: |
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -e
+          cd ~/projects/mrCarpet
+          
+          echo "Pulling latest changes..."
+          git fetch origin
+          git pull origin main || git pull origin master
+          
+          echo "Rebuilding containers..."
+          docker compose -f docker-compose.prod.yml build web
+          
+          echo "Starting/restarting containers..."
+          docker compose -f docker-compose.prod.yml up -d
+          
+          echo "Collecting static files..."
+          docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
+          
+          echo "Running migrations..."
+          docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
+          
+          echo "Restarting services..."
+          docker compose -f docker-compose.prod.yml restart web nginx
+          
+          echo "Cleaning up Docker..."
+          docker system prune -f
+          
+          echo "Deployment completed successfully!"
+        EOF
+        
+    - name: Deployment status
+      run: |
+        echo "✅ Deployment completed successfully!"

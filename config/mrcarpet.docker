@@ -31,6 +31,16 @@
 #     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 # 
 # }
+# Default server для IP адреси
+server{
+    listen 80 default_server;
+    server_name _;
+    
+    location / {
+        return 301 http://mrcarpet24.com$request_uri;
+    }
+}
+
 server{
     server_name mrcarpet24.com;
     client_max_body_size 100M;
