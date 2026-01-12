@@ -161,7 +161,9 @@ class LiqPay(object):
 
         """
         if signature:
-            expected_signature = self._make_signature(self._private_key, base64.b64decode(data).decode('utf-8'))
+            # LiqPay створює підпис з base64-закодованого data, а не з декодованого JSON
+            # Тому перевіряємо підпис з самого data (base64 рядка)
+            expected_signature = self._make_signature(self._private_key, data)
             if expected_signature != signature:
                 raise ParamValidationError("Invalid signature")
 

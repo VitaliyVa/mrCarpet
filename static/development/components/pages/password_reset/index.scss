@@ -1,0 +1,236 @@
+.password-reset {
+  height: calc(100vh - 105px); // viewport height - header height (105px)
+  min-height: 600px; // мінімальна висота для мобільних
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 90px); // мобільний хедер менший
+    min-height: 500px;
+    padding: 40px 20px;
+  }
+
+  &__wrapper {
+    width: 100%;
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__container {
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 48px 40px;
+    animation: fadeInUp 0.5s ease-out;
+
+    @media (max-width: 768px) {
+      padding: 36px 24px;
+      max-width: 100%;
+    }
+  }
+
+  &__header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  &__title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    line-height: 1.2;
+
+    @media (max-width: 768px) {
+      font-size: 26px;
+    }
+  }
+
+  &__subtitle {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #666666;
+    max-width: 380px;
+    margin: 0 auto;
+
+    @media (max-width: 768px) {
+      font-size: 14px;
+    }
+  }
+
+  &__form {
+    margin-bottom: 28px;
+  }
+
+  &__form-field {
+    margin-bottom: 24px;
+  }
+
+  &__input {
+    width: 100%;
+    height: 52px;
+    font-size: 16px;
+    padding: 0 18px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+
+    &:focus {
+      background: #ffffff;
+      border-color: #a46c46;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(164, 108, 70, 0.1);
+    }
+
+    &::placeholder {
+      color: #999999;
+    }
+
+    @media (max-width: 768px) {
+      height: 48px;
+      font-size: 15px;
+    }
+  }
+
+  &__submit-btn {
+    width: 100%;
+    height: 52px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: none;
+    letter-spacing: 0.3px;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(164, 108, 70, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      height: 48px;
+      font-size: 15px;
+    }
+  }
+
+  &__footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid #eeeeee;
+  }
+
+  &__back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: #666666;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+
+    svg {
+      transition: transform 0.3s ease;
+    }
+
+    &:hover {
+      color: #a46c46;
+
+      svg {
+        transform: translateX(-4px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      font-size: 14px;
+    }
+  }
+}
+
+// Animation
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Validation error styles
+.validation_container {
+  position: relative;
+
+  .validation_error {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    font-size: 13px;
+    color: #e74c3c;
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Input error state
+.validation_input.error {
+  border-color: #e74c3c !important;
+  background: #fff5f5 !important;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+  }
+}
+
+// Success message (optional, for backend)
+.password-reset__success {
+  text-align: center;
+  padding: 20px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  color: #155724;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+// Error message (optional, for backend)
+.password-reset__error {
+  text-align: center;
+  padding: 20px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  color: #721c24;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.5s ease-out;
+}
+

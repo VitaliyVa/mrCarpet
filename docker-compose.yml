@@ -14,7 +14,10 @@ services:
       - NOVA_POSHTA_API_KEY=${NOVA_POSHTA_API_KEY}
       - DB_ENGINE=django.db.backends.sqlite3
       - DB_NAME=/app/db.sqlite3
-    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
 
 volumes:
   static_volume:
