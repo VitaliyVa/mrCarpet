@@ -36,7 +36,6 @@ services:
       - .:/app
       - static_volume:/app/static_root
       - media_volume:/app/media
-      - ./config/mrcarpet.sock:/app/config/mrcarpet.sock
       - ./logs:/app/logs
     environment:
       - DEBUG=False
@@ -46,7 +45,7 @@ services:
       - DB_NAME=/app/db.sqlite3
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && uwsgi --ini /app/config/mrcarpet.ini.prod"
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 300"
     restart: unless-stopped
     networks:
       - mrcarpet_network

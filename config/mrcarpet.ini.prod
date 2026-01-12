@@ -1,9 +1,8 @@
 [uwsgi]
 project      = mrcarpet
-uid          = www-data
-gid          = www-data
-chmod-socket = 664
-chown-socket = www-data:www-data
+uid          = root
+gid          = root
+chmod-socket = 666
 processes    = 4
 threads      = 2
 vacuum       = true
@@ -20,3 +19,4 @@ enable-threads = true
 lazy-apps    = true
 single-interpreter = true
 need-app     = true
+stats        = /app/config/uwsgi_stats.sock

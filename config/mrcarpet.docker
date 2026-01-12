@@ -14,10 +14,14 @@
 #         add_header Cache-Control "public, immutable";
 #     }
 #     location / {
-#         uwsgi_pass unix:/app/config/mrcarpet.sock;
-#         include /etc/nginx/uwsgi_params;
-#         uwsgi_read_timeout 300;
-#         uwsgi_send_timeout 300;
+#         proxy_pass http://web:8000;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_redirect off;
+#         proxy_read_timeout 300;
+#         proxy_connect_timeout 300;
 #     }
 # 
 #     listen 443 ssl; # managed by Certbot
@@ -49,10 +53,14 @@ server{
     }
     
     location / {
-        uwsgi_pass unix:/app/config/mrcarpet.sock;
-        include /etc/nginx/uwsgi_params;
-        uwsgi_read_timeout 300;
-        uwsgi_send_timeout 300;
+        proxy_pass http://web:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
     }
 
     listen 80;
@@ -74,10 +82,14 @@ server{
 #         add_header Cache-Control "public, immutable";
 #     }
 #     location / {
-#         uwsgi_pass unix:/app/config/mrcarpet.sock;
-#         include /etc/nginx/uwsgi_params;
-#         uwsgi_read_timeout 300;
-#         uwsgi_send_timeout 300;
+#         proxy_pass http://web:8000;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_redirect off;
+#         proxy_read_timeout 300;
+#         proxy_connect_timeout 300;
 #     }
 # 
 #     listen 443 ssl; # managed by Certbot
@@ -110,10 +122,14 @@ server{
     }
     
     location / {
-        uwsgi_pass unix:/app/config/mrcarpet.sock;
-        include /etc/nginx/uwsgi_params;
-        uwsgi_read_timeout 300;
-        uwsgi_send_timeout 300;
+        proxy_pass http://web:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
     }
 
     listen 80;
