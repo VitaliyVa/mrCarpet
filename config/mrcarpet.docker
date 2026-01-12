@@ -27,14 +27,34 @@ server{
 
 }
 server{
-    if ($host = mrcarpet24.com) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
     server_name mrcarpet24.com;
-    listen 80;
-    return 404; # managed by Certbot
+    client_max_body_size 100M;
+    
+    location = /favicon.ico { 
+        access_log off; 
+        log_not_found off; 
+    }
+    
+    location /media {
+        alias /app/media;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+    
+    location /static {
+        alias /app/static_root;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    location / {
+        uwsgi_pass unix:/app/config/mrcarpet.sock;
+        include /etc/nginx/uwsgi_params;
+        uwsgi_read_timeout 300;
+        uwsgi_send_timeout 300;
+    }
 
+    listen 80;
 }
 
 server{
@@ -67,12 +87,32 @@ server{
 }
 
 server{
-    if ($host = www.mrcarpet24.com) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
     server_name www.mrcarpet24.com;
-    listen 80;
-    return 404; # managed by Certbot
+    client_max_body_size 100M;
+    
+    location = /favicon.ico { 
+        access_log off; 
+        log_not_found off; 
+    }
+    
+    location /media {
+        alias /app/media;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+    
+    location /static {
+        alias /app/static_root;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    location / {
+        uwsgi_pass unix:/app/config/mrcarpet.sock;
+        include /etc/nginx/uwsgi_params;
+        uwsgi_read_timeout 300;
+        uwsgi_send_timeout 300;
+    }
 
+    listen 80;
 }
