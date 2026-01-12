@@ -38,6 +38,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://178.128.196.94",
+    "https://mrcarpet24.com",
+    "https://www.mrcarpet24.com",
+    "http://mrcarpet24.com",
+    "http://www.mrcarpet24.com",
 ]
 
 # Для додавання нових ngrok URL через змінну оточення (опціонально):
