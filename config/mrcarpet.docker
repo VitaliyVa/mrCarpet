@@ -1,31 +1,32 @@
-server{
-    server_name mrcarpet24.com;
-    client_max_body_size 100M;
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location /media {
-        alias /app/media;
-        expires 30d;
-        add_header Cache-Control "public";
-    }
-    location /static {
-        alias /app/static_root;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    location / {
-        uwsgi_pass unix:/app/config/mrcarpet.sock;
-        include /etc/nginx/uwsgi_params;
-        uwsgi_read_timeout 300;
-        uwsgi_send_timeout 300;
-    }
-
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/mrcarpet24.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/mrcarpet24.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-}
+# HTTPS блок - розкоментуйте після отримання SSL сертифікатів
+# server{
+#     server_name mrcarpet24.com;
+#     client_max_body_size 100M;
+#     location = /favicon.ico { access_log off; log_not_found off; }
+#     location /media {
+#         alias /app/media;
+#         expires 30d;
+#         add_header Cache-Control "public";
+#     }
+#     location /static {
+#         alias /app/static_root;
+#         expires 30d;
+#         add_header Cache-Control "public, immutable";
+#     }
+#     location / {
+#         uwsgi_pass unix:/app/config/mrcarpet.sock;
+#         include /etc/nginx/uwsgi_params;
+#         uwsgi_read_timeout 300;
+#         uwsgi_send_timeout 300;
+#     }
+# 
+#     listen 443 ssl; # managed by Certbot
+#     ssl_certificate /etc/letsencrypt/live/mrcarpet24.com/fullchain.pem; # managed by Certbot
+#     ssl_certificate_key /etc/letsencrypt/live/mrcarpet24.com/privkey.pem; # managed by Certbot
+#     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+# 
+# }
 server{
     server_name mrcarpet24.com;
     client_max_body_size 100M;
@@ -57,34 +58,35 @@ server{
     listen 80;
 }
 
-server{
-    server_name www.mrcarpet24.com;
-    client_max_body_size 100M;
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location /media {
-        alias /app/media;
-        expires 30d;
-        add_header Cache-Control "public";
-    }
-    location /static {
-        alias /app/static_root;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    location / {
-        uwsgi_pass unix:/app/config/mrcarpet.sock;
-        include /etc/nginx/uwsgi_params;
-        uwsgi_read_timeout 300;
-        uwsgi_send_timeout 300;
-    }
-
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/www.mrcarpet24.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/www.mrcarpet24.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-}
+# HTTPS блок для www - розкоментуйте після отримання SSL сертифікатів
+# server{
+#     server_name www.mrcarpet24.com;
+#     client_max_body_size 100M;
+#     location = /favicon.ico { access_log off; log_not_found off; }
+#     location /media {
+#         alias /app/media;
+#         expires 30d;
+#         add_header Cache-Control "public";
+#     }
+#     location /static {
+#         alias /app/static_root;
+#         expires 30d;
+#         add_header Cache-Control "public, immutable";
+#     }
+#     location / {
+#         uwsgi_pass unix:/app/config/mrcarpet.sock;
+#         include /etc/nginx/uwsgi_params;
+#         uwsgi_read_timeout 300;
+#         uwsgi_send_timeout 300;
+#     }
+# 
+#     listen 443 ssl; # managed by Certbot
+#     ssl_certificate /etc/letsencrypt/live/www.mrcarpet24.com/fullchain.pem; # managed by Certbot
+#     ssl_certificate_key /etc/letsencrypt/live/www.mrcarpet24.com/privkey.pem; # managed by Certbot
+#     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+# 
+# }
 
 server{
     server_name www.mrcarpet24.com;
