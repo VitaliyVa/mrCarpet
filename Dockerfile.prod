@@ -13,10 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p static_root media config logs && \
-    chown -R www-data:www-data /app
-
-RUN python manage.py collectstatic --noinput
+RUN mkdir -p static_root media config logs
 
 EXPOSE 8000
 

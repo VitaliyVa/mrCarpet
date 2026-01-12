@@ -47,7 +47,7 @@ services:
       - DB_NAME=/app/db.sqlite3
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-    command: uwsgi --ini /app/config/mrcarpet.ini.prod
+    command: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput && uwsgi --ini /app/config/mrcarpet.ini.prod"
     restart: unless-stopped
     networks:
       - mrcarpet_network
