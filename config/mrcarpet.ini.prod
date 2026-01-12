@@ -1,0 +1,22 @@
+[uwsgi]
+project      = mrcarpet
+uid          = www-data
+gid          = www-data
+chmod-socket = 664
+chown-socket = www-data:www-data
+processes    = 4
+threads      = 2
+vacuum       = true
+master       = true
+socket       = /app/config/mrcarpet.sock
+chdir        = /app
+module       = core.wsgi:application
+logto        = /app/logs/uwsgi.log
+log-maxsize  = 20971520
+log-reopen   = true
+buffer-size  = 32768
+die-on-term  = true
+enable-threads = true
+lazy-apps    = true
+single-interpreter = true
+need-app     = true

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/mrcarpet.docker:/etc/nginx/sites-available/mrcarpet
+      - ./config/mrcarpet.docker:/etc/nginx/sites-enabled/mrcarpet
+      - ./config/certbot:/etc/letsencrypt:ro
+      - ./static_root:/app/static_root:ro
+      - ./media:/app/media:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./config/certbot:/etc/letsencrypt
+      - ./config/certbot-www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email admin@mrcarpet24.com --agree-tos --no-eff-email -d mrcarpet24.com -d www.mrcarpet24.com
+    networks:
+      - mrcarpet_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    expose:
+      - "8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/static_root
+      - media_volume:/app/media
+      - ./config/mrcarpet.sock:/app/config/mrcarpet.sock
+      - ./logs:/app/logs
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - NOVA_POSHTA_API_KEY=${NOVA_POSHTA_API_KEY}
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    command: uwsgi --ini /app/config/mrcarpet.ini.prod
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
+volumes:
+  static_volume:
+  media_volume:
+
+networks:
+  mrcarpet_network:
+    driver: bridge

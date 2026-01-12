@@ -37,6 +37,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://21f997f18ee0.ngrok-free.app",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://178.128.196.94",
 ]
 
 # Для додавання нових ngrok URL через змінну оточення (опціонально):
