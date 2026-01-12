@@ -69,4 +69,8 @@ static_root/
 
 # Logs
 *.log
-logs/ 
+logs/
+
+# Certbot (не потрібен в образі)
+config/certbot/
+config/certbot-www/ 
