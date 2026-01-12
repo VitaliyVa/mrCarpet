@@ -1,5 +1,5 @@
 server{
-    server_name mrcarpet.shop;
+    server_name mrcarpet24.com;
     client_max_body_size 100M;
     location = /favicon.ico { access_log off; log_not_found off; }
     location /media {
@@ -16,19 +16,19 @@ server{
 
 
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/mrcarpet.shop/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/mrcarpet.shop/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/mrcarpet24.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/mrcarpet24.com/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
 }
 server{
-    if ($host = mrcarpet.shop) {
+    if ($host = mrcarpet24.com) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
 
-    server_name mrcarpet.shop;
+    server_name mrcarpet24.com;
     listen 80;
     return 404; # managed by Certbot
 
@@ -36,7 +36,7 @@ server{
 }
 
 server{
-    server_name www.mrcarpet.shop;
+    server_name www.mrcarpet24.com;
     client_max_body_size 100M;
     location = /favicon.ico { access_log off; log_not_found off; }
     location /media {
@@ -53,8 +53,8 @@ server{
 
 
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/www.mrcarpet.shop/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/www.mrcarpet.shop/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/www.mrcarpet24.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.mrcarpet24.com/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
@@ -62,12 +62,12 @@ server{
 
 
 server{
-    if ($host = www.mrcarpet.shop) {
+    if ($host = www.mrcarpet24.com) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
 
-    server_name www.mrcarpet.shop;
+    server_name www.mrcarpet24.com;
     listen 80;
     return 404; # managed by Certbot
 
