@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./config/certbot:/etc/letsencrypt
+    depends_on:
+      - web
+
   web:
     build: .
     ports:
