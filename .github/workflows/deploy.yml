@@ -40,8 +40,14 @@ jobs:
           echo "Rebuilding containers..."
           docker compose -f docker-compose.prod.yml build web
           
-          echo "Starting/restarting containers..."
+          echo "Stopping containers..."
+          docker compose -f docker-compose.prod.yml down
+          
+          echo "Starting containers..."
           docker compose -f docker-compose.prod.yml up -d
+          
+          echo "Waiting for web container to be ready..."
+          sleep 10
           
           echo "Collecting static files..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
