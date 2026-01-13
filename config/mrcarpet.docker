@@ -57,6 +57,11 @@ server{
         log_not_found off; 
     }
     
+    # Certbot verification
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
     location /media {
         alias /app/media;
         expires 30d;
@@ -124,6 +129,11 @@ server{
     location = /favicon.ico { 
         access_log off; 
         log_not_found off; 
+    }
+    
+    # Certbot verification
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
     }
     
     location /media {

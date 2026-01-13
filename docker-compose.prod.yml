@@ -8,6 +8,7 @@ services:
       - ./config/nginx-main.conf:/etc/nginx/nginx.conf:ro
       - ./config/mrcarpet.docker:/etc/nginx/conf.d/default.conf
       - ./config/certbot:/etc/letsencrypt:ro
+      - ./config/certbot-www:/var/www/certbot:ro
       - static_volume:/app/static_root:ro
       - media_volume:/app/media:ro
     depends_on:
