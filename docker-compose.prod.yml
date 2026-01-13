@@ -26,6 +26,21 @@ services:
     networks:
       - mrcarpet_network
 
+  certbot-renew:
+    image: certbot/certbot:latest
+    volumes:
+      - ./config/certbot:/etc/letsencrypt
+      - ./config/certbot-www:/var/www/certbot
+    entrypoint: /bin/sh -c
+    command: >
+      "while :; do
+         certbot renew --webroot -w /var/www/certbot --quiet;
+         sleep 12h;
+       done"
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
   web:
     build:
       context: .
