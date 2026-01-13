@@ -5,7 +5,8 @@ services:
       - ./config/certbot:/etc/letsencrypt
     entrypoint: /bin/sh
     command: >
-      -c "
+      -c
+      "
       if [ ! -f /etc/letsencrypt/options-ssl-nginx.conf ]; then
         echo 'ssl_session_cache shared:le_nginx_SSL:10m;
 ssl_session_timeout 1440m;
