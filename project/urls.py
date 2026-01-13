@@ -12,4 +12,5 @@ urlpatterns = [
     path('policy/', views.policy, name='policy'),
     path('success/', views.success, name='success'),
     path('reset-password/', views.reset_password, name='reset_password'),
+    path('robots.txt', views.robots_txt, name='robots_txt'),
 ]

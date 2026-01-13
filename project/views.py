@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
@@ -69,3 +70,10 @@ def success(request):
 
 def reset_password(request):
     return render(request, 'reset_password.html')
+
+
+def robots_txt(request):
+    robots_content = """User-agent: *
+Disallow: /
+"""
+    return HttpResponse(robots_content, content_type='text/plain')
