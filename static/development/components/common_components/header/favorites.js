@@ -10,13 +10,19 @@ document.addEventListener("click", async ({ target }) => {
     const isAdded = addToFavoriteButton.classList.contains("active");
 
     if (!isAdded) {
-      await addToFavorite(productId, () =>
-        addToFavoriteButton.classList.add("active")
-      );
+      await addToFavorite(productId, () => {
+        // Використовуємо requestAnimationFrame для гарантії що DOM оновився
+        requestAnimationFrame(() => {
+          addToFavoriteButton.classList.add("active");
+        });
+      });
     } else {
-      await removeFromFavorite(productId, () =>
-        addToFavoriteButton.classList.remove("active")
-      );
+      await removeFromFavorite(productId, () => {
+        // Використовуємо requestAnimationFrame для гарантії що DOM оновився
+        requestAnimationFrame(() => {
+          addToFavoriteButton.classList.remove("active");
+        });
+      });
     }
   }
 });

@@ -8,8 +8,8 @@
         >
         <span class="catalog_item_img">
           <img
-            src="/static/utils/assets/catalog_item/catalog_item-1.png"
-            alt=""
+            src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+            alt="{{ category.title }}"
           />
         </span>
       </a>

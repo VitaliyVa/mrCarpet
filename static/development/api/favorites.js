@@ -8,13 +8,15 @@ export const addToFavorite = async (productId, onSucces) => {
       product: productId,
     });
 
+    // showSuccess(data?.message || "Додано в обране!");
+
+    // При create повертається {favourite: {...}, message: "..."}
+    const quantity = data?.favourite?.quantity ?? data?.quantity ?? 0;
+    updateCountBadge(".header_bottom_panel_like", quantity);
+
     if (onSucces) {
       onSucces();
     }
-
-    showSuccess(data?.message || "Додано в обране!");
-
-    updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
 
     return data;
   } catch ({ response }) {
@@ -30,9 +32,11 @@ export const removeFromFavorite = async (productId, onSucces) => {
       onSucces();
     }
 
-    showSuccess(data?.message || "Товар видалено!");
+    // showSuccess(data?.message || "Товар видалено!");
 
-    updateCountBadge(".header_bottom_panel_like", data?.favourite?.quantity);
+    // При destroy повертається FavouriteSerializer без обгортки favourite
+    const quantity = data?.quantity ?? data?.favourite?.quantity ?? 0;
+    updateCountBadge(".header_bottom_panel_like", quantity);
 
     return data;
   } catch ({ response }) {

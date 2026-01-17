@@ -1,9 +1,8 @@
 import { instance } from "./instance";
 import { showLoader } from "../components/module/form_action";
-import { showSuccess, showError } from "../utils/notifications";
+import { showError } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
 import { updateBasket } from "../components/pages/basket/utils/updateBasket";
-
 export const addToBasket = async (product, onSucces) => {
   try {
     const { data } = await instance.post("/cart-products/", product);
@@ -11,8 +10,6 @@ export const addToBasket = async (product, onSucces) => {
     if (onSucces) {
       onSucces();
     }
-
-    showSuccess(data?.message || "Додано в корзину!");
 
     updateCountBadge(".header_bottom_panel_cart", data?.quantity);
     updateBasket(data);

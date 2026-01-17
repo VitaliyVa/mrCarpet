@@ -27145,7 +27145,6 @@ const addToBasket = async (product, onSucces) => {
     if (onSucces) {
       onSucces();
     }
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в корзину!");
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
     return data;
@@ -27276,17 +27275,21 @@ __webpack_require__.r(__webpack_exports__);
 
 const addToFavorite = async (productId, onSucces) => {
   try {
-    var _data$favourite;
+    var _ref, _data$favourite$quant, _data$favourite;
     const {
       data
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/favourite-products/", {
       product: productId
     });
+
+    // showSuccess(data?.message || "Додано в обране!");
+
+    // При create повертається {favourite: {...}, message: "..."}
+    const quantity = (_ref = (_data$favourite$quant = data === null || data === void 0 || (_data$favourite = data.favourite) === null || _data$favourite === void 0 ? void 0 : _data$favourite.quantity) !== null && _data$favourite$quant !== void 0 ? _data$favourite$quant : data === null || data === void 0 ? void 0 : data.quantity) !== null && _ref !== void 0 ? _ref : 0;
+    Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", quantity);
     if (onSucces) {
       onSucces();
     }
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в обране!");
-    Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", data === null || data === void 0 || (_data$favourite = data.favourite) === null || _data$favourite === void 0 ? void 0 : _data$favourite.quantity);
     return data;
   } catch ({
     response
@@ -27297,15 +27300,19 @@ const addToFavorite = async (productId, onSucces) => {
 };
 const removeFromFavorite = async (productId, onSucces) => {
   try {
-    var _data$favourite2;
+    var _ref2, _data$quantity, _data$favourite2;
     const {
       data
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].delete("/favourite-products/".concat(productId, "/"));
     if (onSucces) {
       onSucces();
     }
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено!");
-    Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", data === null || data === void 0 || (_data$favourite2 = data.favourite) === null || _data$favourite2 === void 0 ? void 0 : _data$favourite2.quantity);
+
+    // showSuccess(data?.message || "Товар видалено!");
+
+    // При destroy повертається FavouriteSerializer без обгортки favourite
+    const quantity = (_ref2 = (_data$quantity = data === null || data === void 0 ? void 0 : data.quantity) !== null && _data$quantity !== void 0 ? _data$quantity : data === null || data === void 0 || (_data$favourite2 = data.favourite) === null || _data$favourite2 === void 0 ? void 0 : _data$favourite2.quantity) !== null && _ref2 !== void 0 ? _ref2 : 0;
+    Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_2__["updateCountBadge"])(".header_bottom_panel_like", quantity);
     return data;
   } catch ({
     response
@@ -27613,9 +27620,19 @@ document.addEventListener("click", async _ref => {
     const productId = product === null || product === void 0 || (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
     const isAdded = addToFavoriteButton.classList.contains("active");
     if (!isAdded) {
-      await Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["addToFavorite"])(productId, () => addToFavoriteButton.classList.add("active"));
+      await Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["addToFavorite"])(productId, () => {
+        // Використовуємо requestAnimationFrame для гарантії що DOM оновився
+        requestAnimationFrame(() => {
+          addToFavoriteButton.classList.add("active");
+        });
+      });
     } else {
-      await Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["removeFromFavorite"])(productId, () => addToFavoriteButton.classList.remove("active"));
+      await Object(_api_favorites__WEBPACK_IMPORTED_MODULE_0__["removeFromFavorite"])(productId, () => {
+        // Використовуємо requestAnimationFrame для гарантії що DOM оновився
+        requestAnimationFrame(() => {
+          addToFavoriteButton.classList.remove("active");
+        });
+      });
     }
   }
 });
@@ -28865,14 +28882,28 @@ const bad_modal = function () {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateCountBadge", function() { return updateCountBadge; });
-const updateCountBadge = function (badgeClassName) {
-  let count = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "???";
+const updateCountBadge = (badgeClassName, count) => {
   const badgeElements = document.querySelectorAll(badgeClassName);
   if (badgeElements.length) {
     badgeElements.forEach(badge => {
       const badgeCountLabel = badge.querySelector(".header_bottom_panel_item_count");
       if (badgeCountLabel) {
-        badgeCountLabel.textContent = count;
+        // Видаляємо попередній клас анімації якщо він є
+        badgeCountLabel.classList.remove("count-animate");
+
+        // Оновлюємо текст - використовуємо 0 якщо count undefined або null
+        badgeCountLabel.textContent = count !== undefined && count !== null ? count : 0;
+
+        // Додаємо клас анімації для збільшення
+        // Використовуємо requestAnimationFrame для гарантії що DOM оновився
+        requestAnimationFrame(() => {
+          badgeCountLabel.classList.add("count-animate");
+
+          // Видаляємо клас після завершення анімації
+          setTimeout(() => {
+            badgeCountLabel.classList.remove("count-animate");
+          }, 300);
+        });
       }
     });
   }

@@ -1094,10 +1094,27 @@ textarea {
   padding-left: 6px;
   font-size: 16px;
 }
+.header_bottom_panel_item_icon .header_bottom_panel_item_count {
+  transition: transform 0.2s ease;
+}
+.header_bottom_panel_item_icon .header_bottom_panel_item_count.count-animate {
+  animation: countBounce 0.3s ease;
+}
 .header_bottom_panel_item_label {
   font-size: 18px;
 }
 
+@keyframes countBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 .header_widget_wrapper {
   width: 100%;
 }
@@ -3336,23 +3353,26 @@ swiper-container .swiper-notification {
   transform: scale(1);
   padding: 10px;
 }
+.cart_item_add_to_favorite svg path,
 .cart_item_add_to_favorite path {
   transition: all 0.2s;
-  fill: #89817c;
+  fill: #89817c !important;
 }
 .cart_item_add_to_favorite:hover {
   opacity: 1;
   transform: scale(1.1);
 }
+.cart_item_add_to_favorite:hover svg path,
 .cart_item_add_to_favorite:hover path {
-  fill: #a46c46;
+  fill: #a46c46 !important;
 }
 .cart_item_add_to_favorite.active {
   opacity: 1;
   transform: scale(1.1);
 }
+.cart_item_add_to_favorite.active svg path,
 .cart_item_add_to_favorite.active path {
-  fill: #a46c46;
+  fill: #ff0000 !important;
 }
 .cart_item_title {
   font-size: 22px;
