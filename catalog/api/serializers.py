@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview, ProductSale
+from ..models import Product, ProductCategory, Favourite, FavouriteProducts, ProductAttribute, ProductReview, ProductSale, ProductColor
 from ..utils import get_favourite
 
 
@@ -32,21 +32,37 @@ class ProductSerializer(serializers.ModelSerializer):
     product_attributes = ProductAttributeSerializer(source='product_attr', read_only=True, many=True)
     image_url = serializers.CharField(source="image.url", read_only=True)
     href = serializers.SerializerMethodField()
+    active_color = serializers.SerializerMethodField()
+    slug = serializers.CharField(read_only=True)
     
     class Meta:
         model = Product
         fields = [
             'id',
             'title',
+            'slug',
             'image_url',
             'href',
             'categories',
+            'active_color',
             # 'quantity',
             'product_attributes'
         ]
 
     def get_href(self, obj):
         return obj.get_absolute_url()
+    
+    def get_active_color(self, obj):
+        if obj.active_color:
+            result = {
+                'id': obj.active_color.id,
+                'title': obj.active_color.title,
+                'slug': obj.active_color.slug,
+                'color': str(obj.active_color.color) if obj.active_color.color else None,
+                'texture': obj.active_color.texture.url if obj.active_color.texture else None
+            }
+            return result
+        return None
 
 
     # def to_representation(self, instance):

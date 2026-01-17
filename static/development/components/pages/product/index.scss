@@ -76,6 +76,46 @@
     border-top: 1px solid #ebeae8;
   }
 
+  .colors-block {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 0 8px;
+  }
+
+  .color-label {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: visible; // Змінив з hidden на visible для видимості outline
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    &.active {
+      // Подвійна облямівка: зовнішня коричнева 1px з відступом, внутрішня біла 1px
+      outline: 1px solid #a46c46; // Зовнішня коричнева 1px (не враховується в розмірі)
+      outline-offset: 2px; // Відступ зовнішньої облямівки від елемента
+      box-shadow: 0 0 0 1px #ffffff inset; // Внутрішня біла 1px
+    }
+  }
+
+  @media (max-width: 600px) {
+    .colors-block {
+      gap: 6px;
+      margin-top: 12px;
+    }
+  }
+
   &__option {
     display: flex;
     align-items: center;

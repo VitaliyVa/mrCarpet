@@ -61,6 +61,14 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         blank=True,
         to="catalog.ProductColor",
     )
+    active_color = models.ForeignKey(
+        verbose_name="Активний колір",
+        to="catalog.ProductColor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="active_products",
+    )
     has_discount = models.BooleanField(default=False)
     # discount = models.IntegerField(blank=True, null=True)
     # sizes = models.ManyToManyField(
@@ -84,6 +92,31 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        # Генеруємо slug з title + active_color (якщо є)
+        # Це гарантує унікальність slug для товарів з однаковим title але різними кольорами
+        from django.utils.text import slugify
+        from unidecode import unidecode
+        
+        if self.title:
+            # Базова частина slug з title
+            base_slug = slugify(unidecode(self.title))
+            
+            # Додаємо active_color до slug якщо він є
+            if self.active_color and self.active_color.title:
+                color_slug = slugify(unidecode(self.active_color.title))
+                base_slug = f"{base_slug}-{color_slug}"
+            
+            # Перевіряємо унікальність
+            from s_utils.model_fields import check_s_availability
+            self.slug = check_s_availability(self, base_slug)
+        else:
+            # Якщо title немає, використовуємо стандартну генерацію
+            from s_utils.model_fields import generate_slug
+            self.slug = generate_slug(self)
+        
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("product", args=(self.slug,))
@@ -137,7 +170,32 @@ class Size(models.Model):
 
 
 class ProductColor(AbstractTitleSlug):
-    color = ColorField(verbose_name="Колір", blank=False, unique=True)
+    color = ColorField(verbose_name="Колір", blank=True, null=True)
+    texture = models.ImageField(
+        verbose_name="Текстура",
+        upload_to="colors/textures",
+        blank=True,
+        null=True,
+        help_text="Альтернатива кольору. Якщо завантажено текстуру, вона буде відображатися замість кольору."
+    )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        # Перевіряємо що є або color або texture (але не обидва)
+        if not self.color and not self.texture:
+            raise ValidationError({
+                'color': "Необхідно вказати або колір, або завантажити текстуру.",
+                'texture': "Необхідно вказати або колір, або завантажити текстуру."
+            })
+        if self.color and self.texture:
+            raise ValidationError({
+                'color': "Можна використати або колір, або текстуру, але не обидва одночасно.",
+                'texture': "Можна використати або колір, або текстуру, але не обидва одночасно."
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Викликаємо clean() для валідації
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -404,6 +462,15 @@ class Specification(models.Model):
 class SpecificationValue(models.Model):
     title = models.CharField(
         verbose_name="Назва", max_length=128, blank=True, null=True
+    )
+    specification = models.ForeignKey(
+        verbose_name="Характеристика",
+        to="catalog.Specification",
+        on_delete=models.CASCADE,
+        related_name="values",
+        blank=True,
+        null=True,
+        help_text="Характеристика до якої належить це значення"
     )
 
     class Meta:

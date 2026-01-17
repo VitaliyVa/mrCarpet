@@ -3810,6 +3810,40 @@ swiper-container .swiper-notification {
   line-height: 130%;
   border-top: 1px solid #ebeae8;
 }
+.product .colors-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 0 8px;
+}
+.product .color-label {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+.product .color-label:hover {
+  transform: scale(1.05);
+}
+.product .color-label.active {
+  outline: 1px solid #a46c46;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px #ffffff inset;
+}
+@media (max-width: 600px) {
+  .product .colors-block {
+    gap: 6px;
+    margin-top: 12px;
+  }
+}
 .product__option {
   display: flex;
   align-items: center;

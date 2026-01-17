@@ -1,0 +1,70 @@
+/* Стилі для блоку оновлення кольорів в Product admin */
+.product-update-colors-block {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: var(--darkened-bg, #f8f9fa);
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+}
+
+.product-update-colors-block .update-colors-btn {
+    padding: 10px 20px;
+    background-color: var(--default-button-bg, #417690);
+    color: var(--button-fg, white);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.15s ease;
+}
+
+.product-update-colors-block .update-colors-btn:hover {
+    background-color: var(--default-button-hover-bg, #205067);
+}
+
+.product-update-colors-block .update-colors-btn:disabled {
+    background-color: var(--hairline-color, #ccc);
+    color: var(--body-quiet-color, #666);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.update-colors-results {
+    margin-top: 15px;
+}
+
+.update-colors-success {
+    padding: 10px;
+    background-color: var(--message-success-bg, #d4edda);
+    border: 1px solid var(--border-color, #c3e6cb);
+    border-radius: 4px;
+    color: var(--body-fg, #155724);
+    font-size: 14px;
+}
+
+/* Стилі для темної теми через prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+    .product-update-colors-block {
+        background-color: var(--darkened-bg, #212121);
+        border-color: var(--border-color, #353535);
+    }
+
+    .update-colors-success {
+        background-color: var(--message-success-bg, #006b1b);
+        border-color: var(--border-color, #003d0f);
+        color: var(--body-fg, #ffffff);
+    }
+}
+
+/* Стилі для темної теми через data-theme="dark" */
+html[data-theme="dark"] .product-update-colors-block {
+    background-color: var(--darkened-bg, #212121);
+    border-color: var(--border-color, #353535);
+}
+
+html[data-theme="dark"] .update-colors-success {
+    background-color: var(--message-success-bg, #006b1b);
+    border-color: var(--border-color, #003d0f);
+    color: var(--body-fg, #ffffff);
+}

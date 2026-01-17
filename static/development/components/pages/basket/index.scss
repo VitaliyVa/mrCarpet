@@ -122,14 +122,24 @@
       flex-wrap: wrap;
       gap: 4px 5px;
       margin-top: 12px;
+      align-items: center;
+    }
+
+    .color-label-basket {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      flex-shrink: 0;
     }
 
     &__center {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-width: 270px;
-      width: 270px;
+      min-width: 340px;
+      width: 340px;
       margin: 0 20px;
       text-align: center;
 

@@ -48,6 +48,10 @@
 
                                 <ul class="basket_item-sizes">
                                     <li class="size-label">{{ cart_product.product_attr.size }}</li>
+                                    {% if cart_product.product_attr.product.active_color %}
+                                    <li class="color-label-basket" {% if cart_product.product_attr.product.active_color.texture %}style="background-image: url('{{ cart_product.product_attr.product.active_color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ cart_product.product_attr.product.active_color.color }};"{% endif %} title="{{ cart_product.product_attr.product.active_color.title }}">
+                                    </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                             <div class="basket_item__center">

@@ -2,7 +2,7 @@ from functools import reduce
 from operator import or_
 
 from django import db
-from django.db.models import Min, ExpressionWrapper, F, fields, Subquery, Q, Case, When
+from django.db.models import Min, ExpressionWrapper, F, fields, Subquery, Q, Case, When, Value
 from django_filters import rest_framework as rest_filters
 
 from ..models import Product, Specification, SpecificationValue, ProductSpecification
@@ -58,12 +58,28 @@ class ProductFilter(rest_filters.FilterSet):
     #     return exact_search
 
     def search(self, queryset, name, value):
-        split_values = value.split(" ")
-        result = (
-            Product.objects.annotate(
+        """
+        Пошук товарів з пріоритетом точного збігу title
+        Спочатку шукаємо точний збіг (title__iexact), потім частковий (title__icontains)
+        """
+        # Спочатку шукаємо точний збіг title (вищий пріоритет)
+        exact_match = queryset.filter(title__iexact=value)
+        
+        if exact_match.exists():
+            # Якщо знайдено точний збіг, повертаємо тільки його
+            return exact_match.annotate(
                 custom_order=Case(
-                    When(title__icontains=value, then=1),
-                    When(description__icontains=value, then=2),
+                    When(title__iexact=value, then=Value(1)),
+                    output_field=db.models.IntegerField(),
+                )
+            ).order_by("custom_order", "-created")
+        
+        # Якщо точного збігу немає, шукаємо частковий
+        result = (
+            queryset.annotate(
+                custom_order=Case(
+                    When(title__icontains=value, then=Value(1)),
+                    When(description__icontains=value, then=Value(2)),
                     output_field=db.models.IntegerField(),
                 )
             )

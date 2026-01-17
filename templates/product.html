@@ -306,6 +306,20 @@
             {% endfor %}
           </div>
 
+          {% if product.colors.all %}
+          <div class="colors-block">
+            {% for color in product.colors.all %}
+            {% if product.active_color and color.id == product.active_color.id %}
+            <div class="color-label active" data-color-id="{{ color.id }}" data-color-slug="{{ color.slug }}" data-product-title="{{ product.title }}" {% if color.texture %}style="background-image: url('{{ color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ color.color }};"{% endif %} title="{{ color.title }}">
+            </div>
+            {% else %}
+            <div class="color-label" data-color-id="{{ color.id }}" data-color-slug="{{ color.slug }}" data-product-title="{{ product.title }}" {% if color.texture %}style="background-image: url('{{ color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ color.color }};"{% endif %} title="{{ color.title }}">
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
           <div class="product__option">
             <div class="counter">
               <button
