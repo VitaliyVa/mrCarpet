@@ -2,6 +2,138 @@ import { addToBasket } from "../../../api/basket";
 import { addToFavorite, removeFromFavorite } from "../../../api/favorites";
 import { minus, plus } from "../../module/shop_scripts/basket_action";
 import { instance } from "../../../api/instance";
+import Choices from "choices.js";
+import { showError } from "../../../utils/notifications";
+
+// Логіка для кастомних товарів
+function initCustomProductLogic() {
+  const customSizeBlocks = document.querySelectorAll('.custom-size-block');
+  
+  customSizeBlocks.forEach((block) => {
+    const widthSelectElement = block.querySelector('.custom-size-width-select');
+    const lengthInput = block.querySelector('.custom-size-length-input');
+    const errorSpan = block.querySelector('.custom-size-error');
+    
+    // Обгортаємо інпут довжини в обгортку для відображення "м."
+    if (lengthInput && !lengthInput.parentElement.classList.contains('custom-size-length-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'custom-size-length-wrapper';
+      lengthInput.parentNode.insertBefore(wrapper, lengthInput);
+      wrapper.appendChild(lengthInput);
+    }
+    const minLen = parseFloat(block.dataset.minLen);
+    const maxLen = parseFloat(block.dataset.maxLen);
+    const customPrice = parseFloat(block.dataset.customPrice);
+    const product = block.closest('.product');
+    const priceElement = product?.querySelector('.cart_item_price-value');
+    const priceBlock = product?.querySelector('.cart_item_price__block');
+    
+    // Створюємо елемент для відображення повної ціни (коли вибрана довжина)
+    let totalPriceElement = null;
+    if (priceBlock) {
+      totalPriceElement = document.createElement('p');
+      totalPriceElement.className = 'cart_item_price medium color_gold custom-total-price';
+      totalPriceElement.style.display = 'none';
+      totalPriceElement.style.marginTop = '8px';
+      totalPriceElement.style.width = '100%';
+      priceBlock.style.display = 'flex';
+      priceBlock.style.flexDirection = 'column';
+      priceBlock.appendChild(totalPriceElement);
+    }
+    
+    // Функція валідації довжини
+    function validateLength(value) {
+      const numValue = parseFloat(value);
+      
+      if (!value || isNaN(numValue)) {
+        errorSpan.textContent = '';
+        errorSpan.classList.remove('show');
+        lengthInput.classList.remove('error');
+        return false;
+      }
+      
+      if (numValue < minLen) {
+        errorSpan.textContent = `Мінімальна довжина: ${minLen}м`;
+        errorSpan.classList.add('show');
+        lengthInput.classList.add('error');
+        return false;
+      }
+      
+      if (numValue > maxLen) {
+        errorSpan.textContent = `Максимальна довжина: ${maxLen}м`;
+        errorSpan.classList.add('show');
+        lengthInput.classList.add('error');
+        return false;
+      }
+      
+      errorSpan.textContent = '';
+      errorSpan.classList.remove('show');
+      lengthInput.classList.remove('error');
+      return true;
+    }
+    
+    // Ініціалізація Choices.js для селекта ширини
+    let widthChoices = null;
+    if (widthSelectElement) {
+      widthChoices = new Choices(widthSelectElement, {
+        searchEnabled: false,
+        itemSelectText: "",
+        shouldSort: false,
+        removeItemButton: false,
+        placeholderValue: "Оберіть ширину",
+      });
+    }
+    
+    // Функція обчислення та оновлення ціни
+    function calculatePrice() {
+      const widthValue = widthSelectElement?.value || '';
+      const width = parseFloat(widthValue);
+      const length = parseFloat(lengthInput.value);
+      
+      // Приховуємо блок повної ціни, якщо немає ширини або довжини
+      if (!width || !length || isNaN(width) || isNaN(length)) {
+        if (totalPriceElement) {
+          totalPriceElement.style.display = 'none';
+        }
+        return;
+      }
+      
+      if (!validateLength(length)) {
+        if (totalPriceElement) {
+          totalPriceElement.style.display = 'none';
+        }
+        return;
+      }
+      
+      const totalPrice = customPrice * width * length;
+      const formattedPrice = totalPrice % 1 === 0 
+        ? totalPrice.toFixed(0) 
+        : totalPrice.toFixed(2);
+      
+      // Показуємо повну ціну нижче на новому рядку
+      if (totalPriceElement) {
+        totalPriceElement.innerHTML = `<span class="cart_item_price-value">${formattedPrice}</span> <span>грн</span>`;
+        totalPriceElement.style.display = 'block';
+      }
+    }
+    
+    // Обробник подій для селекта ширини
+    if (widthSelectElement) {
+      widthSelectElement.addEventListener('change', calculatePrice);
+    }
+    lengthInput.addEventListener('input', function() {
+      validateLength(this.value);
+      calculatePrice();
+    });
+    lengthInput.addEventListener('blur', function() {
+      validateLength(this.value);
+      calculatePrice(); // Оновлюємо відображення "/м²" при втраті фокусу
+    });
+  });
+}
+
+// Ініціалізація при завантаженні сторінки
+document.addEventListener('DOMContentLoaded', initCustomProductLogic);
 
 document.addEventListener("click", async ({ target }) => {
   const product = target.closest(".product");
@@ -118,11 +250,49 @@ document.addEventListener("click", async ({ target }) => {
   // add to basket
   if (addToBasketButton) {
     const counterValue = product.querySelector(".counter__value").value;
-
-    const basketProduct = await addToBasket({
+    const customSizeBlock = product.querySelector(".custom-size-block");
+    
+    const basketData = {
       product: productId,
       quantity: Number(counterValue) || 1,
-    });
+    };
+    
+    // Якщо це кастомний товар, перевіряємо та додаємо width та length
+    if (customSizeBlock) {
+      const widthSelectElement = customSizeBlock.querySelector(".custom-size-width-select");
+      const lengthInput = customSizeBlock.querySelector(".custom-size-length-input");
+      
+      // Отримуємо значення з select (Choices автоматично синхронізує з оригінальним select)
+      const selectedWidthValue = widthSelectElement?.value;
+      const lengthValue = lengthInput?.value;
+      
+      // Валідація для кастомного товару
+      if (!selectedWidthValue || !lengthValue) {
+        showError("Будь ласка, виберіть ширину та введіть довжину для кастомного килима");
+        return;
+      }
+      
+      // Перевіряємо валідність довжини (перевірка вже в initCustomProductLogic, але перевіримо ще раз)
+      const minLen = parseFloat(customSizeBlock.dataset.minLen);
+      const maxLen = parseFloat(customSizeBlock.dataset.maxLen);
+      const lengthNum = parseFloat(lengthValue);
+      
+      if (isNaN(lengthNum) || lengthNum < minLen || lengthNum > maxLen) {
+        showError(`Довжина повинна бути від ${minLen}м до ${maxLen}м`);
+        return;
+      }
+      
+      // Отримуємо ID ProductWidth з обраної опції
+      const selectedOption = widthSelectElement?.querySelector(`option[value="${selectedWidthValue}"]`);
+      const widthId = selectedOption?.dataset?.widthId;
+      
+      if (widthId && lengthValue) {
+        basketData.width = parseInt(widthId);
+        basketData.length = parseFloat(lengthValue);
+      }
+    }
+
+    const basketProduct = await addToBasket(basketData);
 
     console.log(basketProduct);
   }

@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.urls import path
 from django.shortcuts import render
 from django.utils.html import format_html
+from django.db.models import Sum
 from .models import (
     Product,
     ProductCategory,
@@ -79,7 +80,7 @@ class SpecificationInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
     save_as = True
-    list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'created', 'updated']
+    list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_total_quantity', 'created', 'updated']
     list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color']
     search_fields = ['title', 'description']
     actions = ['update_colors_action', 'duplicate_product_action']
@@ -317,6 +318,14 @@ class ProductAdmin(admin.ModelAdmin):
     
     get_color_display.short_description = 'Колір'
     get_color_display.admin_order_field = 'active_color'
+    
+    def get_total_quantity(self, obj):
+        """Відображає загальну кількість товару з усіх ProductAttribute"""
+        total = obj.product_attr.aggregate(total=Sum('quantity'))['total'] or 0
+        return total
+    
+    get_total_quantity.short_description = 'Кількість'
+    get_total_quantity.admin_order_field = 'product_attr__quantity'
     
     def update_colors_from_title(self, request, object_id):
         """AJAX view для оновлення кольорів поточного товару на основі title"""

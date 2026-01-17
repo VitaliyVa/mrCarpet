@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Min, Q, Case, When, Value, IntegerField, F
+from django.db.models import Min, Q, Case, When, Value, IntegerField, F, ExpressionWrapper, FloatField
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 
 from .filters import ProductFilter
@@ -29,9 +30,29 @@ def catalog_detail(request, slug):
         elif sort_param == '-title':
             products = products.order_by('-title')
         elif sort_param == 'price':
-            products = products.annotate(min_price=Min('product_attr__price')).order_by('min_price')
+            effective_price_expr = Case(
+                When(product_attr__custom_attribute=True, then=F('product_attr__custom_price')),
+                default=ExpressionWrapper(
+                    F('product_attr__price') * (1 - Coalesce(F('product_attr__discount'), 0) / 100.0),
+                    output_field=FloatField()
+                ),
+                output_field=FloatField()
+            )
+            products = products.annotate(
+                effective_price_attr=effective_price_expr
+            ).annotate(min_price=Min('effective_price_attr')).order_by('min_price')
         elif sort_param == '-price':
-            products = products.annotate(min_price=Min('product_attr__price')).order_by('-min_price')
+            effective_price_expr = Case(
+                When(product_attr__custom_attribute=True, then=F('product_attr__custom_price')),
+                default=ExpressionWrapper(
+                    F('product_attr__price') * (1 - Coalesce(F('product_attr__discount'), 0) / 100.0),
+                    output_field=FloatField()
+                ),
+                output_field=FloatField()
+            )
+            products = products.annotate(
+                effective_price_attr=effective_price_expr
+            ).annotate(min_price=Min('effective_price_attr')).order_by('-min_price')
     
     # Застосовуємо фільтри
     filter_set = ProductFilter(request.GET, products)

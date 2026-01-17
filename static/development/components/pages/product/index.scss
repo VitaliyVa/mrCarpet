@@ -84,6 +84,182 @@
     padding: 0 8px;
   }
 
+  .custom-size-block {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+
+    .custom-size-field {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+
+      .custom-size-label {
+        color: #453f3a;
+        font-size: 14px;
+        line-height: 130%;
+        font-family: "Futura PT Medium", sans-serif;
+      }
+
+      .custom-size-width-select {
+        min-width: 120px;
+        max-width: 150px;
+        width: auto;
+      }
+
+      // Стилі для Choices.js селекта ширини
+      .choices {
+        width: 140px !important;
+        min-width: 140px !important;
+        
+        .choices__inner {
+          min-height: 29px !important;
+          height: 29px !important;
+          background-color: #f9f5ed !important;
+          padding: 4px 28px 4px 12px !important;
+          color: #453f3a !important;
+          font-size: 14px !important;
+          line-height: 130% !important;
+          font-family: "Futura PT Medium", sans-serif !important;
+          border-radius: 50px !important;
+          border: none !important;
+          outline: none !important;
+          cursor: pointer !important;
+          transition: all 0.2s !important;
+          display: flex !important;
+          align-items: center !important;
+          
+          .choices__list--single {
+            padding: 0 !important;
+            
+            .choices__item {
+              padding: 0 !important;
+              line-height: 130% !important;
+            }
+          }
+        }
+        
+        .choices__list--dropdown {
+          border: 1px solid #e0e0e0 !important;
+          border-radius: 8px !important;
+          margin-top: 4px !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+          background-color: #fff !important;
+          
+          .choices__item--selectable {
+            padding: 10px 12px !important;
+            font-size: 14px !important;
+            line-height: 130% !important;
+            font-family: "Futura PT Medium", sans-serif !important;
+            color: #453f3a !important;
+            
+            &.is-highlighted {
+              background-color: #f9f5ed !important;
+              color: #453f3a !important;
+            }
+            
+            &.is-selected {
+              background-color: #89817c !important;
+              color: #fff !important;
+            }
+          }
+        }
+        
+        &.is-open .choices__inner {
+          background-color: #f9f5ed !important;
+          color: #453f3a !important;
+        }
+        
+        &[data-type*="select-one"]::after {
+          border-color: #a17e5c transparent transparent transparent !important;
+          border-width: 6px 4px 0 4px !important;
+          right: 10px !important;
+          margin-top: -3px !important;
+          transition: all 0.2s !important;
+        }
+        
+        &.is-open[data-type*="select-one"]::after {
+          border-color: #a17e5c transparent transparent transparent !important;
+          border-width: 6px 4px 0 4px !important;
+          transform: rotate(180deg) !important;
+          margin-top: -3px !important;
+        }
+        
+        &:hover:not(.is-open) .choices__inner {
+          background-color: #f9f5ed !important;
+          color: #453f3a !important;
+        }
+        
+        &:hover:not(.is-open)[data-type*="select-one"]::after {
+          border-color: #a17e5c transparent transparent transparent !important;
+        }
+      }
+
+      .custom-size-length-input {
+        background-color: transparent;
+        padding: 4px 20px 4px 0;
+        border: none;
+        border-bottom: 1px solid #89817c;
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        font-family: "Futura PT Medium", sans-serif;
+        font-weight: 450;
+        font-size: 14px;
+        line-height: 130%;
+        color: #453f3a;
+        position: relative;
+
+        &::placeholder {
+          color: #89817c;
+        }
+
+        &:focus {
+          outline: none;
+          border-bottom-color: #a46c46;
+        }
+
+        &.error {
+          border-bottom-color: #dc3545;
+        }
+      }
+
+      // Додаємо "м." після інпута довжини
+      .custom-size-length-wrapper {
+        position: relative;
+        display: inline-block;
+
+        &::after {
+          content: 'м.';
+          position: absolute;
+          right: 4px;
+          bottom: 4px;
+          font-family: "Futura PT Medium", sans-serif;
+          font-size: 14px;
+          line-height: 130%;
+          color: #453f3a;
+          pointer-events: none;
+        }
+      }
+
+      .custom-size-error {
+        color: #dc3545;
+        font-size: 12px;
+        line-height: 130%;
+        margin-top: 4px;
+        display: none;
+
+        &.show {
+          display: block;
+        }
+      }
+    }
+  }
+
   .color-label {
     position: relative;
     display: flex;

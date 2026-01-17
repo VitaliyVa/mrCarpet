@@ -27147,6 +27147,9 @@ const addToBasket = async (product, onSucces) => {
     }
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
+
+    // Показуємо успішне повідомлення
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Товар додано в кошик");
     return data;
   } catch (error) {
     var _error$response;
@@ -27281,8 +27284,7 @@ const addToFavorite = async (productId, onSucces) => {
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/favourite-products/", {
       product: productId
     });
-
-    // showSuccess(data?.message || "Додано в обране!");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в обране!");
 
     // При create повертається {favourite: {...}, message: "..."}
     const quantity = (_ref = (_data$favourite$quant = data === null || data === void 0 || (_data$favourite = data.favourite) === null || _data$favourite === void 0 ? void 0 : _data$favourite.quantity) !== null && _data$favourite$quant !== void 0 ? _data$favourite$quant : data === null || data === void 0 ? void 0 : data.quantity) !== null && _ref !== void 0 ? _ref : 0;
@@ -27307,8 +27309,7 @@ const removeFromFavorite = async (productId, onSucces) => {
     if (onSucces) {
       onSucces();
     }
-
-    // showSuccess(data?.message || "Товар видалено!");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено з обраного!");
 
     // При destroy повертається FavouriteSerializer без обгортки favourite
     const quantity = (_ref2 = (_data$quantity = data === null || data === void 0 ? void 0 : data.quantity) !== null && _data$quantity !== void 0 ? _data$quantity : data === null || data === void 0 || (_data$favourite2 = data.favourite) === null || _data$favourite2 === void 0 ? void 0 : _data$favourite2.quantity) !== null && _ref2 !== void 0 ? _ref2 : 0;
@@ -28798,6 +28799,78 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.scss */ "../components/pages/index/index.scss");
 /* harmony import */ var _index_scss__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_index_scss__WEBPACK_IMPORTED_MODULE_0__);
 
+
+// Таймер акцій
+function initSaleTimer() {
+  // Знаходимо всі таймери акцій і перевіряємо їх секції
+  const timerElements = document.querySelectorAll('.info_for_product__timer[data-end-time]');
+  if (!timerElements.length) {
+    return;
+  }
+  timerElements.forEach(timerElement => {
+    // Знаходимо батьківську секцію акцій
+    const section = timerElement.closest('.catalog_slider');
+    if (!section) {
+      return;
+    }
+    const sliderWrapper = section.querySelector('.slider__block.swiper-wrapper');
+    const saleProducts = sliderWrapper ? sliderWrapper.querySelectorAll('.swiper-slide') : [];
+
+    // Перевіряємо чи є товари в акції
+    if (!saleProducts || saleProducts.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    const endTimeStr = timerElement.getAttribute('data-end-time');
+
+    // Якщо немає data-end-time або він порожній - приховуємо всю секцію
+    if (!endTimeStr || !endTimeStr.trim()) {
+      section.style.display = 'none';
+      return;
+    }
+    const endTime = new Date(endTimeStr).getTime();
+
+    // Перевірка чи дата валідна
+    if (isNaN(endTime)) {
+      section.style.display = 'none';
+      return;
+    }
+
+    // Функція для оновлення таймера
+    function updateTimer() {
+      const now = new Date().getTime();
+      const distance = endTime - now;
+
+      // Якщо час вийшов
+      if (distance < 0) {
+        timerElement.textContent = '00:00:00';
+        return;
+      }
+
+      // Обчислюємо години, хвилини, секунди
+      const hours = Math.floor(distance % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
+      const minutes = Math.floor(distance % (1000 * 60 * 60) / (1000 * 60));
+      const seconds = Math.floor(distance % (1000 * 60) / 1000);
+
+      // Форматуємо з двома цифрами
+      const formattedHours = String(hours).padStart(2, '0');
+      const formattedMinutes = String(minutes).padStart(2, '0');
+      const formattedSeconds = String(seconds).padStart(2, '0');
+
+      // Оновлюємо текст
+      timerElement.textContent = "".concat(formattedHours, ":").concat(formattedMinutes, ":").concat(formattedSeconds);
+    }
+
+    // Оновлюємо таймер одразу
+    updateTimer();
+
+    // Оновлюємо таймер кожну секунду
+    setInterval(updateTimer, 1000);
+  });
+}
+
+// Ініціалізація таймера при завантаженні сторінки
+document.addEventListener('DOMContentLoaded', initSaleTimer);
 
 /***/ }),
 

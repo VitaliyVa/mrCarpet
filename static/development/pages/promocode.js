@@ -1,4 +1,6 @@
 // Функціональність для промокоду
+import { showSuccess, showError } from "../utils/notifications";
+
 document.addEventListener('DOMContentLoaded', function() {
     const promocodeBtn = document.querySelector('.basket__promocode-add-btn');
     const promocodeInput = document.querySelector('.basket__promocode input[type="text"]');
@@ -8,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const promocode = promocodeInput.value.trim();
             
             if (!promocode) {
-                alert('Введіть промокод');
+                showError('Введіть промокод');
                 return;
             }
             
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updatePricesWithDiscount(data);
                     
                     // Показуємо повідомлення про успіх
-                    alert(data.message);
+                    showSuccess(data.message);
                     
                     // Зберігаємо промокод в localStorage
                     localStorage.setItem('applied_promocode', promocode);
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 // Показуємо повідомлення про помилку
-                alert(error.message);
+                showError(error.message);
                 
                 // Повертаємо кнопку в початковий стан
                 promocodeBtn.textContent = 'Додати';

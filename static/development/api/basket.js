@@ -1,6 +1,6 @@
 import { instance } from "./instance";
 import { showLoader } from "../components/module/form_action";
-import { showError } from "../utils/notifications";
+import { showError, showSuccess } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
 import { updateBasket } from "../components/pages/basket/utils/updateBasket";
 export const addToBasket = async (product, onSucces) => {
@@ -13,6 +13,9 @@ export const addToBasket = async (product, onSucces) => {
 
     updateCountBadge(".header_bottom_panel_cart", data?.quantity);
     updateBasket(data);
+    
+    // Показуємо успішне повідомлення
+    showSuccess(data?.message || "Товар додано в кошик");
 
     return data;
   } catch (error) {

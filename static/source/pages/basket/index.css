@@ -884,6 +884,11 @@ textarea {
 .header_top_panel_nav_link {
   font-size: 16px;
   line-height: 21px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+.header_top_panel_nav_link:hover {
+  color: #a46c46;
 }
 
 .header_bottom_panel__block {
@@ -925,6 +930,9 @@ textarea {
   border-radius: 8px;
   margin-left: 30px;
   margin-right: 30px;
+}
+.header_bottom_panel_catalog:hover {
+  background: #8d5a39;
 }
 .header_bottom_panel_catalog_label {
   font-size: 16px;
@@ -1083,12 +1091,22 @@ textarea {
   display: flex;
   align-items: center;
   margin-left: 40px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+.header_bottom_panel_item:hover {
+  color: #a46c46;
+}
+.header_bottom_panel_item:hover .header_bottom_panel_item_icon,
+.header_bottom_panel_item:hover .header_bottom_panel_item_label {
+  color: #a46c46;
 }
 .header_bottom_panel_item_icon {
   position: relative;
   display: flex;
   align-items: center;
   margin-right: 15px;
+  transition: color 0.2s ease;
 }
 .header_bottom_panel_item_icon span {
   padding-left: 6px;
@@ -1102,6 +1120,7 @@ textarea {
 }
 .header_bottom_panel_item_label {
   font-size: 18px;
+  transition: color 0.2s ease;
 }
 
 @keyframes countBounce {
@@ -3890,7 +3909,7 @@ swiper-container .swiper-notification {
 
 .checkout-notification {
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
   min-width: 300px;
   max-width: 400px;
@@ -3902,12 +3921,12 @@ swiper-container .swiper-notification {
   align-items: center;
   gap: 12px;
   z-index: 99999 !important;
-  transform: translateX(450px);
+  transform: translateY(450px);
   opacity: 0;
   transition: all 0.3s ease;
 }
 .checkout-notification--show {
-  transform: translateX(0);
+  transform: translateY(0);
   opacity: 1;
 }
 .checkout-notification__icon {
@@ -3967,6 +3986,7 @@ swiper-container .swiper-notification {
   .checkout-notification {
     left: 20px;
     right: 20px;
+    bottom: 20px;
     min-width: auto;
     max-width: none;
   }
@@ -4083,6 +4103,19 @@ swiper-container .swiper-notification {
   border-radius: 50%;
   border: none;
   flex-shrink: 0;
+}
+.basket_item .custom-length-label {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #fffcf2;
+  border-radius: 50px;
+  font-size: 12px;
+  line-height: 130%;
+  font-family: "Futura PT Medium", sans-serif;
+  color: #453f3a;
+}
+.basket_item .custom-length-label span {
+  color: #453f3a;
 }
 .basket_item__center {
   display: flex;

@@ -167,7 +167,8 @@
                     </button>
                 </div>
             </div>
-            <div class="catalog_section_bottom cart_item_wrapper">
+            <div class="catalog_section_bottom cart_item_wrapper{% if not products %} empty-catalog{% endif %}">
+
                 {% if products %}
                 {% for product in products %}
                 <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
@@ -226,6 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         // Відновлюємо стан чекбоксів з URL параметрів
         restoreCheckboxState();
+        
+        // Перевіряємо наявність активних фільтрів та приховуємо кнопку скидання
+        updateResetButtonVisibility();
         
         // Ініціалізація noUiSlider для цін
         const priceSlider = document.getElementById('price-slider');
@@ -334,6 +338,8 @@ function applyFilters() {
     if (form) {
         form.submit();
     }
+    // Оновлюємо видимість кнопки після застосування
+    setTimeout(updateResetButtonVisibility, 100);
 }
 
 // Функція для встановлення сортування (працює одразу)
@@ -349,6 +355,26 @@ function setSort(sortValue) {
     // Перенаправляємо з новими параметрами
     const newUrl = window.location.pathname + '?' + urlParams.toString();
     window.location.href = newUrl;
+}
+
+// Функція для перевірки наявності активних фільтрів та оновлення видимості кнопки
+function updateResetButtonVisibility() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetBtn = document.querySelector('.reset-filters-btn');
+    
+    if (!resetBtn) return;
+    
+    // Перевіряємо чи є якісь параметри окрім можливих служебних
+    const hasFilters = Array.from(urlParams.keys()).some(key => {
+        // Пропускаємо sort та інші служебні параметри
+        return !['sort', 'page'].includes(key);
+    });
+    
+    if (hasFilters) {
+        resetBtn.style.display = 'block';
+    } else {
+        resetBtn.style.display = 'none';
+    }
 }
 
 // Функція для скидання всіх фільтрів

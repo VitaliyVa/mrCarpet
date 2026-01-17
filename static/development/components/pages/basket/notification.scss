@@ -1,7 +1,7 @@
 // Notification стилі
 .checkout-notification {
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
   min-width: 300px;
   max-width: 400px;
@@ -13,12 +13,12 @@
   align-items: center;
   gap: 12px;
   z-index: 99999 !important; // Повинно бути вище за modal-overlay (z-index: 9999)
-  transform: translateX(450px);
+  transform: translateY(450px);
   opacity: 0;
   transition: all 0.3s ease;
 
   &--show {
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1;
   }
 
@@ -93,6 +93,7 @@
   @media (max-width: 768px) {
     left: 20px;
     right: 20px;
+    bottom: 20px;
     min-width: auto;
     max-width: none;
   }

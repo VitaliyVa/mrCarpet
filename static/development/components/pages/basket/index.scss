@@ -134,6 +134,21 @@
       flex-shrink: 0;
     }
 
+    .custom-length-label {
+      display: inline-block;
+      padding: 4px 12px;
+      background-color: #fffcf2;
+      border-radius: 50px;
+      font-size: 12px;
+      line-height: 130%;
+      font-family: "Futura PT Medium", sans-serif;
+      color: #453f3a;
+
+      span {
+        color: #453f3a;
+      }
+    }
+
     &__center {
       display: flex;
       justify-content: space-between;

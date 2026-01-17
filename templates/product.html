@@ -255,8 +255,13 @@
               {% endif %}
               {% endfor %}
             >
+              {% if product.product_attr.first.custom_attribute %}
+              <span class="cart_item_price-value">{{ product.product_attr.first.custom_price }}</span>
+              <span>грн/м²</span>
+              {% else %}
               <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
               <span>грн</span>
+              {% endif %}
             </p>
             <p
               class="cart_item_procent medium color_gold"
@@ -305,6 +310,34 @@
             {% endif %}
             {% endfor %}
           </div>
+
+          {% for attr in product.product_attr.all %}
+          {% if attr.custom_attribute %}
+          <div class="custom-size-block" data-custom-attr-id="{{ attr.id }}" data-min-len="{{ attr.min_len }}" data-max-len="{{ attr.max_len }}" data-custom-price="{{ attr.custom_price }}">
+            <div class="custom-size-field">
+              <label class="custom-size-label">Ширина:</label>
+              <select class="custom-size-width-select">
+                <option value="">Оберіть ширину</option>
+                {% for width in attr.width.all %}
+                <option value="{{ width.width }}" data-width-id="{{ width.id }}">{{ width.width }}М</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="custom-size-field">
+              <label class="custom-size-label">Довжина:</label>
+              <input 
+                type="number" 
+                class="custom-size-length-input input-transparent" 
+                placeholder="Введіть довжину"
+                step="0.1"
+                min="{{ attr.min_len }}"
+                max="{{ attr.max_len }}"
+              />
+              <span class="custom-size-error"></span>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
 
           {% if product.colors.all %}
           <div class="colors-block">

@@ -32,8 +32,13 @@
       {% endif %}
       {% endfor %}
     >
+      {% if product.product_attr.first.custom_attribute %}
+      <span class="cart_item_price-value">{{ product.product_attr.first.custom_price }}</span>
+      <span>грн/м²</span>
+      {% else %}
       <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
       <span>грн</span>
+      {% endif %}
     </div>
     <div
       class="cart_item_procent medium color_gold"

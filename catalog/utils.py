@@ -1,5 +1,5 @@
 from .models import Favourite
-from django.db.models import Count, Min, Max
+from django.db.models import Count, Min, Max, Case, When, DecimalField, Q, ExpressionWrapper, F
 from .models import Specification, SpecificationValue, Size, ProductColor
 
 
@@ -60,11 +60,44 @@ def get_available_filters(products_queryset):
     
     filters['specifications'] = available_specs
     
-    # Отримуємо діапазон цін
-    price_range = products_queryset.aggregate(
-        min_price=Min('product_attr__price'),
-        max_price=Max('product_attr__price')
-    )
+    # Отримуємо діапазон цін з урахуванням кастомних товарів та знижок
+    # Для кастомних товарів використовуємо custom_price, для звичайних - price зі знижкою якщо є
+    from catalog.models import ProductAttribute
+    from django.db.models import FloatField
+    
+    # Збираємо всі ціни з обох полів з урахуванням знижок
+    all_prices = []
+    
+    # Для мінімальної ціни - з поточного queryset
+    product_attrs = ProductAttribute.objects.filter(product__in=products_queryset)
+    for attr in product_attrs:
+        if attr.custom_attribute and attr.custom_price:
+            all_prices.append(float(attr.custom_price))
+        elif attr.price:
+            # Обчислюємо ціну зі знижкою якщо є
+            if attr.discount:
+                price_with_discount = float(attr.price) - (float(attr.price) * float(attr.discount) / 100)
+                all_prices.append(price_with_discount)
+            else:
+                all_prices.append(float(attr.price))
+    
+    # Для максимальної ціни - з усіх товарів на сайті
+    all_product_attrs = ProductAttribute.objects.all()
+    all_max_prices = []
+    for attr in all_product_attrs:
+        if attr.custom_attribute and attr.custom_price:
+            all_max_prices.append(float(attr.custom_price))
+        elif attr.price:
+            # Без знижки для максимальної (беремо оригінальну ціну)
+            all_max_prices.append(float(attr.price))
+    
+    min_price = min(all_prices) if all_prices else None
+    max_price = max(all_max_prices) if all_max_prices else (max(all_prices) if all_prices else None)
+    
+    price_range = {
+        'min_price': min_price,
+        'max_price': max_price
+    }
     
     filters['price_range'] = price_range
     

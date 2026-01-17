@@ -1,5 +1,6 @@
 import Swiper, { Thumbs, Navigation } from "swiper";
 import "swiper/swiper-bundle.css";
+import "choices.js/public/assets/styles/choices.min.css";
 import "./product";
 import "./reviews";
 import "./index.scss";

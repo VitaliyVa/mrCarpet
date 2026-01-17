@@ -27147,6 +27147,9 @@ const addToBasket = async (product, onSucces) => {
     }
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
+
+    // Показуємо успішне повідомлення
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Товар додано в кошик");
     return data;
   } catch (error) {
     var _error$response;
@@ -27281,8 +27284,7 @@ const addToFavorite = async (productId, onSucces) => {
     } = await _instance__WEBPACK_IMPORTED_MODULE_0__["instance"].post("/favourite-products/", {
       product: productId
     });
-
-    // showSuccess(data?.message || "Додано в обране!");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Додано в обране!");
 
     // При create повертається {favourite: {...}, message: "..."}
     const quantity = (_ref = (_data$favourite$quant = data === null || data === void 0 || (_data$favourite = data.favourite) === null || _data$favourite === void 0 ? void 0 : _data$favourite.quantity) !== null && _data$favourite$quant !== void 0 ? _data$favourite$quant : data === null || data === void 0 ? void 0 : data.quantity) !== null && _ref !== void 0 ? _ref : 0;
@@ -27307,8 +27309,7 @@ const removeFromFavorite = async (productId, onSucces) => {
     if (onSucces) {
       onSucces();
     }
-
-    // showSuccess(data?.message || "Товар видалено!");
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_1__["showSuccess"])((data === null || data === void 0 ? void 0 : data.message) || "Товар видалено з обраного!");
 
     // При destroy повертається FavouriteSerializer без обгортки favourite
     const quantity = (_ref2 = (_data$quantity = data === null || data === void 0 ? void 0 : data.quantity) !== null && _data$quantity !== void 0 ? _data$quantity : data === null || data === void 0 || (_data$favourite2 = data.favourite) === null || _data$favourite2 === void 0 ? void 0 : _data$favourite2.quantity) !== null && _ref2 !== void 0 ? _ref2 : 0;

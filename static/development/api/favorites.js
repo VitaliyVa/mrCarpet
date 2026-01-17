@@ -8,7 +8,7 @@ export const addToFavorite = async (productId, onSucces) => {
       product: productId,
     });
 
-    // showSuccess(data?.message || "Додано в обране!");
+    showSuccess(data?.message || "Додано в обране!");
 
     // При create повертається {favourite: {...}, message: "..."}
     const quantity = data?.favourite?.quantity ?? data?.quantity ?? 0;
@@ -32,7 +32,7 @@ export const removeFromFavorite = async (productId, onSucces) => {
       onSucces();
     }
 
-    // showSuccess(data?.message || "Товар видалено!");
+    showSuccess(data?.message || "Товар видалено з обраного!");
 
     // При destroy повертається FavouriteSerializer без обгортки favourite
     const quantity = data?.quantity ?? data?.favourite?.quantity ?? 0;
