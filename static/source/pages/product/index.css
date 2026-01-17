@@ -3646,6 +3646,90 @@ swiper-container .swiper-notification {
   outline: none;
   pointer-events: none;
 }
+.checkout-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 99999 !important;
+  transform: translateX(450px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.checkout-notification--show {
+  transform: translateX(0);
+  opacity: 1;
+}
+.checkout-notification__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkout-notification__message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #453f3a;
+}
+.checkout-notification__close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #89817c;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+.checkout-notification__close:hover {
+  color: #453f3a;
+}
+.checkout-notification__close svg {
+  width: 14px;
+  height: 14px;
+}
+.checkout-notification--success {
+  border-left: 4px solid #28a745;
+}
+.checkout-notification--success .checkout-notification__icon {
+  color: #28a745;
+}
+.checkout-notification--error {
+  border-left: 4px solid #dc3545;
+}
+.checkout-notification--error .checkout-notification__icon {
+  color: #dc3545;
+}
+.checkout-notification--info {
+  border-left: 4px solid #a46c46;
+}
+.checkout-notification--info .checkout-notification__icon {
+  color: #a46c46;
+}
+@media (max-width: 768px) {
+  .checkout-notification {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+    max-width: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .first_section .container {
     padding: 0;
@@ -3680,6 +3764,16 @@ swiper-container .swiper-notification {
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
+}
+.product .characteristic .characteristic-value {
+  cursor: pointer;
+  color: #a46c46;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+}
+.product .characteristic .characteristic-value:hover {
+  color: #8a5638;
+  text-decoration: none;
 }
 .product__info-bottom {
   margin-top: 40px;

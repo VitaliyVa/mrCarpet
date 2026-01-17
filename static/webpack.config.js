@@ -63,6 +63,11 @@ module.exports = {
   },
   devtool: isDev ? "source-map" : "",
   optimization: optimization(),
+  watchOptions: {
+    poll: 1000,
+    aggregateTimeout: 300,
+    ignored: /node_modules/,
+  },
   devServer: {
     port: 3801,
     hot: isDev,

@@ -18,8 +18,13 @@ export const addToBasket = async (product, onSucces) => {
     updateBasket(data);
 
     return data;
-  } catch ({ response }) {
-    showError(response?.data?.message || "Помилка при додаванні в кошик");
+  } catch (error) {
+    // Обробка помилок від axios
+    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при додаванні в кошик";
+    showError(errorMessage);
+    
+    // Повертаємо null при помилці для обробки на рівні компонента
+    return null;
   }
 };
 
@@ -35,8 +40,12 @@ export const removeFromBasket = async (productId, onSucces) => {
     updateBasket(data);
 
     return data;
-  } catch ({ response }) {
-    showError(response?.data?.message || "Помилка при додаванні в кошик");
+  } catch (error) {
+    // Обробка помилок від axios
+    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при видаленні з кошика";
+    showError(errorMessage);
+    
+    return null;
   }
 };
 
@@ -52,8 +61,12 @@ export const updateBasketItem = async ({ id, ...product }, onSucces) => {
     updateBasket(data);
 
     return data;
-  } catch ({ response }) {
-    showError(response?.data?.message || "Помилка при додаванні в кошик");
+  } catch (error) {
+    // Обробка помилок від axios
+    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при оновленні кошика";
+    showError(errorMessage);
+    
+    return null;
   }
 };
 

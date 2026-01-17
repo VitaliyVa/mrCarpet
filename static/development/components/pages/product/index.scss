@@ -1,3 +1,5 @@
+@import '../basket/notification.scss';
+
 @media (max-width: 1024px) {
   .first_section .container {
     padding: 0;
@@ -39,6 +41,18 @@
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
+
+    .characteristic-value {
+      cursor: pointer;
+      color: #a46c46;
+      text-decoration: underline;
+      transition: all 0.2s ease;
+
+      &:hover {
+        color: #8a5638;
+        text-decoration: none;
+      }
+    }
   }
 
   &__info {

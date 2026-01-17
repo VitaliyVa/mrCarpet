@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development webpack --watch --mode development ",
+    "watch": "cross-env NODE_ENV=development webpack --watch --mode development ",
     "build": "cross-env NODE_ENV=production webpack --mode production  "
   },
   "browserslist": "> 0.25%, not dead",

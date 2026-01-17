@@ -365,7 +365,14 @@
             <div class="accordion_content content_column">
               {% for spec in product.product_specs.all %}
               <div class="characteristic">
-                <span>{{ spec.specification }}</span> <span>{{ spec.spec_value }}</span>
+                <span>{{ spec.specification }}</span> 
+                <span 
+                  class="characteristic-value" 
+                  data-spec-name="{{ spec.specification.title }}"
+                  data-spec-value="{{ spec.spec_value.title }}"
+                  data-category-slug="{% if product.categories.first %}{{ product.categories.first.slug }}{% endif %}"
+                  style="cursor: pointer; color: #a46c46; text-decoration: underline;"
+                >{{ spec.spec_value }}</span>
               </div>
               {% endfor %}
             </div>

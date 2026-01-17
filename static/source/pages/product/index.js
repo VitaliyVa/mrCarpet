@@ -27149,11 +27149,14 @@ const addToBasket = async (product, onSucces) => {
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
     return data;
-  } catch ({
-    response
-  }) {
-    var _response$data;
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.message) || "Помилка при додаванні в кошик");
+  } catch (error) {
+    var _error$response;
+    // Обробка помилок від axios
+    const errorMessage = (error === null || error === void 0 || (_error$response = error.response) === null || _error$response === void 0 || (_error$response = _error$response.data) === null || _error$response === void 0 ? void 0 : _error$response.message) || (error === null || error === void 0 ? void 0 : error.message) || "Помилка при додаванні в кошик";
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])(errorMessage);
+
+    // Повертаємо null при помилці для обробки на рівні компонента
+    return null;
   }
 };
 const removeFromBasket = async (productId, onSucces) => {
@@ -27167,11 +27170,12 @@ const removeFromBasket = async (productId, onSucces) => {
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
     return data;
-  } catch ({
-    response
-  }) {
-    var _response$data2;
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data2 = response.data) === null || _response$data2 === void 0 ? void 0 : _response$data2.message) || "Помилка при додаванні в кошик");
+  } catch (error) {
+    var _error$response2;
+    // Обробка помилок від axios
+    const errorMessage = (error === null || error === void 0 || (_error$response2 = error.response) === null || _error$response2 === void 0 || (_error$response2 = _error$response2.data) === null || _error$response2 === void 0 ? void 0 : _error$response2.message) || (error === null || error === void 0 ? void 0 : error.message) || "Помилка при видаленні з кошика";
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])(errorMessage);
+    return null;
   }
 };
 const updateBasketItem = async (_ref, onSucces) => {
@@ -27189,11 +27193,12 @@ const updateBasketItem = async (_ref, onSucces) => {
     Object(_utils_updateCountBadge__WEBPACK_IMPORTED_MODULE_3__["updateCountBadge"])(".header_bottom_panel_cart", data === null || data === void 0 ? void 0 : data.quantity);
     Object(_components_pages_basket_utils_updateBasket__WEBPACK_IMPORTED_MODULE_4__["updateBasket"])(data);
     return data;
-  } catch ({
-    response
-  }) {
-    var _response$data3;
-    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])((response === null || response === void 0 || (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.message) || "Помилка при додаванні в кошик");
+  } catch (error) {
+    var _error$response3;
+    // Обробка помилок від axios
+    const errorMessage = (error === null || error === void 0 || (_error$response3 = error.response) === null || _error$response3 === void 0 || (_error$response3 = _error$response3.data) === null || _error$response3 === void 0 ? void 0 : _error$response3.message) || (error === null || error === void 0 ? void 0 : error.message) || "Помилка при оновленні кошика";
+    Object(_utils_notifications__WEBPACK_IMPORTED_MODULE_2__["showError"])(errorMessage);
+    return null;
   }
 };
 
@@ -29074,8 +29079,30 @@ document.addEventListener("click", async _ref => {
   const productId = product === null || product === void 0 || (_product$dataset = product.dataset) === null || _product$dataset === void 0 ? void 0 : _product$dataset.productId;
   const addToBasketButton = target.closest(".add-to-cart");
   const addToFavoriteButton = target.closest(".product_favourite-btn");
+  const characteristicValue = target.closest(".characteristic-value");
   const counterMinusButton = target.closest(".counter__minus-btn");
   const counterPlusButton = target.closest(".counter__plus-btn");
+
+  // click on characteristic value - redirect to catalog with filter
+  if (characteristicValue) {
+    const specName = characteristicValue.dataset.specName;
+    const specValue = characteristicValue.dataset.specValue;
+    const categorySlug = characteristicValue.dataset.categorySlug;
+    if (specName && specValue && categorySlug) {
+      // Перетворюємо назву специфікації в нижній регістр для URL
+      const specNameLower = specName.toLowerCase();
+
+      // Кодуємо значення для URL
+      const encodedSpecValue = encodeURIComponent(specValue);
+
+      // Будуємо URL: /catalog/categorie/{category_slug}/?{spec_name_lower}={spec_value}
+      const catalogUrl = "/catalog/categorie/".concat(categorySlug, "/?").concat(specNameLower, "=").concat(encodedSpecValue);
+
+      // Перенаправляємо на каталог з фільтром
+      window.location.href = catalogUrl;
+      return;
+    }
+  }
 
   // add to basket
   if (addToBasketButton) {
