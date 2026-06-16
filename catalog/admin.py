@@ -1,8 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin.widgets import AdminFileWidget
+from django.db import models
 from django.http import JsonResponse
 from django.urls import path
 from django.shortcuts import render
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.db.models import Sum
 from .models import (
     Product,
@@ -21,6 +24,24 @@ from .models import (
     ProductWidth,
     PromoCode, ProductImage,
 )
+
+
+class ImagePreviewWidget(AdminFileWidget):
+    """Віджет ImageField, що показує мініатюру завантаженого фото біля поля."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        html = super().render(name, value, attrs, renderer)
+        # value — це FieldFile; порожній FieldFile дає False, тож прев'ю лише коли є файл
+        if value and getattr(value, "url", None):
+            preview = format_html(
+                '<div class="image-preview" style="margin:0 0 8px;">'
+                '<img src="{}" alt="preview" style="max-height:160px; max-width:240px; '
+                'border-radius:8px; border:1px solid var(--border-color,#ccc); '
+                'object-fit:contain; background:#fff; padding:2px;" /></div>',
+                value.url,
+            )
+            return mark_safe(preview + html)
+        return html
 
 
 # Register your models here.
@@ -44,6 +65,9 @@ class ProductInLine(admin.TabularInline):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 0
+    formfield_overrides = {
+        models.ImageField: {"widget": ImagePreviewWidget},
+    }
 
 
 class RelatedProductInline(admin.TabularInline):
@@ -79,6 +103,9 @@ class SpecificationInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
+    formfield_overrides = {
+        models.ImageField: {"widget": ImagePreviewWidget},
+    }
     save_as = True
     list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_total_quantity', 'created', 'updated']
     list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color']
@@ -428,6 +455,9 @@ class ProductAdmin(admin.ModelAdmin):
 
 class ProductColorAdmin(admin.ModelAdmin):
     fields = ["title", "color", "texture"]
+    formfield_overrides = {
+        models.ImageField: {"widget": ImagePreviewWidget},
+    }
     list_display = [
         "title",
         "color",
