@@ -1,16 +1,16 @@
 'use strict';
 /*
  * Авто-обробка зображень товару в адмінці при виборі/зміні файлу:
- *   - Product.image / Product.hover_image  → ширина до 300px (висота пропорційно)
- *   - ProductImage (інлайн «Зображення продуктів»), name=images-N-image → ширина до 800px
+ *   - Product.image / Product.hover_image  → ширина до 500px (висота пропорційно)
+ *   - ProductImage (інлайн «Зображення продуктів»), name=images-N-image → ширина до 1024px
  *   - усе конвертується у WebP (з фолбеком на PNG, якщо браузер не вміє webp).
  * Пропорції зберігаються (без обрізки). Якщо зображення вже вужче за ціль — не збільшуємо,
  * лише конвертуємо у WebP. Делегований обробник ловить і динамічно додані інлайн-рядки.
  */
 (function () {
     var RULES = [
-        { test: function (n) { return n === 'image' || n === 'hover_image'; }, maxWidth: 300 },
-        { test: function (n) { return /^images-\d+-image$/.test(n); }, maxWidth: 800 }
+        { test: function (n) { return n === 'image' || n === 'hover_image'; }, maxWidth: 500 },
+        { test: function (n) { return /^images-\d+-image$/.test(n); }, maxWidth: 1024 }
     ];
     var selfUpdate = false; // ми самі міняємо input.files (захист від можливого зациклення)
 
