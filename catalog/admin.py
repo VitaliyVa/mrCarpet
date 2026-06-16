@@ -108,8 +108,9 @@ class ProductAdmin(admin.ModelAdmin):
         models.ImageField: {"widget": ImagePreviewWidget},
     }
     save_as = True
-    list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_total_quantity', 'created', 'updated']
-    list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color']
+    list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_color_group_display', 'get_total_quantity', 'created', 'updated']
+    list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color', 'color_group']
+    list_select_related = ('active_color', 'color_group')
     search_fields = ['title', 'description']
     actions = ['group_color_variants_action', 'duplicate_product_action']
     fieldsets = (
@@ -395,6 +396,23 @@ class ProductAdmin(admin.ModelAdmin):
     
     get_color_display.short_description = 'Колір'
     get_color_display.admin_order_field = 'active_color'
+
+    def get_color_group_display(self, obj):
+        """Показує кольорову групу товару (ID + кількість варіантів). Однаковий #ID = одна група."""
+        if obj.color_group_id:
+            count = obj.color_group.variants.count()
+            return format_html(
+                '<span style="display:inline-block; padding:2px 8px; border-radius:10px; '
+                'background:#2d6cdf; color:#fff; font-weight:600; white-space:nowrap;" '
+                'title="{}">#{} · {} шт.</span>',
+                obj.color_group.name or '',
+                obj.color_group_id,
+                count,
+            )
+        return format_html('<span style="color: var(--body-quiet-color, #999);">—</span>')
+
+    get_color_group_display.short_description = 'Кольор. група'
+    get_color_group_display.admin_order_field = 'color_group'
     
     def get_total_quantity(self, obj):
         """Відображає загальну кількість товару з усіх ProductAttribute"""
