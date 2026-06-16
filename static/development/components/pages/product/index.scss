@@ -269,6 +269,7 @@
     height: 32px;
     border-radius: 50%;
     border: none;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); // тонке кільце, щоб світлі/білі кольори було видно
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: visible; // Змінив з hidden на visible для видимості outline

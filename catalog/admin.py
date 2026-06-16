@@ -112,7 +112,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color', 'color_group']
     list_select_related = ('active_color', 'color_group')
     search_fields = ['title', 'description']
-    actions = ['group_color_variants_action', 'duplicate_product_action']
+    actions = ['group_color_variants_action', 'ungroup_color_variants_action', 'duplicate_product_action']
     fieldsets = (
         ('Основна інформація', {
             'fields': ('title', 'slug', 'description', 'image', 'hover_image', 'categories', 'is_new')
@@ -187,6 +187,36 @@ class ProductAdmin(admin.ModelAdmin):
             f"(оновлено {updated}).",
             level='success'
         )
+
+    @admin.action(description='Видалити з кольорової групи')
+    def ungroup_color_variants_action(self, request, queryset):
+        """
+        Прибирає вибрані товари з їхньої кольорової групи (color_group = None).
+        Групи, що стали порожніми, видаляються (перевірка по admin_objects — усі товари,
+        навіть без варіацій, щоб не видалити групу, де ще лишились товари).
+        """
+        grouped = queryset.exclude(color_group__isnull=True)
+        affected_group_ids = set(grouped.values_list('color_group_id', flat=True))
+        removed = grouped.update(color_group=None)
+
+        deleted_groups = 0
+        for gid in affected_group_ids:
+            if not Product.admin_objects.filter(color_group_id=gid).exists():
+                ColorGroup.objects.filter(id=gid).delete()
+                deleted_groups += 1
+
+        if removed == 0:
+            self.message_user(
+                request,
+                "Вибрані товари не належать до жодної кольорової групи.",
+                level='warning'
+            )
+        else:
+            self.message_user(
+                request,
+                f"Прибрано з групи: {removed} товарів. Видалено порожніх груп: {deleted_groups}.",
+                level='success'
+            )
 
     @admin.action(description='Оновити кольори для вибраних товарів')
     def update_colors_action(self, request, queryset):
