@@ -108,9 +108,9 @@
                             {% for size in available_filters.sizes %}
                             <div class="accordion_content_item">
                                 <label for="size_{{ size.id }}">
-                                    <input type="checkbox" name="size" value="{{ size.id }}" 
-                                           id="size_{{ size.id }}" 
-                                           {% if size.id|stringformat:'s' in current_filters|getlist:size %}checked{% endif %} />
+                                    <input type="checkbox" name="size" value="{{ size.id }}"
+                                           id="size_{{ size.id }}"
+                                           {% if size.id|stringformat:'s' in current_filters|getlist:'size' %}checked{% endif %} />
                                     <span class="checkbox-custom"></span>
                                     {{ size.title }} ({{ size.count }})
                                 </label>
@@ -128,9 +128,9 @@
                             {% for color in available_filters.colors %}
                             <div class="accordion_content_item">
                                 <label for="color_{{ color.id }}">
-                                    <input type="checkbox" name="color" value="{{ color.title }}" 
-                                           id="color_{{ color.id }}" 
-                                           {% if color.title in current_filters|getlist:color %}checked{% endif %} />
+                                    <input type="checkbox" name="color" value="{{ color.title }}"
+                                           id="color_{{ color.id }}"
+                                           {% if color.title in current_filters|getlist:'color' %}checked{% endif %} />
                                     <span class="checkbox-custom"></span>
                                     <span class="color-preview" style="background-color: {{ color.color }};"></span>
                                     {{ color.title }} ({{ color.count }})
@@ -149,9 +149,11 @@
                             {% for spec_value in spec_values %}
                             <div class="accordion_content_item">
                                 <label for="spec_{{ spec_value.id }}">
-                                    <input type="checkbox" name="{{ spec_title|lower }}" value="{{ spec_value.title }}" 
-                                           id="spec_{{ spec_value.id }}" 
-                                           {% if spec_value.title in current_filters|getlist:spec_title|lower %}checked{% endif %} />
+                                    {% with spec_key=spec_title|lower %}
+                                    <input type="checkbox" name="{{ spec_key }}" value="{{ spec_value.title }}"
+                                           id="spec_{{ spec_value.id }}"
+                                           {% if spec_value.title in current_filters|getlist:spec_key %}checked{% endif %} />
+                                    {% endwith %}
                                     <span class="checkbox-custom"></span>
                                     {{ spec_value.title }} ({{ spec_value.count }})
                                 </label>
