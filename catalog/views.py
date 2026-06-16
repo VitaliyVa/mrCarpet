@@ -20,7 +20,8 @@ from .utils import get_available_filters, get_filter_counts
 # Create your views here.
 def catalog_detail(request, slug):
     categorie = ProductCategory.objects.get(slug=slug)
-    products = categorie.products.all()
+    base_products = categorie.products.all()
+    products = base_products
     
     # Застосовуємо сортування
     sort_param = request.GET.get('sort')
@@ -58,8 +59,9 @@ def catalog_detail(request, slug):
     filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
     
-    # Отримуємо актуальні фільтри на основі поточних товарів
-    available_filters = get_available_filters(products)
+    # Доступні фільтри (фасети) — з базового набору категорії, щоб вибір одного
+    # значення фасета не ховав інші його значення
+    available_filters = get_available_filters(base_products, request.GET)
     
     # Пагінація
     paginator = Paginator(products, 12)  # 12 товарів на сторінку
@@ -129,17 +131,18 @@ def _apply_product_sort(products, sort_param):
 
 def all_collection(request):
     """Сторінка «Вся колекція» — усі товари з фільтрами (без прив'язки до категорії)."""
-    products = Product.objects.all()
+    base_products = Product.objects.all()
 
     # Сортування
-    products = _apply_product_sort(products, request.GET.get('sort'))
+    products = _apply_product_sort(base_products, request.GET.get('sort'))
 
     # Фільтри
     filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
 
-    # Доступні фільтри на основі поточного набору
-    available_filters = get_available_filters(products)
+    # Доступні фільтри (фасети) — рахуємо з базового набору, щоб вибір одного
+    # значення фасета не ховав інші його значення
+    available_filters = get_available_filters(base_products, request.GET)
     products_count = products.count()
 
     # Пагінація
