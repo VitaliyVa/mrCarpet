@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminFileWidget
 from django.db import models
@@ -25,6 +26,42 @@ from .models import (
     PromoCode, ProductImage,
     ColorGroup,
 )
+
+
+class ColorSelectWidget(forms.Select):
+    """
+    Select для «Активного кольору»: додає кожній опції data-color / data-texture,
+    щоб JS (select2) намалював кружечок-прев'ю кольору або текстури.
+    Якщо select2 недоступний — лишається звичайний робочий select.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        css = (self.attrs.get('class', '') + ' color-select').strip()
+        self.attrs['class'] = css
+
+    def _color_map(self):
+        cmap = getattr(self, '_cmap', None)
+        if cmap is None:
+            cmap = {}
+            for c in ProductColor.objects.all():
+                cmap[str(c.pk)] = {
+                    'color': str(c.color) if c.color else '',
+                    'texture': c.texture.url if c.texture else '',
+                }
+            self._cmap = cmap
+        return cmap
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        pk = str(getattr(value, 'value', value) or '')
+        data = self._color_map().get(pk)
+        if data:
+            if data['texture']:
+                option['attrs']['data-texture'] = data['texture']
+            elif data['color']:
+                option['attrs']['data-color'] = data['color']
+        return option
 
 
 class ImagePreviewWidget(AdminFileWidget):
@@ -136,6 +173,12 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
     
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Для «Активного кольору» вмикаємо віджет з прев'ю кольору/текстури в опціях."""
+        if db_field.name == 'active_color':
+            kwargs['widget'] = ColorSelectWidget
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -545,9 +588,21 @@ class ProductAdmin(admin.ModelAdmin):
         return self.model.admin_objects.all()
 
     class Media:
-        js = ('admin/js/product_specification_inline.js',)
+        # Порядок як у Django autocomplete: jquery → select2 → jquery.init,
+        # щоб select2 коректно прикріпився до django.jQuery.
+        js = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/vendor/select2/select2.full.js',
+            'admin/js/jquery.init.js',
+            'admin/js/product_specification_inline.js',
+            'admin/js/color_select.js',
+        )
         css = {
-            'all': ('admin/css/product_admin.css',)
+            'all': (
+                'admin/css/product_admin.css',
+                'admin/css/vendor/select2/select2.css',
+                'admin/css/color_select.css',
+            )
         }
 
     class Meta:
