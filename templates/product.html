@@ -196,13 +196,15 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_black_sub"
-        >Килими українського виробництва</a
-      >
+      {% with category=product.categories.first %}
+      {% if category %}
+      <a href="{% url 'categorie' category.slug %}" class="color_black_sub">{{ category.title }}</a>
+      {% else %}
+      <a href="{% url 'catalog' %}" class="color_black_sub">Каталог</a>
+      {% endif %}
+      {% endwith %}
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold"
-        >Килим Layered OVALS WOOL RUG OATMEAL</a
-      >
+      <a href="{{ product.get_absolute_url }}" class="color_gold">{{ product.title }}</a>
     </div>
 
     <div class="product" data-product-id="{{ product.product_attr.first.id }}">
@@ -293,8 +295,10 @@
           </div>
 
           <div class="product__origin color_black_sub">
+            {% comment %} Тимчасово приховано статичні дані до підключення динамічних
             <p class="product__material">Вовна, шовк</p>
             <p class="product__country">Вироблено в Україні</p>
+            {% endcomment %}
           </div>
 
           <div class="sizes-block cart_item_size__block">
