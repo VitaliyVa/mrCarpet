@@ -614,6 +614,8 @@
   </div>
 </section>
 
+{% with related=product.related_products.all %}
+{% if related %}
 <section class="catalog_slider">
   <div class="container">
     <div class="slider__wrapper">
@@ -630,7 +632,7 @@
       </div>
       <div class="swiper blog-swiper catalog-swiper">
         <div class="slider__block swiper-wrapper">
-          {% for related_product in product.related_products.all %}
+          {% for related_product in related %}
           <div
             class="slider_item cart_item swiper-slide"
             data-product-id="{{ related_product.product.product_attr.first.id }}"
@@ -651,6 +653,8 @@
   <!-- /.container -->
 </section>
 <!-- /.catalog_slider -->
+{% endif %}
+{% endwith %}
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/product/index.js"></script>
 {% endblock scripts %}
