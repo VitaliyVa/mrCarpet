@@ -10,8 +10,8 @@
         <img src="{{ product.image.url }}" alt="{{ product.title }}" />
     </div>
     <div class="cart_item_img image-on-hover">
-      {% if product.images.all %}
-      <img src="{{ product.images.all.0.image.url }}" alt="{{ product.title }}" />
+      {% if product.hover_image %}
+      <img src="{{ product.hover_image.url }}" alt="{{ product.title }}" />
       {% else %}
       <img src="{{ product.image.url }}" alt="{{ product.title }}" />
       {% endif %}

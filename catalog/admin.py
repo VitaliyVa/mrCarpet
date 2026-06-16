@@ -86,7 +86,7 @@ class ProductAdmin(admin.ModelAdmin):
     actions = ['update_colors_action', 'duplicate_product_action']
     fieldsets = (
         ('Основна інформація', {
-            'fields': ('title', 'slug', 'description', 'image', 'categories', 'is_new')
+            'fields': ('title', 'slug', 'description', 'image', 'hover_image', 'categories', 'is_new')
         }),
         ('Кольори', {
             'fields': ('colors', 'active_color')
@@ -216,6 +216,7 @@ class ProductAdmin(admin.ModelAdmin):
                 title=new_title,
                 description=original_product.description,
                 image=original_product.image,  # Django скопіює посилання на файл
+                hover_image=original_product.hover_image,
                 is_new=original_product.is_new,
                 has_discount=original_product.has_discount,
                 active_color=original_product.active_color,

@@ -47,7 +47,12 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     #     related_name='product_prices'
     # )
     image = models.ImageField(
-        verbose_name="Зображення", default="products/default.png", max_length=512, blank=True, upload_to="products"
+        verbose_name="Зображення", default="products/default.png", max_length=512, blank=True, upload_to="products",
+        help_text="Основне фото для каталогу (можна в меншій якості). На детальній сторінці не показується."
+    )
+    hover_image = models.ImageField(
+        verbose_name="Зображення при наведенні", max_length=512, blank=True, upload_to="products",
+        help_text="Фото для каталогу при наведенні (можна в меншій якості). На детальній сторінці не показується."
     )
     categories = models.ManyToManyField(
         verbose_name="Категорії",

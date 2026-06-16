@@ -209,30 +209,32 @@
       <div class="product_slider">
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
-            <div class="swiper-slide">
-              <img src="{{ product.image.url }}" alt="" />
-            </div>
             {% if images %}
             {% for image in images %}
             <div class="swiper-slide">
               <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
             </div>
             {% endfor %}
+            {% else %}
+            <div class="swiper-slide">
+              <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+            </div>
             {% endif %}
           </div>
         </div>
 
         <div class="product_slider_main swiper">
           <div class="swiper-wrapper">
-            <div class="swiper-slide">
-              <img src="{{ product.image.url }}" alt="" />
-            </div>
             {% if images %}
             {% for image in images %}
             <div class="swiper-slide">
               <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
             </div>
             {% endfor %}
+            {% else %}
+            <div class="swiper-slide">
+              <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+            </div>
             {% endif %}
           </div>
 
