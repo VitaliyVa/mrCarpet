@@ -87,6 +87,7 @@
             try { $sel.select2('destroy'); } catch (e) { /* ignore */ }
         }
         $sel.select2({
+            theme: 'admin-autocomplete',  // тема Django → коректні кольори у світлій/темній адмінці
             templateResult: tpl,
             templateSelection: tpl,
             matcher: matcher,

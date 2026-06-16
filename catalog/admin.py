@@ -601,6 +601,7 @@ class ProductAdmin(admin.ModelAdmin):
             'all': (
                 'admin/css/product_admin.css',
                 'admin/css/vendor/select2/select2.css',
+                'admin/css/autocomplete.css',  # тема select2 під адмінку (світла/темна)
                 'admin/css/color_select.css',
             )
         }
