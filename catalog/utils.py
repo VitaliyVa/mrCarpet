@@ -35,30 +35,37 @@ def get_available_filters(products_queryset, data=None):
 
     base = products_queryset
 
-    def facet_qs(*exclude_keys):
-        """База, відфільтрована всіма активними фільтрами, крім exclude_keys."""
+    def facet_ids(*exclude_keys):
+        """
+        Список ID товарів бази, відфільтрованої всіма активними фільтрами, КРІМ exclude_keys.
+        Матеріалізуємо в чистий список ID (без анотацій/сортування ProductManager), щоб
+        уникнути крихких вкладених підзапитів. Ключі виключаємо регістро-/пробіло-незалежно.
+        """
         if not data:
-            return base
-        sub = data.copy()
-        for key in list(sub.keys()):
-            if key in exclude_keys:
-                del sub[key]
-        return ProductFilter(sub, base).qs
+            qs = base
+        else:
+            excl = {k.lower().strip() for k in exclude_keys}
+            sub = data.copy()
+            for key in list(sub.keys()):
+                if key.lower().strip() in excl:
+                    del sub[key]
+            qs = ProductFilter(sub, base).qs
+        return list(qs.order_by().values_list('id', flat=True).distinct())
 
     filters = {}
 
     # Розміри (виключаємо власний фасет 'size')
-    sizes_qs = facet_qs('size')
+    size_ids = facet_ids('size')
     filters['sizes'] = Size.objects.filter(
-        product_attr__product__in=sizes_qs
+        product_attr__product_id__in=size_ids
     ).distinct().annotate(
         count=Count('product_attr__product', distinct=True)
     ).order_by('title')
 
     # Кольори (виключаємо власний фасет 'color')
-    colors_qs = facet_qs('color')
+    color_ids = facet_ids('color')
     filters['colors'] = ProductColor.objects.filter(
-        product__in=colors_qs
+        product_id__in=color_ids
     ).distinct().annotate(
         count=Count('product', distinct=True)
     ).order_by('title')
@@ -68,9 +75,9 @@ def get_available_filters(products_queryset, data=None):
     available_specs = {}
 
     for spec in specifications:
-        spec_qs = facet_qs(spec.title.lower())
+        spec_ids = facet_ids(spec.title.lower())
         spec_values = SpecificationValue.objects.filter(
-            product_specs__product__in=spec_qs,
+            product_specs__product_id__in=spec_ids,
             product_specs__specification=spec
         ).distinct().annotate(
             count=Count('product_specs__product', distinct=True)
@@ -82,9 +89,9 @@ def get_available_filters(products_queryset, data=None):
     filters['specifications'] = available_specs
 
     # Діапазон цін з урахуванням кастомних товарів та знижок (виключаємо price_min/price_max)
-    price_qs = facet_qs('price_min', 'price_max')
+    price_ids = facet_ids('price_min', 'price_max')
     all_prices = []
-    for attr in ProductAttribute.objects.filter(product__in=price_qs):
+    for attr in ProductAttribute.objects.filter(product_id__in=price_ids):
         if attr.custom_attribute and attr.custom_price:
             all_prices.append(float(attr.custom_price))
         elif attr.price:
