@@ -615,6 +615,9 @@ class ProductColorAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.ImageField: {"widget": ImagePreviewWidget},
     }
+
+    class Media:
+        js = ('admin/js/texture_paste.js',)
     list_display = [
         "title",
         "color",
