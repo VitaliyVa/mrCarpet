@@ -36,20 +36,54 @@
                 'border:1px solid var(--border-color,#ccc); object-fit:contain; ' +
                 'background:#fff; padding:2px;" />' +
                 '<div style="font-size:.85em; color:var(--body-quiet-color,#888); margin-top:4px;">' +
-                'Вставлено з буфера: ' + file.name + '</div>';
+                'Оброблено: 40×40, ' + (file.type.indexOf('webp') > -1 ? 'WebP' : file.type) + '</div>';
         };
         reader.readAsDataURL(file);
     }
 
-    function onPaste(e) {
-        var input = document.getElementById(INPUT_ID);
-        if (!input) return;
-        var blob = getImageBlob(e.clipboardData || window.clipboardData);
-        if (!blob) return;
+    var SIZE = 40; // авто-обрізка вставленої текстури до 40×40 (квадрат по центру)
 
-        e.preventDefault();
-        var ext = (blob.type.split('/')[1] || 'png').split('+')[0];
-        var file = new File([blob], 'texture-' + Date.now() + '.' + ext, { type: blob.type });
+    function cropToSquare(blob, size, cb) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () {
+            try {
+                var canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                var ctx = canvas.getContext('2d');
+                // cover: беремо центральний квадрат і масштабуємо до size×size без спотворення
+                var s = Math.min(img.naturalWidth, img.naturalHeight);
+                var sx = (img.naturalWidth - s) / 2;
+                var sy = (img.naturalHeight - s) / 2;
+                ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+                // конвертація у WebP; якщо браузер не вміє кодувати webp (out=null) —
+                // відкочуємось на PNG, але зберігаємо обрізку 40×40
+                canvas.toBlob(function (out) {
+                    if (out) {
+                        URL.revokeObjectURL(url);
+                        cb(out);
+                        return;
+                    }
+                    canvas.toBlob(function (pngOut) {
+                        URL.revokeObjectURL(url);
+                        cb(pngOut);
+                    }, 'image/png');
+                }, 'image/webp', 0.92);
+            } catch (err) {
+                URL.revokeObjectURL(url);
+                cb(null);
+            }
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+        img.src = url;
+    }
+
+    function putFile(input, blob) {
+        var type = blob.type || 'image/png';
+        var ext = type.indexOf('webp') > -1 ? 'webp'
+            : (type.indexOf('jpeg') > -1 || type.indexOf('jpg') > -1) ? 'jpg' : 'png';
+        var file = new File([blob], 'texture-' + Date.now() + '.' + ext, { type: type });
         try {
             var dt = new DataTransfer();
             dt.items.add(file);
@@ -61,6 +95,18 @@
         }
     }
 
+    function onPaste(e) {
+        var input = document.getElementById(INPUT_ID);
+        if (!input) return;
+        var blob = getImageBlob(e.clipboardData || window.clipboardData);
+        if (!blob) return;
+
+        e.preventDefault();
+        cropToSquare(blob, SIZE, function (out) {
+            putFile(input, out || blob); // якщо обрізка не вдалась — кладемо оригінал
+        });
+    }
+
     function init() {
         var input = document.getElementById(INPUT_ID);
         if (!input) return;
@@ -69,7 +115,7 @@
             var hint = document.createElement('div');
             hint.id = 'texture-paste-hint';
             hint.style.cssText = 'font-size:.85em; color:var(--body-quiet-color,#888); margin-top:4px;';
-            hint.textContent = 'Підказка: можна вставити зображення з буфера обміну — Ctrl+V';
+            hint.textContent = 'Підказка: Ctrl+V вставляє зображення з буфера (авто-обрізка до 40×40 + WebP)';
             input.parentNode.appendChild(hint);
         }
     }
