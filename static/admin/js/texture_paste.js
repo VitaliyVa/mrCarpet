@@ -79,6 +79,8 @@
         img.src = url;
     }
 
+    var selfUpdate = false; // прапорець: ми самі міняємо input.files (щоб не зациклити change)
+
     function putFile(input, blob) {
         var type = blob.type || 'image/png';
         var ext = type.indexOf('webp') > -1 ? 'webp'
@@ -87,12 +89,21 @@
         try {
             var dt = new DataTransfer();
             dt.items.add(file);
-            input.files = dt.files;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
+            selfUpdate = true;
+            input.files = dt.files;     // програмна зміна не кидає change, але про всяк — прапорець
+            selfUpdate = false;
             showPreview(input, file);
         } catch (err) {
-            console.error('Не вдалося вставити текстуру з буфера:', err);
+            selfUpdate = false;
+            console.error('Не вдалося обробити текстуру:', err);
         }
+    }
+
+    // Спільна обробка: обрізка 40×40 → webp → у поле. Працює і для вставки, і для вибору файлу.
+    function processAndPut(input, source) {
+        cropToSquare(source, SIZE, function (out) {
+            putFile(input, out || source); // якщо обрізка не вдалась — кладемо джерело як є
+        });
     }
 
     function onPaste(e) {
@@ -100,22 +111,30 @@
         if (!input) return;
         var blob = getImageBlob(e.clipboardData || window.clipboardData);
         if (!blob) return;
-
         e.preventDefault();
-        cropToSquare(blob, SIZE, function (out) {
-            putFile(input, out || blob); // якщо обрізка не вдалась — кладемо оригінал
-        });
+        processAndPut(input, blob);
+    }
+
+    function onFileChange(e) {
+        if (selfUpdate) return; // це наша ж програмна зміна — пропускаємо
+        var input = e.target;
+        if (!input || input.id !== INPUT_ID) return;
+        if (!input.files || !input.files.length) return;
+        var file = input.files[0];
+        if (!file.type || file.type.indexOf('image/') !== 0) return; // не зображення — не чіпаємо
+        processAndPut(input, file);
     }
 
     function init() {
         var input = document.getElementById(INPUT_ID);
         if (!input) return;
         document.addEventListener('paste', onPaste);
+        input.addEventListener('change', onFileChange);
         if (!document.getElementById('texture-paste-hint')) {
             var hint = document.createElement('div');
             hint.id = 'texture-paste-hint';
             hint.style.cssText = 'font-size:.85em; color:var(--body-quiet-color,#888); margin-top:4px;';
-            hint.textContent = 'Підказка: Ctrl+V вставляє зображення з буфера (авто-обрізка до 40×40 + WebP)';
+            hint.textContent = 'Зображення (вставлене Ctrl+V або вибране файлом) авто-обрізається до 40×40 і конвертується у WebP';
             input.parentNode.appendChild(hint);
         }
     }
