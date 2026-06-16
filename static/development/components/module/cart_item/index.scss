@@ -15,12 +15,15 @@
     }
 
     .cart_item_img {
-      // головне фото лишається в потоці → висота стабільна; плавно зникає (opacity)
+      // головне фото лишається в потоці (без position:absolute) → висота стабільна;
+      // плавно зникає (opacity) і фліпається (scaleX)
       opacity: 0;
+      transform: scaleX(-1);
 
       &.image-on-hover {
-        // абсолютний оверлей плавно проявляється (чистий крос-фейд, без фліпу/тряски)
+        // абсолютний оверлей плавно проявляється і фліпається в норму
         opacity: 1;
+        transform: scaleX(1);
       }
     }
   }
@@ -44,7 +47,7 @@
     width: 100%;
     height: 420px;
     text-align: center;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
 
     img {
       object-fit: cover;
@@ -60,6 +63,7 @@
       top: 0;
       left: 0;
       opacity: 0;
+      transform: scaleX(-1);
     }
   }
 
