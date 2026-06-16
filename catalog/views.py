@@ -103,6 +103,70 @@ def catalog(request):
     return render(request, "catalog.html", {"products": products})
 
 
+def _apply_product_sort(products, sort_param):
+    """Сортування товарів за параметром sort (title / -title / price / -price)."""
+    if not sort_param:
+        return products
+    if sort_param == 'title':
+        return products.order_by('title')
+    if sort_param == '-title':
+        return products.order_by('-title')
+    if sort_param in ('price', '-price'):
+        effective_price_expr = Case(
+            When(product_attr__custom_attribute=True, then=F('product_attr__custom_price')),
+            default=ExpressionWrapper(
+                F('product_attr__price') * (1 - Coalesce(F('product_attr__discount'), 0) / 100.0),
+                output_field=FloatField()
+            ),
+            output_field=FloatField()
+        )
+        products = products.annotate(
+            effective_price_attr=effective_price_expr
+        ).annotate(min_price=Min('effective_price_attr'))
+        return products.order_by('min_price' if sort_param == 'price' else '-min_price')
+    return products
+
+
+def all_collection(request):
+    """Сторінка «Вся колекція» — усі товари з фільтрами (без прив'язки до категорії)."""
+    products = Product.objects.all()
+
+    # Сортування
+    products = _apply_product_sort(products, request.GET.get('sort'))
+
+    # Фільтри
+    filter_set = ProductFilter(request.GET, products)
+    products = filter_set.qs
+
+    # Доступні фільтри на основі поточного набору
+    available_filters = get_available_filters(products)
+    products_count = products.count()
+
+    # Пагінація
+    paginator = Paginator(products, 12)
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    return render(
+        request,
+        "catalog_inside.html",
+        {
+            "categorie": None,
+            "is_collection": True,
+            "collection_title": "Вся колекція",
+            "products_count": products_count,
+            "products": products,
+            "available_filters": available_filters,
+            "current_filters": request.GET,
+        },
+    )
+
+
 def search_products(request):
     """API view для пошуку товарів"""
     search_query = request.GET.get('search_query', '').strip()

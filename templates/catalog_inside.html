@@ -9,14 +9,18 @@
         <div class="bread-crumbs">
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
             <span class="color_black_sub">/</span>
+            {% if categorie %}
             <a href="{% url 'categorie' categorie.slug %}" class="color_gold">{{ categorie.title }}</a>
+            {% else %}
+            <a href="{% url 'all_collection' %}" class="color_gold">{{ collection_title }}</a>
+            {% endif %}
         </div>
         <div class="catalog_inside-top">
             <div class="title">
                 <h1 class="catalog_inside__title">
-                    {{ categorie.title }}
+                    {% if categorie %}{{ categorie.title }}{% else %}{{ collection_title }}{% endif %}
                 </h1>
-                <span>{{ categorie.products.all|length }} товари</span>
+                <span>{% if categorie %}{{ categorie.products.all|length }}{% else %}{{ products_count }}{% endif %} товари</span>
             </div>
 
             <button class="catalog_inside_filter-btn">
@@ -199,19 +203,19 @@
         {% if products.has_other_pages %}
         <div class="pagination">
             {% if products.has_previous %}
-                <a href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Назад</a>
+                <a href="?page={{ products.previous_page_number }}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}&{{ key }}={{ value }}{% endfor %}{% endif %}{% endfor %}">Назад</a>
             {% endif %}
             
             {% for num in products.paginator.page_range %}
                 {% if products.number == num %}
                     <a href="#" class="active">{{ num }}</a>
                 {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
-                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    <a href="?page={{ num }}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}&{{ key }}={{ value }}{% endfor %}{% endif %}{% endfor %}">{{ num }}</a>
                 {% endif %}
             {% endfor %}
             
             {% if products.has_next %}
-                <a href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Далі</a>
+                <a href="?page={{ products.next_page_number }}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}&{{ key }}={{ value }}{% endfor %}{% endif %}{% endfor %}">Далі</a>
             {% endif %}
         </div>
         {% endif %}
