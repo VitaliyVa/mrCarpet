@@ -57,7 +57,7 @@ def get_available_filters(products_queryset, data=None):
     # Розміри (виключаємо власний фасет 'size')
     size_ids = facet_ids('size')
     filters['sizes'] = Size.objects.filter(
-        product_attr__product_id__in=size_ids
+        product_attr__product__in=size_ids
     ).distinct().annotate(
         count=Count('product_attr__product', distinct=True)
     ).order_by('title')
@@ -65,7 +65,7 @@ def get_available_filters(products_queryset, data=None):
     # Кольори (виключаємо власний фасет 'color')
     color_ids = facet_ids('color')
     filters['colors'] = ProductColor.objects.filter(
-        product_id__in=color_ids
+        product__in=color_ids
     ).distinct().annotate(
         count=Count('product', distinct=True)
     ).order_by('title')
@@ -77,7 +77,7 @@ def get_available_filters(products_queryset, data=None):
     for spec in specifications:
         spec_ids = facet_ids(spec.title.lower())
         spec_values = SpecificationValue.objects.filter(
-            product_specs__product_id__in=spec_ids,
+            product_specs__product__in=spec_ids,
             product_specs__specification=spec
         ).distinct().annotate(
             count=Count('product_specs__product', distinct=True)
@@ -91,7 +91,7 @@ def get_available_filters(products_queryset, data=None):
     # Діапазон цін з урахуванням кастомних товарів та знижок (виключаємо price_min/price_max)
     price_ids = facet_ids('price_min', 'price_max')
     all_prices = []
-    for attr in ProductAttribute.objects.filter(product_id__in=price_ids):
+    for attr in ProductAttribute.objects.filter(product__in=price_ids):
         if attr.custom_attribute and attr.custom_price:
             all_prices.append(float(attr.custom_price))
         elif attr.price:
