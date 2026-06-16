@@ -398,13 +398,17 @@ class ProductAdmin(admin.ModelAdmin):
     get_color_display.admin_order_field = 'active_color'
 
     def get_color_group_display(self, obj):
-        """Показує кольорову групу товару (ID + кількість варіантів). Однаковий #ID = одна група."""
+        """Показує кольорову групу товару (ID + кількість варіантів). Однаковий #ID = одна група.
+        Колір бейджа детермінований від ID групи (золотий кут) — різні групи легко розрізнити."""
         if obj.color_group_id:
             count = obj.color_group.variants.count()
+            hue = (obj.color_group_id * 137) % 360  # золотий кут → рівномірний розкид кольорів
+            bg = "hsl({}, 60%, 40%)".format(hue)
             return format_html(
                 '<span style="display:inline-block; padding:2px 8px; border-radius:10px; '
-                'background:#2d6cdf; color:#fff; font-weight:600; white-space:nowrap;" '
+                'background:{}; color:#fff; font-weight:600; white-space:nowrap;" '
                 'title="{}">#{} · {} шт.</span>',
+                bg,
                 obj.color_group.name or '',
                 obj.color_group_id,
                 count,
