@@ -612,6 +612,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/jquery.init.js',
             'admin/js/product_specification_inline.js',
             'admin/js/color_select.js',
+            'admin/js/image_resize.js',
         )
         css = {
             'all': (
