@@ -1,0 +1,17 @@
+{
+  "name": "test-ar",
+  "version": "1.0.0",
+  "description": "AR-перегляд килима через <model-viewer> (ARCore/ARKit). GLB генерується з текстури.",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "ngrok": "node start-ngrok.js",
+    "dev:ngrok": "concurrently \"npm run dev\" \"npm run ngrok\"",
+    "glb": "node make-glb.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
