@@ -192,8 +192,24 @@ class ProductAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.get_spec_values),
                 name='catalog_product_get_spec_values'
             ),
+            path(
+                'color-swatch-data/',
+                self.admin_site.admin_view(self.color_swatch_data),
+                name='catalog_product_color_swatch_data'
+            ),
         ]
         return custom_urls + urls
+
+    def color_swatch_data(self, request):
+        """JSON: {id: {color, texture}} — щоб JS міг домалювати кружечок щойно
+        створеного кольору в select без перезавантаження сторінки."""
+        data = {}
+        for c in ProductColor.objects.all():
+            data[str(c.pk)] = {
+                'color': str(c.color) if c.color else '',
+                'texture': c.texture.url if c.texture else '',
+            }
+        return JsonResponse({'colors': data})
     
     @admin.action(description='Обʼєднати вибрані в кольорову групу')
     def group_color_variants_action(self, request, queryset):

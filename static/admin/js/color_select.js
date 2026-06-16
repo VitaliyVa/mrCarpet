@@ -94,6 +94,34 @@
             sorter: sorter,
             width: 'resolve'
         });
+
+        // Коли через попап «+» додають новий колір, Django вставляє <option> БЕЗ наших
+        // data-color/data-texture. Підтягуємо дані з сервера й домальовуємо кружечок одразу.
+        var swatchUrl = window.location.pathname
+            .replace(/\/catalog\/product\/.*$/, '/catalog/product/') + 'color-swatch-data/';
+
+        function applyMap(map) {
+            $sel.find('option').each(function () {
+                if (!this.value) return;
+                if (this.getAttribute('data-color') || this.getAttribute('data-texture')) return;
+                var d = map[this.value];
+                if (!d) return;
+                if (d.texture) this.setAttribute('data-texture', d.texture);
+                else if (d.color) this.setAttribute('data-color', d.color);
+            });
+        }
+
+        $sel.on('change', function () {
+            var val = $sel.val();
+            if (!val) return;
+            var opt = $sel.find('option[value="' + val + '"]')[0];
+            if (!opt || opt.getAttribute('data-color') || opt.getAttribute('data-texture')) return;
+            // нова опція без даних → один запит за мапою кольорів і перемалювати
+            $.getJSON(swatchUrl).done(function (resp) {
+                applyMap((resp && resp.colors) || {});
+                $sel.trigger('change.select2'); // оновити вибране з кружечком (без повторного change)
+            });
+        });
     }
 
     function boot() {
