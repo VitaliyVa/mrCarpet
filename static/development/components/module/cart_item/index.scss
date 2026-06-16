@@ -15,7 +15,7 @@
     }
 
     .cart_item_img {
-      position: absolute;
+      // лишаємо в потоці (без position:absolute) → висота картки стабільна, без тряски
       visibility: hidden;
       opacity: 0;
       transform: scaleX(-1);
@@ -23,7 +23,7 @@
       // transform: translateX(-100%);
 
       &.image-on-hover {
-        position: static;
+        // лишається абсолютним оверлеєм (не static), просто проявляється
         visibility: visible;
         opacity: 1;
         transform: scaleX(1);
@@ -52,10 +52,10 @@
     width: 100%;
     height: 420px;
     text-align: center;
-    transition: all 0.35s;
+    transition: opacity 0.35s ease, transform 0.35s ease;
 
     img {
-      object-fit: contain;
+      object-fit: cover;
       width: 100%;
       height: 100%;
       // height: 95%;
@@ -66,6 +66,7 @@
     &.image-on-hover {
       position: absolute;
       top: 0;
+      left: 0;
       visibility: hidden;
       opacity: 0;
       transform: scaleX(-1);

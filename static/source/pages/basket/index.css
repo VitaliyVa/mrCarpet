@@ -3284,13 +3284,11 @@ swiper-container .swiper-notification {
   opacity: 1;
 }
 .cart_item:hover .cart_item_img {
-  position: absolute;
   visibility: hidden;
   opacity: 0;
   transform: scaleX(-1);
 }
 .cart_item:hover .cart_item_img.image-on-hover {
-  position: static;
   visibility: visible;
   opacity: 1;
   transform: scaleX(1);
@@ -3310,10 +3308,10 @@ swiper-container .swiper-notification {
   width: 100%;
   height: 420px;
   text-align: center;
-  transition: all 0.35s;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 .cart_item_img img {
-  object-fit: contain;
+  object-fit: cover;
   width: 100%;
   height: 100%;
   max-width: 365px;
@@ -3322,6 +3320,7 @@ swiper-container .swiper-notification {
 .cart_item_img.image-on-hover {
   position: absolute;
   top: 0;
+  left: 0;
   visibility: hidden;
   opacity: 0;
   transform: scaleX(-1);
