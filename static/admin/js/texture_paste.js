@@ -36,12 +36,12 @@
                 'border:1px solid var(--border-color,#ccc); object-fit:contain; ' +
                 'background:#fff; padding:2px;" />' +
                 '<div style="font-size:.85em; color:var(--body-quiet-color,#888); margin-top:4px;">' +
-                'Оброблено: 40×40, ' + (file.type.indexOf('webp') > -1 ? 'WebP' : file.type) + '</div>';
+                'Оброблено: ' + SIZE + '×' + SIZE + ', ' + (file.type.indexOf('webp') > -1 ? 'WebP' : file.type) + '</div>';
         };
         reader.readAsDataURL(file);
     }
 
-    var SIZE = 40; // авто-обрізка вставленої текстури до 40×40 (квадрат по центру)
+    var SIZE = 100; // авто-обрізка текстури до 100×100 (квадрат по центру)
 
     function cropToSquare(blob, size, cb) {
         var url = URL.createObjectURL(blob);
@@ -134,7 +134,7 @@
             var hint = document.createElement('div');
             hint.id = 'texture-paste-hint';
             hint.style.cssText = 'font-size:.85em; color:var(--body-quiet-color,#888); margin-top:4px;';
-            hint.textContent = 'Зображення (вставлене Ctrl+V або вибране файлом) авто-обрізається до 40×40 і конвертується у WebP';
+            hint.textContent = 'Зображення (вставлене Ctrl+V або вибране файлом) авто-обрізається до ' + SIZE + '×' + SIZE + ' і конвертується у WebP';
             input.parentNode.appendChild(hint);
         }
     }
