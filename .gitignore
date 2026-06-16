@@ -21,3 +21,7 @@ yarn.lock
 *.env
 .env
 /media/*
+
+# internal documentation (local only, not for the repo)
+/docs/
+docs/
