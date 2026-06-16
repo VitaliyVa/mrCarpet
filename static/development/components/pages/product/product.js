@@ -147,80 +147,11 @@ document.addEventListener("click", async ({ target }) => {
   const counterMinusButton = target.closest(".counter__minus-btn");
   const counterPlusButton = target.closest(".counter__plus-btn");
 
-  // click on color label - redirect to product with this active_color
+  // click on color label - redirect to the sibling product (color variant) by slug
   if (colorLabel) {
-    const colorId = colorLabel.dataset.colorId;
-    const productTitle = colorLabel.dataset.productTitle;
-    
-    if (colorId && productTitle) {
-      console.log('Пошук товару:', { productTitle, colorId });
-      
-      // Шукаємо товар з однаковим title та active_color = обраному кольору
-      // Використовуємо API для пошуку товару
-      try {
-        // Використовуємо page_size для отримання більшої кількості результатів
-        // Це важливо якщо товарів багато і є пагінація
-        const searchUrl = `/products/?search_query=${encodeURIComponent(productTitle)}&page_size=100`;
-        console.log('API запит:', searchUrl);
-        
-        const response = await instance.get(searchUrl);
-        const data = response.data;
-        
-        console.log('API відповідь:', data);
-        
-        if (data && data.results) {
-          console.log('Знайдено товарів:', data.results.length);
-          console.log('Всі знайдені товари:', data.results.map(p => ({ title: p.title, colorId: p.active_color?.id })));
-          
-          // Знаходимо товар з ТОЧНИМ title та active_color = обраному кольору
-          const targetProduct = data.results.find(p => {
-            const titleMatch = p.title && p.title.toLowerCase() === productTitle.toLowerCase();
-            const colorMatch = p.active_color && parseInt(p.active_color.id) === parseInt(colorId);
-            
-            console.log('Перевірка товару:', {
-              title: p.title,
-              titleMatch,
-              activeColorId: p.active_color?.id,
-              colorMatch,
-              expectedColorId: colorId
-            });
-            
-            return titleMatch && colorMatch;
-          });
-          
-          if (targetProduct && targetProduct.slug) {
-            console.log('Знайдено товар для редиректу:', targetProduct.slug);
-            // Перекидаємо на товар з цим active_color
-            window.location.href = `/catalog/product/${targetProduct.slug}/`;
-            return;
-          } else {
-            console.warn('Товар не знайдено. Шукали:', { productTitle, colorId });
-            // Якщо не знайдено товар з точним title та colorId, спробуємо знайти хоча б по title
-            const fallbackProduct = data.results.find(p => 
-              p.title && p.title.toLowerCase() === productTitle.toLowerCase()
-            );
-            
-            if (fallbackProduct && fallbackProduct.slug) {
-              console.log('Знайдено товар без перевірки кольору:', fallbackProduct.slug);
-              window.location.href = `/catalog/product/${fallbackProduct.slug}/`;
-              return;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Помилка при пошуку товару:', error);
-        // Якщо пошук не вдався, просто перемикаємо активний колір
-      }
-    }
-    
-    // Якщо товар не знайдено, просто перемикаємо активний колір
-    const colorsBlock = colorLabel.closest(".colors-block");
-    if (colorsBlock) {
-      const allColorLabels = colorsBlock.querySelectorAll(".color-label");
-      allColorLabels.forEach((label) => {
-        label.classList.remove("active");
-      });
-      colorLabel.classList.add("active");
+    const slug = colorLabel.dataset.productSlug;
+    if (slug) {
+      window.location.href = `/catalog/product/${slug}/`;
     }
     return;
   }

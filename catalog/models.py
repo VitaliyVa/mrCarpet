@@ -36,6 +36,18 @@ class ProductAdminManager(models.Manager):
         return super().get_queryset().order_by("-created")
 
 
+class ColorGroup(models.Model):
+    """Обʼєднує кольорові варіанти одного килима (товари з різними назвами)."""
+    name = models.CharField(verbose_name="Назва групи", max_length=255, blank=True)
+
+    class Meta:
+        verbose_name = "Кольорова група"
+        verbose_name_plural = "Кольорові групи"
+
+    def __str__(self):
+        return self.name or f"Кольорова група #{self.pk}"
+
+
 # Create your models here.
 class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     description = models.TextField(verbose_name="Description", blank=True, null=True)
@@ -73,6 +85,16 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         null=True,
         blank=True,
         related_name="active_products",
+    )
+    color_group = models.ForeignKey(
+        verbose_name="Кольорова група",
+        to="catalog.ColorGroup",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="variants",
+        help_text="Обʼєднує кольорові варіанти одного килима (з різними назвами). "
+                  "Плитки кольорів на сторінці товару беруться з цієї групи.",
     )
     has_discount = models.BooleanField(default=False)
     # discount = models.IntegerField(blank=True, null=True)

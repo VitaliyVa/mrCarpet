@@ -34481,83 +34481,11 @@ document.addEventListener("click", async _ref => {
   const counterMinusButton = target.closest(".counter__minus-btn");
   const counterPlusButton = target.closest(".counter__plus-btn");
 
-  // click on color label - redirect to product with this active_color
+  // click on color label - redirect to the sibling product (color variant) by slug
   if (colorLabel) {
-    const colorId = colorLabel.dataset.colorId;
-    const productTitle = colorLabel.dataset.productTitle;
-    if (colorId && productTitle) {
-      console.log('Пошук товару:', {
-        productTitle,
-        colorId
-      });
-
-      // Шукаємо товар з однаковим title та active_color = обраному кольору
-      // Використовуємо API для пошуку товару
-      try {
-        // Використовуємо page_size для отримання більшої кількості результатів
-        // Це важливо якщо товарів багато і є пагінація
-        const searchUrl = "/products/?search_query=".concat(encodeURIComponent(productTitle), "&page_size=100");
-        console.log('API запит:', searchUrl);
-        const response = await _api_instance__WEBPACK_IMPORTED_MODULE_3__["instance"].get(searchUrl);
-        const data = response.data;
-        console.log('API відповідь:', data);
-        if (data && data.results) {
-          console.log('Знайдено товарів:', data.results.length);
-          console.log('Всі знайдені товари:', data.results.map(p => {
-            var _p$active_color;
-            return {
-              title: p.title,
-              colorId: (_p$active_color = p.active_color) === null || _p$active_color === void 0 ? void 0 : _p$active_color.id
-            };
-          }));
-
-          // Знаходимо товар з ТОЧНИМ title та active_color = обраному кольору
-          const targetProduct = data.results.find(p => {
-            var _p$active_color2;
-            const titleMatch = p.title && p.title.toLowerCase() === productTitle.toLowerCase();
-            const colorMatch = p.active_color && parseInt(p.active_color.id) === parseInt(colorId);
-            console.log('Перевірка товару:', {
-              title: p.title,
-              titleMatch,
-              activeColorId: (_p$active_color2 = p.active_color) === null || _p$active_color2 === void 0 ? void 0 : _p$active_color2.id,
-              colorMatch,
-              expectedColorId: colorId
-            });
-            return titleMatch && colorMatch;
-          });
-          if (targetProduct && targetProduct.slug) {
-            console.log('Знайдено товар для редиректу:', targetProduct.slug);
-            // Перекидаємо на товар з цим active_color
-            window.location.href = "/catalog/product/".concat(targetProduct.slug, "/");
-            return;
-          } else {
-            console.warn('Товар не знайдено. Шукали:', {
-              productTitle,
-              colorId
-            });
-            // Якщо не знайдено товар з точним title та colorId, спробуємо знайти хоча б по title
-            const fallbackProduct = data.results.find(p => p.title && p.title.toLowerCase() === productTitle.toLowerCase());
-            if (fallbackProduct && fallbackProduct.slug) {
-              console.log('Знайдено товар без перевірки кольору:', fallbackProduct.slug);
-              window.location.href = "/catalog/product/".concat(fallbackProduct.slug, "/");
-              return;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Помилка при пошуку товару:', error);
-        // Якщо пошук не вдався, просто перемикаємо активний колір
-      }
-    }
-
-    // Якщо товар не знайдено, просто перемикаємо активний колір
-    const colorsBlock = colorLabel.closest(".colors-block");
-    if (colorsBlock) {
-      const allColorLabels = colorsBlock.querySelectorAll(".color-label");
-      allColorLabels.forEach(label => {
-        label.classList.remove("active");
-      });
-      colorLabel.classList.add("active");
+    const slug = colorLabel.dataset.productSlug;
+    if (slug) {
+      window.location.href = "/catalog/product/".concat(slug, "/");
     }
     return;
   }

@@ -23,6 +23,7 @@ from .models import (
     ProductColor,
     ProductWidth,
     PromoCode, ProductImage,
+    ColorGroup,
 )
 
 
@@ -110,13 +111,24 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_total_quantity', 'created', 'updated']
     list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color']
     search_fields = ['title', 'description']
-    actions = ['update_colors_action', 'duplicate_product_action']
+    actions = ['group_color_variants_action', 'duplicate_product_action']
     fieldsets = (
         ('Основна інформація', {
             'fields': ('title', 'slug', 'description', 'image', 'hover_image', 'categories', 'is_new')
         }),
         ('Кольори', {
-            'fields': ('colors', 'active_color')
+            'fields': ('active_color', 'color_group'),
+            'description': (
+                '<b>Як звʼязати кольори килима:</b><br>'
+                '1) Створіть кожен кольоровий варіант як <b>окремий товар</b> і задайте йому '
+                '«Активний колір» (назви товарів можуть бути різними — це більше не важливо).<br>'
+                '2) У списку товарів виділіть ці варіанти та застосуйте дію '
+                '<b>«Обʼєднати вибрані в кольорову групу»</b> (або вкажіть їм одну «Кольорову групу» вручну тут).<br>'
+                '3) Після цього на сторінці кожного товару зʼявляться плитки всіх кольорів групи, '
+                'а клік по плитці веде на відповідний товар.<br>'
+                'Щоб додати ще один колір згодом — створіть товар, виділіть його разом з будь-яким '
+                'товаром із групи та знову застосуйте ту саму дію.'
+            ),
         }),
         ('Інше', {
             'fields': ('has_discount',)
@@ -139,6 +151,42 @@ class ProductAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
     
+    @admin.action(description='Обʼєднати вибрані в кольорову групу')
+    def group_color_variants_action(self, request, queryset):
+        """
+        Обʼєднує вибрані товари в одну кольорову групу (кольорові варіанти одного килима).
+        Якщо хтось із вибраних уже має групу — використовуємо її повторно, інакше створюємо нову.
+        Після цього на сторінці кожного товару показуються плитки всіх кольорів групи.
+        """
+        products = list(queryset)
+        if len(products) < 2:
+            self.message_user(
+                request,
+                "Виберіть щонайменше 2 товари, щоб обʼєднати їх у кольорову групу.",
+                level='warning'
+            )
+            return
+
+        # Беремо наявну групу одного з вибраних або створюємо нову
+        existing_group = next((p.color_group for p in products if p.color_group_id), None)
+        group = existing_group or ColorGroup.objects.create(
+            name=products[0].title
+        )
+
+        updated = 0
+        for product in products:
+            if product.color_group_id != group.id:
+                product.color_group = group
+                product.save(update_fields=['color_group'])
+                updated += 1
+
+        self.message_user(
+            request,
+            f"Обʼєднано {len(products)} товарів у кольорову групу «{group}» "
+            f"(оновлено {updated}).",
+            level='success'
+        )
+
     @admin.action(description='Оновити кольори для вибраних товарів')
     def update_colors_action(self, request, queryset):
         """
@@ -247,6 +295,7 @@ class ProductAdmin(admin.ModelAdmin):
                 is_new=original_product.is_new,
                 has_discount=original_product.has_discount,
                 active_color=original_product.active_color,
+                color_group=original_product.color_group,
                 meta_title=original_product.meta_title,
                 meta_description=original_product.meta_description,
                 meta_keys=original_product.meta_keys,
@@ -444,7 +493,7 @@ class ProductAdmin(admin.ModelAdmin):
         return self.model.admin_objects.all()
 
     class Media:
-        js = ('admin/js/product_admin.js', 'admin/js/product_specification_inline.js')
+        js = ('admin/js/product_specification_inline.js',)
         css = {
             'all': ('admin/css/product_admin.css',)
         }
@@ -504,3 +553,15 @@ admin.site.register(ProductSale)
 admin.site.register(ProductColor, ProductColorAdmin)
 admin.site.register(ProductWidth)
 admin.site.register(PromoCode)
+
+
+class ColorGroupAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'get_variants_count']
+    search_fields = ['name', 'variants__title']
+
+    def get_variants_count(self, obj):
+        return obj.variants.count()
+    get_variants_count.short_description = 'Кількість варіантів'
+
+
+admin.site.register(ColorGroup, ColorGroupAdmin)

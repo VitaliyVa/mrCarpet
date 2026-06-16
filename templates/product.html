@@ -345,18 +345,19 @@
           {% endif %}
           {% endfor %}
 
-          {% if product.colors.all %}
+          {% if product.color_group %}
+          {% with variants=product.color_group.variants.all %}
+          {% if variants|length > 1 %}
           <div class="colors-block">
-            {% for color in product.colors.all %}
-            {% if product.active_color and color.id == product.active_color.id %}
-            <div class="color-label active" data-color-id="{{ color.id }}" data-color-slug="{{ color.slug }}" data-product-title="{{ product.title }}" {% if color.texture %}style="background-image: url('{{ color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ color.color }};"{% endif %} title="{{ color.title }}">
-            </div>
-            {% else %}
-            <div class="color-label" data-color-id="{{ color.id }}" data-color-slug="{{ color.slug }}" data-product-title="{{ product.title }}" {% if color.texture %}style="background-image: url('{{ color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ color.color }};"{% endif %} title="{{ color.title }}">
+            {% for v in variants %}
+            {% if v.active_color %}
+            <div class="color-label{% if v.id == product.id %} active{% endif %}" data-product-slug="{{ v.slug }}" {% if v.active_color.texture %}style="background-image: url('{{ v.active_color.texture.url }}'); background-size: cover; background-position: center;"{% else %}style="background-color: {{ v.active_color.color }};"{% endif %} title="{{ v.active_color.title }}">
             </div>
             {% endif %}
             {% endfor %}
           </div>
+          {% endif %}
+          {% endwith %}
           {% endif %}
 
           <div class="product__option">
