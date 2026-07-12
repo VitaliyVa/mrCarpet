@@ -3315,7 +3315,7 @@ swiper-container .swiper-notification {
   will-change: transform, opacity;
 }
 .cart_item_img img {
-  object-fit: cover;
+  object-fit: contain;
   width: 100%;
   height: 100%;
   max-width: 365px;

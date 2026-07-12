@@ -188,6 +188,8 @@ REST_FRAMEWORK = {
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
 LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
 
+REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
+
 # CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
 # CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")
 
@@ -209,3 +211,27 @@ SERVER_EMAIL = config('EMAIL_HOST_USER')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "catalog.replicate": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

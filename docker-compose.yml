@@ -32,6 +32,7 @@ services:
       - DB_NAME=/app/db.sqlite3
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
       
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
 

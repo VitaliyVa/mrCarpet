@@ -1,6 +1,15 @@
+import base64
+import os
+import shutil
+import time
+import uuid
+from pathlib import Path
+
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.widgets import AdminFileWidget
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.http import JsonResponse
 from django.urls import path
@@ -8,6 +17,13 @@ from django.shortcuts import render
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Sum
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+
+from catalog.services.replicate_product_images import (
+    ReplicateGenerationError,
+    ReplicateProductImageService,
+)
 from .models import (
     Product,
     ProductCategory,
@@ -197,8 +213,91 @@ class ProductAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.color_swatch_data),
                 name='catalog_product_color_swatch_data'
             ),
+            path(
+                'generate-images/',
+                self.admin_site.admin_view(self.generate_product_images),
+                name='catalog_product_generate_images'
+            ),
         ]
         return custom_urls + urls
+
+    @method_decorator(require_POST)
+    def generate_product_images(self, request):
+        phase = request.POST.get('phase', '').strip()
+        if phase not in ('catalog', 'hover'):
+            return JsonResponse(
+                {'success': False, 'error': 'Параметр phase має бути catalog або hover'},
+                status=400,
+            )
+
+        uploaded = request.FILES.get('source_image')
+        if not uploaded:
+            return JsonResponse({'success': False, 'error': 'Не вибрано файл'}, status=400)
+
+        error = self._validate_source_image(uploaded)
+        if error:
+            return JsonResponse({'success': False, 'error': error}, status=400)
+
+        temp_dir = Path(settings.MEDIA_ROOT) / 'temp' / 'replicate' / str(uuid.uuid4())
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        source_path = temp_dir / self._safe_filename(uploaded.name)
+        service = None
+
+        try:
+            with open(source_path, 'wb') as dest:
+                for chunk in uploaded.chunks():
+                    dest.write(chunk)
+
+            service = ReplicateProductImageService()
+            image_bytes, meta = service.generate_phase(source_path, phase)
+
+            payload = {
+                'success': True,
+                'phase': phase,
+                'meta': meta,
+                'logs': meta.get('logs', []),
+            }
+            if phase == 'catalog':
+                payload['image'] = self._file_payload(image_bytes, 'product')
+            else:
+                payload['hover_image'] = self._file_payload(image_bytes, 'hover')
+
+            return JsonResponse(payload)
+        except ReplicateGenerationError as exc:
+            logs = service.job_log.entries if service else []
+            return JsonResponse(
+                {'success': False, 'error': str(exc), 'phase': phase, 'logs': logs},
+                status=502,
+            )
+        except Exception as exc:
+            return JsonResponse(
+                {'success': False, 'error': f'Помилка генерації: {exc}', 'phase': phase},
+                status=500,
+            )
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def _validate_source_image(self, uploaded: UploadedFile) -> str | None:
+        allowed = {'image/jpeg', 'image/png', 'image/webp'}
+        if uploaded.content_type not in allowed:
+            return 'Дозволені лише JPEG, PNG або WebP'
+
+        max_size = 15 * 1024 * 1024
+        if uploaded.size > max_size:
+            return 'Максимальний розмір файлу — 15 МБ'
+
+        return None
+
+    def _safe_filename(self, name: str) -> str:
+        base = os.path.basename(name or 'source.jpg')
+        return base.replace('..', '').replace('/', '').replace('\\', '') or 'source.jpg'
+
+    def _file_payload(self, data: bytes, prefix: str) -> dict:
+        return {
+            'filename': f'{prefix}-{int(time.time())}.webp',
+            'content_type': 'image/webp',
+            'data_base64': base64.b64encode(data).decode('ascii'),
+        }
 
     def color_swatch_data(self, request):
         """JSON: {id: {color, texture}} — щоб JS міг домалювати кружечок щойно
@@ -613,6 +712,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/product_specification_inline.js',
             'admin/js/color_select.js',
             'admin/js/image_resize.js',
+            'admin/js/replicate_generate_images.js',
         )
         css = {
             'all': (
