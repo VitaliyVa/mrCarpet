@@ -70,6 +70,7 @@ Set the following environment variables on your server:
 - `EMAIL_HOST_PASSWORD` - Email password
 - `LIQPAY_PUBLIC_KEY` - LiqPay public key
 - `LIQPAY_PRIVATE_KEY` - LiqPay private key
+- `REPLICATE_API_TOKEN` - Replicate API token (admin image generation)
 
 2. **Configure DNS**
 
@@ -153,6 +154,7 @@ EMAIL_HOST_USER=your_email@gmail.com
 EMAIL_HOST_PASSWORD=your_password
 LIQPAY_PUBLIC_KEY=your_public_key
 LIQPAY_PRIVATE_KEY=your_private_key
+REPLICATE_API_TOKEN=your_replicate_token
 ```
 
 ## Common Commands

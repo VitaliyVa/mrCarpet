@@ -1,7 +1,10 @@
 import "./index.scss";
 
-document.querySelectorAll(".accordion__title").forEach((item) => {
-  item.addEventListener("click", () => {
-    item.closest(".accordion_content__block").classList.toggle("active");
+document.querySelectorAll(".accordion_content__block").forEach((block) => {
+  block.addEventListener("click", (e) => {
+    const content = block.querySelector(".accordion_content");
+    if (content && content.contains(e.target)) return;
+
+    block.classList.toggle("active");
   });
 });

@@ -5,16 +5,28 @@
     var MAX_SIZE = 15 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
-    var STEPS = {
+    var PHASES = {
         catalog: {
-            num: 1,
+            phase: 'catalog',
+            targetId: 'id_image',
             title: 'Генерація каталожного зображення',
-            hint: 'Replicate обробляє фото (~1–3 хв). Не закривайте сторінку.',
+            hint: 'Завантажте фото килима — Replicate зробить зображення для каталогу (top-down, 2:3).',
+            button: 'Згенерувати зображення',
+            progressTitle: 'Генерація зображення…',
+            progressHint: 'Replicate обробляє фото (~1–3 хв). Не закривайте сторінку.',
+            successMsg: 'Зображення згенеровано. Перевірте поле нижче і натисніть «Зберегти».',
+            previewResultLabel: 'Результат',
         },
         hover: {
-            num: 2,
+            phase: 'hover',
+            targetId: 'id_hover_image',
             title: 'Генерація зображення при наведенні',
-            hint: 'Другий запит до Replicate (~1–3 хв).',
+            hint: 'Завантажте фото килима — Replicate зробить hover-фото (macro, згин, bokeh).',
+            button: 'Згенерувати зображення при наведенні',
+            progressTitle: 'Генерація hover-зображення…',
+            progressHint: 'Replicate обробляє фото (~1–3 хв). Не закривайте сторінку.',
+            successMsg: 'Hover-зображення згенеровано. Перевірте поле нижче і натисніть «Зберегти».',
+            previewResultLabel: 'Результат',
         },
     };
 
@@ -36,18 +48,16 @@
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function buildBlock() {
+    function buildBlock(cfg) {
         var block = document.createElement('div');
         block.className = 'replicate-generate-block';
+        block.dataset.phase = cfg.phase;
         block.innerHTML =
-            '<h3>Генерація зображень через Replicate</h3>' +
-            '<p class="replicate-generate-hint">' +
-            'Завантажте фото килима — буде згенеровано 2 зображення окремими запитами. ' +
-            'Перевірте результат у полях нижче і натисніть «Зберегти».' +
-            '</p>' +
+            '<h3>' + cfg.title + '</h3>' +
+            '<p class="replicate-generate-hint">' + cfg.hint + '</p>' +
             '<div class="replicate-generate-controls">' +
             '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input" />' +
-            '<button type="button" class="replicate-generate-btn">Згенерувати зображення та зображення при наведенні</button>' +
+            '<button type="button" class="replicate-generate-btn">' + cfg.button + '</button>' +
             '</div>' +
             '<div class="replicate-progress" hidden>' +
             '<div class="replicate-spinner"></div>' +
@@ -55,7 +65,7 @@
             '<div class="replicate-progress-sub"></div>' +
             '<div class="replicate-elapsed"></div>' +
             '</div>' +
-            '<div class="replicate-logs" hidden><pre class="replicate-logs-content"></pre></div>' +
+            '<div class="replicate-logs" hidden><div class="replicate-logs-content"></div></div>' +
             '<div class="replicate-status" hidden></div>' +
             '<div class="replicate-preview" hidden></div>';
         return block;
@@ -69,10 +79,8 @@
     }
 
     function setProgress(block, title, sub, running) {
-        var progress = block.querySelector('.replicate-progress');
-        var status = block.querySelector('.replicate-status');
-        progress.hidden = false;
-        status.hidden = true;
+        block.querySelector('.replicate-progress').hidden = false;
+        block.querySelector('.replicate-status').hidden = true;
         block.querySelector('.replicate-progress-text').textContent = title;
         block.querySelector('.replicate-progress-sub').textContent = sub || '';
         block.classList.toggle('is-loading', !!running);
@@ -125,19 +133,16 @@
         status.textContent = text;
     }
 
-    function showPreview(block, sourceUrl, imageB64, hoverB64) {
+    function showPreview(block, sourceUrl, resultB64, resultLabel) {
         var preview = block.querySelector('.replicate-preview');
         preview.hidden = false;
-        var html = '<div class="replicate-preview-grid">';
-        html += '<div class="replicate-preview-item"><div class="replicate-preview-label">Джерело</div><img src="' + sourceUrl + '" alt="source" /></div>';
-        if (imageB64) {
-            html += '<div class="replicate-preview-item"><div class="replicate-preview-label">Зображення</div><img src="data:image/webp;base64,' + imageB64 + '" alt="catalog" /></div>';
-        }
-        if (hoverB64) {
-            html += '<div class="replicate-preview-item"><div class="replicate-preview-label">При наведенні</div><img src="data:image/webp;base64,' + hoverB64 + '" alt="hover" /></div>';
-        }
-        html += '</div>';
-        preview.innerHTML = html;
+        preview.innerHTML =
+            '<div class="replicate-preview-grid">' +
+            '<div class="replicate-preview-item"><div class="replicate-preview-label">Джерело</div>' +
+            '<img src="' + sourceUrl + '" alt="source" /></div>' +
+            '<div class="replicate-preview-item"><div class="replicate-preview-label">' + resultLabel + '</div>' +
+            '<img src="data:image/webp;base64,' + resultB64 + '" alt="result" /></div>' +
+            '</div>';
     }
 
     function runPhase(file, phase) {
@@ -155,7 +160,6 @@
                 if (!res.ok) {
                     var err = new Error(data.error || 'Помилка сервера');
                     err.logs = data.logs;
-                    err.phase = phase;
                     throw err;
                 }
                 return data;
@@ -163,7 +167,7 @@
         });
     }
 
-    function onGenerate(block, fileInput, btn) {
+    function onGenerate(block, cfg, fileInput, btn) {
         var file = fileInput.files && fileInput.files[0];
         if (!file) {
             setStatus(block, 'Спочатку виберіть фото килима', true);
@@ -178,10 +182,9 @@
             return;
         }
 
-        var imageInput = document.getElementById('id_image');
-        var hoverInput = document.getElementById('id_hover_image');
-        if (!imageInput || !hoverInput) {
-            setStatus(block, 'Не знайдено поля зображень на формі', true);
+        var targetInput = document.getElementById(cfg.targetId);
+        if (!targetInput) {
+            setStatus(block, 'Не знайдено поле зображення на формі', true);
             return;
         }
 
@@ -191,58 +194,31 @@
         block.querySelector('.replicate-preview').hidden = true;
         block.querySelector('.replicate-status').hidden = true;
 
-        var totalStart = Date.now();
+        var started = Date.now();
         var elapsedTimer = setInterval(function () {
-            setElapsed(block, Date.now() - totalStart);
+            setElapsed(block, Date.now() - started);
         }, 1000);
         setElapsed(block, 0);
 
-        var catalogB64 = null;
-        var hoverB64 = null;
         var sourceUrl = URL.createObjectURL(file);
 
-        function runStep(phase) {
-            var step = STEPS[phase];
-            setProgress(
-                block,
-                'Крок ' + step.num + '/2: ' + step.title,
-                step.hint,
-                true
-            );
+        setProgress(block, cfg.progressTitle, cfg.progressHint, true);
 
-            return runPhase(file, phase).then(function (data) {
-                appendLogs(block, data.logs);
-                if (phase === 'catalog' && data.image) {
-                    catalogB64 = data.image.data_base64;
-                    setFileInput(imageInput, data.image.data_base64, data.image.filename, data.image.content_type);
-                }
-                if (phase === 'hover' && data.hover_image) {
-                    hoverB64 = data.hover_image.data_base64;
-                    setFileInput(hoverInput, data.hover_image.data_base64, data.hover_image.filename, data.hover_image.content_type);
-                }
-                return data;
-            });
-        }
-
-        runStep('catalog')
-            .then(function () {
-                setProgress(block, 'Крок 2/2: Генерація зображення при наведенні', STEPS.hover.hint, true);
-                return runStep('hover');
-            })
+        runPhase(file, cfg.phase)
             .then(function (data) {
-                var totalSec = Math.round((Date.now() - totalStart) / 1000);
-                setStatus(
-                    block,
-                    'Готово за ' + totalSec + ' с. Обидва зображення згенеровано. Перевірте поля нижче і натисніть «Зберегти».',
-                    false,
-                    true
-                );
-                showPreview(block, sourceUrl, catalogB64, hoverB64);
+                appendLogs(block, data.logs);
+                var payload = cfg.phase === 'catalog' ? data.image : data.hover_image;
+                if (!payload) {
+                    throw new Error('Сервер не повернув зображення');
+                }
+                setFileInput(targetInput, payload.data_base64, payload.filename, payload.content_type);
+                var totalSec = Math.round((Date.now() - started) / 1000);
+                setStatus(block, 'Готово за ' + totalSec + ' с. ' + cfg.successMsg, false, true);
+                showPreview(block, sourceUrl, payload.data_base64, cfg.previewResultLabel);
             })
             .catch(function (err) {
                 if (err.logs) appendLogs(block, err.logs);
-                var phaseLabel = err.phase === 'hover' ? ' (hover)' : err.phase === 'catalog' ? ' (каталог)' : '';
-                setStatus(block, (err.message || 'Помилка генерації') + phaseLabel, true);
+                setStatus(block, err.message || 'Помилка генерації', true);
             })
             .finally(function () {
                 clearInterval(elapsedTimer);
@@ -252,18 +228,22 @@
             });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var imageRow = document.querySelector('.form-row.field-image');
-        if (!imageRow || !imageRow.parentNode) return;
+    function mountBlock(fieldSelector, cfg) {
+        var row = document.querySelector(fieldSelector);
+        if (!row || !row.parentNode) return;
 
-        var block = buildBlock();
-        imageRow.parentNode.insertBefore(block, imageRow);
+        var block = buildBlock(cfg);
+        row.parentNode.insertBefore(block, row);
 
         var fileInput = block.querySelector('.replicate-source-input');
         var btn = block.querySelector('.replicate-generate-btn');
-
         btn.addEventListener('click', function () {
-            onGenerate(block, fileInput, btn);
+            onGenerate(block, cfg, fileInput, btn);
         });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        mountBlock('.form-row.field-image', PHASES.catalog);
+        mountBlock('.form-row.field-hover_image', PHASES.hover);
     });
 })();

@@ -7,7 +7,10 @@
   <div class="catalog_section">
     <div class="catalog_section_top">
       <div class="catalog_section_top_img catalog_section_top_img-left">
-        <img src="/static/utils/assets/img.png" alt="" />
+        <img
+          src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+          alt="{{ category.title }}"
+        />
       </div>
       <div class="catalog_section_top_center">
         <h2>{{ category.title }}</h2>
@@ -17,8 +20,8 @@
       </div>
       <div class="catalog_section_top_img catalog_section_top_img-right">
         <img
-          src="/static/utils/assets/catalog_item/catalog_item-1.png"
-          alt=""
+          src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+          alt="{{ category.title }}"
         />
       </div>
     </div>

@@ -71,8 +71,8 @@ html[data-theme="dark"] .update-colors-success {
 
 /* Replicate image generation block */
 .replicate-generate-block {
-    margin: 15px 0;
-    padding: 15px;
+    margin: 0 0 12px;
+    padding: 12px 15px;
     background-color: var(--darkened-bg, #f8f9fa);
     border: 1px solid var(--border-color, #dee2e6);
     border-radius: 4px;
