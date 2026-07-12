@@ -65,25 +65,15 @@
       &::after {
         content: "";
         position: absolute;
-        width: 13px;
         right: 14px;
-        height: 1px;
-        background: #453f3a;
-        top: 20px;
-        cursor: pointer;
-        pointer-events: none;
-      }
-
-      &::before {
-        transition: all 0.2s;
-        content: "";
-        position: absolute;
-        width: 1px;
-        right: 20px;
-        height: 12px;
-        background: #453f3a;
-        top: 15px;
-        cursor: pointer;
+        top: 50%;
+        width: 14px;
+        height: 14px;
+        transform: translateY(-50%);
+        background:
+          linear-gradient(#453f3a, #453f3a) center / 14px 2px no-repeat,
+          linear-gradient(#453f3a, #453f3a) center / 2px 14px no-repeat;
+        transition: background 0.2s;
         pointer-events: none;
       }
 
@@ -100,8 +90,8 @@
           color: #a46c46;
         }
 
-        &::before {
-          opacity: 0;
+        &::after {
+          background: linear-gradient(#453f3a, #453f3a) center / 14px 2px no-repeat;
         }
       }
     }
