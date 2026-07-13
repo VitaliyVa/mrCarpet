@@ -12,6 +12,7 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   slidesPerView: 1,
   slidesPerGroup: 1,
   initialSlide: 0,
+  autoHeight: true,
   // zoom: {
   //     maxRaito: 5,
   //     minRaito: 1

@@ -338,7 +338,7 @@ def favourites(request):
 
 def product(request, slug):
     product = Product.objects.get(slug=slug)
-    images = ProductImage.objects.filter(product=product)
+    images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
     # product_attr = ProductAttribute.objects.filter(product=prod)
     return render(request, "product.html", {"product": product, "images": images})
 

@@ -116,6 +116,20 @@
         return result;
     }
 
+    function setNextSortOrder(targetInput) {
+        var row = targetInput.closest('tr');
+        if (!row) return;
+        var orderInput = row.querySelector('input[name$="-sort_order"]');
+        if (!orderInput) return;
+        var max = 0;
+        document.querySelectorAll('#' + INLINE_GROUP_ID + ' input[name$="-sort_order"]').forEach(function (inp) {
+            if (inp === orderInput) return;
+            var v = parseInt(inp.value, 10);
+            if (!isNaN(v) && v > max) max = v;
+        });
+        orderInput.value = max + 10;
+    }
+
     function setFileInput(input, base64, filename, mime) {
         var binary = atob(base64);
         var bytes = new Uint8Array(binary.length);
@@ -350,6 +364,7 @@
                         payload.filename,
                         payload.content_type
                     );
+                    setNextSortOrder(targetInput);
                     var totalSec = Math.round((Date.now() - started) / 1000);
                     var optsMeta = data.meta && data.meta.prompt_options;
                     var optsNote = optsMeta

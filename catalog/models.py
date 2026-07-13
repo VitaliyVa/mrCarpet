@@ -160,13 +160,31 @@ class ProductImage(models.Model):
     alt = models.CharField(
         verbose_name="Image alt", max_length=500, blank=True, null=True
     )
+    sort_order = models.PositiveIntegerField(
+        verbose_name="Порядок",
+        default=0,
+        help_text="Менше число — вище в слайдері на сторінці товару",
+    )
 
     class Meta:
         verbose_name = "Зображення продукта"
         verbose_name_plural = "Зображення продуктів"
+        ordering = ["sort_order", "id"]
 
     def __str__(self):
         return f"{self.product.title}: {self.image.url}"
+
+    def save(self, *args, **kwargs):
+        if self.sort_order == 0 and self.product_id:
+            from django.db.models import Max
+
+            current_max = (
+                ProductImage.objects.filter(product_id=self.product_id)
+                .exclude(pk=self.pk)
+                .aggregate(m=Max("sort_order"))["m"]
+            )
+            self.sort_order = (current_max or 0) + 10
+        super().save(*args, **kwargs)
 
 
 class ProductCategory(AbstractTitleSlug):

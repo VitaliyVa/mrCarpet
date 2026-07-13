@@ -321,3 +321,39 @@ html[data-theme="dark"] .replicate-generate-block {
     color: #dc3545;
     font-weight: 600;
 }
+
+/* ProductImage inline sort order */
+#images-group .field-sort_order input {
+    width: 4em;
+    text-align: center;
+}
+
+.product-image-drag-col {
+    width: 28px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.product-image-drag-handle {
+    display: inline-block;
+    cursor: grab;
+    color: var(--body-quiet-color, #888);
+    font-size: 14px;
+    line-height: 1;
+    user-select: none;
+    padding: 4px 2px;
+}
+
+.product-image-drag-handle:active {
+    cursor: grabbing;
+}
+
+#images-group tr.is-dragging {
+    opacity: 0.45;
+}
+
+#images-group tr.is-drag-over {
+    outline: 2px dashed var(--default-button-bg, #417690);
+    outline-offset: -2px;
+}

@@ -120,6 +120,8 @@ class ProductInLine(admin.TabularInline):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 0
+    fields = ("sort_order", "image", "alt")
+    ordering = ("sort_order", "id")
     formfield_overrides = {
         models.ImageField: {"widget": ImagePreviewWidget},
     }
@@ -502,11 +504,12 @@ class ProductAdmin(admin.ModelAdmin):
             new_product.colors.set(original_colors)
             
             # Копіюємо ProductImage
-            for original_image in original_product.images.all():
+            for original_image in original_product.images.all().order_by("sort_order", "id"):
                 ProductImage.objects.create(
                     product=new_product,
                     image=original_image.image,
-                    alt=original_image.alt
+                    alt=original_image.alt,
+                    sort_order=original_image.sort_order,
                 )
             
             # Копіюємо ProductAttribute
@@ -718,6 +721,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/image_resize.js',
             'admin/js/replicate_generate_images.js',
             'admin/js/replicate_generate_scene.js',
+            'admin/js/product_image_sortable.js',
         )
         css = {
             'all': (
