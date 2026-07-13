@@ -5,17 +5,58 @@
     var MAX_SIZE = 15 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
+    var CATALOG_OPTIONS = {
+        rug_shape: {
+            label: 'Форма килима',
+            name: 'rug_shape',
+            default: 'auto',
+            choices: [
+                { value: 'auto', label: 'Авто (з фото)' },
+                { value: 'oval', label: 'Овальний' },
+                { value: 'rectangular', label: 'Прямокутний' },
+                { value: 'round', label: 'Круглий' },
+                { value: 'runner', label: 'Доріжка (runner)' },
+            ],
+        },
+        source_context: {
+            label: 'Тип вихідного фото',
+            name: 'source_context',
+            default: 'auto',
+            choices: [
+                { value: 'auto', label: 'Авто' },
+                { value: 'in_room', label: 'В інтер\'єрі / на підлозі' },
+                { value: 'isolated', label: 'Вже на білому фоні' },
+            ],
+        },
+        color_mode: {
+            label: 'Колір',
+            name: 'color_mode',
+            default: 'auto',
+            choices: [
+                { value: 'auto', label: 'Авто' },
+                { value: 'preserve_exact', label: 'Точно як на фото' },
+                { value: 'monochrome', label: 'Монохром / сірий' },
+            ],
+        },
+    };
+
+    var HOVER_OPTIONS = {
+        rug_shape: CATALOG_OPTIONS.rug_shape,
+        color_mode: CATALOG_OPTIONS.color_mode,
+    };
+
     var PHASES = {
         catalog: {
             phase: 'catalog',
             targetId: 'id_image',
             title: 'Генерація каталожного зображення',
-            hint: 'Завантажте фото килима — Replicate зробить зображення для каталогу (top-down, 2:3).',
+            hint: 'Завантажте фото килима і вкажіть форму — Replicate зробить top-down зображення 2:3.',
             button: 'Згенерувати зображення',
             progressTitle: 'Генерація зображення…',
             progressHint: 'Replicate обробляє фото (~1–3 хв). Не закривайте сторінку.',
             successMsg: 'Зображення згенеровано. Перевірте поле нижче і натисніть «Зберегти».',
             previewResultLabel: 'Результат',
+            options: CATALOG_OPTIONS,
         },
         hover: {
             phase: 'hover',
@@ -27,6 +68,7 @@
             progressHint: 'Replicate обробляє фото (~1–3 хв). Не закривайте сторінку.',
             successMsg: 'Hover-зображення згенеровано. Перевірте поле нижче і натисніть «Зберегти».',
             previewResultLabel: 'Результат',
+            options: HOVER_OPTIONS,
         },
     };
 
@@ -48,6 +90,50 @@
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    function buildOptionsHtml(optionsConfig, phase) {
+        if (!optionsConfig) return '';
+
+        var groups = Object.keys(optionsConfig);
+        var html = '<div class="replicate-options">';
+
+        groups.forEach(function (key) {
+            var group = optionsConfig[key];
+            var groupName = phase + '_' + group.name;
+            html += '<fieldset class="replicate-option-group">';
+            html += '<legend>' + group.label + '</legend>';
+            html += '<div class="replicate-option-radios">';
+
+            group.choices.forEach(function (choice) {
+                var id = groupName + '_' + choice.value;
+                var checked = choice.value === group.default ? ' checked' : '';
+                html +=
+                    '<label class="replicate-option-label" for="' + id + '">' +
+                    '<input type="radio" id="' + id + '" name="' + groupName + '" value="' + choice.value + '"' + checked + ' />' +
+                    '<span>' + choice.label + '</span>' +
+                    '</label>';
+            });
+
+            html += '</div></fieldset>';
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    function collectOptions(block, cfg) {
+        var result = {};
+        if (!cfg.options) return result;
+
+        Object.keys(cfg.options).forEach(function (key) {
+            var group = cfg.options[key];
+            var groupName = cfg.phase + '_' + group.name;
+            var selected = block.querySelector('input[name="' + groupName + '"]:checked');
+            result[group.name] = selected ? selected.value : group.default;
+        });
+
+        return result;
+    }
+
     function buildBlock(cfg) {
         var block = document.createElement('div');
         block.className = 'replicate-generate-block';
@@ -55,6 +141,7 @@
         block.innerHTML =
             '<h3>' + cfg.title + '</h3>' +
             '<p class="replicate-generate-hint">' + cfg.hint + '</p>' +
+            buildOptionsHtml(cfg.options, cfg.phase) +
             '<div class="replicate-generate-controls">' +
             '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input" />' +
             '<button type="button" class="replicate-generate-btn">' + cfg.button + '</button>' +
@@ -145,10 +232,14 @@
             '</div>';
     }
 
-    function runPhase(file, phase) {
+    function runPhase(file, phase, options) {
         var formData = new FormData();
         formData.append('source_image', file);
         formData.append('phase', phase);
+
+        Object.keys(options || {}).forEach(function (key) {
+            formData.append(key, options[key]);
+        });
 
         return fetch(ENDPOINT, {
             method: 'POST',
@@ -190,6 +281,9 @@
 
         btn.disabled = true;
         fileInput.disabled = true;
+        block.querySelectorAll('.replicate-options input').forEach(function (el) {
+            el.disabled = true;
+        });
         clearLogs(block);
         block.querySelector('.replicate-preview').hidden = true;
         block.querySelector('.replicate-status').hidden = true;
@@ -201,10 +295,11 @@
         setElapsed(block, 0);
 
         var sourceUrl = URL.createObjectURL(file);
+        var promptOptions = collectOptions(block, cfg);
 
         setProgress(block, cfg.progressTitle, cfg.progressHint, true);
 
-        runPhase(file, cfg.phase)
+        runPhase(file, cfg.phase, promptOptions)
             .then(function (data) {
                 appendLogs(block, data.logs);
                 var payload = cfg.phase === 'catalog' ? data.image : data.hover_image;
@@ -213,7 +308,9 @@
                 }
                 setFileInput(targetInput, payload.data_base64, payload.filename, payload.content_type);
                 var totalSec = Math.round((Date.now() - started) / 1000);
-                setStatus(block, 'Готово за ' + totalSec + ' с. ' + cfg.successMsg, false, true);
+                var optsMeta = data.meta && data.meta.prompt_options;
+                var optsNote = optsMeta ? ' [' + Object.keys(optsMeta).map(function (k) { return k + '=' + optsMeta[k]; }).join(', ') + ']' : '';
+                setStatus(block, 'Готово за ' + totalSec + ' с' + optsNote + '. ' + cfg.successMsg, false, true);
                 showPreview(block, sourceUrl, payload.data_base64, cfg.previewResultLabel);
             })
             .catch(function (err) {
@@ -224,6 +321,9 @@
                 clearInterval(elapsedTimer);
                 btn.disabled = false;
                 fileInput.disabled = false;
+                block.querySelectorAll('.replicate-options input').forEach(function (el) {
+                    el.disabled = false;
+                });
                 block.classList.remove('is-loading');
             });
     }

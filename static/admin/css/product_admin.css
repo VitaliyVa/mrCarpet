@@ -89,6 +89,62 @@ html[data-theme="dark"] .update-colors-success {
     color: var(--body-quiet-color, #666);
 }
 
+.replicate-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.replicate-option-group {
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    background: var(--body-bg, #fff);
+}
+
+.replicate-option-group legend {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 4px;
+}
+
+.replicate-option-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+}
+
+.replicate-option-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.replicate-option-label input {
+    margin: 0;
+}
+
+.replicate-scene-block {
+    margin-bottom: 16px;
+}
+
+.replicate-scene-block .replicate-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .replicate-scene-block .replicate-options {
+        grid-template-columns: 1fr;
+    }
+}
+
 .replicate-generate-controls {
     display: flex;
     flex-wrap: wrap;

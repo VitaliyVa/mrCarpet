@@ -8,23 +8,44 @@ import requests
 from django.conf import settings
 
 from catalog.image_optimize import optimize_product_image
+from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.replicate_prompts import (
-    PROMPT_CATALOG_IMAGE,
-    PROMPT_HOVER_IMAGE,
     PROMPT_VERSION,
+    build_catalog_prompt,
+    build_hover_prompt,
+    build_scene_prompt,
 )
 
 logger = logging.getLogger("catalog.replicate")
 
 PHASE_CATALOG = "catalog"
 PHASE_HOVER = "hover"
+PHASE_SCENE = "scene"
 PREDICTION_TIMEOUT_SEC = 360
 POLL_INTERVAL_SEC = 3
-ASPECT_RATIO = "2:3"
 
-PROMPTS = {
-    PHASE_CATALOG: PROMPT_CATALOG_IMAGE,
-    PHASE_HOVER: PROMPT_HOVER_IMAGE,
+PHASE_CONFIG = {
+    PHASE_CATALOG: {
+        "label": "Каталог",
+        "aspect_ratio": "2:3",
+        "max_width": 500,
+        "build_prompt": lambda opts: build_catalog_prompt(opts.catalog),
+        "options_meta": lambda opts: opts.catalog.as_meta(),
+    },
+    PHASE_HOVER: {
+        "label": "Hover",
+        "aspect_ratio": "2:3",
+        "max_width": 500,
+        "build_prompt": lambda opts: build_hover_prompt(opts.catalog),
+        "options_meta": lambda opts: opts.catalog.as_meta(),
+    },
+    PHASE_SCENE: {
+        "label": "Сцена",
+        "aspect_ratio": "4:3",
+        "max_width": 1024,
+        "build_prompt": lambda opts: build_scene_prompt(opts.scene),
+        "options_meta": lambda opts: opts.scene.as_meta(),
+    },
 }
 
 
@@ -65,34 +86,48 @@ class ReplicateProductImageService:
         self.client = replicate.Client(api_token=token)
         self.job_log = ReplicateJobLog()
 
-    def generate_phase(self, source_path: Path, phase: str) -> tuple[bytes, dict]:
-        if phase not in PROMPTS:
+    def generate_phase(
+        self,
+        source_path: Path,
+        phase: str,
+        options: GenerationOptions | None = None,
+    ) -> tuple[bytes, dict]:
+        if phase not in PHASE_CONFIG:
             raise ReplicateGenerationError(f"Невідома фаза: {phase}")
+
+        config = PHASE_CONFIG[phase]
+        opts = options or GenerationOptions()
+        prompt = config["build_prompt"](opts)
+        aspect_ratio = config["aspect_ratio"]
+        max_width = config["max_width"]
+        phase_label = config["label"]
 
         started = time.monotonic()
         source_bytes = source_path.read_bytes()
         source_name = source_path.name or "source.jpg"
 
-        phase_label = "Каталог" if phase == PHASE_CATALOG else "Hover"
         self.job_log.info(f"{phase_label}: відправлено на Replicate…")
 
         raw_bytes = self._run_and_download(
             source_bytes,
             source_name,
-            PROMPTS[phase],
-            phase,
+            prompt,
             phase_label,
+            aspect_ratio,
         )
-        optimized = optimize_product_image(raw_bytes)
+        optimized = optimize_product_image(raw_bytes, max_width=max_width)
 
         duration = round(time.monotonic() - started, 1)
-        self.job_log.ok(f"{phase_label}: готово за {duration} с ({len(optimized) // 1024} KB)")
+        self.job_log.ok(
+            f"{phase_label}: готово за {duration} с ({len(optimized) // 1024} KB)"
+        )
 
         meta = {
             "model": self.MODEL,
             "prompt_version": PROMPT_VERSION,
             "phase": phase,
-            "aspect_ratio": ASPECT_RATIO,
+            "aspect_ratio": aspect_ratio,
+            "prompt_options": config["options_meta"](opts),
             "duration_sec": duration,
             "output_size_kb": len(optimized) // 1024,
             "logs": self.job_log.entries,
@@ -104,8 +139,8 @@ class ReplicateProductImageService:
         source_bytes: bytes,
         source_name: str,
         prompt: str,
-        phase: str,
         phase_label: str,
+        aspect_ratio: str,
     ) -> bytes:
         file_obj = io.BytesIO(source_bytes)
         file_obj.name = source_name
@@ -115,7 +150,7 @@ class ReplicateProductImageService:
             input={
                 "prompt": prompt,
                 "input_images": [file_obj],
-                "aspect_ratio": ASPECT_RATIO,
+                "aspect_ratio": aspect_ratio,
                 "quality": "high",
                 "output_format": "webp",
                 "output_compression": 90,

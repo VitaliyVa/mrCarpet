@@ -24,6 +24,7 @@ from catalog.services.replicate_product_images import (
     ReplicateGenerationError,
     ReplicateProductImageService,
 )
+from catalog.services.replicate_prompt_options import GenerationOptions
 from .models import (
     Product,
     ProductCategory,
@@ -224,9 +225,9 @@ class ProductAdmin(admin.ModelAdmin):
     @method_decorator(require_POST)
     def generate_product_images(self, request):
         phase = request.POST.get('phase', '').strip()
-        if phase not in ('catalog', 'hover'):
+        if phase not in ('catalog', 'hover', 'scene'):
             return JsonResponse(
-                {'success': False, 'error': 'Параметр phase має бути catalog або hover'},
+                {'success': False, 'error': 'Параметр phase має бути catalog, hover або scene'},
                 status=400,
             )
 
@@ -249,7 +250,8 @@ class ProductAdmin(admin.ModelAdmin):
                     dest.write(chunk)
 
             service = ReplicateProductImageService()
-            image_bytes, meta = service.generate_phase(source_path, phase)
+            gen_options = GenerationOptions.from_request_post(request.POST)
+            image_bytes, meta = service.generate_phase(source_path, phase, gen_options)
 
             payload = {
                 'success': True,
@@ -259,8 +261,10 @@ class ProductAdmin(admin.ModelAdmin):
             }
             if phase == 'catalog':
                 payload['image'] = self._file_payload(image_bytes, 'product')
-            else:
+            elif phase == 'hover':
                 payload['hover_image'] = self._file_payload(image_bytes, 'hover')
+            else:
+                payload['image'] = self._file_payload(image_bytes, 'scene')
 
             return JsonResponse(payload)
         except ReplicateGenerationError as exc:
@@ -713,6 +717,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/color_select.js',
             'admin/js/image_resize.js',
             'admin/js/replicate_generate_images.js',
+            'admin/js/replicate_generate_scene.js',
         )
         css = {
             'all': (
