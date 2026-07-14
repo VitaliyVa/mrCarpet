@@ -43,49 +43,113 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   },
 });
 
+function positionBadgeTooltip(badge) {
+  const tooltip = badge.querySelector(".product-slide__badge-tooltip");
+  const label = badge.querySelector(".product-slide__badge-label");
+  if (!tooltip || !label) return;
+
+  tooltip.style.visibility = "hidden";
+  tooltip.style.opacity = "0";
+  tooltip.style.display = "block";
+
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const labelRect = label.getBoundingClientRect();
+  const gap = 8;
+  const margin = 12;
+
+  let top = labelRect.top - tooltipRect.height - gap;
+  let left = labelRect.left;
+
+  if (top < margin) {
+    top = labelRect.bottom + gap;
+  }
+
+  if (left + tooltipRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - tooltipRect.width - margin;
+  }
+
+  if (left < margin) {
+    left = margin;
+  }
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.visibility = "";
+  tooltip.style.opacity = "";
+  tooltip.style.display = "";
+}
+
+function openBadge(badge) {
+  positionBadgeTooltip(badge);
+  badge.classList.add("product-slide__badge--open");
+}
+
+function closeBadge(badge) {
+  badge.classList.remove("product-slide__badge--open");
+}
+
 function initProductAiBadges() {
   const badges = document.querySelectorAll(".product-slide__badge");
   if (!badges.length) return;
 
   const hasHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const hideTimers = new WeakMap();
+
+  const scheduleClose = (badge) => {
+    clearTimeout(hideTimers.get(badge));
+    hideTimers.set(
+      badge,
+      setTimeout(() => closeBadge(badge), 140)
+    );
+  };
+
+  const cancelClose = (badge) => {
+    clearTimeout(hideTimers.get(badge));
+  };
 
   badges.forEach((badge) => {
-    if (hasHover) {
-      badge.addEventListener("mouseenter", () => {
-        badge.classList.add("product-slide__badge--open");
-      });
+    const tooltip = badge.querySelector(".product-slide__badge-tooltip");
 
-      badge.addEventListener("mouseleave", () => {
-        badge.classList.remove("product-slide__badge--open");
+    if (hasHover) {
+      [badge, tooltip].forEach((el) => {
+        if (!el) return;
+        el.addEventListener("mouseenter", () => {
+          cancelClose(badge);
+          openBadge(badge);
+        });
+        el.addEventListener("mouseleave", () => scheduleClose(badge));
       });
     }
 
-    badge.addEventListener("focus", () => {
-      badge.classList.add("product-slide__badge--open");
-    });
-
-    badge.addEventListener("blur", () => {
-      badge.classList.remove("product-slide__badge--open");
-    });
+    badge.addEventListener("focus", () => openBadge(badge));
+    badge.addEventListener("blur", () => closeBadge(badge));
 
     badge.addEventListener("click", (event) => {
       if (hasHover) return;
 
       event.stopPropagation();
       const isOpen = badge.classList.contains("product-slide__badge--open");
-      badges.forEach((item) => item.classList.remove("product-slide__badge--open"));
-      if (!isOpen) badge.classList.add("product-slide__badge--open");
+      badges.forEach((item) => closeBadge(item));
+      if (!isOpen) openBadge(badge);
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    badges.forEach((badge) => {
+      if (badge.classList.contains("product-slide__badge--open")) {
+        positionBadgeTooltip(badge);
+      }
     });
   });
 
   document.addEventListener("click", (event) => {
     if (event.target.closest(".product-slide__badge")) return;
-    badges.forEach((badge) => badge.classList.remove("product-slide__badge--open"));
+    badges.forEach((badge) => closeBadge(badge));
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      badges.forEach((badge) => badge.classList.remove("product-slide__badge--open"));
+      badges.forEach((badge) => closeBadge(badge));
     }
   });
 }

@@ -507,14 +507,9 @@
 .product_slider_main {
   width: calc(100% - 190px);
   align-self: flex-start;
-  overflow: visible;
 
   .swiper-wrapper {
     align-items: flex-start;
-  }
-
-  &.swiper {
-    overflow: visible;
   }
 
   .swiper-slide {
@@ -524,7 +519,6 @@
     align-items: flex-start;
     justify-content: center;
     height: auto !important;
-    overflow: visible;
 
     img {
       width: 100%;
@@ -538,7 +532,6 @@
   .product-slide__media {
     position: relative;
     width: 100%;
-    overflow: visible;
   }
 
   .product-slide__badge {
@@ -569,38 +562,38 @@
     }
 
     &-tooltip {
-      position: absolute;
-      bottom: calc(100% + 8px);
+      position: fixed;
       left: 0;
+      top: 0;
+      z-index: 1000;
       width: max-content;
-      max-width: min(220px, 70vw);
+      max-width: min(240px, calc(100vw - 24px));
       padding: 8px 10px;
       font-size: 11px;
       line-height: 1.4;
       font-family: "Futura PT Book", sans-serif;
       color: rgba(69, 63, 58, 0.88);
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.98);
       border: 1px solid rgba(164, 108, 70, 0.18);
       border-radius: 6px;
-      box-shadow: 0 10px 28px rgba(69, 63, 58, 0.1);
+      box-shadow: 0 10px 28px rgba(69, 63, 58, 0.14);
       opacity: 0;
       visibility: hidden;
-      transform: translateY(5px) scale(0.98);
-      transform-origin: left bottom;
+      transform: translateY(4px);
       transition:
-        opacity 0.28s ease,
-        transform 0.28s ease,
-        visibility 0.28s ease;
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        visibility 0.22s ease;
       pointer-events: none;
 
       &::after {
         content: "";
         position: absolute;
         bottom: -4px;
-        left: 12px;
+        left: 16px;
         width: 7px;
         height: 7px;
-        background: rgba(255, 255, 255, 0.96);
+        background: rgba(255, 255, 255, 0.98);
         border-right: 1px solid rgba(164, 108, 70, 0.18);
         border-bottom: 1px solid rgba(164, 108, 70, 0.18);
         transform: rotate(45deg);
@@ -614,12 +607,10 @@
       transform: translateY(-1px);
     }
 
-    &:hover &-tooltip,
-    &:focus-visible &-tooltip,
     &--open &-tooltip {
       opacity: 1;
       visibility: visible;
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
       pointer-events: auto;
     }
 
