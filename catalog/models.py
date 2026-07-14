@@ -165,6 +165,11 @@ class ProductImage(models.Model):
         default=0,
         help_text="Менше число — вище в слайдері на сторінці товару",
     )
+    is_ai = models.BooleanField(
+        verbose_name="Ілюстрація інтер'єру (ШІ)",
+        default=False,
+        help_text="Позначається автоматично для зображень, згенерованих у блоці «Генерація фото для сторінки товару»",
+    )
 
     class Meta:
         verbose_name = "Зображення продукта"

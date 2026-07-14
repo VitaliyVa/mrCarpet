@@ -120,7 +120,7 @@ class ProductInLine(admin.TabularInline):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 0
-    fields = ("sort_order", "image", "alt")
+    fields = ("sort_order", "image", "alt", "is_ai")
     ordering = ("sort_order", "id")
     formfield_overrides = {
         models.ImageField: {"widget": ImagePreviewWidget},
@@ -510,6 +510,7 @@ class ProductAdmin(admin.ModelAdmin):
                     image=original_image.image,
                     alt=original_image.alt,
                     sort_order=original_image.sort_order,
+                    is_ai=original_image.is_ai,
                 )
             
             # Копіюємо ProductAttribute

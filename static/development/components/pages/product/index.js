@@ -42,3 +42,15 @@ const product_main_swiper = new Swiper(".product_slider_main", {
     },
   },
 });
+
+function updateProductAiNote(swiper) {
+  const note = document.getElementById("product-ai-note");
+  if (!note) return;
+
+  const slide = swiper.slides[swiper.activeIndex];
+  const isAi = slide?.dataset?.isAi === "1";
+  note.hidden = !isAi;
+}
+
+product_main_swiper.on("slideChange", updateProductAiNote);
+updateProductAiNote(product_main_swiper);

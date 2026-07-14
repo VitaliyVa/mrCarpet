@@ -213,7 +213,7 @@
           <div class="swiper-wrapper">
             {% if images %}
             {% for image in images %}
-            <div class="swiper-slide">
+            <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}">
               <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
             </div>
             {% endfor %}
@@ -229,13 +229,20 @@
           <div class="swiper-wrapper">
             {% if images %}
             {% for image in images %}
-            <div class="swiper-slide">
-              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
+            <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}" data-is-ai="{% if image.is_ai %}1{% else %}0{% endif %}">
+              <div class="product-slide__media">
+                {% if image.is_ai %}
+                <span class="product-slide__badge">В інтер'єрі</span>
+                {% endif %}
+                <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
+              </div>
             </div>
             {% endfor %}
             {% else %}
-            <div class="swiper-slide">
-              <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+            <div class="swiper-slide" data-is-ai="0">
+              <div class="product-slide__media">
+                <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+              </div>
             </div>
             {% endif %}
           </div>
@@ -243,6 +250,12 @@
           <div class="swiper-button swiper-button-next"></div>
           <div class="swiper-button swiper-button-prev"></div>
         </div>
+
+        {% if has_ai_images %}
+        <p class="product_slider__ai-note" id="product-ai-note" hidden>
+          Ілюстрація інтер'єру для наочності. Колір і освітлення можуть відрізнятися.
+        </p>
+        {% endif %}
       </div>
       <div class="product__right">
         <div class="title">

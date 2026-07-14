@@ -26,7 +26,9 @@
     width: 50%;
     max-height: 800px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
+    align-content: flex-start;
   }
 
   &__right {
@@ -529,6 +531,27 @@
     }
   }
 
+  .product-slide__media {
+    position: relative;
+    width: 100%;
+  }
+
+  .product-slide__badge {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2;
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.25;
+    font-family: "Futura PT Book", sans-serif;
+    color: #fff;
+    background: rgba(164, 108, 70, 0.92);
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+
   .swiper-button-next,
   .swiper-button-prev {
     display: none;
@@ -564,6 +587,21 @@
     .swiper-button-prev {
       display: flex;
     }
+  }
+}
+
+.product_slider__ai-note {
+  flex-basis: 100%;
+  width: 100%;
+  order: 3;
+  margin: 12px 0 0;
+  padding-left: 124px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(69, 63, 58, 0.75);
+
+  @media (max-width: 1024px) {
+    padding: 0 20px;
   }
 }
 

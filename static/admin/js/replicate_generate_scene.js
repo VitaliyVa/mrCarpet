@@ -130,6 +130,15 @@
         orderInput.value = max + 10;
     }
 
+    function setIsAiFlag(targetInput, value) {
+        var row = targetInput.closest('tr');
+        if (!row) return;
+        var checkbox = row.querySelector('input[type="checkbox"][name$="-is_ai"]');
+        if (checkbox) {
+            checkbox.checked = !!value;
+        }
+    }
+
     function setFileInput(input, base64, filename, mime) {
         var binary = atob(base64);
         var bytes = new Uint8Array(binary.length);
@@ -364,6 +373,7 @@
                         payload.filename,
                         payload.content_type
                     );
+                    setIsAiFlag(targetInput, true);
                     setNextSortOrder(targetInput);
                     var totalSec = Math.round((Date.now() - started) / 1000);
                     var optsMeta = data.meta && data.meta.prompt_options;
