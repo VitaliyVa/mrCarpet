@@ -47,9 +47,27 @@ function initProductAiBadges() {
   const badges = document.querySelectorAll(".product-slide__badge");
   if (!badges.length) return;
 
-  const hasHover = window.matchMedia("(hover: hover)").matches;
+  const hasHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   badges.forEach((badge) => {
+    if (hasHover) {
+      badge.addEventListener("mouseenter", () => {
+        badge.classList.add("product-slide__badge--open");
+      });
+
+      badge.addEventListener("mouseleave", () => {
+        badge.classList.remove("product-slide__badge--open");
+      });
+    }
+
+    badge.addEventListener("focus", () => {
+      badge.classList.add("product-slide__badge--open");
+    });
+
+    badge.addEventListener("blur", () => {
+      badge.classList.remove("product-slide__badge--open");
+    });
+
     badge.addEventListener("click", (event) => {
       if (hasHover) return;
 
@@ -60,7 +78,8 @@ function initProductAiBadges() {
     });
   });
 
-  document.addEventListener("click", () => {
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".product-slide__badge")) return;
     badges.forEach((badge) => badge.classList.remove("product-slide__badge--open"));
   });
 
