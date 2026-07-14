@@ -339,12 +339,7 @@ def favourites(request):
 def product(request, slug):
     product = Product.objects.get(slug=slug)
     images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
-    has_ai_images = images.filter(is_ai=True).exists()
-    return render(
-        request,
-        "product.html",
-        {"product": product, "images": images, "has_ai_images": has_ai_images},
-    )
+    return render(request, "product.html", {"product": product, "images": images})
 
 
 def stock(request):

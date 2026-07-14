@@ -43,14 +43,32 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   },
 });
 
-function updateProductAiNote(swiper) {
-  const note = document.getElementById("product-ai-note");
-  if (!note) return;
+function initProductAiBadges() {
+  const badges = document.querySelectorAll(".product-slide__badge");
+  if (!badges.length) return;
 
-  const slide = swiper.slides[swiper.activeIndex];
-  const isAi = slide?.dataset?.isAi === "1";
-  note.hidden = !isAi;
+  const hasHover = window.matchMedia("(hover: hover)").matches;
+
+  badges.forEach((badge) => {
+    badge.addEventListener("click", (event) => {
+      if (hasHover) return;
+
+      event.stopPropagation();
+      const isOpen = badge.classList.contains("product-slide__badge--open");
+      badges.forEach((item) => item.classList.remove("product-slide__badge--open"));
+      if (!isOpen) badge.classList.add("product-slide__badge--open");
+    });
+  });
+
+  document.addEventListener("click", () => {
+    badges.forEach((badge) => badge.classList.remove("product-slide__badge--open"));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      badges.forEach((badge) => badge.classList.remove("product-slide__badge--open"));
+    }
+  });
 }
 
-product_main_swiper.on("slideChange", updateProductAiNote);
-updateProductAiNote(product_main_swiper);
+initProductAiBadges();

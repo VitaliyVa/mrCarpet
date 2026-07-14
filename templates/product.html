@@ -229,17 +229,22 @@
           <div class="swiper-wrapper">
             {% if images %}
             {% for image in images %}
-            <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}" data-is-ai="{% if image.is_ai %}1{% else %}0{% endif %}">
+            <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}">
               <div class="product-slide__media">
                 {% if image.is_ai %}
-                <span class="product-slide__badge">В інтер'єрі</span>
+                <div class="product-slide__badge" tabindex="0" aria-label="В інтер'єрі">
+                  <span class="product-slide__badge-label">В інтер'єрі</span>
+                  <span class="product-slide__badge-tooltip" role="tooltip">
+                    Ілюстрація інтер'єру для наочності. Колір і освітлення можуть відрізнятися.
+                  </span>
+                </div>
                 {% endif %}
                 <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
               </div>
             </div>
             {% endfor %}
             {% else %}
-            <div class="swiper-slide" data-is-ai="0">
+            <div class="swiper-slide">
               <div class="product-slide__media">
                 <img src="{{ product.image.url }}" alt="{{ product.title }}" />
               </div>
@@ -250,12 +255,6 @@
           <div class="swiper-button swiper-button-next"></div>
           <div class="swiper-button swiper-button-prev"></div>
         </div>
-
-        {% if has_ai_images %}
-        <p class="product_slider__ai-note" id="product-ai-note" hidden>
-          Ілюстрація інтер'єру для наочності. Колір і освітлення можуть відрізнятися.
-        </p>
-        {% endif %}
       </div>
       <div class="product__right">
         <div class="title">
