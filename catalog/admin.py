@@ -723,6 +723,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/replicate_generate_images.js',
             'admin/js/replicate_generate_scene.js',
             'admin/js/product_image_sortable.js',
+            'admin/js/product_image_dropzone.js',
         )
         css = {
             'all': (

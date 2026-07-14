@@ -78,6 +78,10 @@
         });
 
         row.addEventListener('dragover', function (e) {
+            if (e.dataTransfer && e.dataTransfer.types
+                && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1) {
+                return;
+            }
             if (group.querySelector('.is-dragging') === row) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
@@ -89,6 +93,10 @@
         });
 
         row.addEventListener('drop', function (e) {
+            if (e.dataTransfer && e.dataTransfer.types
+                && Array.prototype.indexOf.call(e.dataTransfer.types, 'Files') !== -1) {
+                return;
+            }
             e.preventDefault();
             row.classList.remove('is-drag-over');
             var dragging = group.querySelector('tbody tr.is-dragging');

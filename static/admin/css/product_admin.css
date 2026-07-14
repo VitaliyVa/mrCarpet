@@ -357,3 +357,28 @@ html[data-theme="dark"] .replicate-generate-block {
     outline: 2px dashed var(--default-button-bg, #417690);
     outline-offset: -2px;
 }
+
+.product-image-drop-hint {
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px dashed var(--border-color, #ccc);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--body-quiet-color, #666);
+    text-align: center;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.product-image-drop-hint.is-error {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.06);
+}
+
+#images-group.is-file-dragover .product-image-drop-hint {
+    border-color: var(--default-button-bg, #417690);
+    background: rgba(65, 118, 144, 0.1);
+    color: var(--body-fg, #333);
+    font-weight: 600;
+}
