@@ -13,10 +13,6 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   slidesPerGroup: 1,
   initialSlide: 0,
   autoHeight: true,
-  // zoom: {
-  //     maxRaito: 5,
-  //     minRaito: 1
-  // },
   navigation: {
     nextEl: ".swiper-button-next",
     prevEl: ".swiper-button-prev",
@@ -28,44 +24,32 @@ const product_main_swiper = new Swiper(".product_slider_main", {
       slidesPerView: 6,
       spaceBetween: 16,
       direction: "vertical",
-      breakpoints: {
-        // 700: {
-        //   slidesPerView: 4,
-        // },
-        // 600: {
-        //   slidesPerView: 3,
-        // },
-        // 300: {
-        //   slidesPerView: 2,
-        // },
-      },
+      breakpoints: {},
     },
   },
 });
 
-function positionBadgeTooltip(badge) {
-  const tooltip = badge.querySelector(".product-slide__badge-tooltip");
-  const label = badge.querySelector(".product-slide__badge-label");
-  if (!tooltip || !label) return;
-
-  tooltip.style.visibility = "hidden";
-  tooltip.style.opacity = "0";
+function positionBadgeTooltip(anchor, tooltip) {
   tooltip.style.display = "block";
+  tooltip.style.visibility = "hidden";
+  tooltip.style.left = "-9999px";
+  tooltip.style.top = "0";
 
-  const tooltipRect = tooltip.getBoundingClientRect();
-  const labelRect = label.getBoundingClientRect();
+  const tooltipHeight = tooltip.offsetHeight;
+  const tooltipWidth = tooltip.offsetWidth;
+  const rect = anchor.getBoundingClientRect();
   const gap = 8;
   const margin = 12;
 
-  let top = labelRect.top - tooltipRect.height - gap;
-  let left = labelRect.left;
+  let top = rect.top - tooltipHeight - gap;
+  let left = rect.left;
 
   if (top < margin) {
-    top = labelRect.bottom + gap;
+    top = rect.bottom + gap;
   }
 
-  if (left + tooltipRect.width > window.innerWidth - margin) {
-    left = window.innerWidth - tooltipRect.width - margin;
+  if (left + tooltipWidth > window.innerWidth - margin) {
+    left = window.innerWidth - tooltipWidth - margin;
   }
 
   if (left < margin) {
@@ -75,17 +59,36 @@ function positionBadgeTooltip(badge) {
   tooltip.style.left = `${left}px`;
   tooltip.style.top = `${top}px`;
   tooltip.style.visibility = "";
-  tooltip.style.opacity = "";
-  tooltip.style.display = "";
 }
 
 function openBadge(badge) {
-  positionBadgeTooltip(badge);
+  const tooltip = badge.querySelector(".product-slide__badge-tooltip")
+    || document.querySelector(
+      `.product-slide__badge-tooltip[data-badge-for="${badge.dataset.badgeId}"]`
+    );
+  const label = badge.querySelector(".product-slide__badge-label");
+  if (!tooltip || !label) return;
+
+  if (tooltip.parentElement !== document.body) {
+    document.body.appendChild(tooltip);
+  }
+
+  positionBadgeTooltip(label, tooltip);
+  tooltip.classList.add("is-visible");
   badge.classList.add("product-slide__badge--open");
 }
 
 function closeBadge(badge) {
+  const tooltip = document.querySelector(
+    `.product-slide__badge-tooltip[data-badge-for="${badge.dataset.badgeId}"]`
+  ) || badge.querySelector(".product-slide__badge-tooltip");
+
   badge.classList.remove("product-slide__badge--open");
+
+  if (!tooltip) return;
+
+  tooltip.classList.remove("is-visible");
+  badge.appendChild(tooltip);
 }
 
 function initProductAiBadges() {
@@ -95,30 +98,39 @@ function initProductAiBadges() {
   const hasHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const hideTimers = new WeakMap();
 
-  const scheduleClose = (badge) => {
-    clearTimeout(hideTimers.get(badge));
-    hideTimers.set(
-      badge,
-      setTimeout(() => closeBadge(badge), 140)
-    );
-  };
-
-  const cancelClose = (badge) => {
-    clearTimeout(hideTimers.get(badge));
-  };
-
-  badges.forEach((badge) => {
+  badges.forEach((badge, index) => {
     const tooltip = badge.querySelector(".product-slide__badge-tooltip");
+    const badgeId = `badge-${index}`;
+    badge.dataset.badgeId = badgeId;
+
+    if (tooltip) {
+      tooltip.dataset.badgeFor = badgeId;
+    }
+
+    const scheduleClose = () => {
+      clearTimeout(hideTimers.get(badge));
+      hideTimers.set(
+        badge,
+        setTimeout(() => closeBadge(badge), 160)
+      );
+    };
+
+    const cancelClose = () => {
+      clearTimeout(hideTimers.get(badge));
+    };
 
     if (hasHover) {
-      [badge, tooltip].forEach((el) => {
-        if (!el) return;
-        el.addEventListener("mouseenter", () => {
-          cancelClose(badge);
-          openBadge(badge);
-        });
-        el.addEventListener("mouseleave", () => scheduleClose(badge));
+      badge.addEventListener("mouseenter", () => {
+        cancelClose();
+        openBadge(badge);
       });
+
+      badge.addEventListener("mouseleave", scheduleClose);
+
+      if (tooltip) {
+        tooltip.addEventListener("mouseenter", cancelClose);
+        tooltip.addEventListener("mouseleave", scheduleClose);
+      }
     }
 
     badge.addEventListener("focus", () => openBadge(badge));
@@ -134,16 +146,27 @@ function initProductAiBadges() {
     });
   });
 
+  product_main_swiper.on("slideChange", () => {
+    badges.forEach((badge) => closeBadge(badge));
+  });
+
   window.addEventListener("resize", () => {
     badges.forEach((badge) => {
-      if (badge.classList.contains("product-slide__badge--open")) {
-        positionBadgeTooltip(badge);
+      if (!badge.classList.contains("product-slide__badge--open")) return;
+
+      const tooltip = document.querySelector(
+        `.product-slide__badge-tooltip[data-badge-for="${badge.dataset.badgeId}"]`
+      );
+      const label = badge.querySelector(".product-slide__badge-label");
+      if (tooltip && label) {
+        positionBadgeTooltip(label, tooltip);
       }
     });
   });
 
   document.addEventListener("click", (event) => {
     if (event.target.closest(".product-slide__badge")) return;
+    if (event.target.closest(".product-slide__badge-tooltip")) return;
     badges.forEach((badge) => closeBadge(badge));
   });
 
