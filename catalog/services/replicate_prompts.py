@@ -1,6 +1,6 @@
 from catalog.services.replicate_prompt_options import CatalogPromptOptions, ScenePromptOptions
 
-PROMPT_VERSION = "4"
+PROMPT_VERSION = "7"
 
 _ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -13,6 +13,22 @@ CRITICAL FRAMING — NO EMPTY SPACE:
 - Absolutely NO white background, NO floor, NO room, NO padding, NO letterboxing, NO empty margins.
 - If the reference shows floor, walls, or room around the rug, REMOVE them completely.
 - The rug silhouette must touch the image borders on all sides (top, bottom, left, right) with zero gap."""
+
+# Oval cannot touch all 4 borders without distorting shape — allow side margins.
+_OVAL_ASPECT_NOTE = (
+    "Output must be a vertical 2:3 portrait image. "
+    "Center the oval rug matching the reference silhouette. "
+    "White margins on left and right are OK where the oval curves inward — "
+    "do NOT stretch the rug to fill those corners."
+)
+
+_OVAL_FRAMING = """
+CRITICAL FRAMING — OVAL FROM REFERENCE:
+- Isolate ONLY the rug on solid white (#FFFFFF). Remove floor, wood, room, shadows.
+- Match the reference oval proportions exactly: broad, softly rounded top and bottom ends.
+- Ends must be WIDE and gently rounded (like the reference) — NOT pointed, NOT sharp, NOT teardrop tips.
+- Continuous smooth curve all around. NO rectangle, NO 90-degree corners, NO straight long sides.
+- Never force the rug to touch left and right frame borders if that would change the oval."""
 
 _PRESERVATION = """
 STRICT PRESERVATION (do NOT change):
@@ -27,10 +43,12 @@ RUG SHAPE (CRITICAL):
 - Do NOT regularize the shape: never convert oval to rectangle, never square off curved edges, never change proportions.
 - Match the reference perimeter precisely, including curved vs straight edges and corner style.""",
     'oval': """
-RUG SHAPE (CRITICAL — OVAL):
-- The rug MUST stay OVAL / elliptical (stadium shape): two long curved sides and two curved ends.
-- NO straight long sides, NO 90-degree corners, NO rectangle, NO rounded-rectangle, NO square.
-- Preserve the exact oval proportions and curved perimeter from the reference. Do not rectangularize.""",
+RUG SHAPE (CRITICAL — OVAL, MATCH REFERENCE):
+- The rug MUST stay OVAL with the SAME end curvature as the reference photo.
+- Top and bottom ends: broad, soft, gently rounded — the same width of curve as in the reference.
+- Do NOT make pointed/sharp/narrow tips. Do NOT exaggerate the ellipse into a spindle or lemon shape.
+- NO straight long sides, NO 90-degree corners, NO rectangle, NO rounded-rectangle.
+- Copy the reference silhouette closely; only remove the floor around it.""",
     'rectangular': """
 RUG SHAPE (CRITICAL — RECTANGULAR):
 - The rug MUST stay rectangular with the same corner style as the reference (sharp or slightly rounded corners).
@@ -61,26 +79,36 @@ SOURCE PHOTO (isolated):
 _COLOR_BLOCKS = {
     'auto': """
 COLOR:
-- Preserve the exact colors and tonal balance from the reference.""",
+- Preserve the exact colors, contrast, and tonal balance from the reference.
+- Do NOT wash out, lighten, desaturate, or flatten the image. Keep the same depth between dark and light areas.""",
     'preserve_exact': """
 COLOR:
-- Preserve pixel-accurate colors, contrast, and tonal distribution from the reference. No recoloring or color grading.""",
+- Preserve pixel-accurate colors, contrast, and tonal distribution from the reference. No recoloring or color grading.
+- Match the reference luminance: dark areas stay dark, highlights stay bright — no global gray shift.""",
     'monochrome': """
 COLOR:
-- This is a monochrome / grayscale rug. Preserve the exact gray, charcoal, silver, and black tones from the reference without adding color.""",
+- This is a monochrome / grayscale rug. Preserve the exact gray, charcoal, silver, and black tones from the reference without adding color.
+- Do NOT make the rug lighter, flatter, or more uniform gray than the reference. Keep rich contrast between charcoal pattern and silver highlights.""",
 }
 
 
 def build_catalog_prompt(options: CatalogPromptOptions | None = None) -> str:
     opts = (options or CatalogPromptOptions()).normalized()
 
+    if opts.rug_shape == 'oval':
+        aspect_note = _OVAL_ASPECT_NOTE
+        framing = _OVAL_FRAMING
+    else:
+        aspect_note = _ASPECT_NOTE
+        framing = _NO_WHITESPACE
+
     return f"""Edit the provided reference image of a rug/carpet for an e-commerce catalog thumbnail.
 
 CAMERA & COMPOSITION (change only this):
 - Perfect top-down orthogonal view: camera directly above at 90 degrees, zero perspective, no tilt, no 3D angle.
 - Show the entire rug fully inside the frame; crop to the rug silhouette only.
-- {_ASPECT_NOTE}
-{_NO_WHITESPACE}
+- {aspect_note}
+{framing}
 - Center the rug in the vertical 2:3 frame.
 
 {_SHAPE_BLOCKS[opts.rug_shape]}
@@ -90,7 +118,7 @@ CAMERA & COMPOSITION (change only this):
 {_PRESERVATION}
 
 OUTPUT:
-- Clean professional catalog product photography, even soft lighting, sharp focus across the whole rug surface."""
+- Clean professional catalog product photography, neutral studio lighting that preserves reference contrast, sharp focus across the whole rug surface."""
 
 
 def build_hover_prompt(options: CatalogPromptOptions | None = None) -> str:
