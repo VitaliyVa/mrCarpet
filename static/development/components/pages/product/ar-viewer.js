@@ -1,53 +1,18 @@
 /**
  * Product 3D / AR modal — lazy-loads model-viewer only on open.
- * Floor = <extra-model> GLB plane in the same scene (orbits/zooms with the rug).
  */
 const MODEL_VIEWER_SRC =
-  "https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js";
+  "https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
 
 const FLOOR_BASE = "/static/ar/floors/";
-/** Baked size of floor-*.glb planes (metres). */
-const FLOOR_SIZE_M = 10;
-/** Visual floor span relative to rug so product stays large in frame. */
-const FLOOR_TO_RUG = 4.5;
 const FLOOR_PRESETS = [
-  { id: "white", label: "Білий", thumb: null, glb: null },
-  {
-    id: "oak-light",
-    label: "Світлий дуб",
-    thumb: FLOOR_BASE + "oak-light.webp",
-    glb: FLOOR_BASE + "oak-light.glb",
-  },
-  {
-    id: "oak-grey",
-    label: "Сірий дуб",
-    thumb: FLOOR_BASE + "oak-grey.webp",
-    glb: FLOOR_BASE + "oak-grey.glb",
-  },
-  {
-    id: "herringbone",
-    label: "Ялинка",
-    thumb: FLOOR_BASE + "herringbone.webp",
-    glb: FLOOR_BASE + "herringbone.glb",
-  },
-  {
-    id: "walnut-dark",
-    label: "Горіх",
-    thumb: FLOOR_BASE + "walnut-dark.webp",
-    glb: FLOOR_BASE + "walnut-dark.glb",
-  },
-  {
-    id: "marble-white",
-    label: "Мармур",
-    thumb: FLOOR_BASE + "marble-white.webp",
-    glb: FLOOR_BASE + "marble-white.glb",
-  },
-  {
-    id: "concrete",
-    label: "Бетон",
-    thumb: FLOOR_BASE + "concrete.webp",
-    glb: FLOOR_BASE + "concrete.glb",
-  },
+  { id: "white", label: "Білий", src: null },
+  { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
+  { id: "oak-grey", label: "Сірий дуб", src: FLOOR_BASE + "oak-grey.webp" },
+  { id: "herringbone", label: "Ялинка", src: FLOOR_BASE + "herringbone.webp" },
+  { id: "walnut-dark", label: "Горіх", src: FLOOR_BASE + "walnut-dark.webp" },
+  { id: "marble-white", label: "Мармур", src: FLOOR_BASE + "marble-white.webp" },
+  { id: "concrete", label: "Бетон", src: FLOOR_BASE + "concrete.webp" },
 ];
 
 let mvScriptPromise = null;
@@ -55,10 +20,28 @@ let modelViewerEl = null;
 let currentSizeLabel = null;
 let autoArRequested = false;
 let currentFloorId = "white";
-let customFloorGlbUrl = null;
-let customFloorThumbUrl = null;
-let arPresenting = false;
-let floorApplyToken = 0;
+let customFloorObjectUrl = null;
+let targetYaw = 0;
+let targetPitch = 0;
+let targetScale = 1;
+let displayYaw = 0;
+let displayPitch = 0;
+let displayScale = 1;
+let scenePointerBound = false;
+let sceneVelYaw = 0;
+let sceneVelPitch = 0;
+let sceneLoopRaf = 0;
+let sceneDragging = false;
+const DEFAULT_CAMERA_ORBIT = "0deg 0deg 150%";
+const DEFAULT_FOV = 32;
+const SCENE_PITCH_MAX = 86;
+const SCENE_SCALE_MIN = 0.55;
+const SCENE_SCALE_MAX = 2.4;
+const SCENE_YAW_SENS = 0.16;
+const SCENE_PITCH_SENS = 0.14;
+const SCENE_FRICTION = 0.965;
+const SCENE_VEL_MIN = 0.015;
+const SCENE_LERP = 0.1;
 
 function loadModelViewerScript() {
   if (customElements.get("model-viewer")) {
@@ -180,312 +163,210 @@ async function fetchGlbUrl(sizeLabel) {
   return data.glb_url;
 }
 
-function getMvScene(mv) {
-  if (!mv) return null;
-  const seen = new Set();
-  let obj = mv;
-  while (obj && obj !== HTMLElement.prototype) {
-    for (const sym of Object.getOwnPropertySymbols(obj)) {
-      if (seen.has(sym)) continue;
-      seen.add(sym);
-      try {
-        const val = mv[sym];
-        if (val && val.isScene && val.target) return val;
-      } catch (_) {
-        /* ignore */
+function clampScenePitch(value) {
+  return Math.max(-SCENE_PITCH_MAX, Math.min(SCENE_PITCH_MAX, value));
+}
+
+function applySceneTransform() {
+  const scene = document.getElementById("product-ar-scene");
+  if (!scene) return;
+  scene.style.transform =
+    `rotateX(${displayPitch}deg) rotateZ(${displayYaw}deg) scale(${displayScale})`;
+}
+
+function stopSceneLoop() {
+  sceneVelYaw = 0;
+  sceneVelPitch = 0;
+  sceneDragging = false;
+  if (sceneLoopRaf) {
+    cancelAnimationFrame(sceneLoopRaf);
+    sceneLoopRaf = 0;
+  }
+}
+
+function ensureSceneLoop() {
+  if (sceneLoopRaf) return;
+
+  const tick = () => {
+    if (!sceneDragging) {
+      if (Math.abs(sceneVelYaw) > SCENE_VEL_MIN) {
+        targetYaw += sceneVelYaw;
+        sceneVelYaw *= SCENE_FRICTION;
+      } else {
+        sceneVelYaw = 0;
+      }
+      if (Math.abs(sceneVelPitch) > SCENE_VEL_MIN) {
+        targetPitch = clampScenePitch(targetPitch + sceneVelPitch);
+        sceneVelPitch *= SCENE_FRICTION;
+      } else {
+        sceneVelPitch = 0;
       }
     }
-    obj = Object.getPrototypeOf(obj);
-  }
-  return null;
-}
 
-function queueMvRender(mv) {
-  const scene = getMvScene(mv);
-  if (scene && typeof scene.queueRender === "function") scene.queueRender();
-}
+    displayYaw += (targetYaw - displayYaw) * SCENE_LERP;
+    displayPitch += (targetPitch - displayPitch) * SCENE_LERP;
+    displayScale += (targetScale - displayScale) * SCENE_LERP;
 
-function resolveFloorGlb(floorId) {
-  const id = floorId || "white";
-  if (id === "custom") return customFloorGlbUrl;
-  const preset = FLOOR_PRESETS.find((f) => f.id === id);
-  return preset?.glb || null;
-}
+    if (Math.abs(targetYaw - displayYaw) < 0.01) displayYaw = targetYaw;
+    if (Math.abs(targetPitch - displayPitch) < 0.01) displayPitch = targetPitch;
+    if (Math.abs(targetScale - displayScale) < 0.001) displayScale = targetScale;
 
-function setViewerChrome(mv, hasFloor) {
-  const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
-  const floorEl = document.getElementById("product-ar-floor");
-  if (wrap) wrap.classList.toggle("has-floor", Boolean(hasFloor));
-  if (floorEl) floorEl.style.backgroundImage = "";
-  if (!mv) return;
-  // Keep white canvas clear; floor is a real 3D mesh under the rug
-  mv.style.background = "";
-  mv.style.setProperty("--poster-color", "#ffffff");
-}
-
-function ensureFloorExtra(mv) {
-  let extra = mv.querySelector("extra-model[data-ar-floor]");
-  if (!extra) {
-    extra = document.createElement("extra-model");
-    extra.setAttribute("data-ar-floor", "");
-    extra.setAttribute("background", "");
-    mv.appendChild(extra);
-  }
-  return extra;
-}
-
-function setFloorModelsVisible(mv, visible) {
-  const scene = getMvScene(mv);
-  const models = scene?._models || scene?.models;
-  if (!models || models.length < 2) return;
-  for (let i = 1; i < models.length; i++) {
-    models[i].visible = visible;
-  }
-  queueMvRender(mv);
-}
-
-function getRugSizeM(mv) {
-  try {
-    const dim = typeof mv.getDimensions === "function" ? mv.getDimensions() : null;
-    if (dim) return Math.max(Number(dim.x) || 0, Number(dim.z) || 0, 0.25);
-  } catch (_) {
-    /* ignore */
-  }
-  return 1;
-}
-
-/** Scale floor plane so it sits under the rug (~FLOOR_TO_RUG × rug), not a 10 m arena. */
-function syncFloorScaleToRug(mv) {
-  const extra = mv?.querySelector?.("extra-model[data-ar-floor]");
-  if (!extra) return;
-  if (!extra.getAttribute("src")) {
-    extra.removeAttribute("scale");
-    return;
-  }
-  const rugM = getRugSizeM(mv);
-  const targetFloorM = Math.max(rugM * FLOOR_TO_RUG, rugM + 1.0);
-  const s = targetFloorM / FLOOR_SIZE_M;
-  extra.setAttribute("scale", `${s} ${s} ${s}`);
-}
-
-function waitForMvLoad(mv) {
-  return new Promise((resolve) => {
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      mv.removeEventListener("load", finish);
-      resolve();
-    };
-    mv.addEventListener("load", finish);
-  });
-}
-
-/**
- * Frame camera on the rug only. model-viewer bounds use scene._models,
- * so floor extras must be spliced out before updateFraming (target.remove is not enough).
- */
-async function reframedRugOnly(mv) {
-  if (!mv) return;
-  const scene = getMvScene(mv);
-  const orbit = "0deg 0deg 120%";
-
-  syncFloorScaleToRug(mv);
-  // Let extra-model apply scale transform before measuring bounds
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-  const models = scene?._models;
-  const floorModels =
-    models && models.length >= 2 ? models.splice(1, models.length - 1) : [];
-
-  try {
-    if (scene && typeof scene.updateBoundingBox === "function") {
-      scene.updateBoundingBox();
-    }
-    if (scene && typeof scene.updateFraming === "function") {
-      await scene.updateFraming();
-    } else if (typeof mv.updateFraming === "function") {
-      await mv.updateFraming();
-    }
-  } catch (_) {
-    /* ignore */
-  } finally {
-    if (models && floorModels.length) {
-      for (const m of floorModels) {
-        models.push(m);
-        if (scene?.target && m.parent !== scene.target) scene.target.add(m);
-        m.visible = currentFloorId !== "white" && !arPresenting;
-      }
-    }
-  }
-
-  mv.setAttribute("camera-orbit", orbit);
-  mv.setAttribute("field-of-view", "28deg");
-  queueMvRender(mv);
-}
-
-function pad4(bytes, fill = 0) {
-  const rem = bytes.length % 4;
-  if (rem === 0) return bytes;
-  const out = new Uint8Array(bytes.length + (4 - rem));
-  out.set(bytes);
-  if (fill) out.fill(fill, bytes.length);
-  return out;
-}
-
-function u32(n) {
-  const b = new ArrayBuffer(4);
-  new DataView(b).setUint32(0, n, true);
-  return new Uint8Array(b);
-}
-
-function concatBytes(parts) {
-  const total = parts.reduce((n, p) => n + p.length, 0);
-  const out = new Uint8Array(total);
-  let o = 0;
-  for (const p of parts) {
-    out.set(p, o);
-    o += p.length;
-  }
-  return out;
-}
-
-/** Minimal textured XZ plane GLB for custom floor uploads. */
-function buildFloorGlbFromImage(imageBytes, mimeType, sizeM = FLOOR_SIZE_M) {
-  const w = sizeM;
-  const hx = w / 2;
-  const hz = w / 2;
-  const y = 0;
-  const positions = new Float32Array([
-    -hx, y, -hz, hx, y, -hz, hx, y, hz, -hx, y, hz,
-  ]);
-  const normals = new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]);
-  const uvs = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
-  const indices = new Uint16Array([0, 2, 1, 0, 3, 2]);
-
-  const posBuf = new Uint8Array(positions.buffer);
-  const normBuf = new Uint8Array(normals.buffer);
-  const uvBuf = new Uint8Array(uvs.buffer);
-  const idxBuf = pad4(new Uint8Array(indices.buffer));
-  const imgBuf = imageBytes instanceof Uint8Array ? imageBytes : new Uint8Array(imageBytes);
-
-  let offset = 0;
-  const posOff = offset;
-  offset += posBuf.length;
-  const normOff = offset;
-  offset += normBuf.length;
-  const uvOff = offset;
-  offset += uvBuf.length;
-  const idxOff = offset;
-  offset += idxBuf.length;
-  const imgOff = offset;
-  const binary = concatBytes([posBuf, normBuf, uvBuf, idxBuf, imgBuf]);
-
-  const gltf = {
-    asset: { version: "2.0", generator: "mrCarpet-floor" },
-    scene: 0,
-    scenes: [{ nodes: [0] }],
-    nodes: [{ mesh: 0, name: "ar-floor" }],
-    meshes: [
-      {
-        name: "ar-floor",
-        primitives: [
-          {
-            attributes: { POSITION: 0, NORMAL: 1, TEXCOORD_0: 2 },
-            indices: 3,
-            material: 0,
-          },
-        ],
-      },
-    ],
-    materials: [
-      {
-        name: "floor",
-        pbrMetallicRoughness: {
-          baseColorTexture: { index: 0 },
-          metallicFactor: 0,
-          roughnessFactor: 1,
-        },
-        doubleSided: true,
-        alphaMode: "OPAQUE",
-      },
-    ],
-    textures: [{ source: 0 }],
-    images: [{ bufferView: 4, mimeType: mimeType || "image/jpeg" }],
-    buffers: [{ byteLength: binary.length }],
-    bufferViews: [
-      { buffer: 0, byteOffset: posOff, byteLength: posBuf.length, target: 34962 },
-      { buffer: 0, byteOffset: normOff, byteLength: normBuf.length, target: 34962 },
-      { buffer: 0, byteOffset: uvOff, byteLength: uvBuf.length, target: 34962 },
-      { buffer: 0, byteOffset: idxOff, byteLength: idxBuf.length, target: 34963 },
-      { buffer: 0, byteOffset: imgOff, byteLength: imgBuf.length },
-    ],
-    accessors: [
-      {
-        bufferView: 0,
-        componentType: 5126,
-        count: 4,
-        type: "VEC3",
-        max: [hx, y, hz],
-        min: [-hx, y, -hz],
-      },
-      { bufferView: 1, componentType: 5126, count: 4, type: "VEC3" },
-      { bufferView: 2, componentType: 5126, count: 4, type: "VEC2" },
-      { bufferView: 3, componentType: 5123, count: 6, type: "SCALAR" },
-    ],
+    applySceneTransform();
+    sceneLoopRaf = requestAnimationFrame(tick);
   };
 
-  const jsonBytes = pad4(
-    new TextEncoder().encode(JSON.stringify(gltf)),
-    0x20
-  );
-  const total = 12 + 8 + jsonBytes.length + 8 + binary.length;
-  const magic = new Uint8Array([0x67, 0x6c, 0x54, 0x46]); // glTF
-  const version = u32(2);
-  const totalBuf = u32(total);
-  const jsonLen = u32(jsonBytes.length);
-  const jsonType = new Uint8Array([0x4a, 0x53, 0x4f, 0x4e]); // JSON
-  const binLen = u32(binary.length);
-  const binType = new Uint8Array([0x42, 0x49, 0x4e, 0x00]); // BIN\0
-  return concatBytes([
-    magic,
-    version,
-    totalBuf,
-    jsonLen,
-    jsonType,
-    jsonBytes,
-    binLen,
-    binType,
-    binary,
-  ]);
+  sceneLoopRaf = requestAnimationFrame(tick);
 }
 
-function getFloorCycleIds() {
-  const ids = FLOOR_PRESETS.map((f) => f.id);
-  if (customFloorGlbUrl || currentFloorId === "custom") ids.push("custom");
-  return ids;
+function resetSceneTransform() {
+  sceneVelYaw = 0;
+  sceneVelPitch = 0;
+  sceneDragging = false;
+  targetYaw = 0;
+  targetPitch = 0;
+  targetScale = 1;
+  displayYaw = 0;
+  displayPitch = 0;
+  displayScale = 1;
+  applySceneTransform();
 }
 
-function syncFloorChipActive() {
-  document.querySelectorAll(".product-ar-modal__floor-chip").forEach((chip) => {
-    const active = chip.dataset.floorId === currentFloorId;
-    chip.classList.toggle("is-active", active);
-    if (active && typeof chip.scrollIntoView === "function") {
-      chip.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
+function resetViewerCamera() {
+  const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
+  if (!mv) return;
+
+  const prevDecay = mv.interpolationDecay;
+  if (typeof prevDecay === "number") mv.interpolationDecay = 0;
+
+  mv.setAttribute("camera-orbit", DEFAULT_CAMERA_ORBIT);
+  mv.setAttribute("field-of-view", `${DEFAULT_FOV}deg`);
+  if ("cameraOrbit" in mv) mv.cameraOrbit = DEFAULT_CAMERA_ORBIT;
+  if ("fieldOfView" in mv) mv.fieldOfView = `${DEFAULT_FOV}deg`;
+
+  if (typeof prevDecay === "number") {
+    requestAnimationFrame(() => {
+      mv.interpolationDecay = prevDecay;
+    });
+  }
+}
+
+function bindSceneControls() {
+  const hit = document.getElementById("product-ar-scene-hit");
+  if (!hit || scenePointerBound) return;
+  scenePointerBound = true;
+  ensureSceneLoop();
+
+  let lastX = 0;
+  let lastY = 0;
+  let lastTs = 0;
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+
+  const onPointerDown = (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    sceneDragging = true;
+    sceneVelYaw = 0;
+    sceneVelPitch = 0;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    lastTs = performance.now();
+    hit.setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e) => {
+    if (!sceneDragging) return;
+    const now = performance.now();
+    const dt = Math.max(8, Math.min(40, now - lastTs || 16));
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    lastTs = now;
+
+    // Invert only yaw. Pitch up/down unchanged.
+    const dYaw = -dx * SCENE_YAW_SENS;
+    const dPitch = -dy * SCENE_PITCH_SENS;
+    targetYaw += dYaw;
+    targetPitch = clampScenePitch(targetPitch + dPitch);
+
+    const frameScale = 16 / dt;
+    sceneVelYaw = dYaw * frameScale;
+    sceneVelPitch = dPitch * frameScale;
+  };
+
+  const onPointerUp = (e) => {
+    if (!sceneDragging) return;
+    sceneDragging = false;
+    try {
+      hit.releasePointerCapture?.(e.pointerId);
+    } catch (_) {
+      /* ignore */
     }
-  });
+  };
+
+  hit.addEventListener("pointerdown", onPointerDown);
+  hit.addEventListener("pointermove", onPointerMove);
+  hit.addEventListener("pointerup", onPointerUp);
+  hit.addEventListener("pointercancel", onPointerUp);
+  hit.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      const next = targetScale * (e.deltaY > 0 ? 0.97 : 1.03);
+      targetScale = Math.max(SCENE_SCALE_MIN, Math.min(SCENE_SCALE_MAX, next));
+    },
+    { passive: false }
+  );
+
+  hit.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length === 2) {
+        sceneDragging = false;
+        sceneVelYaw = 0;
+        sceneVelPitch = 0;
+        const a = e.touches[0];
+        const b = e.touches[1];
+        pinchStartDist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+        pinchStartScale = targetScale;
+      }
+    },
+    { passive: true }
+  );
+
+  hit.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length !== 2 || !pinchStartDist) return;
+      e.preventDefault();
+      const a = e.touches[0];
+      const b = e.touches[1];
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const next = pinchStartScale * (dist / pinchStartDist);
+      targetScale = Math.max(SCENE_SCALE_MIN, Math.min(SCENE_SCALE_MAX, next));
+    },
+    { passive: false }
+  );
+
+  hit.addEventListener(
+    "touchend",
+    (e) => {
+      if (e.touches.length < 2) pinchStartDist = 0;
+    },
+    { passive: true }
+  );
 }
 
-function cycleFloor(delta) {
-  const ids = getFloorCycleIds();
-  if (!ids.length) return;
+function cycleFloor(direction) {
+  const ids = FLOOR_PRESETS.map((f) => f.id);
   let idx = ids.indexOf(currentFloorId);
   if (idx < 0) idx = 0;
-  applyFloor(ids[(idx + delta + ids.length) % ids.length]);
+  idx = (idx + direction + ids.length) % ids.length;
+  if (customFloorObjectUrl) {
+    URL.revokeObjectURL(customFloorObjectUrl);
+    customFloorObjectUrl = null;
+  }
+  applyFloor(ids[idx]);
 }
 
 function bindFloorNav() {
@@ -509,45 +390,43 @@ function bindFloorNav() {
   }
 }
 
-async function applyFloor(floorId) {
-  const token = ++floorApplyToken;
-  currentFloorId = floorId || "white";
-  const glbUrl = resolveFloorGlb(currentFloorId);
+function applyFloor(floorId, customSrc) {
+  const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
+  const floorEl = document.getElementById("product-ar-floor");
+  const floorTex = document.getElementById("product-ar-floor-tex");
   const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
-  syncFloorChipActive();
-  if (!mv) return;
+  if (!wrap || !floorEl || !floorTex) return;
 
-  const extra = ensureFloorExtra(mv);
-  setViewerChrome(mv, Boolean(glbUrl));
+  currentFloorId = floorId || "white";
+  const preset = FLOOR_PRESETS.find((f) => f.id === currentFloorId);
+  const src =
+    customSrc ||
+    (currentFloorId === "custom" ? customFloorObjectUrl : preset?.src) ||
+    null;
 
-  if (!glbUrl) {
-    if (extra.hasAttribute("src")) {
-      const pending = waitForMvLoad(mv);
-      extra.removeAttribute("src");
-      await Promise.race([
-        pending,
-        new Promise((r) => setTimeout(r, 800)),
-      ]);
+  // Reset shared scene transform + locked top-down camera
+  resetSceneTransform();
+  resetViewerCamera();
+
+  if (src) {
+    floorTex.style.backgroundImage = `url("${src}")`;
+    wrap.classList.add("has-floor");
+    if (mv) {
+      mv.style.background = "transparent";
+      mv.style.setProperty("--poster-color", "transparent");
     }
-    if (token !== floorApplyToken) return;
-    setFloorModelsVisible(mv, false);
-    await reframedRugOnly(mv);
-    return;
+  } else {
+    floorTex.style.backgroundImage = "";
+    wrap.classList.remove("has-floor");
+    if (mv) {
+      mv.style.background = "";
+      mv.style.setProperty("--poster-color", "#ffffff");
+    }
   }
 
-  const currentSrc = extra.getAttribute("src");
-  if (currentSrc !== glbUrl) {
-    const pending = waitForMvLoad(mv);
-    extra.setAttribute("src", glbUrl);
-    await Promise.race([
-      pending,
-      new Promise((r) => setTimeout(r, 12000)),
-    ]);
-  }
-  if (token !== floorApplyToken) return;
-
-  setFloorModelsVisible(mv, !arPresenting);
-  await reframedRugOnly(mv);
+  document.querySelectorAll(".product-ar-modal__floor-chip").forEach((chip) => {
+    chip.classList.toggle("is-active", chip.dataset.floorId === currentFloorId);
+  });
 }
 
 function renderFloorPicker() {
@@ -565,12 +444,18 @@ function renderFloorPicker() {
     btn.dataset.floorId = floor.id;
     btn.title = floor.label;
     btn.setAttribute("aria-label", floor.label);
-    if (floor.thumb) {
-      btn.style.backgroundImage = `url("${floor.thumb}")`;
+    if (floor.src) {
+      btn.style.backgroundImage = `url("${floor.src}")`;
     } else {
       btn.classList.add("is-white");
     }
-    btn.addEventListener("click", () => applyFloor(floor.id));
+    btn.addEventListener("click", () => {
+      if (customFloorObjectUrl && currentFloorId === "custom") {
+        URL.revokeObjectURL(customFloorObjectUrl);
+        customFloorObjectUrl = null;
+      }
+      applyFloor(floor.id);
+    });
     list.appendChild(btn);
   });
 }
@@ -579,27 +464,16 @@ function bindFloorUpload() {
   const input = document.getElementById("product-ar-floor-upload");
   if (!input || input.dataset.bound === "1") return;
   input.dataset.bound = "1";
-  input.addEventListener("change", async () => {
+  input.addEventListener("change", () => {
     const file = input.files && input.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setStatus("Оберіть файл зображення для підлоги", true);
       return;
     }
-    try {
-      const buf = new Uint8Array(await file.arrayBuffer());
-      const glbBytes = buildFloorGlbFromImage(buf, file.type || "image/jpeg");
-      if (customFloorGlbUrl) URL.revokeObjectURL(customFloorGlbUrl);
-      if (customFloorThumbUrl) URL.revokeObjectURL(customFloorThumbUrl);
-      customFloorGlbUrl = URL.createObjectURL(
-        new Blob([glbBytes], { type: "model/gltf-binary" })
-      );
-      customFloorThumbUrl = URL.createObjectURL(file);
-      await applyFloor("custom");
-    } catch (err) {
-      console.error(err);
-      setStatus("Не вдалося застосувати підлогу", true);
-    }
+    if (customFloorObjectUrl) URL.revokeObjectURL(customFloorObjectUrl);
+    customFloorObjectUrl = URL.createObjectURL(file);
+    applyFloor("custom", customFloorObjectUrl);
     input.value = "";
   });
 }
@@ -615,18 +489,15 @@ function ensureModelViewer() {
     modelViewerEl.setAttribute("ar-modes", "webxr scene-viewer quick-look");
     modelViewerEl.setAttribute("ar-placement", "floor");
     modelViewerEl.setAttribute("ar-scale", "fixed");
-    modelViewerEl.setAttribute("camera-controls", "");
-    modelViewerEl.setAttribute("touch-action", "pan-y");
+    // No camera-controls: orbit/zoom handled by shared CSS scene (rug + floor)
+    modelViewerEl.setAttribute("disable-zoom", "");
     modelViewerEl.setAttribute("shadow-intensity", "0.35");
     modelViewerEl.setAttribute("exposure", "1.05");
     modelViewerEl.setAttribute("interaction-prompt", "none");
-    // Top-down: phi=0 → килим рівно в кадрі (не під нахилом)
-    modelViewerEl.setAttribute("camera-orbit", "0deg 0deg 120%");
-    modelViewerEl.setAttribute("field-of-view", "28deg");
-    modelViewerEl.setAttribute("min-field-of-view", "16deg");
-    modelViewerEl.setAttribute("max-field-of-view", "45deg");
-    modelViewerEl.setAttribute("max-camera-orbit", "auto 90deg auto");
-    modelViewerEl.setAttribute("min-camera-orbit", "auto 0deg auto");
+    modelViewerEl.setAttribute("camera-orbit", DEFAULT_CAMERA_ORBIT);
+    modelViewerEl.setAttribute("field-of-view", `${DEFAULT_FOV}deg`);
+    modelViewerEl.setAttribute("min-camera-orbit", "0deg 0deg 150%");
+    modelViewerEl.setAttribute("max-camera-orbit", "0deg 0deg 150%");
     modelViewerEl.className = "product-ar-modal__mv";
 
     // Hide built-in AR slot button — we use the sidebar CTA
@@ -639,10 +510,7 @@ function ensureModelViewer() {
     modelViewerEl.appendChild(hiddenAr);
 
     modelViewerEl.addEventListener("ar-status", (e) => {
-      const status = e.detail?.status;
-      arPresenting = status === "session-started" || status === "object-placed";
-      setFloorModelsVisible(modelViewerEl, currentFloorId !== "white" && !arPresenting);
-      if (status === "failed") {
+      if (e.detail?.status === "failed") {
         setStatus(
           "Не вдалося відкрити AR. Перевірте підтримку пристрою або скористайтесь QR-кодом.",
           true
@@ -651,8 +519,8 @@ function ensureModelViewer() {
       }
     });
 
-    ensureFloorExtra(modelViewerEl);
     host.appendChild(modelViewerEl);
+    applyFloor(currentFloorId);
   }
   return modelViewerEl;
 }
@@ -703,8 +571,17 @@ async function loadSizeIntoViewer(sizeLabel) {
       if (mv.loaded) resolve();
     });
 
-    // Floor as extra-model in the same scene; frame by rug only
-    await applyFloor(currentFloorId);
+    // Re-frame after load so round rugs aren't clipped
+    if (typeof mv.updateFraming === "function") {
+      try {
+        mv.updateFraming();
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    mv.setAttribute("camera-orbit", DEFAULT_CAMERA_ORBIT);
+    mv.setAttribute("field-of-view", `${DEFAULT_FOV}deg`);
+    resetSceneTransform();
 
     renderModalSizes(sizeLabel);
 
@@ -749,6 +626,8 @@ async function openModal(opts = {}) {
   renderFloorPicker();
   bindFloorUpload();
   bindFloorNav();
+  bindSceneControls();
+  ensureSceneLoop();
   applyFloor(currentFloorId);
 
   try {
@@ -775,16 +654,15 @@ function closeModal() {
   document.body.classList.remove("product-ar-modal-open");
   autoArRequested = false;
   hideQr();
-  if (customFloorGlbUrl) {
-    URL.revokeObjectURL(customFloorGlbUrl);
-    customFloorGlbUrl = null;
-  }
-  if (customFloorThumbUrl) {
-    URL.revokeObjectURL(customFloorThumbUrl);
-    customFloorThumbUrl = null;
-  }
-  if (currentFloorId === "custom") {
-    currentFloorId = "white";
+  stopSceneLoop();
+  resetSceneTransform();
+  if (customFloorObjectUrl) {
+    URL.revokeObjectURL(customFloorObjectUrl);
+    customFloorObjectUrl = null;
+    if (currentFloorId === "custom") {
+      currentFloorId = "white";
+      applyFloor("white");
+    }
   }
 }
 
@@ -835,18 +713,7 @@ export function initProductArViewer() {
   });
 
   document.addEventListener("keydown", (e) => {
-    if (modal.hidden) return;
-    if (e.key === "Escape") {
-      closeModal();
-      return;
-    }
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      cycleFloor(-1);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      cycleFloor(1);
-    }
+    if (e.key === "Escape" && !modal.hidden) closeModal();
   });
 
   document.querySelectorAll(".sizes-block .size-label").forEach((chip) => {

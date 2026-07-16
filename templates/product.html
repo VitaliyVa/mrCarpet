@@ -726,20 +726,17 @@
 
     <div class="product-ar-modal__layout">
       <div class="product-ar-modal__viewer-wrap">
-        <div class="product-ar-modal__floor" id="product-ar-floor" aria-hidden="true"></div>
+        <div class="product-ar-modal__scene" id="product-ar-scene">
+          <div class="product-ar-modal__floor" id="product-ar-floor" aria-hidden="true">
+            <div class="product-ar-modal__floor-tex" id="product-ar-floor-tex"></div>
+          </div>
+          <div id="product-ar-viewer-host"></div>
+          <div class="product-ar-modal__scene-hit" id="product-ar-scene-hit" aria-hidden="true"></div>
+        </div>
         <div class="product-ar-modal__loading" id="product-ar-loading">Завантаження 3D…</div>
-        <div id="product-ar-viewer-host"></div>
 
-        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--prev" id="product-ar-floor-prev" aria-label="Попередня підлога">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M11.25 3.75L6 9l5.25 5.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--next" id="product-ar-floor-next" aria-label="Наступна підлога">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M6.75 3.75L12 9l-5.25 5.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--prev" id="product-ar-floor-prev" aria-label="Попередня підлога"></button>
+        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--next" id="product-ar-floor-next" aria-label="Наступна підлога"></button>
 
         <div class="product-ar-modal__floors" id="product-ar-floors">
           <span class="product-ar-modal__floors-label">Підлога</span>
@@ -755,7 +752,7 @@
         <div class="product-ar-modal__header">
           <p class="product-ar-modal__eyebrow">3D / AR</p>
           <h2 id="product-ar-modal-title" class="product-ar-modal__title">{{ product.title }}</h2>
-          <p class="product-ar-modal__hint">Оберіть розмір і розгляньте килим з усіх боків.</p>
+          <p class="product-ar-modal__hint">Оберіть розмір і обертайте сцену (килим разом із підлогою).</p>
         </div>
 
         <div class="product-ar-modal__sizes-label">Розмір</div>

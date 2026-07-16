@@ -737,6 +737,8 @@ body.product-ar-modal-open {
     min-height: 0;
     height: 100%;
     overflow: hidden;
+    perspective: 1100px;
+    perspective-origin: 50% 45%;
 
     &.has-floor {
       .product-ar-modal__mv {
@@ -746,21 +748,55 @@ body.product-ar-modal-open {
     }
   }
 
-  &__floor {
+  &__scene {
     position: absolute;
     inset: 0;
+    z-index: 1;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  &__scene-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    touch-action: none;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  // Floor pattern: center tile + 1 tile each side (3×3 grid)
+  &__floor {
+    --floor-tiles: 3;
+    position: absolute;
+    left: 50%;
+    top: 50%;
     z-index: 0;
+    width: calc(100% * var(--floor-tiles));
+    height: calc(100% * var(--floor-tiles));
+    transform: translate(-50%, -50%);
+    overflow: hidden;
     background-color: #fff;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
     pointer-events: none;
+  }
+
+  &__floor-tex {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-repeat: repeat;
+    // One tile ≈ scene viewport; 3 tiles max outward from center
+    background-size: calc(100% / var(--floor-tiles)) calc(100% / var(--floor-tiles));
   }
 
   &__loading {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 4;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -779,6 +815,7 @@ body.product-ar-modal-open {
     z-index: 1;
     width: 100%;
     height: 100%;
+    pointer-events: none;
   }
 
   &__mv {
@@ -787,51 +824,53 @@ body.product-ar-modal-open {
     display: block;
     background: #fff;
     --poster-color: #ffffff;
+    pointer-events: none;
   }
 
   &__floor-nav {
     position: absolute;
     top: 50%;
-    z-index: 3;
-    transform: translateY(-50%);
-    box-sizing: border-box;
-    width: 40px;
-    height: 40px;
-    margin: 0;
+    z-index: 5;
+    width: 39px;
+    height: 39px;
     padding: 0;
     border: 1px solid rgba(69, 63, 58, 0.1);
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.92);
-    color: #453f3a;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.94);
     box-shadow: 0 6px 18px rgba(69, 63, 58, 0.12);
-    backdrop-filter: blur(8px);
-    transition: background 0.15s, color 0.15s, transform 0.15s;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background 0.15s, transform 0.15s;
 
-    svg {
+    &::before {
+      content: "";
       display: block;
-      flex: 0 0 auto;
-    }
-
-    &:hover {
-      background: #fff;
-      color: #a46c46;
-    }
-
-    &:active {
-      transform: translateY(-50%) scale(0.96);
+      width: 9px;
+      height: 9px;
+      margin: 0 auto;
+      border-right: 2px solid #453f3a;
+      border-bottom: 2px solid #453f3a;
     }
 
     &--prev {
       left: 12px;
+
+      &::before {
+        transform: translateX(2px) rotate(135deg);
+      }
     }
 
     &--next {
       right: 12px;
+
+      &::before {
+        transform: translateX(-2px) rotate(-45deg);
+      }
+    }
+
+    &:hover {
+      background: #fff;
+      transform: translateY(-50%) scale(1.05);
     }
   }
 
@@ -1073,11 +1112,6 @@ body.product-ar-modal-open {
     &__floor-nav {
       width: 34px;
       height: 34px;
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
 
       &--prev {
         left: 8px;
