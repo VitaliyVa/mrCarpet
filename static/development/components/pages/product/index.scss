@@ -998,6 +998,10 @@ body.product-ar-modal-open {
   .product-slide__media {
     position: relative;
     width: 100%;
+
+    > img {
+      cursor: zoom-in;
+    }
   }
 
   .product-slide__badge {

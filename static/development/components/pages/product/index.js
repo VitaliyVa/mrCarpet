@@ -6,6 +6,7 @@ import "./reviews";
 import "./index.scss";
 import "./review-write-modal.scss";
 import { initProductArViewer } from "./ar-viewer";
+import { initProductGalleryLightbox } from "./gallery-lightbox";
 
 Swiper.use([Thumbs, Navigation]);
 
@@ -53,6 +54,8 @@ if (typeof window !== "undefined") {
     product_main_swiper.updateAutoHeight(0);
   });
 }
+
+initProductGalleryLightbox(product_main_swiper);
 
 function positionBadgeTooltip(anchor, tooltip) {
   tooltip.style.display = "block";

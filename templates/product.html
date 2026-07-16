@@ -214,7 +214,7 @@
             {% if images %}
             {% for image in images %}
             <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}">
-              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
+              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}" />
             </div>
             {% endfor %}
             {% else %}
@@ -259,14 +259,14 @@
                   </span>
                 </div>
                 {% endif %}
-                <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{% endif %}" />
+                <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}" tabindex="0" role="button" aria-label="Відкрити фото галерею" />
               </div>
             </div>
             {% endfor %}
             {% else %}
             <div class="swiper-slide">
               <div class="product-slide__media">
-                <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+                <img src="{{ product.image.url }}" alt="{{ product.title }}" tabindex="0" role="button" aria-label="Відкрити фото галерею" />
               </div>
             </div>
             {% endif %}
