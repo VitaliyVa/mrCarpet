@@ -6,7 +6,10 @@ const MODEL_VIEWER_SRC =
   "https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js";
 
 const FLOOR_BASE = "/static/ar/floors/";
+/** Baked size of floor-*.glb planes (metres). */
 const FLOOR_SIZE_M = 10;
+/** Visual floor span relative to rug so product stays large in frame. */
+const FLOOR_TO_RUG = 4.5;
 const FLOOR_PRESETS = [
   { id: "white", label: "Білий", thumb: null, glb: null },
   {
@@ -233,11 +236,36 @@ function ensureFloorExtra(mv) {
 
 function setFloorModelsVisible(mv, visible) {
   const scene = getMvScene(mv);
-  if (!scene?.models || scene.models.length < 2) return;
-  for (let i = 1; i < scene.models.length; i++) {
-    scene.models[i].visible = visible;
+  const models = scene?._models || scene?.models;
+  if (!models || models.length < 2) return;
+  for (let i = 1; i < models.length; i++) {
+    models[i].visible = visible;
   }
   queueMvRender(mv);
+}
+
+function getRugSizeM(mv) {
+  try {
+    const dim = typeof mv.getDimensions === "function" ? mv.getDimensions() : null;
+    if (dim) return Math.max(Number(dim.x) || 0, Number(dim.z) || 0, 0.25);
+  } catch (_) {
+    /* ignore */
+  }
+  return 1;
+}
+
+/** Scale floor plane so it sits under the rug (~FLOOR_TO_RUG × rug), not a 10 m arena. */
+function syncFloorScaleToRug(mv) {
+  const extra = mv?.querySelector?.("extra-model[data-ar-floor]");
+  if (!extra) return;
+  if (!extra.getAttribute("src")) {
+    extra.removeAttribute("scale");
+    return;
+  }
+  const rugM = getRugSizeM(mv);
+  const targetFloorM = Math.max(rugM * FLOOR_TO_RUG, rugM + 1.0);
+  const s = targetFloorM / FLOOR_SIZE_M;
+  extra.setAttribute("scale", `${s} ${s} ${s}`);
 }
 
 function waitForMvLoad(mv) {
@@ -250,49 +278,49 @@ function waitForMvLoad(mv) {
       resolve();
     };
     mv.addEventListener("load", finish);
-    // If already idle with loaded model, still wait for next load event from src change
-    setTimeout(() => {
-      // safety: don't hang forever if load already fired in same tick
-    }, 0);
   });
 }
 
+/**
+ * Frame camera on the rug only. model-viewer bounds use scene._models,
+ * so floor extras must be spliced out before updateFraming (target.remove is not enough).
+ */
 async function reframedRugOnly(mv) {
   if (!mv) return;
   const scene = getMvScene(mv);
-  const orbit = "0deg 0deg 150%";
+  const orbit = "0deg 0deg 120%";
 
-  if (!scene?.models || scene.models.length < 2) {
-    if (typeof mv.updateFraming === "function") {
-      try {
-        await mv.updateFraming();
-      } catch (_) {
-        /* ignore */
-      }
-    }
-    mv.setAttribute("camera-orbit", orbit);
-    mv.setAttribute("field-of-view", "32deg");
-    return;
-  }
+  syncFloorScaleToRug(mv);
+  // Let extra-model apply scale transform before measuring bounds
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  const extras = scene.models.slice(1);
-  for (const m of extras) scene.target.remove(m);
+  const models = scene?._models;
+  const floorModels =
+    models && models.length >= 2 ? models.splice(1, models.length - 1) : [];
 
   try {
-    if (typeof scene.updateBoundingBox === "function") scene.updateBoundingBox();
-    if (typeof scene.updateFraming === "function") await scene.updateFraming();
-    else if (typeof mv.updateFraming === "function") await mv.updateFraming();
+    if (scene && typeof scene.updateBoundingBox === "function") {
+      scene.updateBoundingBox();
+    }
+    if (scene && typeof scene.updateFraming === "function") {
+      await scene.updateFraming();
+    } else if (typeof mv.updateFraming === "function") {
+      await mv.updateFraming();
+    }
   } catch (_) {
     /* ignore */
+  } finally {
+    if (models && floorModels.length) {
+      for (const m of floorModels) {
+        models.push(m);
+        if (scene?.target && m.parent !== scene.target) scene.target.add(m);
+        m.visible = currentFloorId !== "white" && !arPresenting;
+      }
+    }
   }
 
-  const show = currentFloorId !== "white" && !arPresenting;
-  for (const m of extras) {
-    scene.target.add(m);
-    m.visible = show;
-  }
   mv.setAttribute("camera-orbit", orbit);
-  mv.setAttribute("field-of-view", "32deg");
+  mv.setAttribute("field-of-view", "28deg");
   queueMvRender(mv);
 }
 
@@ -593,9 +621,9 @@ function ensureModelViewer() {
     modelViewerEl.setAttribute("exposure", "1.05");
     modelViewerEl.setAttribute("interaction-prompt", "none");
     // Top-down: phi=0 → килим рівно в кадрі (не під нахилом)
-    modelViewerEl.setAttribute("camera-orbit", "0deg 0deg 150%");
-    modelViewerEl.setAttribute("field-of-view", "32deg");
-    modelViewerEl.setAttribute("min-field-of-view", "18deg");
+    modelViewerEl.setAttribute("camera-orbit", "0deg 0deg 120%");
+    modelViewerEl.setAttribute("field-of-view", "28deg");
+    modelViewerEl.setAttribute("min-field-of-view", "16deg");
     modelViewerEl.setAttribute("max-field-of-view", "45deg");
     modelViewerEl.setAttribute("max-camera-orbit", "auto 90deg auto");
     modelViewerEl.setAttribute("min-camera-orbit", "auto 0deg auto");
