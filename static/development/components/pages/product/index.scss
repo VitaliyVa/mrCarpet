@@ -881,8 +881,9 @@ body.product-ar-modal-open {
     bottom: 12px;
     z-index: 3;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     padding: 8px 10px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.92);
@@ -892,7 +893,7 @@ body.product-ar-modal-open {
   }
 
   &__floors-label {
-    flex: 0 0 auto;
+    flex: 1 0 100%;
     font-family: "Futura PT Medium", sans-serif;
     font-size: 12px;
     color: #89817c;
@@ -900,23 +901,13 @@ body.product-ar-modal-open {
   }
 
   &__floors-list {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    overflow-x: auto;
-    padding: 2px 0;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    display: contents;
   }
 
   &__floor-chip {
     flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: 2px solid transparent;
     border-radius: 10px;
@@ -947,8 +938,8 @@ body.product-ar-modal-open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
     border: 1px dashed #c9c2bb;
     background: #fff;
@@ -1126,18 +1117,18 @@ body.product-ar-modal-open {
       left: 8px;
       right: 8px;
       bottom: 8px;
-      gap: 8px;
+      gap: 5px;
       padding: 6px 8px;
     }
 
     &__floors-label {
-      display: none;
+      font-size: 11px;
     }
 
     &__floor-chip,
     &__floor-upload {
-      width: 34px;
-      height: 34px;
+      width: 38px;
+      height: 38px;
     }
 
     &__aside {
@@ -1151,7 +1142,8 @@ body.product-ar-modal-open {
   }
 }
 
-.product-slide__badge-tooltip {
+.product-slide__badge-tooltip,
+.product-ar-modal__floor-tooltip {
   position: fixed;
   z-index: 10000;
   width: max-content;
@@ -1178,13 +1170,23 @@ body.product-ar-modal-open {
     content: "";
     position: absolute;
     bottom: -4px;
-    left: 16px;
+    left: 50%;
     width: 7px;
     height: 7px;
+    margin-left: -3.5px;
     background: rgba(255, 255, 255, 0.98);
     border-right: 1px solid rgba(164, 108, 70, 0.18);
     border-bottom: 1px solid rgba(164, 108, 70, 0.18);
     transform: rotate(45deg);
+  }
+
+  &.is-below::after {
+    bottom: auto;
+    top: -4px;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid rgba(164, 108, 70, 0.18);
+    border-top: 1px solid rgba(164, 108, 70, 0.18);
   }
 
   &.is-visible {
@@ -1193,6 +1195,15 @@ body.product-ar-modal-open {
     transform: translateY(0);
     pointer-events: auto;
   }
+}
+
+.product-ar-modal__floor-tooltip {
+  z-index: 10100;
+}
+
+.product-slide__badge-tooltip::after {
+  left: 16px;
+  margin-left: 0;
 }
 
 .product_slider_main {

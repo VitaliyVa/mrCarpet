@@ -8,10 +8,16 @@ const FLOOR_BASE = "/static/ar/floors/";
 const FLOOR_PRESETS = [
   { id: "white", label: "Білий", src: null },
   { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
+  { id: "oak-natural", label: "Натуральний дуб", src: FLOOR_BASE + "oak-natural.webp" },
+  { id: "oak-bleached", label: "Вибілений дуб", src: FLOOR_BASE + "oak-bleached.webp" },
   { id: "oak-grey", label: "Сірий дуб", src: FLOOR_BASE + "oak-grey.webp" },
-  { id: "herringbone", label: "Ялинка", src: FLOOR_BASE + "herringbone.webp" },
+  { id: "ash-light", label: "Світлий ясен", src: FLOOR_BASE + "ash-light.webp" },
+  { id: "laminate-beige", label: "Бежевий ламінат", src: FLOOR_BASE + "laminate-beige.webp" },
+  { id: "herringbone", label: "Ялинка", src: FLOOR_BASE + "herringbone.webp?v=3" },
   { id: "walnut-dark", label: "Горіх", src: FLOOR_BASE + "walnut-dark.webp" },
+  { id: "wenge", label: "Венге", src: FLOOR_BASE + "wenge.webp" },
   { id: "marble-white", label: "Мармур", src: FLOOR_BASE + "marble-white.webp" },
+  { id: "tile-cream", label: "Кремова плитка", src: FLOOR_BASE + "tile-cream.webp" },
   { id: "concrete", label: "Бетон", src: FLOOR_BASE + "concrete.webp" },
 ];
 
@@ -37,8 +43,8 @@ const DEFAULT_FOV = 32;
 const SCENE_PITCH_MAX = 86;
 const SCENE_SCALE_MIN = 0.55;
 const SCENE_SCALE_MAX = 2.4;
-const SCENE_YAW_SENS = 0.16;
-const SCENE_PITCH_SENS = 0.14;
+const SCENE_YAW_SENS = 0.38;
+const SCENE_PITCH_SENS = 0.32;
 const SCENE_FRICTION = 0.965;
 const SCENE_VEL_MIN = 0.015;
 const SCENE_LERP = 0.1;
@@ -429,6 +435,100 @@ function applyFloor(floorId, customSrc) {
   });
 }
 
+function positionFloorTooltip(anchor, tooltip) {
+  tooltip.style.display = "block";
+  tooltip.style.visibility = "hidden";
+  tooltip.style.left = "-9999px";
+  tooltip.style.top = "0";
+
+  const tooltipHeight = tooltip.offsetHeight;
+  const tooltipWidth = tooltip.offsetWidth;
+  const rect = anchor.getBoundingClientRect();
+  const gap = 8;
+  const margin = 12;
+
+  let top = rect.top - tooltipHeight - gap;
+  let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+
+  if (top < margin) {
+    top = rect.bottom + gap;
+    tooltip.classList.add("is-below");
+  } else {
+    tooltip.classList.remove("is-below");
+  }
+
+  if (left + tooltipWidth > window.innerWidth - margin) {
+    left = window.innerWidth - tooltipWidth - margin;
+  }
+  if (left < margin) left = margin;
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.visibility = "";
+}
+
+function bindFloorTooltip(anchor, label) {
+  if (!anchor || anchor.dataset.tooltipBound === "1") return;
+  anchor.dataset.tooltipBound = "1";
+
+  const tooltip = document.createElement("span");
+  tooltip.className = "product-ar-modal__floor-tooltip";
+  tooltip.setAttribute("role", "tooltip");
+  tooltip.textContent = label;
+  // Above modal (z-index 10050); body so fixed coords stay viewport-relative
+  document.body.appendChild(tooltip);
+
+  let hideTimer = 0;
+
+  const show = () => {
+    clearTimeout(hideTimer);
+    positionFloorTooltip(anchor, tooltip);
+    tooltip.classList.add("is-visible");
+  };
+  const hide = () => {
+    clearTimeout(hideTimer);
+    hideTimer = window.setTimeout(() => {
+      tooltip.classList.remove("is-visible");
+    }, 120);
+  };
+
+  // Always bind hover — modal is desktop-first; matchMedia alone was flaky
+  anchor.addEventListener("mouseenter", show);
+  anchor.addEventListener("mouseleave", hide);
+  tooltip.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+  tooltip.addEventListener("mouseleave", hide);
+
+  anchor.addEventListener("focus", show);
+  anchor.addEventListener("blur", () => {
+    clearTimeout(hideTimer);
+    tooltip.classList.remove("is-visible");
+  });
+}
+
+/** CSS floor is preview-only — never part of the GLB / AR session. */
+function setPreviewFloorHidden(hidden) {
+  const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
+  const floorEl = document.getElementById("product-ar-floor");
+  const floorsUi = document.getElementById("product-ar-floors");
+  const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
+  if (!wrap || !floorEl) return;
+
+  if (hidden) {
+    wrap.classList.remove("has-floor");
+    floorEl.hidden = true;
+    floorEl.setAttribute("aria-hidden", "true");
+    if (floorsUi) floorsUi.style.visibility = "hidden";
+    if (mv) {
+      mv.style.background = "";
+      mv.style.setProperty("--poster-color", "#ffffff");
+    }
+  } else {
+    floorEl.hidden = false;
+    if (floorsUi) floorsUi.style.visibility = "";
+    applyFloor(currentFloorId);
+  }
+}
+
 function renderFloorPicker() {
   const list = document.getElementById("product-ar-floors-list");
   if (!list || list.dataset.ready === "1") return;
@@ -442,7 +542,6 @@ function renderFloorPicker() {
       "product-ar-modal__floor-chip" +
       (floor.id === currentFloorId ? " is-active" : "");
     btn.dataset.floorId = floor.id;
-    btn.title = floor.label;
     btn.setAttribute("aria-label", floor.label);
     if (floor.src) {
       btn.style.backgroundImage = `url("${floor.src}")`;
@@ -457,6 +556,7 @@ function renderFloorPicker() {
       applyFloor(floor.id);
     });
     list.appendChild(btn);
+    bindFloorTooltip(btn, floor.label);
   });
 }
 
@@ -464,6 +564,13 @@ function bindFloorUpload() {
   const input = document.getElementById("product-ar-floor-upload");
   if (!input || input.dataset.bound === "1") return;
   input.dataset.bound = "1";
+
+  const uploadLabel = input.closest(".product-ar-modal__floor-upload");
+  if (uploadLabel) {
+    uploadLabel.removeAttribute("title");
+    bindFloorTooltip(uploadLabel, "Завантажити свою підлогу");
+  }
+
   input.addEventListener("change", () => {
     const file = input.files && input.files[0];
     if (!file) return;
@@ -510,7 +617,14 @@ function ensureModelViewer() {
     modelViewerEl.appendChild(hiddenAr);
 
     modelViewerEl.addEventListener("ar-status", (e) => {
-      if (e.detail?.status === "failed") {
+      const status = e.detail?.status;
+      // AR shows only the GLB rug — strip CSS floor for the whole session
+      if (status === "session-started" || status === "object-placed") {
+        setPreviewFloorHidden(true);
+      } else if (status === "not-presenting" || status === "failed") {
+        setPreviewFloorHidden(false);
+      }
+      if (status === "failed") {
         setStatus(
           "Не вдалося відкрити AR. Перевірте підтримку пристрою або скористайтесь QR-кодом.",
           true
@@ -532,16 +646,19 @@ async function launchAr() {
   if (!mv) return;
 
   if (mv.canActivateAR) {
+    // Ensure AR / Scene Viewer / Quick Look get rug-only (no CSS floor)
+    setPreviewFloorHidden(true);
     try {
       await mv.activateAR();
     } catch (err) {
+      setPreviewFloorHidden(false);
       setStatus("Не вдалося відкрити AR на цьому пристрої.", true);
       showQr(currentSizeLabel);
     }
     return;
   }
 
-  // Desktop / no AR support → show QR
+  // Desktop / no AR support → show QR (preview floor stays)
   showQr(currentSizeLabel);
 }
 
