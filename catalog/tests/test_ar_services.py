@@ -25,6 +25,19 @@ class ParseSizeLabelTests(SimpleTestCase):
         with self.assertRaises(SizeParseError):
             parse_size_label("huge")
 
+    def test_round_diameter_cm(self):
+        self.assertEqual(parse_size_label("∅ 67 см"), (Decimal("0.67"), Decimal("0.67")))
+
+    def test_round_diameter_compact(self):
+        self.assertEqual(parse_size_label("Ø67см"), (Decimal("0.67"), Decimal("0.67")))
+
+    def test_round_diameter_metres(self):
+        self.assertEqual(parse_size_label("⌀ 1.5 м"), (Decimal("1.5"), Decimal("1.5")))
+
+    def test_round_diameter_cm_without_symbol(self):
+        self.assertEqual(parse_size_label("67 см"), (Decimal("0.67"), Decimal("0.67")))
+        self.assertEqual(parse_size_label("80см"), (Decimal("0.80"), Decimal("0.80")))
+
     def test_normalize_key(self):
         self.assertEqual(normalize_size_key("1", "2"), "1.00x2.00")
 
