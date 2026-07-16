@@ -173,7 +173,7 @@ class ReplicateProductImageService:
                 "prompt": prompt,
                 "input_images": [file_obj],
                 "aspect_ratio": aspect_ratio,
-                "quality": "high",
+                "quality": "low",
                 "output_format": "webp",
                 "output_compression": 90,
                 "background": "opaque",
