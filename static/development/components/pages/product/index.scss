@@ -769,9 +769,9 @@ body.product-ar-modal-open {
     }
   }
 
-  // Floor pattern: center tile + 1 tile each side (3×3 grid)
+  // Floor extent: data-floor-extent="single" | "tiled" (set from ar-viewer.js)
   &__floor {
-    --floor-tiles: 3;
+    --floor-tiles: 1;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -782,15 +782,25 @@ body.product-ar-modal-open {
     overflow: hidden;
     background-color: #fff;
     pointer-events: none;
+
+    // tiled = center + 1 tile each side (3×3)
+    &[data-floor-extent="tiled"] {
+      --floor-tiles: 3;
+    }
   }
 
   &__floor-tex {
     position: absolute;
     inset: 0;
     background-position: center;
-    background-repeat: repeat;
-    // One tile ≈ scene viewport; 3 tiles max outward from center
-    background-size: calc(100% / var(--floor-tiles)) calc(100% / var(--floor-tiles));
+    background-repeat: no-repeat;
+    background-size: cover;
+
+    [data-floor-extent="tiled"] & {
+      background-repeat: repeat;
+      // One tile ≈ scene viewport; 3 tiles max outward from center
+      background-size: calc(100% / var(--floor-tiles)) calc(100% / var(--floor-tiles));
+    }
   }
 
   &__loading {

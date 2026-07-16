@@ -5,6 +5,12 @@ const MODEL_VIEWER_SRC =
   "https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
 
 const FLOOR_BASE = "/static/ar/floors/";
+/**
+ * Floor extent (code switch, not UI):
+ * - "single" — one cover image under the rug
+ * - "tiled"  — center + 1 tile each side (3×3 repeat)
+ */
+const FLOOR_EXTENT_MODE = "single";
 const FLOOR_PRESETS = [
   { id: "white", label: "Білий", src: null },
   { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
@@ -396,12 +402,21 @@ function bindFloorNav() {
   }
 }
 
+function applyFloorExtentMode() {
+  const floorEl = document.getElementById("product-ar-floor");
+  if (!floorEl) return;
+  floorEl.dataset.floorExtent =
+    FLOOR_EXTENT_MODE === "tiled" ? "tiled" : "single";
+}
+
 function applyFloor(floorId, customSrc) {
   const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
   const floorEl = document.getElementById("product-ar-floor");
   const floorTex = document.getElementById("product-ar-floor-tex");
   const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
   if (!wrap || !floorEl || !floorTex) return;
+
+  applyFloorExtentMode();
 
   currentFloorId = floorId || "white";
   const preset = FLOOR_PRESETS.find((f) => f.id === currentFloorId);
