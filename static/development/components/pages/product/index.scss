@@ -302,10 +302,13 @@
   &__btn {
     display: flex;
     position: relative;
+    align-items: stretch;
+    gap: 12px;
   }
 
   &_favourite-btn {
-    margin-left: 24px;
+    margin-left: 12px;
+    flex: 0 0 auto;
     opacity: 0.3;
 
     &.active {
@@ -407,13 +410,19 @@
     }
 
     &_slider {
-      max-height: 600px;
-      max-width: none;
+      width: 100%;
+      max-width: 100%;
+      // Viewport-capped gallery — prevents tall photos from overlapping product__right
+      max-height: min(100vw, 65vh);
+      min-height: 0;
+      overflow: hidden;
     }
 
     &__right {
       margin: 12px 0 0;
       padding: 0px 20px;
+      position: relative;
+      z-index: 1;
     }
   }
 
@@ -439,7 +448,7 @@
     }
 
     &_slider {
-      max-height: 486px;
+      max-height: min(100vw, 58vh);
     }
 
     &__info {
@@ -459,9 +468,65 @@
     }
 
     &__btn {
-      .btn-gold {
-        width: 100%;
+      .add-to-cart.btn-gold {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
       }
+    }
+  }
+}
+
+.product-ar-open-mobile {
+  display: none;
+
+  &__short {
+    display: none;
+  }
+
+  @media (max-width: 1024px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 15px 24px;
+    border: 1px solid #a46c46;
+    border-radius: 8px;
+    background: #fff;
+    color: #a46c46;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 16px;
+    line-height: 21px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    white-space: nowrap;
+
+    &:hover {
+      background: #a46c46;
+      color: #fff;
+    }
+  }
+
+  @media (max-width: 720px) {
+    flex: 0 0 45px;
+    width: 45px;
+    min-width: 45px;
+    height: 45px;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1;
+    white-space: normal;
+
+    &__full {
+      display: none;
+    }
+
+    &__short {
+      display: inline;
     }
   }
 }
@@ -485,13 +550,11 @@
     cursor: pointer;
 
     &:hover {
-      // border: 2px solid lightgray;
       transform: scale(1.1);
     }
   }
 
   .swiper-slide-thumb-active {
-    //border: 2px solid lightgray;
     transform: scale(1.3);
 
     &:hover {
@@ -499,8 +562,367 @@
     }
   }
 
+  .product-ar-thumb-slide {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    max-height: 84px;
+    height: 84px;
+    transform: none !important;
+
+    &:hover,
+    &.swiper-slide-thumb-active,
+    &.swiper-slide-thumb-active:hover {
+      transform: none !important;
+    }
+
+    .product-ar-thumb-btn {
+      min-height: 0;
+      height: 100%;
+    }
+  }
+
   @media (max-width: 1024px) {
     display: none;
+  }
+}
+
+.product-ar-thumb-btn {
+  width: 100%;
+  height: 100%;
+  min-height: 72px;
+  padding: 10px 6px;
+  border: 1px solid rgba(164, 108, 70, 0.35);
+  border-radius: 8px;
+  background: #f9f5ed;
+  color: #a46c46;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: #a46c46;
+    color: #fff;
+    border-color: #a46c46;
+  }
+
+  &__text {
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+}
+
+.product-ar-main-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 360px;
+  background: #f9f5ed;
+  border-radius: 4px;
+
+  @media (max-width: 1024px) {
+    min-height: min(100vw, 50vh);
+    max-height: min(100vw, 65vh);
+  }
+
+  @media (max-width: 720px) {
+    min-height: min(100vw, 45vh);
+    max-height: min(100vw, 58vh);
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 50px;
+    background: #a46c46;
+    color: #fff;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #8a5638;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    color: #89817c;
+    font-size: 14px;
+  }
+}
+
+body.product-ar-modal-open {
+  overflow: hidden;
+}
+
+.product-ar-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  &[hidden] {
+    display: none !important;
+  }
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(36, 32, 29, 0.55);
+  }
+
+  &__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(980px, 100%);
+    height: min(640px, calc(100vh - 48px));
+    max-height: min(640px, calc(100vh - 48px));
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(36, 32, 29, 0.22);
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    width: 48px;
+    height: 48px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+  }
+
+  &__viewer-wrap {
+    position: relative;
+    background: #fff;
+    border-right: 1px solid #ebeae8;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  &__loading {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #89817c;
+    background: rgba(255, 255, 255, 0.88);
+    font-size: 15px;
+
+    &[hidden] {
+      display: none !important;
+    }
+  }
+
+  #product-ar-viewer-host {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__mv {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #fff;
+    --poster-color: #ffffff;
+  }
+
+  &__aside {
+    display: flex;
+    flex-direction: column;
+    padding: 36px 32px 28px;
+    background: #fbfaf8;
+  }
+
+  &__eyebrow {
+    margin: 0 0 8px;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a46c46;
+  }
+
+  &__title {
+    margin: 0 0 8px;
+    padding-right: 28px;
+    font-family: "Futura PT Book", sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.25;
+    color: #453f3a;
+  }
+
+  &__hint {
+    margin: 0 0 24px;
+    color: #89817c;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  &__sizes-label {
+    margin-bottom: 8px;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 13px;
+    color: #453f3a;
+  }
+
+  &__sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  &__size {
+    min-width: 72px;
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 50px;
+    background: #ebeae8;
+    color: #453f3a;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+
+    &.is-active {
+      background: #a46c46;
+      color: #fff;
+    }
+  }
+
+  &__ar-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 50px;
+    background: #a46c46;
+    color: #fff;
+    font-size: 15px;
+    font-family: "Futura PT Medium", sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #8a5638;
+    }
+  }
+
+  &__qr {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #ebeae8;
+
+    &[hidden] {
+      display: none !important;
+    }
+
+    img {
+      flex: 0 0 auto;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #453f3a;
+    }
+  }
+
+  &__status {
+    margin: 14px 0 0;
+    font-size: 13px;
+    color: #89817c;
+
+    &.is-error {
+      color: #b42318;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0;
+    align-items: stretch;
+
+    &__dialog {
+      width: 100%;
+      max-height: 100%;
+      height: 100%;
+      border-radius: 0;
+    }
+
+    &__layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(42vh, 1fr) auto;
+      min-height: 0;
+      height: 100%;
+    }
+
+    &__viewer-wrap {
+      border-right: none;
+      border-bottom: 1px solid #ebeae8;
+      min-height: 42vh;
+      height: auto;
+    }
+
+    &__aside {
+      padding: 20px 16px 28px;
+      overflow-y: auto;
+    }
+
+    &__title {
+      font-size: 22px;
+    }
   }
 }
 
@@ -642,15 +1064,47 @@
 
   @media (max-width: 1024px) {
     width: 100%;
+    max-height: min(100vw, 65vh);
+    min-height: 0;
+
+    .swiper-wrapper {
+      max-height: inherit;
+    }
 
     .swiper-slide {
       min-width: auto;
       max-width: none;
+      max-height: min(100vw, 65vh);
+    }
+
+    .product-slide__media {
+      max-height: min(100vw, 65vh);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .swiper-slide img {
+      width: 100%;
+      height: auto;
+      max-height: min(100vw, 65vh);
+      object-fit: contain;
+      object-position: center;
     }
 
     .swiper-button-next,
     .swiper-button-prev {
       display: flex;
+    }
+  }
+
+  @media (max-width: 720px) {
+    max-height: min(100vw, 58vh);
+
+    .swiper-slide,
+    .product-slide__media,
+    .swiper-slide img {
+      max-height: min(100vw, 58vh);
     }
   }
 }

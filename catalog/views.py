@@ -339,7 +339,64 @@ def favourites(request):
 def product(request, slug):
     product = Product.objects.get(slug=slug)
     images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
-    return render(request, "product.html", {"product": product, "images": images})
+    return render(
+        request,
+        "product.html",
+        {
+            "product": product,
+            "images": images,
+            "ar_ready": product.ar_status == Product.AR_STATUS_READY and bool(product.ar_texture),
+        },
+    )
+
+
+def product_ar_glb(request, slug):
+    """Return URL (or file) for carpet GLB at given size metres."""
+    from catalog.services.ar_glb_cache import get_or_build_glb, media_url_for_glb
+    from catalog.services.parse_size import SizeParseError, parse_size_label
+
+    try:
+        product = Product.objects.get(slug=slug)
+    except Product.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Товар не знайдено"}, status=404)
+
+    if product.ar_status != Product.AR_STATUS_READY or not product.ar_texture:
+        return JsonResponse(
+            {"success": False, "error": "AR-текстура не готова"},
+            status=404,
+        )
+
+    w_raw = request.GET.get("w")
+    l_raw = request.GET.get("l")
+    size_label = request.GET.get("size")
+
+    try:
+        if w_raw is not None and l_raw is not None:
+            from decimal import Decimal
+
+            width = Decimal(str(w_raw).replace(",", "."))
+            length = Decimal(str(l_raw).replace(",", "."))
+        elif size_label:
+            width, length = parse_size_label(size_label)
+        else:
+            return JsonResponse(
+                {"success": False, "error": "Вкажіть w і l або size"},
+                status=400,
+            )
+        path = get_or_build_glb(product, width, length)
+    except SizeParseError as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=400)
+    except Exception as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)
+
+    return JsonResponse(
+        {
+            "success": True,
+            "glb_url": media_url_for_glb(path),
+            "width": float(width),
+            "length": float(length),
+        }
+    )
 
 
 def stock(request):

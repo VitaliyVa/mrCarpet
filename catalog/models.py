@@ -97,6 +97,37 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
                   "Плитки кольорів на сторінці товару беруться з цієї групи.",
     )
     has_discount = models.BooleanField(default=False)
+
+    AR_STATUS_NONE = "none"
+    AR_STATUS_PENDING = "pending"
+    AR_STATUS_READY = "ready"
+    AR_STATUS_FAILED = "failed"
+    AR_STATUS_CHOICES = (
+        (AR_STATUS_NONE, "Немає"),
+        (AR_STATUS_PENDING, "Генерується"),
+        (AR_STATUS_READY, "Готово"),
+        (AR_STATUS_FAILED, "Помилка"),
+    )
+    ar_texture = models.ImageField(
+        verbose_name="AR-текстура",
+        upload_to="ar/textures",
+        blank=True,
+        null=True,
+        help_text="PNG з alpha для 3D/AR. Генерується з каталожного фото або завантажується вручну.",
+    )
+    ar_status = models.CharField(
+        verbose_name="Статус AR",
+        max_length=16,
+        choices=AR_STATUS_CHOICES,
+        default=AR_STATUS_NONE,
+        db_index=True,
+    )
+    ar_error = models.TextField(verbose_name="Помилка AR", blank=True, default="")
+    ar_updated_at = models.DateTimeField(
+        verbose_name="AR оновлено",
+        null=True,
+        blank=True,
+    )
     # discount = models.IntegerField(blank=True, null=True)
     # sizes = models.ManyToManyField(
     #     verbose_name='Розміри',

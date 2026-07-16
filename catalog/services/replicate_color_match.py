@@ -129,3 +129,23 @@ def crop_white_margins(image_bytes: bytes, threshold: int = 245, pad: int = 2) -
     buf = io.BytesIO()
     cropped.save(buf, format='WEBP', quality=92, method=6)
     return buf.getvalue()
+
+
+def add_white_margin(image_bytes: bytes, margin_ratio: float = 0.05) -> bytes:
+    """
+    Place rug on a square white canvas with equal margin on all sides.
+
+    Uses max(w, h) so a slightly non-square circle bbox still gets the same
+    visible gap left/right/top/bottom (avoids sides looking clipped).
+    """
+    img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    w, h = img.size
+    side = max(w, h)
+    m = max(8, int(round(side * margin_ratio)))
+    canvas_side = side + 2 * m
+    canvas = Image.new('RGB', (canvas_side, canvas_side), (255, 255, 255))
+    canvas.paste(img, ((canvas_side - w) // 2, (canvas_side - h) // 2))
+
+    buf = io.BytesIO()
+    canvas.save(buf, format='WEBP', quality=92, method=6)
+    return buf.getvalue()

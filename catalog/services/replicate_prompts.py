@@ -1,6 +1,6 @@
 from catalog.services.replicate_prompt_options import CatalogPromptOptions, ScenePromptOptions
 
-PROMPT_VERSION = "11"
+PROMPT_VERSION = "12"
 
 _ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -69,6 +69,28 @@ STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
 - You MAY and MUST correct camera perspective so the outline becomes a true geometric semicircle.
 - Do NOT copy foreshortened / skewed outline from the angled photo."""
 
+# Circle in a tall 2:3 frame gets side-clipped if forced to "touch left/right" — use square canvas + safe margins.
+_ROUND_ASPECT_NOTE = (
+    "Output must be a square 1:1 image. "
+    "Center a perfect CIRCLE rug with a small equal white margin on ALL four sides "
+    "(about 2–4% of the canvas). The full circumference must stay inside the frame."
+)
+
+_ROUND_FRAMING = """
+CRITICAL FRAMING — FULL CIRCLE, NEVER CLIP SIDES:
+- Isolate ONLY the rug on solid white (#FFFFFF). Remove floor, room, shadows, labels.
+- Silhouette = perfect mathematical circle, constant radius, top-down orthographic.
+- The WHOLE circle must be visible: left and right edges must NOT touch or cross the frame borders.
+- Keep a thin equal white gap around the entire circumference — never crop/cut the left or right arc.
+- FORBIDDEN: oval, truncated circle, circle touching left/right borders, side clipping, squashed ellipse."""
+
+_ROUND_PRESERVATION = """
+STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
+- Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
+- Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
+- You MAY correct camera perspective so the outline becomes a perfect circle.
+- Do NOT clip the circle to fit the frame — scale the whole rug down so it fits with margin."""
+
 _SHAPE_BLOCKS = {
     'auto': """
 RUG SHAPE (CRITICAL):
@@ -92,9 +114,10 @@ RUG SHAPE (CRITICAL — RECTANGULAR):
 - The rug MUST stay rectangular with the same corner style as the reference (sharp or slightly rounded corners).
 - Preserve exact length-to-width ratio. Do not convert to oval or round.""",
     'round': """
-RUG SHAPE (CRITICAL — ROUND):
-- The rug MUST stay circular / round. Preserve the exact circle diameter and outline from the reference.
-- Do not convert to oval or rectangle.""",
+RUG SHAPE (CRITICAL — FULL CIRCLE):
+- The rug MUST be a perfect CIRCLE (constant radius). Not oval, not truncated, not stadium.
+- The ENTIRE circumference must be visible — left, right, top, and bottom arcs fully inside the frame.
+- Never clip, crop, or cut off any part of the circle edge.""",
     'runner': """
 RUG SHAPE (CRITICAL — RUNNER):
 - The rug MUST stay a long narrow runner (rectangular strip). Preserve exact length-to-width ratio from the reference.
@@ -143,14 +166,22 @@ def build_catalog_prompt(options: CatalogPromptOptions | None = None) -> str:
         aspect_note = _OVAL_ASPECT_NOTE
         framing = _OVAL_FRAMING
         preservation = _OVAL_PRESERVATION
+        center_line = '- Center the rug in the vertical 2:3 frame.'
     elif opts.rug_shape == 'semicircle':
         aspect_note = _SEMICIRCLE_ASPECT_NOTE
         framing = _SEMICIRCLE_FRAMING
         preservation = _SEMICIRCLE_PRESERVATION
+        center_line = '- Center the rug in the vertical 2:3 frame.'
+    elif opts.rug_shape == 'round':
+        aspect_note = _ROUND_ASPECT_NOTE
+        framing = _ROUND_FRAMING
+        preservation = _ROUND_PRESERVATION
+        center_line = '- Center the circle in the square 1:1 frame with equal white margin on every side.'
     else:
         aspect_note = _ASPECT_NOTE
         framing = _NO_WHITESPACE
         preservation = _PRESERVATION
+        center_line = '- Center the rug in the vertical 2:3 frame.'
 
     return f"""Edit the provided reference image of a rug/carpet for an e-commerce catalog thumbnail.
 
@@ -159,7 +190,7 @@ CAMERA & COMPOSITION (change only this):
 - Show the entire rug fully inside the frame; crop to the rug silhouette only.
 - {aspect_note}
 {framing}
-- Center the rug in the vertical 2:3 frame.
+{center_line}
 
 {_SHAPE_BLOCKS[opts.rug_shape]}
 {_SOURCE_BLOCKS[opts.source_context]}

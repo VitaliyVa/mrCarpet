@@ -5,6 +5,7 @@ import "./product";
 import "./reviews";
 import "./index.scss";
 import "./review-write-modal.scss";
+import { initProductArViewer } from "./ar-viewer";
 
 Swiper.use([Thumbs, Navigation]);
 
@@ -12,6 +13,8 @@ const product_main_swiper = new Swiper(".product_slider_main", {
   slidesPerView: 1,
   slidesPerGroup: 1,
   initialSlide: 0,
+  // Desktop: height follows image. Mobile: CSS max-height caps gallery;
+  // autoHeight still used so short images don't leave empty space.
   autoHeight: true,
   navigation: {
     nextEl: ".swiper-button-next",
@@ -27,7 +30,29 @@ const product_main_swiper = new Swiper(".product_slider_main", {
       breakpoints: {},
     },
   },
+  on: {
+    init(swiper) {
+      // Recalc after images paint — prevents tall photos overlapping text on mobile
+      swiper.el.querySelectorAll("img").forEach((img) => {
+        if (img.complete) return;
+        img.addEventListener(
+          "load",
+          () => {
+            swiper.updateAutoHeight(0);
+          },
+          { once: true }
+        );
+      });
+      requestAnimationFrame(() => swiper.updateAutoHeight(0));
+    },
+  },
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", () => {
+    product_main_swiper.updateAutoHeight(0);
+  });
+}
 
 function positionBadgeTooltip(anchor, tooltip) {
   tooltip.style.display = "block";
@@ -178,3 +203,4 @@ function initProductAiBadges() {
 }
 
 initProductAiBadges();
+initProductArViewer();

@@ -207,7 +207,7 @@
       <a href="{{ product.get_absolute_url }}" class="color_gold">{{ product.title }}</a>
     </div>
 
-    <div class="product" data-product-id="{{ product.product_attr.first.id }}">
+    <div class="product" data-product-id="{{ product.product_attr.first.id }}" data-product-slug="{{ product.slug }}" {% if ar_ready %}data-ar-ready="1"{% endif %}>
       <div class="product_slider">
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
@@ -220,6 +220,26 @@
             {% else %}
             <div class="swiper-slide">
               <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+            </div>
+            {% endif %}
+            {% if ar_ready %}
+            <div class="swiper-slide product-ar-thumb-slide">
+              <button
+                type="button"
+                class="product-ar-thumb-btn"
+                id="product-ar-open"
+                aria-label="Дивитись у 3D"
+                data-product-slug="{{ product.slug }}"
+                data-ar-glb-url="{% url 'product_ar_glb' product.slug %}"
+              >
+                <span class="product-ar-thumb-btn__icon" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3L4 7.5V16.5L12 21L20 16.5V7.5L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M12 12L4 7.5M12 12L20 7.5M12 12V21" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="product-ar-thumb-btn__text">3D</span>
+              </button>
             </div>
             {% endif %}
           </div>
@@ -247,6 +267,22 @@
             <div class="swiper-slide">
               <div class="product-slide__media">
                 <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+              </div>
+            </div>
+            {% endif %}
+            {% if ar_ready %}
+            <div class="swiper-slide product-ar-main-slide">
+              <div class="product-slide__media product-ar-main-cta">
+                <button type="button" class="product-ar-main-cta__btn" data-ar-open-trigger>
+                  <span class="product-ar-main-cta__icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3L4 7.5V16.5L12 21L20 16.5V7.5L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                      <path d="M12 12L4 7.5M12 12L20 7.5M12 12V21" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  Дивитись у 3D
+                </button>
+                <p class="product-ar-main-cta__hint">Огляньте килим у реальному розмірі</p>
               </div>
             </div>
             {% endif %}
@@ -394,6 +430,17 @@
 
           <div class="product__btn">
             <button class="add-to-cart btn-gold">Добавити до кошика</button>
+            {% if ar_ready %}
+            <button
+              type="button"
+              class="product-ar-open-mobile btn"
+              id="product-ar-open-mobile"
+              aria-label="Дивитись у 3D"
+            >
+              <span class="product-ar-open-mobile__full">Дивитись у 3D</span>
+              <span class="product-ar-open-mobile__short" aria-hidden="true">3D</span>
+            </button>
+            {% endif %}
             <button class="product_favourite-btn btn {% if product in favourites %}active{% endif %}">
               <svg
                 width="24"
@@ -668,6 +715,47 @@
 <!-- /.catalog_slider -->
 {% endif %}
 {% endwith %}
+
+{% if ar_ready %}
+<div class="product-ar-modal" id="product-ar-modal" hidden>
+  <div class="product-ar-modal__backdrop" data-ar-close></div>
+  <div class="product-ar-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="product-ar-modal-title">
+    <button type="button" class="product-ar-modal__close" data-ar-close aria-label="Закрити">
+      <img src="/static/utils/assets/close.svg" alt="" />
+    </button>
+
+    <div class="product-ar-modal__layout">
+      <div class="product-ar-modal__viewer-wrap">
+        <div class="product-ar-modal__loading" id="product-ar-loading">Завантаження 3D…</div>
+        <div id="product-ar-viewer-host"></div>
+      </div>
+
+      <div class="product-ar-modal__aside">
+        <div class="product-ar-modal__header">
+          <p class="product-ar-modal__eyebrow">3D / AR</p>
+          <h2 id="product-ar-modal-title" class="product-ar-modal__title">{{ product.title }}</h2>
+          <p class="product-ar-modal__hint">Оберіть розмір і розгляньте килим з усіх боків.</p>
+        </div>
+
+        <div class="product-ar-modal__sizes-label">Розмір</div>
+        <div class="product-ar-modal__sizes" id="product-ar-modal-sizes"></div>
+
+        <button type="button" class="product-ar-modal__ar-btn" id="product-ar-launch">
+          Подивитись в AR
+        </button>
+
+        <div class="product-ar-modal__qr" id="product-ar-qr" hidden>
+          <img id="product-ar-qr-img" alt="QR-код для AR" width="120" height="120" />
+          <p>Відскануйте код телефоном</p>
+        </div>
+
+        <p class="product-ar-modal__status" id="product-ar-status"></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/product/index.js"></script>
 {% endblock scripts %}

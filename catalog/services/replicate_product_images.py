@@ -8,7 +8,11 @@ import requests
 from django.conf import settings
 
 from catalog.image_optimize import optimize_product_image
-from catalog.services.replicate_color_match import crop_white_margins, match_rug_colors
+from catalog.services.replicate_color_match import (
+    add_white_margin,
+    crop_white_margins,
+    match_rug_colors,
+)
 from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.replicate_prompts import (
     PROMPT_VERSION,
@@ -100,6 +104,12 @@ class ReplicateProductImageService:
         opts = options or GenerationOptions()
         prompt = config["build_prompt"](opts)
         aspect_ratio = config["aspect_ratio"]
+        # Circle in 2:3 gets side-clipped; use square canvas for round catalog/hover.
+        if (
+            phase in (PHASE_CATALOG, PHASE_HOVER)
+            and opts.catalog.rug_shape == "round"
+        ):
+            aspect_ratio = "1:1"
         max_width = config["max_width"]
         phase_label = config["label"]
 
@@ -121,6 +131,11 @@ class ReplicateProductImageService:
             raw_bytes = match_rug_colors(source_bytes, raw_bytes)
             self.job_log.info(f"{phase_label}: обрізка білих відступів…")
             raw_bytes = crop_white_margins(raw_bytes)
+            # Circle bbox touches L/R midpoints — add a thin white ring so sides
+            # don't look clipped in the catalog square.
+            if opts.catalog.rug_shape == "round":
+                self.job_log.info(f"{phase_label}: білий відступ для круга…")
+                raw_bytes = add_white_margin(raw_bytes, margin_ratio=0.05)
 
         optimized = optimize_product_image(raw_bytes, max_width=max_width)
 

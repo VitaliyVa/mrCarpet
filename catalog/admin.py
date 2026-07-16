@@ -25,6 +25,8 @@ from catalog.services.replicate_product_images import (
     ReplicateProductImageService,
 )
 from catalog.services.replicate_prompt_options import GenerationOptions
+from catalog.services.ar_texture import ArTextureService, mark_ar_ready_from_manual_upload
+from catalog.tasks import generate_ar_texture_task
 from .models import (
     Product,
     ProductCategory,
@@ -164,11 +166,17 @@ class ProductAdmin(admin.ModelAdmin):
         models.ImageField: {"widget": ImagePreviewWidget},
     }
     save_as = True
-    list_display = ['title', 'is_new', 'has_discount', 'get_color_display', 'get_color_group_display', 'get_total_quantity', 'created', 'updated']
-    list_filter = ['is_new', 'has_discount', 'created', 'categories', 'active_color', 'color_group']
+    list_display = ['title', 'is_new', 'has_discount', 'get_ar_status_display_col', 'get_color_display', 'get_color_group_display', 'get_total_quantity', 'created', 'updated']
+    list_filter = ['is_new', 'has_discount', 'ar_status', 'created', 'categories', 'active_color', 'color_group']
     list_select_related = ('active_color', 'color_group')
     search_fields = ['title', 'description']
-    actions = ['group_color_variants_action', 'ungroup_color_variants_action', 'duplicate_product_action']
+    actions = [
+        'group_color_variants_action',
+        'ungroup_color_variants_action',
+        'duplicate_product_action',
+        'generate_ar_texture_action',
+    ]
+    readonly_fields = ['ar_status', 'ar_error', 'ar_updated_at', 'ar_texture_preview']
     fieldsets = (
         ('Основна інформація', {
             'fields': ('title', 'slug', 'description', 'image', 'hover_image', 'categories', 'is_new')
@@ -185,6 +193,23 @@ class ProductAdmin(admin.ModelAdmin):
                 'а клік по плитці веде на відповідний товар.<br>'
                 'Щоб додати ще один колір згодом — створіть товар, виділіть його разом з будь-яким '
                 'товаром із групи та знову застосуйте ту саму дію.'
+            ),
+        }),
+        ('AR / 3D', {
+            'fields': (
+                'ar_texture_preview',
+                'ar_texture',
+                'ar_status',
+                'ar_error',
+                'ar_updated_at',
+            ),
+            'description': (
+                'Текстура для 3D/AR генерується з <b>каталожного зображення</b> '
+                '(білий фон, вигляд зверху) через Bria product-cutout. '
+                'Можна також завантажити PNG з alpha вручну. '
+                '<br><button type="button" class="button" id="ar-generate-texture-btn" '
+                'style="margin-top:8px;">Згенерувати AR-текстуру з каталожного фото</button>'
+                '<span id="ar-generate-texture-status" style="margin-left:10px;"></span>'
             ),
         }),
         ('Інше', {
@@ -220,6 +245,11 @@ class ProductAdmin(admin.ModelAdmin):
                 'generate-images/',
                 self.admin_site.admin_view(self.generate_product_images),
                 name='catalog_product_generate_images'
+            ),
+            path(
+                'generate-ar-texture/',
+                self.admin_site.admin_view(self.generate_ar_texture),
+                name='catalog_product_generate_ar_texture'
             ),
         ]
         return custom_urls + urls
@@ -556,6 +586,119 @@ class ProductAdmin(admin.ModelAdmin):
                 f"Створено {duplicated_count} копій товарів.",
                 level='success'
             )
+
+    @method_decorator(require_POST)
+    def generate_ar_texture(self, request):
+        product_id = request.POST.get('product_id') or request.POST.get('object_id')
+        if not product_id:
+            return JsonResponse({'success': False, 'error': 'Не вказано product_id'}, status=400)
+        try:
+            product = Product.admin_objects.get(pk=int(product_id))
+        except (Product.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({'success': False, 'error': 'Товар не знайдено'}, status=404)
+
+        if not product.image:
+            return JsonResponse(
+                {'success': False, 'error': 'Немає каталожного зображення'},
+                status=400,
+            )
+
+        service = None
+        try:
+            service = ArTextureService()
+            result = service.generate_for_product(product)
+            return JsonResponse(result)
+        except ReplicateGenerationError as exc:
+            logs = service.job_log.entries if service else []
+            return JsonResponse(
+                {'success': False, 'error': str(exc), 'logs': logs},
+                status=502,
+            )
+        except Exception as exc:
+            return JsonResponse(
+                {'success': False, 'error': f'Помилка AR: {exc}'},
+                status=500,
+            )
+
+    @admin.action(description='Згенерувати AR-текстуру для вибраних')
+    def generate_ar_texture_action(self, request, queryset):
+        queued = 0
+        synced = 0
+        skipped = 0
+        for product in queryset:
+            if not product.image:
+                skipped += 1
+                continue
+            product.ar_status = Product.AR_STATUS_PENDING
+            product.ar_error = ''
+            product.save(update_fields=['ar_status', 'ar_error'])
+            try:
+                generate_ar_texture_task.delay(product.pk)
+                queued += 1
+            except Exception:
+                # Celery broker may be unavailable — run sync
+                try:
+                    ArTextureService().generate_for_product(product)
+                    synced += 1
+                except Exception as exc:
+                    product.ar_status = Product.AR_STATUS_FAILED
+                    product.ar_error = str(exc)[:2000]
+                    product.save(update_fields=['ar_status', 'ar_error'])
+                    skipped += 1
+
+        parts = []
+        if queued:
+            parts.append(f'у чергу Celery: {queued}')
+        if synced:
+            parts.append(f'синхронно: {synced}')
+        if skipped:
+            parts.append(f'пропущено/помилка: {skipped}')
+        self.message_user(
+            request,
+            'AR-текстура: ' + (', '.join(parts) if parts else 'нічого не зроблено'),
+            level='success' if (queued or synced) else 'warning',
+        )
+
+    def ar_texture_preview(self, obj):
+        if obj.ar_texture:
+            return format_html(
+                '<div style="display:inline-block;padding:8px;'
+                'background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 50%/16px 16px;">'
+                '<img src="{}" style="max-width:220px;max-height:220px;display:block;" />'
+                '</div>',
+                obj.ar_texture.url,
+            )
+        return format_html('<span style="color:#999;">— немає текстури</span>')
+
+    ar_texture_preview.short_description = 'Превʼю AR-текстури'
+
+    def get_ar_status_display_col(self, obj):
+        colors = {
+            Product.AR_STATUS_READY: '#28a745',
+            Product.AR_STATUS_PENDING: '#f0ad4e',
+            Product.AR_STATUS_FAILED: '#dc3545',
+            Product.AR_STATUS_NONE: '#999',
+        }
+        color = colors.get(obj.ar_status, '#999')
+        return format_html(
+            '<span style="color:{};font-weight:600;">{}</span>',
+            color,
+            obj.get_ar_status_display(),
+        )
+
+    get_ar_status_display_col.short_description = 'AR'
+    get_ar_status_display_col.admin_order_field = 'ar_status'
+
+    def save_model(self, request, obj, form, change):
+        prev_texture = None
+        if change and obj.pk:
+            prev = Product.admin_objects.filter(pk=obj.pk).only('ar_texture').first()
+            if prev and prev.ar_texture:
+                prev_texture = prev.ar_texture.name
+        super().save_model(request, obj, form, change)
+        new_name = obj.ar_texture.name if obj.ar_texture else None
+        if new_name and new_name != prev_texture:
+            mark_ar_ready_from_manual_upload(obj)
     
     def get_color_display(self, obj):
         """Відображає active_color з візуальним індикатором кольору або текстури"""
@@ -722,6 +865,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/image_resize.js',
             'admin/js/replicate_generate_images.js',
             'admin/js/replicate_generate_scene.js',
+            'admin/js/ar_generate_texture.js',
             'admin/js/product_image_sortable.js',
             'admin/js/product_image_dropzone.js',
         )
