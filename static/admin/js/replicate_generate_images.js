@@ -13,6 +13,7 @@
             choices: [
                 { value: 'auto', label: 'Авто (з фото)' },
                 { value: 'oval', label: 'Овальний' },
+                { value: 'semicircle', label: 'Напівкруг' },
                 { value: 'rectangular', label: 'Прямокутний' },
                 { value: 'round', label: 'Круглий' },
                 { value: 'runner', label: 'Доріжка (runner)' },

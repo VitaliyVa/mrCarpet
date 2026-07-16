@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-RUG_SHAPES = frozenset({'auto', 'oval', 'rectangular', 'round', 'runner'})
+RUG_SHAPES = frozenset({'auto', 'oval', 'semicircle', 'rectangular', 'round', 'runner'})
 SOURCE_CONTEXTS = frozenset({'auto', 'in_room', 'isolated'})
 COLOR_MODES = frozenset({'auto', 'preserve_exact', 'monochrome'})
 

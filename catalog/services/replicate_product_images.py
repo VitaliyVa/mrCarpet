@@ -8,7 +8,7 @@ import requests
 from django.conf import settings
 
 from catalog.image_optimize import optimize_product_image
-from catalog.services.replicate_color_match import match_rug_colors
+from catalog.services.replicate_color_match import crop_white_margins, match_rug_colors
 from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.replicate_prompts import (
     PROMPT_VERSION,
@@ -119,6 +119,8 @@ class ReplicateProductImageService:
         if phase in (PHASE_CATALOG, PHASE_HOVER):
             self.job_log.info(f"{phase_label}: підгонка кольору під джерело…")
             raw_bytes = match_rug_colors(source_bytes, raw_bytes)
+            self.job_log.info(f"{phase_label}: обрізка білих відступів…")
+            raw_bytes = crop_white_margins(raw_bytes)
 
         optimized = optimize_product_image(raw_bytes, max_width=max_width)
 

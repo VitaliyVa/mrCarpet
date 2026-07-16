@@ -1,6 +1,6 @@
 from catalog.services.replicate_prompt_options import CatalogPromptOptions, ScenePromptOptions
 
-PROMPT_VERSION = "7"
+PROMPT_VERSION = "11"
 
 _ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -17,18 +17,20 @@ CRITICAL FRAMING — NO EMPTY SPACE:
 # Oval cannot touch all 4 borders without distorting shape — allow side margins.
 _OVAL_ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
-    "Center the oval rug matching the reference silhouette. "
-    "White margins on left and right are OK where the oval curves inward — "
-    "do NOT stretch the rug to fill those corners."
+    "Center a bilaterally symmetric vertical oval. Crop tightly to the rug bbox — "
+    "minimal outer white padding; side white only in the oval corner wedges."
 )
 
 _OVAL_FRAMING = """
-CRITICAL FRAMING — OVAL FROM REFERENCE:
+CRITICAL — PERSPECTIVE DESKEW (REFERENCE IS TILTED):
+- The source photo is NOT orthographic: camera tilt makes the NEAR end look longer/sharper and the FAR end flatter/wider.
+- You MUST fully remove that foreshortening. Output a perfect 90° top-down / orthographic oval.
+- After correction, if you flip the rug upside-down, the silhouette must look the SAME (180° rotational symmetry of the outline).
+- Top end and bottom end MUST match: same chord width, same curve radius, same roundness.
+- FORBIDDEN silhouettes copied from tilted photos: egg shape, teardrop, pointier bottom, wider bottom, flatter top, trapezoid oval.
+- If the reference bottom looks sharper/longer than the top — ROUND AND SHORTEN the bottom to match the top (and vice versa). Do NOT keep the asymmetry.
 - Isolate ONLY the rug on solid white (#FFFFFF). Remove floor, wood, room, shadows.
-- Match the reference oval proportions exactly: broad, softly rounded top and bottom ends.
-- Ends must be WIDE and gently rounded (like the reference) — NOT pointed, NOT sharp, NOT teardrop tips.
-- Continuous smooth curve all around. NO rectangle, NO 90-degree corners, NO straight long sides.
-- Never force the rug to touch left and right frame borders if that would change the oval."""
+- Ends: broad, soft, gently rounded — NOT pointed tips. Continuous smooth curve. NO 90-degree corners."""
 
 _PRESERVATION = """
 STRICT PRESERVATION (do NOT change):
@@ -36,19 +38,55 @@ STRICT PRESERVATION (do NOT change):
 - Do not redesign, simplify, stylize, recolor, warp, stretch, or reinterpret the rug design.
 - The rug must look identical to the reference — only camera angle, isolation, and framing change."""
 
+_OVAL_PRESERVATION = """
+STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
+- Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
+- Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
+- You MAY and MUST correct camera perspective / silhouette asymmetry (tilted oval → symmetric top-down oval).
+- Do NOT copy the reference's egg-shaped or foreshortened outline — that outline is a photography artifact."""
+
+_SEMICIRCLE_ASPECT_NOTE = (
+    "Output must be a vertical 2:3 portrait image. "
+    "Center a true SEMICIRCLE (half-disk / D-shape). Crop tightly to the rug bbox — "
+    "minimal outer white padding; white only outside the semicircle silhouette."
+)
+
+_SEMICIRCLE_FRAMING = """
+CRITICAL — SEMICIRCLE / HALF-DISK (DESKEWED):
+- Isolate ONLY the rug on solid white (#FFFFFF). Remove floor, wood, room, shadows, labels, and tags.
+- Silhouette = exact mathematical semicircle: ONE perfectly STRAIGHT diameter edge + ONE continuous 180° circular arc of CONSTANT radius.
+- Keep the diameter orientation from the reference (straight edge on the same side as in the photo).
+- The arc MUST be a true half-circle — not a flatter bow, not a deeper U, not an oval half, not a quarter-circle.
+- Where the arc meets the diameter: clean right-angle junctions of geometry (curve meets straight ends), no chopped corners.
+- Reference may be tilted — CORRECT to perfect 90° top-down orthographic view. No perspective taper.
+- FORBIDDEN: full circle, oval, rectangle with one rounded side, irregular D-shape, asymmetric arc."""
+
+_SEMICIRCLE_PRESERVATION = """
+STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
+- Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
+- Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
+- Remove manufacturer tags/labels if present on the reference.
+- You MAY and MUST correct camera perspective so the outline becomes a true geometric semicircle.
+- Do NOT copy foreshortened / skewed outline from the angled photo."""
+
 _SHAPE_BLOCKS = {
     'auto': """
 RUG SHAPE (CRITICAL):
-- Preserve the EXACT silhouette and outline from the reference — oval, round, rectangular, runner, or irregular.
+- Preserve the EXACT silhouette and outline from the reference — oval, semicircle, round, rectangular, runner, or irregular.
 - Do NOT regularize the shape: never convert oval to rectangle, never square off curved edges, never change proportions.
 - Match the reference perimeter precisely, including curved vs straight edges and corner style.""",
     'oval': """
-RUG SHAPE (CRITICAL — OVAL, MATCH REFERENCE):
-- The rug MUST stay OVAL with the SAME end curvature as the reference photo.
-- Top and bottom ends: broad, soft, gently rounded — the same width of curve as in the reference.
-- Do NOT make pointed/sharp/narrow tips. Do NOT exaggerate the ellipse into a spindle or lemon shape.
-- NO straight long sides, NO 90-degree corners, NO rectangle, NO rounded-rectangle.
-- Copy the reference silhouette closely; only remove the floor around it.""",
+RUG SHAPE (CRITICAL — SYMMETRIC OVAL, DESKEWED):
+- Silhouette = classic vertical oval / stadium with EQUAL top and bottom caps.
+- Top cap == bottom cap (mirror across the horizontal mid-line). Never a pointier bottom.
+- Broad soft rounded ends — NOT egg, NOT teardrop, NOT lemon-point tips.
+- Pattern stays from the reference; outline is deskewed to orthographic symmetry.""",
+    'semicircle': """
+RUG SHAPE (CRITICAL — SEMICIRCLE / HALF-DISK):
+- Silhouette MUST be a true semicircle (D-shape): straight diameter + half-circle arc, constant radius.
+- NOT a full circle, NOT an oval, NOT a quarter-circle, NOT a rounded rectangle.
+- Diameter edge perfectly straight; curved side perfectly circular (180°).
+- Pattern stays from the reference; outline is corrected to geometric semicircle.""",
     'rectangular': """
 RUG SHAPE (CRITICAL — RECTANGULAR):
 - The rug MUST stay rectangular with the same corner style as the reference (sharp or slightly rounded corners).
@@ -78,17 +116,23 @@ SOURCE PHOTO (isolated):
 
 _COLOR_BLOCKS = {
     'auto': """
-COLOR:
-- Preserve the exact colors, contrast, and tonal balance from the reference.
-- Do NOT wash out, lighten, desaturate, or flatten the image. Keep the same depth between dark and light areas.""",
+COLOR & LIGHTING (MATCH REFERENCE EXACTLY — CRITICAL FOR BUYERS):
+- Copy the reference colors, saturation, brightness, and contrast EXACTLY — no beautify, no HDR, no punchy grading.
+- Do NOT increase saturation or make colors more vivid/bright than the photo (customers must not be misled).
+- Do NOT deepen blacks or brighten creams beyond the reference. Keep muted/matte product look if the photo is muted.
+- Lighting: same soft natural look as the reference — no harsh studio contrast, no glossy hotspots.""",
     'preserve_exact': """
-COLOR:
-- Preserve pixel-accurate colors, contrast, and tonal distribution from the reference. No recoloring or color grading.
-- Match the reference luminance: dark areas stay dark, highlights stay bright — no global gray shift.""",
+COLOR & LIGHTING (PIXEL-FAITHFUL — CRITICAL FOR BUYERS):
+- Match reference hues, saturation, and luminance as closely as possible. No recoloring, no color grading, no vibrance boost.
+- Do NOT make the result more saturated, brighter, or higher-contrast than the source photo.
+- Dark areas stay the same darkness as the photo (e.g. dark brown stays dark brown, not jet black).
+- Light areas stay the same cream/beige as the photo (not brighter white).
+- Lighting: soft and even like the reference — no studio punch-up.""",
     'monochrome': """
-COLOR:
-- This is a monochrome / grayscale rug. Preserve the exact gray, charcoal, silver, and black tones from the reference without adding color.
-- Do NOT make the rug lighter, flatter, or more uniform gray than the reference. Keep rich contrast between charcoal pattern and silver highlights.""",
+COLOR & LIGHTING (MONOCHROME — MATCH REFERENCE):
+- Preserve the exact gray, charcoal, silver, and black tones from the reference without adding color.
+- Do NOT boost contrast or brighten highlights beyond the photo. No punchy black-and-white look.
+- Lighting: same soft balance as the reference.""",
 }
 
 
@@ -98,9 +142,15 @@ def build_catalog_prompt(options: CatalogPromptOptions | None = None) -> str:
     if opts.rug_shape == 'oval':
         aspect_note = _OVAL_ASPECT_NOTE
         framing = _OVAL_FRAMING
+        preservation = _OVAL_PRESERVATION
+    elif opts.rug_shape == 'semicircle':
+        aspect_note = _SEMICIRCLE_ASPECT_NOTE
+        framing = _SEMICIRCLE_FRAMING
+        preservation = _SEMICIRCLE_PRESERVATION
     else:
         aspect_note = _ASPECT_NOTE
         framing = _NO_WHITESPACE
+        preservation = _PRESERVATION
 
     return f"""Edit the provided reference image of a rug/carpet for an e-commerce catalog thumbnail.
 
@@ -115,10 +165,10 @@ CAMERA & COMPOSITION (change only this):
 {_SOURCE_BLOCKS[opts.source_context]}
 {_COLOR_BLOCKS[opts.color_mode]}
 
-{_PRESERVATION}
+{preservation}
 
 OUTPUT:
-- Clean professional catalog product photography, neutral studio lighting that preserves reference contrast, sharp focus across the whole rug surface."""
+- Clean catalog product photo, sharp focus; lighting and color must stay faithful to the reference (not more vivid)."""
 
 
 def build_hover_prompt(options: CatalogPromptOptions | None = None) -> str:
@@ -243,7 +293,7 @@ GOAL:
 STRICT PRESERVATION (do NOT change the rug):
 - The rug pattern, motif layout, colors, texture, pile, and material must match the reference exactly.
 - Do not redesign, recolor, simplify, or substitute a different rug.
-- Preserve the rug's exact shape silhouette on the floor (oval stays oval, rectangular stays rectangular).
+- Preserve the rug's exact shape silhouette on the floor (oval stays oval, semicircle stays semicircle, rectangular stays rectangular).
 
 SCENE RULES:
 - Photorealistic interior photography, soft natural daylight, no text, no watermark, no people.
