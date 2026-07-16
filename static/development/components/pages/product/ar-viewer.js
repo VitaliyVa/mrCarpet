@@ -4,10 +4,23 @@
 const MODEL_VIEWER_SRC =
   "https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
 
+const FLOOR_BASE = "/static/ar/floors/";
+const FLOOR_PRESETS = [
+  { id: "white", label: "Білий", src: null },
+  { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
+  { id: "oak-grey", label: "Сірий дуб", src: FLOOR_BASE + "oak-grey.webp" },
+  { id: "herringbone", label: "Ялинка", src: FLOOR_BASE + "herringbone.webp" },
+  { id: "walnut-dark", label: "Горіх", src: FLOOR_BASE + "walnut-dark.webp" },
+  { id: "marble-white", label: "Мармур", src: FLOOR_BASE + "marble-white.webp" },
+  { id: "concrete", label: "Бетон", src: FLOOR_BASE + "concrete.webp" },
+];
+
 let mvScriptPromise = null;
 let modelViewerEl = null;
 let currentSizeLabel = null;
 let autoArRequested = false;
+let currentFloorId = "white";
+let customFloorObjectUrl = null;
 
 function loadModelViewerScript() {
   if (customElements.get("model-viewer")) {
@@ -129,6 +142,89 @@ async function fetchGlbUrl(sizeLabel) {
   return data.glb_url;
 }
 
+function applyFloor(floorId, customSrc) {
+  const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
+  const floorEl = document.getElementById("product-ar-floor");
+  const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
+  if (!wrap || !floorEl) return;
+
+  currentFloorId = floorId || "white";
+  const preset = FLOOR_PRESETS.find((f) => f.id === currentFloorId);
+  const src =
+    customSrc ||
+    (currentFloorId === "custom" ? customFloorObjectUrl : preset?.src) ||
+    null;
+
+  if (src) {
+    floorEl.style.backgroundImage = `url("${src}")`;
+    wrap.classList.add("has-floor");
+    if (mv) {
+      mv.style.background = "transparent";
+      mv.style.setProperty("--poster-color", "transparent");
+    }
+  } else {
+    floorEl.style.backgroundImage = "";
+    wrap.classList.remove("has-floor");
+    if (mv) {
+      mv.style.background = "";
+      mv.style.setProperty("--poster-color", "#ffffff");
+    }
+  }
+
+  document.querySelectorAll(".product-ar-modal__floor-chip").forEach((chip) => {
+    chip.classList.toggle("is-active", chip.dataset.floorId === currentFloorId);
+  });
+}
+
+function renderFloorPicker() {
+  const list = document.getElementById("product-ar-floors-list");
+  if (!list || list.dataset.ready === "1") return;
+  list.dataset.ready = "1";
+  list.innerHTML = "";
+
+  FLOOR_PRESETS.forEach((floor) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "product-ar-modal__floor-chip" +
+      (floor.id === currentFloorId ? " is-active" : "");
+    btn.dataset.floorId = floor.id;
+    btn.title = floor.label;
+    btn.setAttribute("aria-label", floor.label);
+    if (floor.src) {
+      btn.style.backgroundImage = `url("${floor.src}")`;
+    } else {
+      btn.classList.add("is-white");
+    }
+    btn.addEventListener("click", () => {
+      if (customFloorObjectUrl && currentFloorId === "custom") {
+        URL.revokeObjectURL(customFloorObjectUrl);
+        customFloorObjectUrl = null;
+      }
+      applyFloor(floor.id);
+    });
+    list.appendChild(btn);
+  });
+}
+
+function bindFloorUpload() {
+  const input = document.getElementById("product-ar-floor-upload");
+  if (!input || input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setStatus("Оберіть файл зображення для підлоги", true);
+      return;
+    }
+    if (customFloorObjectUrl) URL.revokeObjectURL(customFloorObjectUrl);
+    customFloorObjectUrl = URL.createObjectURL(file);
+    applyFloor("custom", customFloorObjectUrl);
+    input.value = "";
+  });
+}
+
 function ensureModelViewer() {
   const host = document.getElementById("product-ar-viewer-host");
   if (!host) return null;
@@ -174,6 +270,7 @@ function ensureModelViewer() {
     });
 
     host.appendChild(modelViewerEl);
+    applyFloor(currentFloorId);
   }
   return modelViewerEl;
 }
@@ -275,6 +372,9 @@ async function openModal(opts = {}) {
   setLoading(true);
   setStatus("");
   hideQr();
+  renderFloorPicker();
+  bindFloorUpload();
+  applyFloor(currentFloorId);
 
   try {
     await loadModelViewerScript();
@@ -300,6 +400,14 @@ function closeModal() {
   document.body.classList.remove("product-ar-modal-open");
   autoArRequested = false;
   hideQr();
+  if (customFloorObjectUrl) {
+    URL.revokeObjectURL(customFloorObjectUrl);
+    customFloorObjectUrl = null;
+    if (currentFloorId === "custom") {
+      currentFloorId = "white";
+      applyFloor("white");
+    }
+  }
 }
 
 function handleDeepLink() {

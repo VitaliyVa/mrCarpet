@@ -726,8 +726,18 @@
 
     <div class="product-ar-modal__layout">
       <div class="product-ar-modal__viewer-wrap">
+        <div class="product-ar-modal__floor" id="product-ar-floor" aria-hidden="true"></div>
         <div class="product-ar-modal__loading" id="product-ar-loading">Завантаження 3D…</div>
         <div id="product-ar-viewer-host"></div>
+
+        <div class="product-ar-modal__floors" id="product-ar-floors">
+          <span class="product-ar-modal__floors-label">Підлога</span>
+          <div class="product-ar-modal__floors-list" id="product-ar-floors-list"></div>
+          <label class="product-ar-modal__floor-upload" title="Завантажити свою підлогу" aria-label="Завантажити підлогу">
+            <input type="file" id="product-ar-floor-upload" accept="image/*" hidden />
+            <span aria-hidden="true">+</span>
+          </label>
+        </div>
       </div>
 
       <div class="product-ar-modal__aside">
