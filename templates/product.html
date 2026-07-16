@@ -717,6 +717,13 @@
 {% endwith %}
 
 {% if ar_ready %}
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js"
+  }
+}
+</script>
 <div class="product-ar-modal" id="product-ar-modal" hidden>
   <div class="product-ar-modal__backdrop" data-ar-close></div>
   <div class="product-ar-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="product-ar-modal-title">
@@ -729,6 +736,13 @@
         <div class="product-ar-modal__floor" id="product-ar-floor" aria-hidden="true"></div>
         <div class="product-ar-modal__loading" id="product-ar-loading">Завантаження 3D…</div>
         <div id="product-ar-viewer-host"></div>
+
+        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--prev" id="product-ar-floor-prev" aria-label="Попередня підлога">
+          <span aria-hidden="true">‹</span>
+        </button>
+        <button type="button" class="product-ar-modal__floor-nav product-ar-modal__floor-nav--next" id="product-ar-floor-next" aria-label="Наступна підлога">
+          <span aria-hidden="true">›</span>
+        </button>
 
         <div class="product-ar-modal__floors" id="product-ar-floors">
           <span class="product-ar-modal__floors-label">Підлога</span>

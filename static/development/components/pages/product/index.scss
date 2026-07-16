@@ -789,6 +789,51 @@ body.product-ar-modal-open {
     --poster-color: #ffffff;
   }
 
+  &__floor-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid rgba(69, 63, 58, 0.1);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #453f3a;
+    font-size: 28px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(69, 63, 58, 0.12);
+    backdrop-filter: blur(8px);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+
+    span {
+      display: block;
+      margin-top: -2px;
+    }
+
+    &:hover {
+      background: #fff;
+      color: #a46c46;
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.96);
+    }
+
+    &--prev {
+      left: 12px;
+    }
+
+    &--next {
+      right: 12px;
+    }
+  }
+
   &__floors {
     position: absolute;
     left: 12px;
@@ -1022,6 +1067,20 @@ body.product-ar-modal-open {
       border-bottom: 1px solid #ebeae8;
       min-height: 42vh;
       height: auto;
+    }
+
+    &__floor-nav {
+      width: 34px;
+      height: 34px;
+      font-size: 24px;
+
+      &--prev {
+        left: 8px;
+      }
+
+      &--next {
+        right: 8px;
+      }
     }
 
     &__floors {

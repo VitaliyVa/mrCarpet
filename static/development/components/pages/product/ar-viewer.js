@@ -1,10 +1,12 @@
 /**
  * Product 3D / AR modal — lazy-loads model-viewer only on open.
+ * Floor is a Three.js plane in the same scene (orbits with the rug).
  */
 const MODEL_VIEWER_SRC =
-  "https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
+  "https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js";
 
 const FLOOR_BASE = "/static/ar/floors/";
+const FLOOR_SIZE_M = 10;
 const FLOOR_PRESETS = [
   { id: "white", label: "Білий", src: null },
   { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
@@ -16,11 +18,15 @@ const FLOOR_PRESETS = [
 ];
 
 let mvScriptPromise = null;
+let threePromise = null;
 let modelViewerEl = null;
 let currentSizeLabel = null;
 let autoArRequested = false;
 let currentFloorId = "white";
 let customFloorObjectUrl = null;
+let floorMesh = null;
+let arPresenting = false;
+let cssFloorFallback = false;
 
 function loadModelViewerScript() {
   if (customElements.get("model-viewer")) {
@@ -142,38 +148,216 @@ async function fetchGlbUrl(sizeLabel) {
   return data.glb_url;
 }
 
-function applyFloor(floorId, customSrc) {
+function loadThree() {
+  if (threePromise) return threePromise;
+  // Same THREE instance as model-viewer (via importmap → MV bundle)
+  threePromise = import(/* webpackIgnore: true */ "three").then((mod) => {
+    if (mod && mod.PlaneGeometry) return mod;
+    if (mod && mod.default && mod.default.PlaneGeometry) return mod.default;
+    return mod;
+  });
+  return threePromise;
+}
+
+function getMvScene(mv) {
+  if (!mv) return null;
+  for (const sym of Object.getOwnPropertySymbols(mv)) {
+    const val = mv[sym];
+    if (val && val.isScene && val.target) return val;
+  }
+  return null;
+}
+
+function queueMvRender(mv) {
+  const scene = getMvScene(mv);
+  if (scene && typeof scene.queueRender === "function") scene.queueRender();
+}
+
+function resolveFloorSrc(floorId, customSrc) {
+  const id = floorId || "white";
+  const preset = FLOOR_PRESETS.find((f) => f.id === id);
+  return (
+    customSrc ||
+    (id === "custom" ? customFloorObjectUrl : preset?.src) ||
+    null
+  );
+}
+
+function setViewerBackground(mv, hasFloor) {
   const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
   const floorEl = document.getElementById("product-ar-floor");
-  const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
-  if (!wrap || !floorEl) return;
-
-  currentFloorId = floorId || "white";
-  const preset = FLOOR_PRESETS.find((f) => f.id === currentFloorId);
-  const src =
-    customSrc ||
-    (currentFloorId === "custom" ? customFloorObjectUrl : preset?.src) ||
-    null;
-
-  if (src) {
-    floorEl.style.backgroundImage = `url("${src}")`;
-    wrap.classList.add("has-floor");
-    if (mv) {
-      mv.style.background = "transparent";
-      mv.style.setProperty("--poster-color", "transparent");
-    }
+  if (wrap) wrap.classList.toggle("has-floor", Boolean(hasFloor));
+  if (!mv) return;
+  if (hasFloor) {
+    mv.style.background = "transparent";
+    mv.style.setProperty("--poster-color", "transparent");
   } else {
-    floorEl.style.backgroundImage = "";
-    wrap.classList.remove("has-floor");
-    if (mv) {
-      mv.style.background = "";
-      mv.style.setProperty("--poster-color", "#ffffff");
+    mv.style.background = "";
+    mv.style.setProperty("--poster-color", "#ffffff");
+    if (floorEl) floorEl.style.backgroundImage = "";
+  }
+}
+
+function applyCssFloorFallback(src) {
+  const floorEl = document.getElementById("product-ar-floor");
+  if (!floorEl) return;
+  floorEl.style.backgroundImage = src ? `url("${src}")` : "";
+}
+
+async function ensureFloorMesh() {
+  const THREE = await loadThree();
+  if (floorMesh) return { THREE, mesh: floorMesh };
+
+  const geometry = new THREE.PlaneGeometry(FLOOR_SIZE_M, FLOOR_SIZE_M);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.95,
+    metalness: 0,
+  });
+  floorMesh = new THREE.Mesh(geometry, material);
+  floorMesh.name = "product-ar-floor-mesh";
+  floorMesh.rotation.x = -Math.PI / 2;
+  floorMesh.position.y = 0;
+  floorMesh.renderOrder = -1;
+  floorMesh.receiveShadow = true;
+  floorMesh.userData.noHit = true;
+  return { THREE, mesh: floorMesh };
+}
+
+async function setFloorTexture(src) {
+  const { THREE, mesh } = await ensureFloorMesh();
+  const material = mesh.material;
+  if (!src) {
+    if (material.map) {
+      material.map.dispose();
+      material.map = null;
     }
+    material.needsUpdate = true;
+    return;
   }
 
-  document.querySelectorAll(".product-ar-modal__floor-chip").forEach((chip) => {
-    chip.classList.toggle("is-active", chip.dataset.floorId === currentFloorId);
+  const loader = new THREE.TextureLoader();
+  const texture = await new Promise((resolve, reject) => {
+    loader.load(src, resolve, undefined, reject);
   });
+  if ("SRGBColorSpace" in THREE) texture.colorSpace = THREE.SRGBColorSpace;
+  else if ("sRGBEncoding" in THREE) texture.encoding = THREE.sRGBEncoding;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+
+  if (material.map) material.map.dispose();
+  material.map = texture;
+  material.needsUpdate = true;
+}
+
+function attachFloorMesh(mv) {
+  if (!floorMesh || !mv) return false;
+  const scene = getMvScene(mv);
+  if (!scene || !scene.target) return false;
+  if (floorMesh.parent !== scene.target) {
+    scene.target.add(floorMesh);
+  }
+  // Keep floor out of framing: it is NOT in scene._models, only on target
+  floorMesh.visible = currentFloorId !== "white" && !arPresenting;
+  queueMvRender(mv);
+  return true;
+}
+
+function getFloorCycleIds() {
+  const ids = FLOOR_PRESETS.map((f) => f.id);
+  if (customFloorObjectUrl || currentFloorId === "custom") {
+    ids.push("custom");
+  }
+  return ids;
+}
+
+function syncFloorChipActive() {
+  document.querySelectorAll(".product-ar-modal__floor-chip").forEach((chip) => {
+    const active = chip.dataset.floorId === currentFloorId;
+    chip.classList.toggle("is-active", active);
+    if (active && typeof chip.scrollIntoView === "function") {
+      chip.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  });
+}
+
+function cycleFloor(delta) {
+  const ids = getFloorCycleIds();
+  if (!ids.length) return;
+  let idx = ids.indexOf(currentFloorId);
+  if (idx < 0) idx = 0;
+  const nextId = ids[(idx + delta + ids.length) % ids.length];
+  if (nextId === "custom") {
+    applyFloor("custom", customFloorObjectUrl);
+  } else {
+    if (customFloorObjectUrl && currentFloorId === "custom") {
+      // keep blob while cycling away; revoke only on close / new upload
+    }
+    applyFloor(nextId);
+  }
+}
+
+function bindFloorNav() {
+  const prev = document.getElementById("product-ar-floor-prev");
+  const next = document.getElementById("product-ar-floor-next");
+  if (prev && prev.dataset.bound !== "1") {
+    prev.dataset.bound = "1";
+    prev.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cycleFloor(-1);
+    });
+  }
+  if (next && next.dataset.bound !== "1") {
+    next.dataset.bound = "1";
+    next.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cycleFloor(1);
+    });
+  }
+}
+
+async function applyFloor(floorId, customSrc) {
+  currentFloorId = floorId || "white";
+  const src = resolveFloorSrc(currentFloorId, customSrc);
+  const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
+
+  syncFloorChipActive();
+
+  if (!src) {
+    setViewerBackground(mv, false);
+    if (floorMesh) {
+      floorMesh.visible = false;
+      queueMvRender(mv);
+    }
+    applyCssFloorFallback(null);
+    return;
+  }
+
+  setViewerBackground(mv, true);
+
+  if (cssFloorFallback) {
+    applyCssFloorFallback(src);
+    return;
+  }
+
+  try {
+    await setFloorTexture(src);
+    applyCssFloorFallback(null);
+    if (mv && !attachFloorMesh(mv)) {
+      // Scene not ready yet (before first GLB load) — attach after load
+      if (floorMesh) floorMesh.visible = false;
+    }
+  } catch (err) {
+    console.warn("3D floor failed, CSS fallback", err);
+    cssFloorFallback = true;
+    applyCssFloorFallback(src);
+  }
 }
 
 function renderFloorPicker() {
@@ -260,7 +444,14 @@ function ensureModelViewer() {
     modelViewerEl.appendChild(hiddenAr);
 
     modelViewerEl.addEventListener("ar-status", (e) => {
-      if (e.detail?.status === "failed") {
+      const status = e.detail?.status;
+      arPresenting = status === "session-started" || status === "object-placed";
+      if (floorMesh) {
+        floorMesh.visible =
+          currentFloorId !== "white" && !arPresenting && !cssFloorFallback;
+        queueMvRender(modelViewerEl);
+      }
+      if (status === "failed") {
         setStatus(
           "Не вдалося відкрити AR. Перевірте підтримку пристрою або скористайтесь QR-кодом.",
           true
@@ -332,6 +523,9 @@ async function loadSizeIntoViewer(sizeLabel) {
     mv.setAttribute("camera-orbit", "0deg 0deg 150%");
     mv.setAttribute("field-of-view", "32deg");
 
+    // Re-attach 3D floor after scene rebuild so it orbits with the rug
+    await applyFloor(currentFloorId);
+
     renderModalSizes(sizeLabel);
 
     if (autoArRequested) {
@@ -374,6 +568,7 @@ async function openModal(opts = {}) {
   hideQr();
   renderFloorPicker();
   bindFloorUpload();
+  bindFloorNav();
   applyFloor(currentFloorId);
 
   try {
@@ -457,7 +652,18 @@ export function initProductArViewer() {
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !modal.hidden) closeModal();
+    if (modal.hidden) return;
+    if (e.key === "Escape") {
+      closeModal();
+      return;
+    }
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      cycleFloor(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      cycleFloor(1);
+    }
   });
 
   document.querySelectorAll(".sizes-block .size-label").forEach((chip) => {
