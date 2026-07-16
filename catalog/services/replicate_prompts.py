@@ -1,6 +1,6 @@
 from catalog.services.replicate_prompt_options import CatalogPromptOptions, ScenePromptOptions
 
-PROMPT_VERSION = "12"
+PROMPT_VERSION = "13"
 
 _ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -32,18 +32,28 @@ CRITICAL — PERSPECTIVE DESKEW (REFERENCE IS TILTED):
 - Isolate ONLY the rug on solid white (#FFFFFF). Remove floor, wood, room, shadows.
 - Ends: broad, soft, gently rounded — NOT pointed tips. Continuous smooth curve. NO 90-degree corners."""
 
+_REMOVE_HANGTAG = """
+REMOVE HANG TAG / HANGER (CRITICAL — IF PRESENT ON THE REFERENCE):
+- Retail photos often have a plastic hanger, metal hook, cardboard brand card, price sticker, barcode, or clip attached to the rug edge (usually top center), with text/price/brand photos.
+- These are NOT part of the product. Completely remove the hanger, hook, cardboard label, price tag, clips, strings, and any shadow they cast.
+- Reconstruct the occluded rug area underneath: continue the border binding and the weave/pattern from the surrounding visible rug so the patch is seamless.
+- Match adjacent color, texture, pile direction, and motif — do not invent a new design, leave a blank/white hole, blur blob, or ghost outline of the label.
+- Final rug must look clean as if no hang tag was ever attached."""
+
 _PRESERVATION = """
 STRICT PRESERVATION (do NOT change):
 - Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
 - Do not redesign, simplify, stylize, recolor, warp, stretch, or reinterpret the rug design.
-- The rug must look identical to the reference — only camera angle, isolation, and framing change."""
+- The rug must look identical to the reference — only camera angle, isolation, framing, and hang-tag removal/inpaint change.
+- Hang tags/hangers/price cards are packaging props — remove them and restore the rug underneath."""
 
 _OVAL_PRESERVATION = """
 STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
 - Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
 - Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
 - You MAY and MUST correct camera perspective / silhouette asymmetry (tilted oval → symmetric top-down oval).
-- Do NOT copy the reference's egg-shaped or foreshortened outline — that outline is a photography artifact."""
+- Do NOT copy the reference's egg-shaped or foreshortened outline — that outline is a photography artifact.
+- Hang tags/hangers/price cards are packaging props — remove them and restore the rug underneath."""
 
 _SEMICIRCLE_ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -65,9 +75,9 @@ _SEMICIRCLE_PRESERVATION = """
 STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
 - Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
 - Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
-- Remove manufacturer tags/labels if present on the reference.
 - You MAY and MUST correct camera perspective so the outline becomes a true geometric semicircle.
-- Do NOT copy foreshortened / skewed outline from the angled photo."""
+- Do NOT copy foreshortened / skewed outline from the angled photo.
+- Hang tags/hangers/price cards are packaging props — remove them and restore the rug underneath."""
 
 # Circle in a tall 2:3 frame gets side-clipped if forced to "touch left/right" — use square canvas + safe margins.
 _ROUND_ASPECT_NOTE = (
@@ -89,7 +99,8 @@ STRICT PRESERVATION (pattern/colors only — silhouette MAY be corrected):
 - Preserve the exact original pattern, motif layout, colors, color distribution, texture, pile direction, and material appearance.
 - Do not redesign, simplify, stylize, recolor, or reinterpret the rug design.
 - You MAY correct camera perspective so the outline becomes a perfect circle.
-- Do NOT clip the circle to fit the frame — scale the whole rug down so it fits with margin."""
+- Do NOT clip the circle to fit the frame — scale the whole rug down so it fits with margin.
+- Hang tags/hangers/price cards are packaging props — remove them and restore the rug underneath."""
 
 _SHAPE_BLOCKS = {
     'auto': """
@@ -127,14 +138,17 @@ RUG SHAPE (CRITICAL — RUNNER):
 _SOURCE_BLOCKS = {
     'auto': """
 SOURCE PHOTO:
-- If the reference shows the rug on a floor or in a room, isolate ONLY the rug and remove all floorboards, tiles, furniture, and surroundings.""",
+- If the reference shows the rug on a floor or in a room, isolate ONLY the rug and remove all floorboards, tiles, furniture, and surroundings.
+- Also remove any hang tag / hanger / price card attached to the rug (see hang-tag rules).""",
     'in_room': """
 SOURCE PHOTO (in-room):
 - The reference is a room/floor photo. Extract ONLY the rug — remove wooden floor, tiles, shadows of the room, and all background.
-- Re-frame as a clean catalog product shot of the rug alone.""",
+- Re-frame as a clean catalog product shot of the rug alone.
+- Also remove any hang tag / hanger / price card attached to the rug (see hang-tag rules).""",
     'isolated': """
 SOURCE PHOTO (isolated):
-- The reference is already an isolated rug photo. Keep a clean tight crop to the rug edge without adding floor or background.""",
+- The reference is already an isolated rug photo. Keep a clean tight crop to the rug edge without adding floor or background.
+- If a hang tag / hanger / price card is attached, remove it and restore the rug underneath (see hang-tag rules).""",
 }
 
 _COLOR_BLOCKS = {
@@ -194,6 +208,7 @@ CAMERA & COMPOSITION (change only this):
 
 {_SHAPE_BLOCKS[opts.rug_shape]}
 {_SOURCE_BLOCKS[opts.source_context]}
+{_REMOVE_HANGTAG}
 {_COLOR_BLOCKS[opts.color_mode]}
 
 {preservation}
@@ -216,6 +231,7 @@ CAMERA & COMPOSITION (change only this):
 - Visible rug area fills the frame edge-to-edge.
 
 {shape_hint}
+{_REMOVE_HANGTAG}
 {_COLOR_BLOCKS[opts.color_mode]}
 
 {_PRESERVATION}
@@ -314,6 +330,7 @@ GOAL:
 - Output a horizontal 4:3 landscape image suitable for a product page slider.
 
 {_SHAPE_BLOCKS[opts.rug_shape]}
+{_REMOVE_HANGTAG}
 {_COLOR_BLOCKS[opts.color_mode]}
 
 {_ROOM_BLOCKS[opts.room_type]}
@@ -325,6 +342,7 @@ STRICT PRESERVATION (do NOT change the rug):
 - The rug pattern, motif layout, colors, texture, pile, and material must match the reference exactly.
 - Do not redesign, recolor, simplify, or substitute a different rug.
 - Preserve the rug's exact shape silhouette on the floor (oval stays oval, semicircle stays semicircle, rectangular stays rectangular).
+- Hang tags/hangers/price cards are packaging props — remove them and restore the rug underneath before placing it in the scene.
 
 SCENE RULES:
 - Photorealistic interior photography, soft natural daylight, no text, no watermark, no people.
