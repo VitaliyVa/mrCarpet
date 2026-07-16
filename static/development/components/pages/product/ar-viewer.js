@@ -1,6 +1,6 @@
 /**
  * Product 3D / AR modal — lazy-loads model-viewer only on open.
- * Floor is a Three.js plane in the same scene (orbits with the rug).
+ * Floor = <extra-model> GLB plane in the same scene (orbits/zooms with the rug).
  */
 const MODEL_VIEWER_SRC =
   "https://unpkg.com/@google/model-viewer@4.3.1/dist/model-viewer.min.js";
@@ -8,25 +8,54 @@ const MODEL_VIEWER_SRC =
 const FLOOR_BASE = "/static/ar/floors/";
 const FLOOR_SIZE_M = 10;
 const FLOOR_PRESETS = [
-  { id: "white", label: "Білий", src: null },
-  { id: "oak-light", label: "Світлий дуб", src: FLOOR_BASE + "oak-light.webp" },
-  { id: "oak-grey", label: "Сірий дуб", src: FLOOR_BASE + "oak-grey.webp" },
-  { id: "herringbone", label: "Ялинка", src: FLOOR_BASE + "herringbone.webp" },
-  { id: "walnut-dark", label: "Горіх", src: FLOOR_BASE + "walnut-dark.webp" },
-  { id: "marble-white", label: "Мармур", src: FLOOR_BASE + "marble-white.webp" },
-  { id: "concrete", label: "Бетон", src: FLOOR_BASE + "concrete.webp" },
+  { id: "white", label: "Білий", thumb: null, glb: null },
+  {
+    id: "oak-light",
+    label: "Світлий дуб",
+    thumb: FLOOR_BASE + "oak-light.webp",
+    glb: FLOOR_BASE + "oak-light.glb",
+  },
+  {
+    id: "oak-grey",
+    label: "Сірий дуб",
+    thumb: FLOOR_BASE + "oak-grey.webp",
+    glb: FLOOR_BASE + "oak-grey.glb",
+  },
+  {
+    id: "herringbone",
+    label: "Ялинка",
+    thumb: FLOOR_BASE + "herringbone.webp",
+    glb: FLOOR_BASE + "herringbone.glb",
+  },
+  {
+    id: "walnut-dark",
+    label: "Горіх",
+    thumb: FLOOR_BASE + "walnut-dark.webp",
+    glb: FLOOR_BASE + "walnut-dark.glb",
+  },
+  {
+    id: "marble-white",
+    label: "Мармур",
+    thumb: FLOOR_BASE + "marble-white.webp",
+    glb: FLOOR_BASE + "marble-white.glb",
+  },
+  {
+    id: "concrete",
+    label: "Бетон",
+    thumb: FLOOR_BASE + "concrete.webp",
+    glb: FLOOR_BASE + "concrete.glb",
+  },
 ];
 
 let mvScriptPromise = null;
-let threePromise = null;
 let modelViewerEl = null;
 let currentSizeLabel = null;
 let autoArRequested = false;
 let currentFloorId = "white";
-let customFloorObjectUrl = null;
-let floorMesh = null;
+let customFloorGlbUrl = null;
+let customFloorThumbUrl = null;
 let arPresenting = false;
-let cssFloorFallback = false;
+let floorApplyToken = 0;
 
 function loadModelViewerScript() {
   if (customElements.get("model-viewer")) {
@@ -148,22 +177,22 @@ async function fetchGlbUrl(sizeLabel) {
   return data.glb_url;
 }
 
-function loadThree() {
-  if (threePromise) return threePromise;
-  // Same THREE instance as model-viewer (via importmap → MV bundle)
-  threePromise = import(/* webpackIgnore: true */ "three").then((mod) => {
-    if (mod && mod.PlaneGeometry) return mod;
-    if (mod && mod.default && mod.default.PlaneGeometry) return mod.default;
-    return mod;
-  });
-  return threePromise;
-}
-
 function getMvScene(mv) {
   if (!mv) return null;
-  for (const sym of Object.getOwnPropertySymbols(mv)) {
-    const val = mv[sym];
-    if (val && val.isScene && val.target) return val;
+  const seen = new Set();
+  let obj = mv;
+  while (obj && obj !== HTMLElement.prototype) {
+    for (const sym of Object.getOwnPropertySymbols(obj)) {
+      if (seen.has(sym)) continue;
+      seen.add(sym);
+      try {
+        const val = mv[sym];
+        if (val && val.isScene && val.target) return val;
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    obj = Object.getPrototypeOf(obj);
   }
   return null;
 }
@@ -173,101 +202,239 @@ function queueMvRender(mv) {
   if (scene && typeof scene.queueRender === "function") scene.queueRender();
 }
 
-function resolveFloorSrc(floorId, customSrc) {
+function resolveFloorGlb(floorId) {
   const id = floorId || "white";
+  if (id === "custom") return customFloorGlbUrl;
   const preset = FLOOR_PRESETS.find((f) => f.id === id);
-  return (
-    customSrc ||
-    (id === "custom" ? customFloorObjectUrl : preset?.src) ||
-    null
-  );
+  return preset?.glb || null;
 }
 
-function setViewerBackground(mv, hasFloor) {
+function setViewerChrome(mv, hasFloor) {
   const wrap = document.querySelector(".product-ar-modal__viewer-wrap");
   const floorEl = document.getElementById("product-ar-floor");
   if (wrap) wrap.classList.toggle("has-floor", Boolean(hasFloor));
+  if (floorEl) floorEl.style.backgroundImage = "";
   if (!mv) return;
-  if (hasFloor) {
-    mv.style.background = "transparent";
-    mv.style.setProperty("--poster-color", "transparent");
-  } else {
-    mv.style.background = "";
-    mv.style.setProperty("--poster-color", "#ffffff");
-    if (floorEl) floorEl.style.backgroundImage = "";
+  // Keep white canvas clear; floor is a real 3D mesh under the rug
+  mv.style.background = "";
+  mv.style.setProperty("--poster-color", "#ffffff");
+}
+
+function ensureFloorExtra(mv) {
+  let extra = mv.querySelector("extra-model[data-ar-floor]");
+  if (!extra) {
+    extra = document.createElement("extra-model");
+    extra.setAttribute("data-ar-floor", "");
+    extra.setAttribute("background", "");
+    mv.appendChild(extra);
   }
+  return extra;
 }
 
-function applyCssFloorFallback(src) {
-  const floorEl = document.getElementById("product-ar-floor");
-  if (!floorEl) return;
-  floorEl.style.backgroundImage = src ? `url("${src}")` : "";
+function setFloorModelsVisible(mv, visible) {
+  const scene = getMvScene(mv);
+  if (!scene?.models || scene.models.length < 2) return;
+  for (let i = 1; i < scene.models.length; i++) {
+    scene.models[i].visible = visible;
+  }
+  queueMvRender(mv);
 }
 
-async function ensureFloorMesh() {
-  const THREE = await loadThree();
-  if (floorMesh) return { THREE, mesh: floorMesh };
-
-  const geometry = new THREE.PlaneGeometry(FLOOR_SIZE_M, FLOOR_SIZE_M);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.95,
-    metalness: 0,
+function waitForMvLoad(mv) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      mv.removeEventListener("load", finish);
+      resolve();
+    };
+    mv.addEventListener("load", finish);
+    // If already idle with loaded model, still wait for next load event from src change
+    setTimeout(() => {
+      // safety: don't hang forever if load already fired in same tick
+    }, 0);
   });
-  floorMesh = new THREE.Mesh(geometry, material);
-  floorMesh.name = "product-ar-floor-mesh";
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.y = 0;
-  floorMesh.renderOrder = -1;
-  floorMesh.receiveShadow = true;
-  floorMesh.userData.noHit = true;
-  return { THREE, mesh: floorMesh };
 }
 
-async function setFloorTexture(src) {
-  const { THREE, mesh } = await ensureFloorMesh();
-  const material = mesh.material;
-  if (!src) {
-    if (material.map) {
-      material.map.dispose();
-      material.map = null;
+async function reframedRugOnly(mv) {
+  if (!mv) return;
+  const scene = getMvScene(mv);
+  const orbit = "0deg 0deg 150%";
+
+  if (!scene?.models || scene.models.length < 2) {
+    if (typeof mv.updateFraming === "function") {
+      try {
+        await mv.updateFraming();
+      } catch (_) {
+        /* ignore */
+      }
     }
-    material.needsUpdate = true;
+    mv.setAttribute("camera-orbit", orbit);
+    mv.setAttribute("field-of-view", "32deg");
     return;
   }
 
-  const loader = new THREE.TextureLoader();
-  const texture = await new Promise((resolve, reject) => {
-    loader.load(src, resolve, undefined, reject);
-  });
-  if ("SRGBColorSpace" in THREE) texture.colorSpace = THREE.SRGBColorSpace;
-  else if ("sRGBEncoding" in THREE) texture.encoding = THREE.sRGBEncoding;
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
+  const extras = scene.models.slice(1);
+  for (const m of extras) scene.target.remove(m);
 
-  if (material.map) material.map.dispose();
-  material.map = texture;
-  material.needsUpdate = true;
+  try {
+    if (typeof scene.updateBoundingBox === "function") scene.updateBoundingBox();
+    if (typeof scene.updateFraming === "function") await scene.updateFraming();
+    else if (typeof mv.updateFraming === "function") await mv.updateFraming();
+  } catch (_) {
+    /* ignore */
+  }
+
+  const show = currentFloorId !== "white" && !arPresenting;
+  for (const m of extras) {
+    scene.target.add(m);
+    m.visible = show;
+  }
+  mv.setAttribute("camera-orbit", orbit);
+  mv.setAttribute("field-of-view", "32deg");
+  queueMvRender(mv);
 }
 
-function attachFloorMesh(mv) {
-  if (!floorMesh || !mv) return false;
-  const scene = getMvScene(mv);
-  if (!scene || !scene.target) return false;
-  if (floorMesh.parent !== scene.target) {
-    scene.target.add(floorMesh);
+function pad4(bytes, fill = 0) {
+  const rem = bytes.length % 4;
+  if (rem === 0) return bytes;
+  const out = new Uint8Array(bytes.length + (4 - rem));
+  out.set(bytes);
+  if (fill) out.fill(fill, bytes.length);
+  return out;
+}
+
+function u32(n) {
+  const b = new ArrayBuffer(4);
+  new DataView(b).setUint32(0, n, true);
+  return new Uint8Array(b);
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const p of parts) {
+    out.set(p, o);
+    o += p.length;
   }
-  // Keep floor out of framing: it is NOT in scene._models, only on target
-  floorMesh.visible = currentFloorId !== "white" && !arPresenting;
-  queueMvRender(mv);
-  return true;
+  return out;
+}
+
+/** Minimal textured XZ plane GLB for custom floor uploads. */
+function buildFloorGlbFromImage(imageBytes, mimeType, sizeM = FLOOR_SIZE_M) {
+  const w = sizeM;
+  const hx = w / 2;
+  const hz = w / 2;
+  const y = 0;
+  const positions = new Float32Array([
+    -hx, y, -hz, hx, y, -hz, hx, y, hz, -hx, y, hz,
+  ]);
+  const normals = new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]);
+  const uvs = new Float32Array([0, 1, 1, 1, 1, 0, 0, 0]);
+  const indices = new Uint16Array([0, 2, 1, 0, 3, 2]);
+
+  const posBuf = new Uint8Array(positions.buffer);
+  const normBuf = new Uint8Array(normals.buffer);
+  const uvBuf = new Uint8Array(uvs.buffer);
+  const idxBuf = pad4(new Uint8Array(indices.buffer));
+  const imgBuf = imageBytes instanceof Uint8Array ? imageBytes : new Uint8Array(imageBytes);
+
+  let offset = 0;
+  const posOff = offset;
+  offset += posBuf.length;
+  const normOff = offset;
+  offset += normBuf.length;
+  const uvOff = offset;
+  offset += uvBuf.length;
+  const idxOff = offset;
+  offset += idxBuf.length;
+  const imgOff = offset;
+  const binary = concatBytes([posBuf, normBuf, uvBuf, idxBuf, imgBuf]);
+
+  const gltf = {
+    asset: { version: "2.0", generator: "mrCarpet-floor" },
+    scene: 0,
+    scenes: [{ nodes: [0] }],
+    nodes: [{ mesh: 0, name: "ar-floor" }],
+    meshes: [
+      {
+        name: "ar-floor",
+        primitives: [
+          {
+            attributes: { POSITION: 0, NORMAL: 1, TEXCOORD_0: 2 },
+            indices: 3,
+            material: 0,
+          },
+        ],
+      },
+    ],
+    materials: [
+      {
+        name: "floor",
+        pbrMetallicRoughness: {
+          baseColorTexture: { index: 0 },
+          metallicFactor: 0,
+          roughnessFactor: 1,
+        },
+        doubleSided: true,
+        alphaMode: "OPAQUE",
+      },
+    ],
+    textures: [{ source: 0 }],
+    images: [{ bufferView: 4, mimeType: mimeType || "image/jpeg" }],
+    buffers: [{ byteLength: binary.length }],
+    bufferViews: [
+      { buffer: 0, byteOffset: posOff, byteLength: posBuf.length, target: 34962 },
+      { buffer: 0, byteOffset: normOff, byteLength: normBuf.length, target: 34962 },
+      { buffer: 0, byteOffset: uvOff, byteLength: uvBuf.length, target: 34962 },
+      { buffer: 0, byteOffset: idxOff, byteLength: idxBuf.length, target: 34963 },
+      { buffer: 0, byteOffset: imgOff, byteLength: imgBuf.length },
+    ],
+    accessors: [
+      {
+        bufferView: 0,
+        componentType: 5126,
+        count: 4,
+        type: "VEC3",
+        max: [hx, y, hz],
+        min: [-hx, y, -hz],
+      },
+      { bufferView: 1, componentType: 5126, count: 4, type: "VEC3" },
+      { bufferView: 2, componentType: 5126, count: 4, type: "VEC2" },
+      { bufferView: 3, componentType: 5123, count: 6, type: "SCALAR" },
+    ],
+  };
+
+  const jsonBytes = pad4(
+    new TextEncoder().encode(JSON.stringify(gltf)),
+    0x20
+  );
+  const total = 12 + 8 + jsonBytes.length + 8 + binary.length;
+  const magic = new Uint8Array([0x67, 0x6c, 0x54, 0x46]); // glTF
+  const version = u32(2);
+  const totalBuf = u32(total);
+  const jsonLen = u32(jsonBytes.length);
+  const jsonType = new Uint8Array([0x4a, 0x53, 0x4f, 0x4e]); // JSON
+  const binLen = u32(binary.length);
+  const binType = new Uint8Array([0x42, 0x49, 0x4e, 0x00]); // BIN\0
+  return concatBytes([
+    magic,
+    version,
+    totalBuf,
+    jsonLen,
+    jsonType,
+    jsonBytes,
+    binLen,
+    binType,
+    binary,
+  ]);
 }
 
 function getFloorCycleIds() {
   const ids = FLOOR_PRESETS.map((f) => f.id);
-  if (customFloorObjectUrl || currentFloorId === "custom") {
-    ids.push("custom");
-  }
+  if (customFloorGlbUrl || currentFloorId === "custom") ids.push("custom");
   return ids;
 }
 
@@ -290,15 +457,7 @@ function cycleFloor(delta) {
   if (!ids.length) return;
   let idx = ids.indexOf(currentFloorId);
   if (idx < 0) idx = 0;
-  const nextId = ids[(idx + delta + ids.length) % ids.length];
-  if (nextId === "custom") {
-    applyFloor("custom", customFloorObjectUrl);
-  } else {
-    if (customFloorObjectUrl && currentFloorId === "custom") {
-      // keep blob while cycling away; revoke only on close / new upload
-    }
-    applyFloor(nextId);
-  }
+  applyFloor(ids[(idx + delta + ids.length) % ids.length]);
 }
 
 function bindFloorNav() {
@@ -322,42 +481,45 @@ function bindFloorNav() {
   }
 }
 
-async function applyFloor(floorId, customSrc) {
+async function applyFloor(floorId) {
+  const token = ++floorApplyToken;
   currentFloorId = floorId || "white";
-  const src = resolveFloorSrc(currentFloorId, customSrc);
+  const glbUrl = resolveFloorGlb(currentFloorId);
   const mv = modelViewerEl || document.querySelector(".product-ar-modal__mv");
-
   syncFloorChipActive();
+  if (!mv) return;
 
-  if (!src) {
-    setViewerBackground(mv, false);
-    if (floorMesh) {
-      floorMesh.visible = false;
-      queueMvRender(mv);
+  const extra = ensureFloorExtra(mv);
+  setViewerChrome(mv, Boolean(glbUrl));
+
+  if (!glbUrl) {
+    if (extra.hasAttribute("src")) {
+      const pending = waitForMvLoad(mv);
+      extra.removeAttribute("src");
+      await Promise.race([
+        pending,
+        new Promise((r) => setTimeout(r, 800)),
+      ]);
     }
-    applyCssFloorFallback(null);
+    if (token !== floorApplyToken) return;
+    setFloorModelsVisible(mv, false);
+    await reframedRugOnly(mv);
     return;
   }
 
-  setViewerBackground(mv, true);
-
-  if (cssFloorFallback) {
-    applyCssFloorFallback(src);
-    return;
+  const currentSrc = extra.getAttribute("src");
+  if (currentSrc !== glbUrl) {
+    const pending = waitForMvLoad(mv);
+    extra.setAttribute("src", glbUrl);
+    await Promise.race([
+      pending,
+      new Promise((r) => setTimeout(r, 12000)),
+    ]);
   }
+  if (token !== floorApplyToken) return;
 
-  try {
-    await setFloorTexture(src);
-    applyCssFloorFallback(null);
-    if (mv && !attachFloorMesh(mv)) {
-      // Scene not ready yet (before first GLB load) — attach after load
-      if (floorMesh) floorMesh.visible = false;
-    }
-  } catch (err) {
-    console.warn("3D floor failed, CSS fallback", err);
-    cssFloorFallback = true;
-    applyCssFloorFallback(src);
-  }
+  setFloorModelsVisible(mv, !arPresenting);
+  await reframedRugOnly(mv);
 }
 
 function renderFloorPicker() {
@@ -375,18 +537,12 @@ function renderFloorPicker() {
     btn.dataset.floorId = floor.id;
     btn.title = floor.label;
     btn.setAttribute("aria-label", floor.label);
-    if (floor.src) {
-      btn.style.backgroundImage = `url("${floor.src}")`;
+    if (floor.thumb) {
+      btn.style.backgroundImage = `url("${floor.thumb}")`;
     } else {
       btn.classList.add("is-white");
     }
-    btn.addEventListener("click", () => {
-      if (customFloorObjectUrl && currentFloorId === "custom") {
-        URL.revokeObjectURL(customFloorObjectUrl);
-        customFloorObjectUrl = null;
-      }
-      applyFloor(floor.id);
-    });
+    btn.addEventListener("click", () => applyFloor(floor.id));
     list.appendChild(btn);
   });
 }
@@ -395,16 +551,27 @@ function bindFloorUpload() {
   const input = document.getElementById("product-ar-floor-upload");
   if (!input || input.dataset.bound === "1") return;
   input.dataset.bound = "1";
-  input.addEventListener("change", () => {
+  input.addEventListener("change", async () => {
     const file = input.files && input.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setStatus("Оберіть файл зображення для підлоги", true);
       return;
     }
-    if (customFloorObjectUrl) URL.revokeObjectURL(customFloorObjectUrl);
-    customFloorObjectUrl = URL.createObjectURL(file);
-    applyFloor("custom", customFloorObjectUrl);
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const glbBytes = buildFloorGlbFromImage(buf, file.type || "image/jpeg");
+      if (customFloorGlbUrl) URL.revokeObjectURL(customFloorGlbUrl);
+      if (customFloorThumbUrl) URL.revokeObjectURL(customFloorThumbUrl);
+      customFloorGlbUrl = URL.createObjectURL(
+        new Blob([glbBytes], { type: "model/gltf-binary" })
+      );
+      customFloorThumbUrl = URL.createObjectURL(file);
+      await applyFloor("custom");
+    } catch (err) {
+      console.error(err);
+      setStatus("Не вдалося застосувати підлогу", true);
+    }
     input.value = "";
   });
 }
@@ -446,11 +613,7 @@ function ensureModelViewer() {
     modelViewerEl.addEventListener("ar-status", (e) => {
       const status = e.detail?.status;
       arPresenting = status === "session-started" || status === "object-placed";
-      if (floorMesh) {
-        floorMesh.visible =
-          currentFloorId !== "white" && !arPresenting && !cssFloorFallback;
-        queueMvRender(modelViewerEl);
-      }
+      setFloorModelsVisible(modelViewerEl, currentFloorId !== "white" && !arPresenting);
       if (status === "failed") {
         setStatus(
           "Не вдалося відкрити AR. Перевірте підтримку пристрою або скористайтесь QR-кодом.",
@@ -460,8 +623,8 @@ function ensureModelViewer() {
       }
     });
 
+    ensureFloorExtra(modelViewerEl);
     host.appendChild(modelViewerEl);
-    applyFloor(currentFloorId);
   }
   return modelViewerEl;
 }
@@ -512,18 +675,7 @@ async function loadSizeIntoViewer(sizeLabel) {
       if (mv.loaded) resolve();
     });
 
-    // Re-frame after load so round rugs aren't clipped
-    if (typeof mv.updateFraming === "function") {
-      try {
-        mv.updateFraming();
-      } catch (_) {
-        /* ignore */
-      }
-    }
-    mv.setAttribute("camera-orbit", "0deg 0deg 150%");
-    mv.setAttribute("field-of-view", "32deg");
-
-    // Re-attach 3D floor after scene rebuild so it orbits with the rug
+    // Floor as extra-model in the same scene; frame by rug only
     await applyFloor(currentFloorId);
 
     renderModalSizes(sizeLabel);
@@ -595,13 +747,16 @@ function closeModal() {
   document.body.classList.remove("product-ar-modal-open");
   autoArRequested = false;
   hideQr();
-  if (customFloorObjectUrl) {
-    URL.revokeObjectURL(customFloorObjectUrl);
-    customFloorObjectUrl = null;
-    if (currentFloorId === "custom") {
-      currentFloorId = "white";
-      applyFloor("white");
-    }
+  if (customFloorGlbUrl) {
+    URL.revokeObjectURL(customFloorGlbUrl);
+    customFloorGlbUrl = null;
+  }
+  if (customFloorThumbUrl) {
+    URL.revokeObjectURL(customFloorThumbUrl);
+    customFloorThumbUrl = null;
+  }
+  if (currentFloorId === "custom") {
+    currentFloorId = "white";
   }
 }
 

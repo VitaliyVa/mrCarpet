@@ -794,26 +794,27 @@ body.product-ar-modal-open {
     top: 50%;
     z-index: 3;
     transform: translateY(-50%);
+    box-sizing: border-box;
     width: 40px;
     height: 40px;
+    margin: 0;
     padding: 0;
     border: 1px solid rgba(69, 63, 58, 0.1);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.92);
     color: #453f3a;
-    font-size: 28px;
-    line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    line-height: 0;
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(69, 63, 58, 0.12);
     backdrop-filter: blur(8px);
     transition: background 0.15s, color 0.15s, transform 0.15s;
 
-    span {
+    svg {
       display: block;
-      margin-top: -2px;
+      flex: 0 0 auto;
     }
 
     &:hover {
@@ -1072,7 +1073,11 @@ body.product-ar-modal-open {
     &__floor-nav {
       width: 34px;
       height: 34px;
-      font-size: 24px;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
 
       &--prev {
         left: 8px;
