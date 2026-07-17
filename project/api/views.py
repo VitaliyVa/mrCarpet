@@ -11,6 +11,10 @@ from .serializers import (
     StockInquirySerializer,
     SubscriptionSerializer,
 )
+from ..email_utils import (
+    build_stock_inquiry_admin_email,
+    build_stock_inquiry_customer_email,
+)
 from ..models import ContactRequest, SMTPSettings, StockInquiry, Subscription
 from ..smtp_utils import send_smtp_mail_async
 
@@ -46,34 +50,26 @@ class StockInquiryCreateView(APIView):
         except Exception:
             notify_to = None
 
-        body = (
-            f"Новий запит про наявність\n\n"
-            f"Ім'я: {inquiry.name}\n"
-            f"Телефон: {inquiry.phone}\n"
-            f"Email: {inquiry.email}\n"
-            f"Товар: {inquiry.product_title}\n"
-            f"Розмір: {inquiry.size_label}\n"
-            f"ID варіації: {inquiry.product_attr_id or '—'}\n"
-        )
-
         if notify_to:
+            admin_subject, admin_text, admin_html = build_stock_inquiry_admin_email(
+                inquiry
+            )
             send_smtp_mail_async(
-                f"Запит наявності: {inquiry.product_title} ({inquiry.size_label})",
-                body,
+                admin_subject,
+                admin_text,
                 [notify_to],
+                html_message=admin_html,
             )
 
         # Підтвердження клієнту (не блокує)
+        cust_subject, cust_text, cust_html = build_stock_inquiry_customer_email(
+            inquiry
+        )
         send_smtp_mail_async(
-            "mr.Carpet — ми отримали ваш запит про наявність",
-            (
-                f"Дякуємо, {inquiry.name}!\n\n"
-                f"Ми отримали запит щодо товару «{inquiry.product_title}», "
-                f"розмір {inquiry.size_label}.\n"
-                f"Менеджер зв’яжеться з вами найближчим часом.\n\n"
-                f"— mr.Carpet"
-            ),
+            cust_subject,
+            cust_text,
             [inquiry.email],
+            html_message=cust_html,
         )
 
         return Response(

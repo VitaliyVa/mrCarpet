@@ -36,10 +36,13 @@ def get_smtp_connection():
     return smtp, connection
 
 
-def send_smtp_mail(subject, message, recipient_list, fail_silently=True):
+def send_smtp_mail(
+    subject, message, recipient_list, fail_silently=True, html_message=None
+):
     """
     Синхронна відправка (як у ContactRequestCreateView).
     За замовчуванням fail_silently=True — помилка лише в лог.
+    html_message — опційний HTML (multipart/alternative).
     """
     try:
         smtp, connection = get_smtp_connection()
@@ -50,6 +53,7 @@ def send_smtp_mail(subject, message, recipient_list, fail_silently=True):
             recipient_list,
             fail_silently=False,
             connection=connection,
+            html_message=html_message,
         )
         return True
     except Exception as exc:
@@ -60,13 +64,19 @@ def send_smtp_mail(subject, message, recipient_list, fail_silently=True):
         return False
 
 
-def send_smtp_mail_async(subject, message, recipient_list):
+def send_smtp_mail_async(subject, message, recipient_list, html_message=None):
     """Фонова відправка — HTTP-відповідь не чекає SMTP."""
 
     def _run():
         close_old_connections()
         try:
-            ok = send_smtp_mail(subject, message, recipient_list, fail_silently=True)
+            ok = send_smtp_mail(
+                subject,
+                message,
+                recipient_list,
+                fail_silently=True,
+                html_message=html_message,
+            )
             if ok:
                 print(f"[smtp] sent OK → {recipient_list}")
         finally:
