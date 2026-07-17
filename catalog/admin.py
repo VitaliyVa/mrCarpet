@@ -25,6 +25,7 @@ from catalog.services.replicate_product_images import (
     ReplicateProductImageService,
 )
 from catalog.services.replicate_prompt_options import GenerationOptions
+from catalog.services.scene_size import SceneSizeError, resolve_scene_size
 from catalog.services.ar_texture import ArTextureService, mark_ar_ready_from_manual_upload
 from catalog.tasks import generate_ar_texture_task
 from .models import (
@@ -283,6 +284,20 @@ class ProductAdmin(admin.ModelAdmin):
 
             service = ReplicateProductImageService()
             gen_options = GenerationOptions.from_request_post(request.POST)
+
+            if phase == 'scene':
+                try:
+                    size_info = resolve_scene_size(
+                        product_id=request.POST.get('product_id'),
+                        size_label=request.POST.get('size_label'),
+                    )
+                except SceneSizeError as exc:
+                    return JsonResponse(
+                        {'success': False, 'error': str(exc), 'phase': phase},
+                        status=400,
+                    )
+                gen_options.scene = gen_options.scene.with_size(size_info)
+
             image_bytes, meta = service.generate_phase(source_path, phase, gen_options)
 
             payload = {

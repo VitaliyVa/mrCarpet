@@ -133,6 +133,38 @@ html[data-theme="dark"] .update-colors-success {
     margin-bottom: 16px;
 }
 
+.replicate-size-info {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.replicate-size-ok {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+}
+
+.replicate-size-missing {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ef9a9a;
+}
+
+html[data-theme="dark"] .replicate-size-ok {
+    background: #1b3d24;
+    color: #c8e6c9;
+    border-color: #2e7d32;
+}
+
+html[data-theme="dark"] .replicate-size-missing {
+    background: #3d1b1b;
+    color: #ffcdd2;
+    border-color: #c62828;
+}
+
 .replicate-scene-block .replicate-options {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

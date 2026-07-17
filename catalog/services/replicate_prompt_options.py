@@ -1,4 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from catalog.services.scene_size import SceneSizeInfo
 
 RUG_SHAPES = frozenset({'auto', 'oval', 'semicircle', 'rectangular', 'round', 'runner'})
 SOURCE_CONTEXTS = frozenset({'auto', 'in_room', 'isolated'})
@@ -48,6 +54,9 @@ class ScenePromptOptions:
     view_angle: str = 'eye_level'
     floor_style: str = 'auto'
     color_mode: str = 'auto'
+    size_label: str = ''
+    width_m: str = ''
+    length_m: str = ''
 
     def normalized(self) -> 'ScenePromptOptions':
         return ScenePromptOptions(
@@ -57,11 +66,28 @@ class ScenePromptOptions:
             view_angle=_normalize(self.view_angle, VIEW_ANGLES, 'eye_level'),
             floor_style=_normalize(self.floor_style, FLOOR_STYLES),
             color_mode=_normalize(self.color_mode, COLOR_MODES),
+            size_label=(self.size_label or '').strip(),
+            width_m=(self.width_m or '').strip(),
+            length_m=(self.length_m or '').strip(),
+        )
+
+    def with_size(self, size_info: 'SceneSizeInfo') -> 'ScenePromptOptions':
+        n = self.normalized()
+        return ScenePromptOptions(
+            rug_shape=n.rug_shape,
+            room_type=n.room_type,
+            camera_distance=n.camera_distance,
+            view_angle=n.view_angle,
+            floor_style=n.floor_style,
+            color_mode=n.color_mode,
+            size_label=size_info.label,
+            width_m=str(size_info.width_m),
+            length_m=str(size_info.length_m),
         )
 
     def as_meta(self) -> dict:
         n = self.normalized()
-        return {
+        meta = {
             'rug_shape': n.rug_shape,
             'room_type': n.room_type,
             'camera_distance': n.camera_distance,
@@ -69,6 +95,11 @@ class ScenePromptOptions:
             'floor_style': n.floor_style,
             'color_mode': n.color_mode,
         }
+        if n.size_label:
+            meta['size_label'] = n.size_label
+            meta['width_m'] = n.width_m
+            meta['length_m'] = n.length_m
+        return meta
 
 
 @dataclass

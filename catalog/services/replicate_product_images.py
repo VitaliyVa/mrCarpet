@@ -102,6 +102,11 @@ class ReplicateProductImageService:
 
         config = PHASE_CONFIG[phase]
         opts = options or GenerationOptions()
+        if phase == PHASE_SCENE and not (opts.scene.size_label or "").strip():
+            raise ReplicateGenerationError(
+                "Для генерації інтер'єру потрібен реальний розмір товару "
+                "(Варіації → Розмір)."
+            )
         prompt = config["build_prompt"](opts)
         aspect_ratio = config["aspect_ratio"]
         # Circle in 2:3 gets side-clipped; use square canvas for round catalog/hover.
@@ -117,6 +122,11 @@ class ReplicateProductImageService:
         source_bytes = source_path.read_bytes()
         source_name = source_path.name or "source.jpg"
 
+        if phase == PHASE_SCENE:
+            self.job_log.info(
+                f"{phase_label}: розмір для масштабу — {opts.scene.size_label} "
+                f"({opts.scene.width_m}×{opts.scene.length_m} м)"
+            )
         self.job_log.info(f"{phase_label}: відправлено на Replicate…")
 
         raw_bytes = self._run_and_download(

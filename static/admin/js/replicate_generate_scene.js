@@ -3,6 +3,7 @@
 (function () {
     var ENDPOINT = '/admin/catalog/product/generate-images/';
     var INLINE_GROUP_ID = 'images-group';
+    var ATTR_GROUP_ID = 'productattribute-group';
     var MAX_SIZE = 15 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -81,6 +82,33 @@
     function getCookie(name) {
         var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
         return match ? decodeURIComponent(match[2]) : '';
+    }
+
+    function getProductId() {
+        var match = window.location.pathname.match(/\/catalog\/product\/(\d+)\/change\/?$/);
+        return match ? match[1] : null;
+    }
+
+    function rowIsDeleted(row) {
+        var del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        return del && del.checked;
+    }
+
+    function getFirstSizeLabelFromDom() {
+        var group = document.getElementById(ATTR_GROUP_ID);
+        if (!group) return null;
+        var rows = group.querySelectorAll('tbody tr.form-row:not(.empty-form)');
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (rowIsDeleted(row)) continue;
+            var sel = row.querySelector('select[name$="-size"]');
+            if (!sel || !sel.value) continue;
+            var opt = sel.options[sel.selectedIndex];
+            var text = ((opt && opt.text) || '').replace(/\u00a0/g, ' ').trim();
+            if (!text || text === '---------' || text.indexOf('----') === 0) continue;
+            return text;
+        }
+        return null;
     }
 
     function buildOptionsHtml() {
@@ -163,11 +191,6 @@
 
     function rowHasSavedImage(row) {
         return !!row.querySelector('.image-preview img, a[href*="/media/"]');
-    }
-
-    function rowIsDeleted(row) {
-        var del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-        return del && del.checked;
     }
 
     function findEmptyImageInput() {
@@ -268,10 +291,38 @@
             '</div>';
     }
 
-    function runSceneGeneration(file, options) {
+    function updateSizeGate(block) {
+        var sizeLabel = getFirstSizeLabelFromDom();
+        var productId = getProductId();
+        var info = block.querySelector('.replicate-size-info');
+        var btn = block.querySelector('.replicate-generate-btn');
+        var fileInput = block.querySelector('.replicate-source-input');
+        var hasSize = !!sizeLabel;
+
+        if (hasSize) {
+            info.className = 'replicate-size-info replicate-size-ok';
+            info.textContent =
+                'Масштаб у промпті: перший розмір з «Варіації» — ' + sizeLabel +
+                (productId ? ' (сервер візьме перший збережений розмір товару).' : ' (збережіть товар, щоб зафіксувати розмір у БД).');
+            btn.disabled = false;
+            fileInput.disabled = false;
+        } else {
+            info.className = 'replicate-size-info replicate-size-missing';
+            info.textContent =
+                'Генерація заблокована: додайте хоча б один розмір у «Варіації → Розмір»' +
+                (productId ? ' і збережіть товар.' : ' (спочатку збережіть товар з розміром).');
+            btn.disabled = true;
+            fileInput.disabled = true;
+        }
+        return hasSize ? sizeLabel : null;
+    }
+
+    function runSceneGeneration(file, options, productId, sizeLabel) {
         var formData = new FormData();
         formData.append('source_image', file);
         formData.append('phase', 'scene');
+        if (productId) formData.append('product_id', productId);
+        if (sizeLabel) formData.append('size_label', sizeLabel);
         Object.keys(options).forEach(function (key) {
             if (key !== 'phase') formData.append(key, options[key]);
         });
@@ -300,8 +351,10 @@
             '<h3>Генерація фото для сторінки товару (інтер\'єр)</h3>' +
             '<p class="replicate-generate-hint">' +
             'Завантажте фото килима — Replicate згенерує lifestyle-знімок у кімнаті (4:3). ' +
+            'У промпт підставляється <b>перший розмір</b> з «Варіації → Розмір» (як на вітрині). ' +
             'Результат потрапить у перший порожній рядок «Зображення продуктів» нижче.' +
             '</p>' +
+            '<div class="replicate-size-info" aria-live="polite"></div>' +
             buildOptionsHtml() +
             '<div class="replicate-generate-controls">' +
             '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input" />' +
@@ -320,6 +373,16 @@
     }
 
     function onGenerate(block, fileInput, btn) {
+        var sizeLabel = updateSizeGate(block);
+        if (!sizeLabel) {
+            setStatus(
+                block,
+                'Спочатку додайте розмір у «Варіації → Розмір» і збережіть товар',
+                true
+            );
+            return;
+        }
+
         var file = fileInput.files && fileInput.files[0];
         if (!file) {
             setStatus(block, 'Спочатку виберіть фото килима', true);
@@ -351,15 +414,16 @@
 
         var sourceUrl = URL.createObjectURL(file);
         var options = collectOptions(block);
+        var productId = getProductId();
 
         setProgress(
             block,
             'Генерація сцени…',
-            'Replicate створює інтер\'єр (~1–3 хв). Не закривайте сторінку.',
+            'Масштаб: ' + sizeLabel + '. Replicate створює інтер\'єр (~1–3 хв). Не закривайте сторінку.',
             true
         );
 
-        runSceneGeneration(file, options)
+        runSceneGeneration(file, options, productId, sizeLabel)
             .then(function (data) {
                 appendLogs(block, data.logs);
                 var payload = data.image;
@@ -378,12 +442,14 @@
                     setNextSortOrder(targetInput);
                     var totalSec = Math.round((Date.now() - started) / 1000);
                     var optsMeta = data.meta && data.meta.prompt_options;
+                    var usedSize = optsMeta && optsMeta.size_label ? optsMeta.size_label : sizeLabel;
                     var optsNote = optsMeta
                         ? ' [' + Object.keys(optsMeta).map(function (k) { return k + '=' + optsMeta[k]; }).join(', ') + ']'
                         : '';
                     setStatus(
                         block,
-                        'Готово за ' + totalSec + ' с' + optsNote + '. Зображення додано в інлайн — натисніть «Зберегти».',
+                        'Готово за ' + totalSec + ' с (розмір ' + usedSize + ')' + optsNote +
+                        '. Зображення додано в інлайн — натисніть «Зберегти».',
                         false,
                         true
                     );
@@ -397,13 +463,25 @@
             })
             .finally(function () {
                 clearInterval(elapsedTimer);
-                btn.disabled = false;
-                fileInput.disabled = false;
                 block.querySelectorAll('.replicate-scene-options input').forEach(function (el) {
                     el.disabled = false;
                 });
                 block.classList.remove('is-loading');
+                updateSizeGate(block);
             });
+    }
+
+    function bindSizeWatchers(block) {
+        var group = document.getElementById(ATTR_GROUP_ID);
+        if (!group) return;
+        group.addEventListener('change', function () {
+            updateSizeGate(block);
+        });
+        group.addEventListener('click', function () {
+            setTimeout(function () {
+                updateSizeGate(block);
+            }, 50);
+        });
     }
 
     function mountSceneBlock() {
@@ -418,6 +496,8 @@
         btn.addEventListener('click', function () {
             onGenerate(block, fileInput, btn);
         });
+        bindSizeWatchers(block);
+        updateSizeGate(block);
     }
 
     document.addEventListener('DOMContentLoaded', mountSceneBlock);

@@ -1,6 +1,6 @@
 from catalog.services.replicate_prompt_options import CatalogPromptOptions, ScenePromptOptions
 
-PROMPT_VERSION = "13"
+PROMPT_VERSION = "14"
 
 _ASPECT_NOTE = (
     "Output must be a vertical 2:3 portrait image. "
@@ -320,8 +320,36 @@ FLOOR:
 }
 
 
+def _scene_scale_block(options: ScenePromptOptions) -> str:
+    label = (options.size_label or '').strip()
+    if not label:
+        raise ValueError("build_scene_prompt requires size_label (real product size)")
+
+    width_m = (options.width_m or '').strip()
+    length_m = (options.length_m or '').strip()
+    is_round = width_m and length_m and width_m == length_m
+
+    if is_round:
+        return f"""
+SCALE (CRITICAL — real product size, do NOT invent another size):
+- This is a ROUND rug. Catalog size label: {label}.
+- Real diameter ≈ {width_m} m (same as width and length in metres).
+- Scale vs known furniture: sofa seat ~2.0–2.2 m wide, coffee table ~0.9–1.2 m, doorway clear opening ~0.8–0.9 m, adult standing height ~1.7 m.
+- On the floor the rug MUST appear exactly this diameter — not oversized like a living-room carpet if it is a small mat, and not undersized if it is large.
+- Keep realistic contact shadows consistent with that footprint."""
+
+    return f"""
+SCALE (CRITICAL — real product size, do NOT invent another size):
+- Catalog size label: {label}.
+- Real footprint: {width_m} m × {length_m} m (width × length).
+- Scale vs known furniture: sofa ~2.0–2.2 m, coffee table ~0.9–1.2 m, dining table ~1.6–2.0 m, doorway ~0.8–0.9 m, adult standing height ~1.7 m.
+- The rug footprint on the floor MUST match these exact dimensions — do not enlarge, shrink, or substitute a different size.
+- Keep realistic contact shadows consistent with that footprint."""
+
+
 def build_scene_prompt(options: ScenePromptOptions | None = None) -> str:
     opts = (options or ScenePromptOptions()).normalized()
+    scale_block = _scene_scale_block(opts)
 
     return f"""Edit the provided reference image of a rug/carpet into a photorealistic in-room lifestyle product photo for an e-commerce product page gallery.
 
@@ -337,6 +365,7 @@ GOAL:
 {_FLOOR_BLOCKS[opts.floor_style]}
 {_DISTANCE_BLOCKS[opts.camera_distance]}
 {_VIEW_BLOCKS[opts.view_angle]}
+{scale_block}
 
 STRICT PRESERVATION (do NOT change the rug):
 - The rug pattern, motif layout, colors, texture, pile, and material must match the reference exactly.
@@ -347,4 +376,4 @@ STRICT PRESERVATION (do NOT change the rug):
 SCENE RULES:
 - Photorealistic interior photography, soft natural daylight, no text, no watermark, no people.
 - Furniture and decor should feel premium and contemporary; do not overpower the rug.
-- The rug must sit flat on the floor with realistic contact shadows and scale."""
+- The rug must sit flat on the floor with realistic contact shadows matching the SCALE block above."""
