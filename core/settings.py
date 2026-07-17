@@ -134,9 +134,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 #     }
 # }
 
+_db_engine = config('DB_ENGINE', 'django.db.backends.sqlite3')
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'ENGINE': _db_engine,
         'NAME': config('DB_NAME', BASE_DIR / 'db.sqlite3'),
         'USER': config('DB_USER', None),
         'PASSWORD': config('DB_PASSWORD', None),
@@ -144,6 +145,24 @@ DATABASES = {
         'PORT': config('DB_PORT', None),
     }
 }
+
+# SQLite + кілька gunicorn workers = "database is locked". Timeout + WAL пом’якшують.
+if _db_engine.endswith('sqlite3'):
+    DATABASES['default']['OPTIONS'] = {
+        'timeout': 30,
+    }
+
+    from django.db.backends.signals import connection_created
+
+    def _sqlite_optimize(sender, connection, **kwargs):
+        if connection.vendor != 'sqlite':
+            return
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA journal_mode=WAL;')
+        cursor.execute('PRAGMA busy_timeout=30000;')
+        cursor.execute('PRAGMA synchronous=NORMAL;')
+
+    connection_created.connect(_sqlite_optimize)
 
 
 # Password validation

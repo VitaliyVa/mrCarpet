@@ -10,20 +10,28 @@ logger = logging.getLogger(__name__)
 def send_order_confirmation_email(order):
     """Надсилає клієнту лист про успішне оформлення замовлення."""
     if not order.email or order.email.endswith("@temp.com"):
-        logger.info("Skip confirmation email: no real email for order %s", order.pk)
+        msg = f"[order-email] skip: no real email for order #{order.pk}"
+        logger.info(msg)
+        print(msg)
         return False
 
     try:
         smtp = SMTPSettings.load()
-        if not smtp.host or not smtp.server_email:
-            logger.warning("SMTPSettings incomplete — skip order email")
+        if not smtp.host or not smtp.server_email or not smtp.email_host_password:
+            msg = "[order-email] skip: SMTPSettings incomplete (host/email/password)"
+            logger.warning(msg)
+            print(msg)
             return False
 
+        # Gmail App Password часто копіюють з пробілами — прибираємо
+        password = (smtp.email_host_password or "").replace(" ", "").strip()
+        username = (smtp.username or smtp.server_email or "").strip()
+
         connection = get_connection(
-            host=smtp.host,
+            host=smtp.host.strip(),
             port=smtp.port,
-            username=smtp.username or None,
-            password=smtp.email_host_password or None,
+            username=username or None,
+            password=password or None,
             use_tls=bool(smtp.use_tls),
             use_ssl=bool(smtp.use_ssl),
         )
@@ -55,7 +63,12 @@ def send_order_confirmation_email(order):
             fail_silently=False,
             connection=connection,
         )
+        msg = f"[order-email] sent OK → {order.email} (order #{order.order_number})"
+        logger.info(msg)
+        print(msg)
         return True
-    except Exception:
-        logger.exception("Failed to send order confirmation for order %s", order.pk)
+    except Exception as exc:
+        msg = f"[order-email] FAILED order #{getattr(order, 'pk', '?')}: {exc}"
+        logger.exception(msg)
+        print(msg)
         return False

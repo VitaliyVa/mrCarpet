@@ -85,10 +85,12 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
         total_price = cart.get_total_price()
 
         try:
+            # Важливо: жодного мережевого I/O (SMTP) всередині atomic —
+            # на SQLite це тримає exclusive lock і дає "database is locked".
             with transaction.atomic():
                 order = Order.objects.create(**serializer.validated_data)
                 cart.order = order
-                cart.save()
+                cart.save(update_fields=["order"])
 
                 if promo:
                     try:
@@ -109,31 +111,35 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                     order.save()
                     cart.apply_quantity()
                     cart.save()
-
-                    return Response(
-                        {"success": True, "redirect_url": "/payment/"},
-                        status=status.HTTP_201_CREATED,
-                    )
-
-                if order.payment_type == Order.PAYMENT_CASH:
+                    payment_type = order.payment_type
+                    order_number = order.order_number
+                elif order.payment_type == Order.PAYMENT_CASH:
                     order.status = Order.STATUS_NEW
                     order.save()
                     cart.ordered = True
                     cart.apply_quantity()
                     cart.save()
+                    payment_type = order.payment_type
+                    order_number = order.order_number
+                else:
+                    raise ValueError("Неправильний спосіб оплати.")
 
-                    send_order_confirmation_email(order)
+            # Після commit — можна слати лист / віддавати відповідь
+            if payment_type == Order.PAYMENT_LIQPAY:
+                return Response(
+                    {"success": True, "redirect_url": "/payment/"},
+                    status=status.HTTP_201_CREATED,
+                )
 
-                    return Response(
-                        {
-                            "success": True,
-                            "message": "Замовлення успішно оформлено!",
-                            "order_number": order.order_number,
-                        },
-                        status=status.HTTP_201_CREATED,
-                    )
-
-                raise ValueError("Неправильний спосіб оплати.")
+            send_order_confirmation_email(order)
+            return Response(
+                {
+                    "success": True,
+                    "message": "Замовлення успішно оформлено!",
+                    "order_number": order_number,
+                },
+                status=status.HTTP_201_CREATED,
+            )
         except ValueError as e:
             return Response(
                 {"message": str(e), "error": str(e)},
