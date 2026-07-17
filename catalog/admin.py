@@ -196,7 +196,23 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ['ar_status', 'ar_error', 'ar_updated_at', 'ar_texture_preview']
     fieldsets = (
         ('Основна інформація', {
-            'fields': ('title', 'slug', 'description', 'image', 'hover_image', 'categories', 'is_new')
+            'fields': ('title', 'slug', 'description')
+        }),
+        ('SEO', {
+            'fields': ('meta_title', 'meta_description', 'meta_keys'),
+            'description': (
+                '<button type="button" class="button" id="seo-generate-btn">'
+                'Згенерувати SEO з фото (gpt-4o-mini)</button>'
+                '<span id="seo-generate-status" style="margin-left:10px;"></span>'
+                '<br><small>Бере каталожне фото + розміри/характеристики товару. '
+                'Якщо Description порожній — також згенерує короткий опис для PDP.</small>'
+                '<div id="seo-generate-logs" class="seo-generate-logs" hidden>'
+                '<div id="seo-generate-logs-content" class="replicate-logs-content"></div>'
+                '</div>'
+            ),
+        }),
+        ('Зображення та категорії', {
+            'fields': ('image', 'hover_image', 'categories', 'is_new')
         }),
         ('Кольори', {
             'fields': ('active_color', 'color_group'),
@@ -272,6 +288,11 @@ class ProductAdmin(admin.ModelAdmin):
                 'generate-ar-texture/',
                 self.admin_site.admin_view(self.generate_ar_texture),
                 name='catalog_product_generate_ar_texture'
+            ),
+            path(
+                'generate-seo/',
+                self.admin_site.admin_view(self.generate_product_seo),
+                name='catalog_product_generate_seo'
             ),
         ]
         return custom_urls + urls
@@ -734,6 +755,58 @@ class ProductAdmin(admin.ModelAdmin):
                 status=500,
             )
 
+    @method_decorator(require_POST)
+    def generate_product_seo(self, request):
+        from catalog.services.seo_generate import ReplicateSeoService, SeoGenerationError
+
+        product_id = request.POST.get('product_id') or request.POST.get('object_id')
+        if not product_id:
+            return JsonResponse({'success': False, 'error': 'Не вказано product_id'}, status=400)
+        try:
+            product = Product.admin_objects.get(pk=int(product_id))
+        except (Product.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({'success': False, 'error': 'Товар не знайдено'}, status=404)
+
+        if not product.image:
+            return JsonResponse(
+                {'success': False, 'error': 'Немає каталожного зображення'},
+                status=400,
+            )
+
+        try:
+            result = ReplicateSeoService().generate_for_product(product)
+            return JsonResponse(
+                {
+                    'success': True,
+                    'meta_title': result.meta_title,
+                    'meta_description': result.meta_description,
+                    'meta_keys': result.meta_keys,
+                    'description': result.description,
+                    'fill_description': result.fill_description,
+                    'model': result.model,
+                    'duration_sec': result.duration_sec,
+                    'logs': result.logs,
+                }
+            )
+        except SeoGenerationError as exc:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': str(exc),
+                    'logs': getattr(exc, 'logs', []) or [],
+                },
+                status=502,
+            )
+        except Exception as exc:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': f'Помилка SEO-генерації: {exc}',
+                    'logs': [],
+                },
+                status=500,
+            )
+
     @admin.action(description='Згенерувати AR-текстуру для вибраних')
     def generate_ar_texture_action(self, request, queryset):
         queued = 0
@@ -984,6 +1057,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/image_resize.js',
             'admin/js/replicate_generate_images.js',
             'admin/js/replicate_generate_scene.js',
+            'admin/js/replicate_generate_seo.js',
             'admin/js/ar_generate_texture.js',
             'admin/js/product_image_sortable.js',
             'admin/js/product_image_dropzone.js',
@@ -1037,8 +1111,26 @@ class ProductColorAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class ProductCategoryAdmin(admin.ModelAdmin):
+    list_display = ['title', 'slug']
+    search_fields = ['title', 'slug', 'meta_title']
+    exclude = ['slug']
+    fieldsets = (
+        ('Основне', {
+            'fields': ('title', 'image'),
+        }),
+        ('SEO', {
+            'fields': ('meta_title', 'meta_description', 'meta_keys'),
+            'description': (
+                'Мета-теги категорії. Якщо порожньо — у <title> буде назва категорії. '
+                'Description: ~150–160 символів, як відповідь на інтент.'
+            ),
+        }),
+    )
+
+
 admin.site.register(Product, ProductAdmin)
-admin.site.register(ProductCategory)
+admin.site.register(ProductCategory, ProductCategoryAdmin)
 admin.site.register(Favourite, FavouriteAdmin)
 class SpecificationValueAdmin(admin.ModelAdmin):
     fields = ["specification", "title"]

@@ -5,10 +5,20 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {# DEV: індексація закрита до go-live (див. docs/seo-ai-search-roadmap.md Фаза 8) #}
+    {% block robots %}
     <meta name="robots" content="noindex, nofollow" />
-    <title>index</title>
+    {% endblock robots %}
+    <title>{% block title %}mr.Carpet — інтернет-магазин килимів{% endblock title %}</title>
+    {% block meta %}
+    <meta
+        name="description"
+        content="Килими від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими / mr.Carpet."
+    />
+    {% endblock meta %}
     <link rel="stylesheet" href="/static/development/main.css" />
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
+    {% block structured_data %}{% endblock structured_data %}
 </head>
 
 <body class="body-main">

@@ -223,7 +223,7 @@ class ProductImage(models.Model):
         super().save(*args, **kwargs)
 
 
-class ProductCategory(AbstractTitleSlug):
+class ProductCategory(AbstractMetaTags, AbstractTitleSlug):
     image = models.ImageField(
         verbose_name="Зображення", max_length=512, blank=True, upload_to="categories"
     )

@@ -1,4 +1,12 @@
-{% extends '_base.html' %}{% block styles %}
+{% extends '_base.html' %}
+{% block title %}Доставка і оплата | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="Доставка та оплата в mr.Carpet: Нова Пошта, онлайн-оплата LiqPay. Безкоштовна доставка від 800 грн. Умови по Україні."
+/>
+{% endblock meta %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/delivery/index.css" />
 {% endblock styles %}{% block content %}
 <section class="delivery first_section">
@@ -66,6 +74,7 @@
               Оплата:
             </h3>
             <div class="terms-and-policies__block-item-text">
+              <p>Онлайн-оплата карткою через LiqPay</p>
               <p>Готівковий розрахунок</p>
               <p>Безготівковий розрахунок</p>
               <p>Післяплатою при доставці</p>

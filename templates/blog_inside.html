@@ -1,4 +1,13 @@
-{% extends "_base.html" %}{% block styles %}
+{% extends "_base.html" %}
+{% block title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}"
+/>
+{% if article.meta_keys %}<meta name="keywords" content="{{ article.meta_keys }}" />{% endif %}
+{% endblock meta %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog_inside/index.css" />
 {% endblock styles %}{% block content %}
 <section class="blog-inside first_section">

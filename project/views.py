@@ -73,7 +73,30 @@ def reset_password(request):
 
 
 def robots_txt(request):
-    robots_content = """User-agent: *
-Disallow: /
-"""
-    return HttpResponse(robots_content, content_type='text/plain')
+    """
+    DEV robots: повна заборона індексації, поки сайт у розробці.
+
+    PROD (НЕ вмикати без явного рішення / Фаза 8 у docs/seo-ai-search-roadmap.md):
+
+        User-agent: *
+        Allow: /
+        Disallow: /admin/
+        Disallow: /api/
+        Disallow: /basket/
+        Disallow: /checkout/
+        Disallow: /payment/
+        Disallow: /profile/
+        Disallow: /success/
+        Sitemap: https://mrcarpet24.com/sitemap.xml
+
+        # AI crawlers (GEO): на проді не блокувати зайво GPTBot / ClaudeBot / PerplexityBot
+        # якщо Allow: / вже відкриває сайт.
+    """
+    # ASCII-only body: robots.txt + Windows text/plain без charset легко ламає кирилицю
+    robots_content = (
+        "# DEV: site under development -- full disallow\n"
+        "# Go-live: replace with prod rules from docs/seo-ai-search-roadmap.md (Phase 8)\n"
+        "User-agent: *\n"
+        "Disallow: /\n"
+    )
+    return HttpResponse(robots_content, content_type="text/plain; charset=utf-8")

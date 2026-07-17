@@ -1,4 +1,13 @@
-{% extends '_base.html' %}{% block styles %}
+{% extends '_base.html' %}
+{% block title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="{% if product.meta_description %}{{ product.meta_description }}{% elif product.description %}{{ product.description|striptags|truncatechars:160 }}{% else %}Купити {{ product.title }} з доставкою по Україні. Магазин Меблі Килими / mr.Carpet.{% endif %}"
+/>
+{% if product.meta_keys %}<meta name="keywords" content="{{ product.meta_keys }}" />{% endif %}
+{% endblock meta %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/product/index.css" />
 {% endblock styles %}{% block content %}
 <section class="first_section">
@@ -425,7 +434,7 @@
               <img src="/static/utils/assets/plus.svg" alt="plus"/>
               </button>
             </div>
-            <span class="info-text__free-delivery">Безкоштовна доставка від ... грн.</span>
+            <span class="info-text__free-delivery">Безкоштовна доставка від 800 грн.</span>
           </div>
 
           <div class="product__btn">

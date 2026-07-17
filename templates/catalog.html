@@ -1,4 +1,12 @@
-{% extends '_base.html' %}{% block styles %}
+{% extends '_base.html' %}
+{% block title %}Каталог килимів | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="Каталог килимів і покриттів для підлоги mr.Carpet. Обирайте за категоріями, розміром і стилем. Доставка по Україні."
+/>
+{% endblock meta %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/catalog/index.css" />
 {% endblock styles %}{% block content %}
 {% include 'includes/categories.html' %}

@@ -16,13 +16,29 @@ class AbstractCreatedUpdated(models.Model):
 
 class AbstractMetaTags(models.Model):
     meta_title = models.TextField(
-        verbose_name='Meta Title', blank=True, null=True
+        verbose_name='SEO Title',
+        blank=True,
+        null=True,
+        help_text=(
+            'Title у вкладці браузера / сніпеті. '
+            'Якщо порожньо — використовується назва (title).'
+        ),
     )
     meta_description = models.TextField(
-        verbose_name='Meta Description', blank=True, null=True
+        verbose_name='SEO Description',
+        blank=True,
+        null=True,
+        help_text=(
+            'Короткий опис для сніпета (~150–160 символів). '
+            'Пишіть як відповідь на інтент покупця, не keyword soup. '
+            'Якщо порожньо — fallback з опису / бренду.'
+        ),
     )
     meta_keys = models.TextField(
-        verbose_name='Meta Keys', blank=True, null=True
+        verbose_name='SEO Keywords',
+        blank=True,
+        null=True,
+        help_text='Опційно. Google майже ігнорує; можна залишити порожнім.',
     )
 
     class Meta:

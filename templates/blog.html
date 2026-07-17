@@ -1,4 +1,12 @@
-{% extends "_base.html" %}{% block styles %}
+{% extends "_base.html" %}
+{% block title %}Блог | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру."
+/>
+{% endblock meta %}
+{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog/index.css" />
 {% endblock styles %}{% block content %}
 <section class="blog-section first_section">
