@@ -182,3 +182,17 @@ class SceneGenerateAdminGateTests(TestCase):
         self.assertEqual(gen_options.scene.size_label, "Ø 67 см")
         self.assertEqual(gen_options.scene.width_m, "0.67")
         self.assertEqual(gen_options.scene.length_m, "0.67")
+
+    def test_scene_size_lookup_endpoint(self):
+        product = _make_product()
+        size = Size.objects.create(title="1.2x2.5")
+        ProductAttribute.objects.create(
+            product=product, size=size, quantity=1, price=500
+        )
+        url = reverse("admin:catalog_product_scene_size")
+        response = self.client.get(url, {"product_id": product.pk, "debug": "1"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["size_label"], "1.2x2.5")
+        self.assertEqual(data["debug"]["attr_count"], 1)

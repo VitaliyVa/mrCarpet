@@ -2,10 +2,13 @@
 
 (function () {
     var ENDPOINT = '/admin/catalog/product/generate-images/';
+    var SIZE_LOOKUP = '/admin/catalog/product/scene-size/';
     var INLINE_GROUP_ID = 'images-group';
     var ATTR_GROUP_ID = 'productattribute-group';
     var MAX_SIZE = 15 * 1024 * 1024;
     var ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+    var LOG_PREFIX = '[scene-size]';
+    var DEBUG = true; // тимчасово для діагностики — потім вимкнемо
 
     var SCENE_OPTIONS = {
         rug_shape: {
@@ -84,6 +87,13 @@
         return match ? decodeURIComponent(match[2]) : '';
     }
 
+    function log() {
+        if (!DEBUG) return;
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(LOG_PREFIX);
+        console.log.apply(console, args);
+    }
+
     function getProductId() {
         var match = window.location.pathname.match(/\/catalog\/product\/(\d+)\/change\/?$/);
         return match ? match[1] : null;
@@ -94,21 +104,186 @@
         return del && del.checked;
     }
 
+    function isBlankSizeText(text) {
+        if (!text) return true;
+        text = String(text).replace(/\u00a0/g, ' ').trim();
+        if (!text) return true;
+        if (text === '---------') return true;
+        if (text.indexOf('----') === 0) return true;
+        return false;
+    }
+
+    function collectDomSizeCandidates() {
+        var candidates = [];
+        var selectors = [
+            '#' + ATTR_GROUP_ID + ' select[name$="-size"]',
+            'select[name^="productattribute-"][name$="-size"]',
+            'select[id^="id_productattribute-"][id$="-size"]',
+            '.inline-group select[name$="-size"]',
+        ];
+        var seen = {};
+        selectors.forEach(function (sel) {
+            document.querySelectorAll(sel).forEach(function (el) {
+                if (seen[el.name || el.id]) return;
+                seen[el.name || el.id] = true;
+                var row = el.closest('tr');
+                var deleted = row ? rowIsDeleted(row) : false;
+                var isEmpty = row && row.classList.contains('empty-form');
+                var opt = el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null;
+                var text = opt ? String(opt.text || '') : '';
+                candidates.push({
+                    name: el.name || '',
+                    id: el.id || '',
+                    value: el.value || '',
+                    text: text.replace(/\u00a0/g, ' ').trim(),
+                    deleted: deleted,
+                    emptyForm: !!isEmpty,
+                    tag: el.tagName,
+                    className: el.className || '',
+                });
+            });
+        });
+        return candidates;
+    }
+
     function getFirstSizeLabelFromDom() {
-        var group = document.getElementById(ATTR_GROUP_ID);
-        if (!group) return null;
-        var rows = group.querySelectorAll('tbody tr.form-row:not(.empty-form)');
-        for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
-            if (rowIsDeleted(row)) continue;
-            var sel = row.querySelector('select[name$="-size"]');
-            if (!sel || !sel.value) continue;
-            var opt = sel.options[sel.selectedIndex];
-            var text = ((opt && opt.text) || '').replace(/\u00a0/g, ' ').trim();
-            if (!text || text === '---------' || text.indexOf('----') === 0) continue;
-            return text;
+        var candidates = collectDomSizeCandidates();
+        log('DOM size candidates:', candidates);
+        log('ATTR group exists:', !!document.getElementById(ATTR_GROUP_ID));
+        log('inline-group count:', document.querySelectorAll('.inline-group').length);
+        log(
+            'inline-group ids:',
+            Array.prototype.map.call(document.querySelectorAll('.inline-group'), function (el) {
+                return el.id;
+            })
+        );
+
+        for (var i = 0; i < candidates.length; i++) {
+            var c = candidates[i];
+            if (c.deleted || c.emptyForm) continue;
+            if (!c.value) continue;
+            if (isBlankSizeText(c.text)) continue;
+            log('DOM first size chosen:', c);
+            return c.text;
         }
         return null;
+    }
+
+    function getCachedServerSize(block) {
+        return (block.dataset.sceneSizeLabel || '').trim() || null;
+    }
+
+    function setCachedServerSize(block, label, meta) {
+        if (label) {
+            block.dataset.sceneSizeLabel = label;
+            block.dataset.sceneSizeMeta = JSON.stringify(meta || {});
+        } else {
+            delete block.dataset.sceneSizeLabel;
+            delete block.dataset.sceneSizeMeta;
+        }
+    }
+
+    function renderSizeDebug(block, extra) {
+        var box = block.querySelector('.replicate-size-debug');
+        if (!box) return;
+        var payload = {
+            productId: getProductId(),
+            pathname: window.location.pathname,
+            cachedServerSize: getCachedServerSize(block),
+            domSize: null,
+            domCandidates: collectDomSizeCandidates(),
+            attrGroupId: ATTR_GROUP_ID,
+            attrGroupFound: !!document.getElementById(ATTR_GROUP_ID),
+            inlineGroupIds: Array.prototype.map.call(
+                document.querySelectorAll('.inline-group'),
+                function (el) { return el.id; }
+            ),
+            extra: extra || null,
+        };
+        // avoid recursive log spam from collect inside getFirst...
+        var first = null;
+        for (var i = 0; i < payload.domCandidates.length; i++) {
+            var c = payload.domCandidates[i];
+            if (!c.deleted && !c.emptyForm && c.value && !isBlankSizeText(c.text)) {
+                first = c.text;
+                break;
+            }
+        }
+        payload.domSize = first;
+        box.hidden = false;
+        box.textContent = JSON.stringify(payload, null, 2);
+        log('debug panel updated', payload);
+    }
+
+    function applySizeGate(block, sizeLabel, source) {
+        var info = block.querySelector('.replicate-size-info');
+        var btn = block.querySelector('.replicate-generate-btn');
+        var fileInput = block.querySelector('.replicate-source-input');
+        var hasSize = !!sizeLabel;
+
+        if (hasSize) {
+            info.className = 'replicate-size-info replicate-size-ok';
+            info.textContent =
+                'Масштаб у промпті: ' + sizeLabel +
+                (source ? ' [' + source + ']' : '') +
+                '.';
+            btn.disabled = false;
+            fileInput.disabled = false;
+        } else {
+            info.className = 'replicate-size-info replicate-size-missing';
+            info.textContent =
+                'Генерація заблокована: додайте хоча б один розмір у «Варіації → Розмір»' +
+                (getProductId() ? ' і збережіть товар.' : ' (спочатку збережіть товар з розміром).') +
+                ' Див. діагностику нижче / Console [scene-size].';
+            btn.disabled = true;
+            fileInput.disabled = true;
+        }
+        renderSizeDebug(block, { appliedSource: source || null, appliedSize: sizeLabel || null });
+        return hasSize ? sizeLabel : null;
+    }
+
+    function updateSizeGate(block) {
+        var serverLabel = getCachedServerSize(block);
+        if (serverLabel) {
+            return applySizeGate(block, serverLabel, 'server');
+        }
+        var domLabel = getFirstSizeLabelFromDom();
+        if (domLabel) {
+            return applySizeGate(block, domLabel, 'dom');
+        }
+        return applySizeGate(block, null, null);
+    }
+
+    function fetchServerSize(block) {
+        var productId = getProductId();
+        if (!productId) {
+            log('no productId in URL — skip server lookup');
+            updateSizeGate(block);
+            return Promise.resolve(null);
+        }
+        var url = SIZE_LOOKUP + '?product_id=' + encodeURIComponent(productId) + '&debug=1';
+        log('fetching', url);
+        return fetch(url, { credentials: 'same-origin' })
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    log('server response', res.status, data);
+                    if (data && data.success && data.size_label) {
+                        setCachedServerSize(block, data.size_label, data);
+                        applySizeGate(block, data.size_label, 'server:' + (data.source || 'db'));
+                        return data.size_label;
+                    }
+                    setCachedServerSize(block, null);
+                    updateSizeGate(block);
+                    renderSizeDebug(block, { server: data });
+                    return null;
+                });
+            })
+            .catch(function (err) {
+                log('server lookup failed', err);
+                updateSizeGate(block);
+                renderSizeDebug(block, { fetchError: String(err && err.message || err) });
+                return null;
+            });
     }
 
     function buildOptionsHtml() {
@@ -291,32 +466,6 @@
             '</div>';
     }
 
-    function updateSizeGate(block) {
-        var sizeLabel = getFirstSizeLabelFromDom();
-        var productId = getProductId();
-        var info = block.querySelector('.replicate-size-info');
-        var btn = block.querySelector('.replicate-generate-btn');
-        var fileInput = block.querySelector('.replicate-source-input');
-        var hasSize = !!sizeLabel;
-
-        if (hasSize) {
-            info.className = 'replicate-size-info replicate-size-ok';
-            info.textContent =
-                'Масштаб у промпті: перший розмір з «Варіації» — ' + sizeLabel +
-                (productId ? ' (сервер візьме перший збережений розмір товару).' : ' (збережіть товар, щоб зафіксувати розмір у БД).');
-            btn.disabled = false;
-            fileInput.disabled = false;
-        } else {
-            info.className = 'replicate-size-info replicate-size-missing';
-            info.textContent =
-                'Генерація заблокована: додайте хоча б один розмір у «Варіації → Розмір»' +
-                (productId ? ' і збережіть товар.' : ' (спочатку збережіть товар з розміром).');
-            btn.disabled = true;
-            fileInput.disabled = true;
-        }
-        return hasSize ? sizeLabel : null;
-    }
-
     function runSceneGeneration(file, options, productId, sizeLabel) {
         var formData = new FormData();
         formData.append('source_image', file);
@@ -355,6 +504,8 @@
             'Результат потрапить у перший порожній рядок «Зображення продуктів» нижче.' +
             '</p>' +
             '<div class="replicate-size-info" aria-live="polite"></div>' +
+            '<details class="replicate-size-debug-wrap"><summary>Діагностика розміру (скинь сюди / Console)</summary>' +
+            '<pre class="replicate-size-debug" hidden></pre></details>' +
             buildOptionsHtml() +
             '<div class="replicate-generate-controls">' +
             '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input" />' +
@@ -472,21 +623,23 @@
     }
 
     function bindSizeWatchers(block) {
-        var group = document.getElementById(ATTR_GROUP_ID);
-        if (!group) return;
-        group.addEventListener('change', function () {
-            updateSizeGate(block);
-        });
-        group.addEventListener('click', function () {
-            setTimeout(function () {
-                updateSizeGate(block);
-            }, 50);
+        document.addEventListener('change', function (ev) {
+            var t = ev.target;
+            if (!t || !t.name) return;
+            if (t.name.indexOf('productattribute-') === -1) return;
+            if (t.name.indexOf('-size') === -1 && t.name.indexOf('-DELETE') === -1) return;
+            // DOM змінились — але серверний кеш має пріоритет для збереженого товару
+            if (!getCachedServerSize(block)) updateSizeGate(block);
+            else renderSizeDebug(block, { domChange: t.name });
         });
     }
 
     function mountSceneBlock() {
         var inlineGroup = document.getElementById(INLINE_GROUP_ID);
-        if (!inlineGroup) return;
+        if (!inlineGroup) {
+            log('images-group not found — scene block not mounted');
+            return;
+        }
 
         var block = buildBlock();
         inlineGroup.parentNode.insertBefore(block, inlineGroup);
@@ -497,7 +650,13 @@
             onGenerate(block, fileInput, btn);
         });
         bindSizeWatchers(block);
+        log('mounted', {
+            productId: getProductId(),
+            pathname: window.location.pathname,
+        });
+        // Спочатку DOM (швидко), потім сервер (джерело істини)
         updateSizeGate(block);
+        fetchServerSize(block);
     }
 
     document.addEventListener('DOMContentLoaded', mountSceneBlock);

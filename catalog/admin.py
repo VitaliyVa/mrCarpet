@@ -243,6 +243,11 @@ class ProductAdmin(admin.ModelAdmin):
                 name='catalog_product_color_swatch_data'
             ),
             path(
+                'scene-size/',
+                self.admin_site.admin_view(self.scene_size_lookup),
+                name='catalog_product_scene_size'
+            ),
+            path(
                 'generate-images/',
                 self.admin_site.admin_view(self.generate_product_images),
                 name='catalog_product_generate_images'
@@ -254,6 +259,82 @@ class ProductAdmin(admin.ModelAdmin):
             ),
         ]
         return custom_urls + urls
+
+    def scene_size_lookup(self, request):
+        """JSON: перший розмір товару для UI-гейту генерації інтер'єру."""
+        from catalog.services.scene_size import (
+            SceneSizeError,
+            get_first_product_size_label,
+            resolve_scene_size,
+        )
+
+        product_id = (request.GET.get('product_id') or '').strip()
+        debug = (request.GET.get('debug') or '') in ('1', 'true', 'yes')
+
+        payload = {
+            'success': False,
+            'product_id': product_id or None,
+            'size_label': None,
+            'width_m': None,
+            'length_m': None,
+            'source': None,
+            'error': None,
+        }
+
+        if not product_id:
+            payload['error'] = 'Потрібен product_id'
+            return JsonResponse(payload, status=400)
+
+        try:
+            pid = int(product_id)
+        except (TypeError, ValueError):
+            payload['error'] = 'Невірний product_id'
+            return JsonResponse(payload, status=400)
+
+        try:
+            product = Product.admin_objects.get(pk=pid)
+        except Product.DoesNotExist:
+            payload['error'] = f'Товар #{pid} не знайдено'
+            return JsonResponse(payload, status=404)
+
+        attrs = list(
+            product.product_attr.select_related('size').order_by('pk')
+        )
+        if debug:
+            payload['debug'] = {
+                'product_title': product.title,
+                'attr_count': len(attrs),
+                'attrs': [
+                    {
+                        'id': a.pk,
+                        'size_id': a.size_id,
+                        'size_title': (a.size.title if a.size else None),
+                        'custom_attribute': a.custom_attribute,
+                        'quantity': a.quantity,
+                    }
+                    for a in attrs
+                ],
+                'first_size_label': get_first_product_size_label(product),
+            }
+
+        try:
+            info = resolve_scene_size(product_id=pid)
+        except SceneSizeError as exc:
+            payload['error'] = str(exc)
+            if debug and 'debug' not in payload:
+                payload['debug'] = {'first_size_label': None}
+            return JsonResponse(payload, status=200)
+
+        payload.update(
+            {
+                'success': True,
+                'size_label': info.label,
+                'width_m': str(info.width_m),
+                'length_m': str(info.length_m),
+                'source': info.source,
+            }
+        )
+        return JsonResponse(payload)
 
     @method_decorator(require_POST)
     def generate_product_images(self, request):
