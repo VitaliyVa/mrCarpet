@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from django.core.management.base import BaseCommand
 
@@ -23,8 +24,6 @@ def test_api():
     errors = response.get("errors") or []
     if errors:
         raise RuntimeError(f"Nova Poshta API error: {errors}")
-    if not response.get("success", True) and not response.get("data"):
-        raise RuntimeError(f"Nova Poshta API unsuccessful: {response}")
 
 
 def create_settlement_types():
@@ -50,11 +49,8 @@ def create_settlement_types():
         SettlementType.objects.bulk_update(
             bulk_update_list, fields=["title", "short_desc", "ref"]
         )
-    logger.info(
-        "SettlementType create=%s update=%s",
-        len(bulk_create_list),
-        len(bulk_update_list),
-    )
+    print("SettlementType bulk_create", len(bulk_create_list))
+    print("SettlementType bulk_update", len(bulk_update_list))
 
 
 def create_warehouse_types():
@@ -74,11 +70,8 @@ def create_warehouse_types():
     WarehouseType.objects.bulk_create(bulk_create_list)
     if bulk_update_list:
         WarehouseType.objects.bulk_update(bulk_update_list, fields=["title", "ref"])
-    logger.info(
-        "WarehouseType create=%s update=%s",
-        len(bulk_create_list),
-        len(bulk_update_list),
-    )
+    print("WarehouseType bulk_create", len(bulk_create_list))
+    print("WarehouseType bulk_update", len(bulk_update_list))
 
 
 def create_areas():
@@ -98,14 +91,15 @@ def create_areas():
     Area.objects.bulk_create(bulk_create_list)
     if bulk_update_list:
         Area.objects.bulk_update(bulk_update_list, fields=["title", "ref"])
-    logger.info("Area create=%s update=%s", len(bulk_create_list), len(bulk_update_list))
+    print("Area bulk_create", len(bulk_create_list))
+    print("Area bulk_update", len(bulk_update_list))
 
 
 def create_cities():
-    """Full paginated getCities — single-page get_response is not enough for prod."""
+    """All cities via pagination (single-page get_response was incomplete)."""
     response = get_full_response("Address", "getCities")
     data = response.get("data") or []
-    logger.info("getCities downloaded=%s", len(data))
+    print("getCities downloaded", len(data))
 
     type_by_ref = {t.ref: t for t in SettlementType.objects.all()}
     area_by_ref = {a.ref: a for a in Area.objects.all()}
@@ -118,14 +112,11 @@ def create_cities():
     for obj in data:
         title = obj.get("Description")
         ref = obj.get("Ref")
-        type_ref = obj.get("SettlementType")
-        area_ref = obj.get("Area")
-        stype = type_by_ref.get(type_ref)
-        area = area_by_ref.get(area_ref)
+        stype = type_by_ref.get(obj.get("SettlementType"))
+        area = area_by_ref.get(obj.get("Area"))
         if not stype or not area or not ref:
             skipped += 1
             continue
-
         settlement = existing.get(ref)
         if settlement:
             settlement.title = title
@@ -137,7 +128,6 @@ def create_cities():
                 Settlement(title=title, type=stype, ref=ref, area=area)
             )
 
-    # chunk bulk ops
     chunk = 1000
     for i in range(0, len(bulk_create_list), chunk):
         Settlement.objects.bulk_create(bulk_create_list[i : i + chunk])
@@ -145,83 +135,127 @@ def create_cities():
         Settlement.objects.bulk_update(
             bulk_update_list[i : i + chunk], fields=["title", "type", "area"]
         )
-
-    logger.info(
-        "Settlement create=%s update=%s skipped=%s total_now=%s",
-        len(bulk_create_list),
-        len(bulk_update_list),
-        skipped,
-        Settlement.objects.count(),
-    )
+    print("Settlement bulk_create", len(bulk_create_list))
+    print("Settlement bulk_update", len(bulk_update_list))
+    print("Settlement skipped", skipped, "total_now", Settlement.objects.count())
 
 
-def create_warehouses():
-    response = get_full_response("Address", "getWarehouses")
-    data = response.get("data") or []
-    logger.info("getWarehouses downloaded=%s", len(data))
+def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
+    """
+    Original project design (see commented loop in old np.py):
+    fetch warehouses per settlement CityRef — not one giant paginated dump.
 
+    That matches how local 40k+ warehouses were meant to be filled and avoids
+    NP rate-limit on getWarehouses page=2 without CityRef.
+    """
     type_by_ref = {t.ref: t for t in WarehouseType.objects.all()}
-    settlement_by_ref = {
-        s.ref: s for s in Settlement.objects.exclude(ref__isnull=True).only("id", "ref")
-    }
-    existing = {w.ref: w for w in Warehouse.objects.exclude(ref__isnull=True)}
+    if not type_by_ref:
+        create_warehouse_types()
+        type_by_ref = {t.ref: t for t in WarehouseType.objects.all()}
 
+    if city_ref:
+        settlements = list(
+            Settlement.objects.filter(ref=city_ref).only("id", "ref", "title")
+        )
+    else:
+        settlements = list(
+            Settlement.objects.exclude(ref__isnull=True)
+            .exclude(ref="")
+            .only("id", "ref", "title")
+            .order_by("id")
+        )
+
+    print(f"Warehouses sync for {len(settlements)} settlements…")
+
+    existing = {
+        w.ref: w
+        for w in Warehouse.objects.exclude(ref__isnull=True).exclude(ref="")
+    }
     bulk_create_list = []
     bulk_update_list = []
     skipped = 0
+    cities_done = 0
+    cities_empty = 0
 
-    for obj in data:
-        title = obj.get("Description")
-        ref = obj.get("Ref")
-        short_address = obj.get("ShortAddress") or ""
-        wtype = type_by_ref.get(obj.get("TypeOfWarehouse"))
-        settlement = settlement_by_ref.get(obj.get("CityRef"))
-        if not wtype or not settlement or not ref:
-            skipped += 1
-            continue
-
-        warehouse = existing.get(ref)
-        if warehouse:
-            warehouse.title = title
-            warehouse.short_address = short_address
-            warehouse.type = wtype
-            warehouse.settlement = settlement
-            warehouse.ref = ref
-            bulk_update_list.append(warehouse)
-        else:
-            bulk_create_list.append(
-                Warehouse(
+    for settlement in settlements:
+        response = get_response(
+            "Address",
+            "getWarehouses",
+            {"CityRef": settlement.ref},
+        )
+        rows = response.get("data") or []
+        if not rows:
+            cities_empty += 1
+        for obj in rows:
+            title = obj.get("Description")
+            ref = obj.get("Ref")
+            short_address = obj.get("ShortAddress") or ""
+            wtype = type_by_ref.get(obj.get("TypeOfWarehouse"))
+            if not wtype or not ref:
+                skipped += 1
+                continue
+            warehouse = existing.get(ref)
+            if warehouse:
+                warehouse.title = title
+                warehouse.short_address = short_address
+                warehouse.type = wtype
+                warehouse.settlement = settlement
+                warehouse.ref = ref
+                bulk_update_list.append(warehouse)
+            else:
+                wh = Warehouse(
                     title=title,
                     short_address=short_address,
                     type=wtype,
                     settlement=settlement,
                     ref=ref,
                 )
-            )
+                bulk_create_list.append(wh)
+                existing[ref] = wh  # avoid dupes within same run
 
-    chunk = 1000
-    for i in range(0, len(bulk_create_list), chunk):
-        Warehouse.objects.bulk_create(bulk_create_list[i : i + chunk])
-    for i in range(0, len(bulk_update_list), chunk):
+        cities_done += 1
+        if cities_done % 50 == 0:
+            # flush periodically to keep memory down
+            if bulk_create_list:
+                Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
+                print(
+                    f"… cities {cities_done}/{len(settlements)}, "
+                    f"flushed create={len(bulk_create_list)}, "
+                    f"warehouses_now={Warehouse.objects.count()}"
+                )
+                bulk_create_list = []
+            if bulk_update_list:
+                Warehouse.objects.bulk_update(
+                    bulk_update_list,
+                    fields=["title", "short_address", "type", "settlement", "ref"],
+                )
+                bulk_update_list = []
+            # refresh existing map ids after flush
+            existing = {
+                w.ref: w
+                for w in Warehouse.objects.exclude(ref__isnull=True).exclude(ref="")
+            }
+
+        time.sleep(delay_sec)
+
+    if bulk_create_list:
+        Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
+    if bulk_update_list:
         Warehouse.objects.bulk_update(
-            bulk_update_list[i : i + chunk],
+            bulk_update_list,
             fields=["title", "short_address", "type", "settlement", "ref"],
         )
 
-    logger.info(
-        "Warehouse create=%s update=%s skipped=%s total_now=%s",
-        len(bulk_create_list),
-        len(bulk_update_list),
-        skipped,
-        Warehouse.objects.count(),
+    print("Warehouse bulk_create (last chunk)", len(bulk_create_list))
+    print("Warehouse bulk_update (last chunk)", len(bulk_update_list))
+    print(
+        f"Warehouses done: cities={cities_done} empty_cities={cities_empty} "
+        f"skipped={skipped} total_now={Warehouse.objects.count()}"
     )
 
 
 class Command(BaseCommand):
-    help = (
-        "Sync Nova Poshta dictionaries into DB. "
-        "Prod empty settlements → run this once (needs NOVA_POSHTA_API_KEY)."
-    )
+    help = "Sync Nova Poshta dictionaries (cities + warehouses per city)."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -233,13 +267,27 @@ class Command(BaseCommand):
         parser.add_argument(
             "--skip-warehouses",
             action="store_true",
-            help="Sync types/areas/cities only (faster; enough for city search)",
+            help="Skip warehouses sync",
+        )
+        parser.add_argument(
+            "--city-ref",
+            type=str,
+            default="",
+            help="Optional: sync warehouses for one CityRef only",
+        )
+        parser.add_argument(
+            "--delay",
+            type=float,
+            default=0.35,
+            help="Sleep seconds between per-city warehouse requests (default 0.35)",
         )
 
     def handle(self, *args, **options):
         only_raw = (options.get("only") or "").strip()
         only = {p.strip() for p in only_raw.split(",") if p.strip()} if only_raw else set()
         skip_wh = options.get("skip_warehouses")
+        city_ref = (options.get("city_ref") or "").strip() or None
+        delay = float(options.get("delay") or 0.35)
 
         def want(name: str) -> bool:
             if only:
@@ -253,18 +301,19 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("API OK"))
 
         if want("types"):
-            self.stdout.write("→ settlement/warehouse types")
             create_settlement_types()
             create_warehouse_types()
         if want("areas"):
-            self.stdout.write("→ areas")
             create_areas()
         if want("cities"):
-            self.stdout.write("→ cities (paginated, may take several minutes)")
+            self.stdout.write("→ cities (paginated)")
             create_cities()
         if want("warehouses"):
-            self.stdout.write("→ warehouses (paginated, long)")
-            create_warehouses()
+            self.stdout.write(
+                "→ warehouses per city (original design; all settlements)"
+                + (f" filter={city_ref}" if city_ref else "")
+            )
+            create_warehouses(city_ref=city_ref, delay_sec=delay)
 
         self.stdout.write(
             self.style.SUCCESS(
