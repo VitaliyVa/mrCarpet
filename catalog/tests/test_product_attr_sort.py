@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from catalog.models import Product, ProductAttribute, Size
 from catalog.services.product_attr_sort import (
+    ordered_size_queryset,
     product_attr_sort_key,
     reorder_product_attributes,
     size_first_number,
@@ -79,3 +80,18 @@ class ReorderProductAttributesTests(TestCase):
         # fixed with number, then unparseable fixed, then custom
         ordered_pks = [k[-1] for k in keys]
         self.assertEqual(ordered_pks, [sized.pk, named.pk, custom.pk])
+
+
+class OrderedSizeQuerysetTests(TestCase):
+    def test_select_options_by_width(self):
+        Size.objects.create(title="200x200")
+        Size.objects.create(title="Маленький")
+        Size.objects.create(title="50x50")
+        Size.objects.create(title="100x100")
+        Size.objects.create(title="∅ 67 см")
+
+        titles = list(ordered_size_queryset().values_list("title", flat=True))
+        self.assertEqual(
+            titles,
+            ["50x50", "∅ 67 см", "100x100", "200x200", "Маленький"],
+        )

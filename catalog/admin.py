@@ -28,7 +28,10 @@ from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.scene_size import SceneSizeError, resolve_scene_size
 from catalog.admin_forms import ProductAdminForm, ProductAttributeAdminForm
 from catalog.services.ar_texture import ArTextureService, mark_ar_ready_from_manual_upload
-from catalog.services.product_attr_sort import reorder_product_attributes
+from catalog.services.product_attr_sort import (
+    ordered_size_queryset,
+    reorder_product_attributes,
+)
 from catalog.tasks import generate_ar_texture_task
 from .models import (
     Product,
@@ -125,6 +128,11 @@ class ProductInLine(admin.TabularInline):
     validate_min = True
     exclude = ("sort_order",)
     ordering = ("sort_order", "id")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "size":
+            kwargs["queryset"] = ordered_size_queryset()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class ProductImageInline(admin.TabularInline):
@@ -1038,10 +1046,17 @@ class SpecificationValueAdmin(admin.ModelAdmin):
     list_filter = ["specification"]
     search_fields = ["title"]
 
+class SizeAdmin(admin.ModelAdmin):
+    search_fields = ["title"]
+
+    def get_queryset(self, request):
+        return ordered_size_queryset(super().get_queryset(request))
+
+
 admin.site.register(Specification)
 admin.site.register(SpecificationValue, SpecificationValueAdmin)
 admin.site.register(ProductSpecification)
-admin.site.register(Size)
+admin.site.register(Size, SizeAdmin)
 admin.site.register(ProductAttribute)
 admin.site.register(ProductReview)
 admin.site.register(ProductSale)
