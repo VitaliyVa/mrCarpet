@@ -180,6 +180,16 @@ document.addEventListener("click", async ({ target }) => {
 
   // add to basket
   if (addToBasketButton) {
+    if (addToBasketButton.hidden) {
+      return;
+    }
+
+    const activeSize = product.querySelector(".sizes-block .size-label.active");
+    if (activeSize && activeSize.dataset.inStock === "0") {
+      showError("Цього розміру зараз немає в наявності");
+      return;
+    }
+
     const counterValue = product.querySelector(".counter__value").value;
     const customSizeBlock = product.querySelector(".custom-size-block");
     

@@ -1,0 +1,252 @@
+@import "../../pages/basket/notification.scss";
+
+.cart_item-top {
+  .cart_item_oos {
+    z-index: 2;
+  }
+
+  .cart_item__add-to-cart-btn {
+    z-index: 3;
+  }
+}
+
+.cart_item_oos,
+.product_oos {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(255, 252, 242, 0.42);
+
+  span {
+    display: inline-block;
+    padding: 8px 14px;
+    background: rgba(69, 63, 58, 0.88);
+    color: #fffcf2;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    text-align: center;
+    border-radius: 4px;
+    max-width: 80%;
+  }
+
+  &.is-visible {
+    display: flex;
+  }
+}
+
+.product_slider_main {
+  position: relative;
+
+  .product_oos {
+    z-index: 3;
+    border-radius: 0;
+  }
+}
+
+.size-label--oos {
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.product__option.is-oos {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* .btn-gold { display:flex } перебиває нативний [hidden] */
+.product__btn {
+  .add-to-cart[hidden],
+  .ask-availability[hidden] {
+    display: none !important;
+  }
+
+  .ask-availability.btn-gold {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+}
+
+/* окремий centered popup — не drawer `.modal` (flex row + slide) */
+.stock-inquiry-overlay.modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 56px;
+  overflow: visible;
+
+  @media (max-width: 720px) {
+    padding: 40px 24px;
+  }
+}
+
+.stock-inquiry-modal.modal {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  position: relative;
+  max-width: 440px;
+  width: 100%;
+  height: auto;
+  max-height: calc(100vh - 32px);
+  margin: 0;
+  padding: 32px 28px 28px;
+  background: #fffcf2;
+  border-radius: 12px;
+  /* visible — інакше хрестик за краєм обрізається */
+  overflow: visible;
+  transform: translateY(16px);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+
+  &.active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 720px) {
+    max-width: min(440px, 100%);
+    width: 100%;
+    padding: 28px 20px 24px;
+    transform: translateY(24px);
+
+    &.active {
+      transform: translateY(0);
+    }
+  }
+}
+
+.stock-inquiry-modal {
+  /* login close: половина за верхнім-правим кутом */
+  .modal__close-btn {
+    top: -22px;
+    left: auto;
+    right: -22px;
+    bottom: auto;
+    width: 44px;
+    height: 44px;
+    max-width: 44px;
+    max-height: 44px;
+    padding: 6px;
+    z-index: 5;
+    transform: none;
+
+    img {
+      width: 32px;
+      height: 32px;
+    }
+
+    &:hover {
+      transform: scale(1.08);
+
+      img {
+        transform: none;
+      }
+    }
+
+    &:active {
+      transform: translateY(2px) scale(1.05);
+    }
+
+    @media (max-width: 720px) {
+      top: -18px;
+      right: -10px;
+      width: 40px;
+      height: 40px;
+      max-width: 40px;
+      max-height: 40px;
+      padding: 4px;
+      transform: none;
+
+      img {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+
+  &__title {
+    font-family: "Futura PT Bold", sans-serif;
+    font-size: 24px;
+    line-height: 1.2;
+    color: #453f3a;
+    margin: 0 0 8px;
+    padding-right: 8px;
+    white-space: nowrap;
+
+    @media (max-width: 480px) {
+      white-space: normal;
+      font-size: 22px;
+    }
+  }
+
+  &__hint {
+    display: block;
+    width: 100%;
+    font-size: 14px;
+    line-height: 130%;
+    margin: 0 0 24px;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-height: calc(100vh - 120px);
+    overflow: auto;
+    gap: 14px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 6px;
+
+    span {
+      font-size: 12px;
+      color: #89817c;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input[readonly] {
+      color: #453f3a;
+      opacity: 0.9;
+      cursor: default;
+    }
+  }
+
+  &__error {
+    font-size: 13px;
+    color: #dc3545;
+    margin: 0;
+  }
+
+  &__submit.btn-gold,
+  #stock-inquiry-submit {
+    display: flex;
+    box-sizing: border-box;
+    margin-top: 8px;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 0 0 auto;
+  }
+}

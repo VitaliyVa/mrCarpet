@@ -25,105 +25,64 @@ def profile(request):
 def password_reset_view(request):
     """
     Відображення сторінки відновлення паролю та обробка POST запиту.
+    Після успішного запиту показуємо окремий success-екран (без форми).
     """
-    print("=" * 50)
-    print("[PASSWORD RESET] Запит отримано")
-    print(f"[PASSWORD RESET] Method: {request.method}")
-    
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        print(f"[PASSWORD RESET] Email отримано: {email}")
-        
-        if not email:
-            print("[PASSWORD RESET] Помилка: email порожній")
-            messages.error(request, 'Будь ласка, введіть email адресу')
-            return render(request, 'password_reset.html')
-        
-        try:
-            user = CustomUser.objects.get(email=email)
-            print(f"[PASSWORD RESET] Користувач знайдено: {user.email} (ID: {user.id})")
-        except CustomUser.DoesNotExist:
-            print(f"[PASSWORD RESET] Користувача з email {email} не знайдено")
-            # Не повідомляємо, що користувача не існує (безпека)
-            messages.success(
-                request, 
-                'Якщо користувач з таким email існує, ми надіслали інструкції на пошту'
-            )
-            return render(request, 'password_reset.html')
-        
-        # Генеруємо токен для скидання паролю
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        print(f"[PASSWORD RESET] Токен згенеровано: {token[:20]}...")
-        print(f"[PASSWORD RESET] UID (base64): {uid}")
-        
-        # Формуємо URL для скидання паролю
-        reset_url = request.build_absolute_uri(
-            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    context = {
+        "email_sent": False,
+        "submitted_email": "",
+        "form_error": "",
+    }
+
+    if request.method != "POST":
+        return render(request, "password_reset.html", context)
+
+    email = request.POST.get("email", "").strip()
+    context["submitted_email"] = email
+
+    if not email:
+        context["form_error"] = "Будь ласка, введіть email адресу"
+        return render(request, "password_reset.html", context)
+
+    user = CustomUser.objects.filter(email=email).first()
+
+    # Однаковий success-екран незалежно від існування юзера (безпека)
+    if not user:
+        context["email_sent"] = True
+        return render(request, "password_reset.html", context)
+
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    reset_url = request.build_absolute_uri(
+        reverse("password_reset_confirm", kwargs={"uidb64": uid, "token": token})
+    )
+
+    subject = "Скидання паролю - mr.Carpet"
+    message = (
+        "Вітаємо!\n\n"
+        "Ви отримали цей лист, тому що хтось запросив скидання паролю "
+        "для вашого облікового запису на mr.Carpet.\n\n"
+        "Якщо це були ви, перейдіть за посиланням нижче для встановлення нового паролю:\n"
+        f"{reset_url}\n\n"
+        "Якщо ви не запитували скидання паролю, просто проігноруйте цей лист.\n\n"
+        "З повагою,\n"
+        "Команда mr.Carpet"
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
         )
-        print(f"[PASSWORD RESET] Reset URL: {reset_url}")
-        
-        # Відправляємо email
-        try:
-            print("[PASSWORD RESET] Початок відправки email...")
-            print(f"[PASSWORD RESET] EMAIL_HOST: {settings.EMAIL_HOST}")
-            print(f"[PASSWORD RESET] EMAIL_PORT: {settings.EMAIL_PORT}")
-            print(f"[PASSWORD RESET] EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-            print(f"[PASSWORD RESET] EMAIL_USE_SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}")
-            print(f"[PASSWORD RESET] EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-            print(f"[PASSWORD RESET] DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
-            print(f"[PASSWORD RESET] Recipient: {email}")
-            
-            subject = "Скидання паролю - MrCarpet"
-            message = f"""
-Вітаємо!
+        context["email_sent"] = True
+    except Exception:
+        context["form_error"] = (
+            "Не вдалося надіслати лист. Спробуйте пізніше або зверніться до підтримки."
+        )
 
-Ви отримали цей лист, тому що хтось запросив скидання паролю для вашого облікового запису на MrCarpet.
-
-Якщо це були ви, перейдіть за посиланням нижче для встановлення нового паролю:
-{reset_url}
-
-Якщо ви не запитували скидання паролю, просто проігноруйте цей лист.
-
-З повагою,
-Команда MrCarpet
-"""
-            
-            print(f"[PASSWORD RESET] Subject: {subject}")
-            print(f"[PASSWORD RESET] Message length: {len(message)} символів")
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-            
-            print("[PASSWORD RESET] ✅ Email успішно відправлено!")
-            messages.success(
-                request, 
-                'Інструкції для скидання паролю надіслано на вашу пошту'
-            )
-        except Exception as e:
-            print("=" * 50)
-            print("[PASSWORD RESET] ❌ ПОМИЛКА ПРИ ВІДПРАВЦІ EMAIL")
-            print(f"[PASSWORD RESET] Тип помилки: {type(e).__name__}")
-            print(f"[PASSWORD RESET] Повідомлення: {str(e)}")
-            print("=" * 50)
-            import traceback
-            print("[PASSWORD RESET] Traceback:")
-            traceback.print_exc()
-            print("=" * 50)
-            messages.error(
-                request, 
-                f'Помилка при відправці email: {str(e)}. Спробуйте пізніше або зверніться до підтримки.'
-            )
-    else:
-        print("[PASSWORD RESET] GET запит - показуємо форму")
-    
-    print("=" * 50)
-    return render(request, 'password_reset.html')
+    return render(request, "password_reset.html", context)
 
 
 def password_reset_confirm(request, uidb64, token):

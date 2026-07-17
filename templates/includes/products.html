@@ -1,5 +1,4 @@
-
-
+{% with default_attr=product.get_default_size_attr %}
 
 {% if product.is_new %}
 <div class="cart_item_new color_white small">Новинка</div>
@@ -18,9 +17,18 @@
     </div>
     </a>
 
-    <button class="cart_item__add-to-cart-btn">
+    <div class="cart_item_oos{% if default_attr and not default_attr.in_stock %} is-visible{% endif %}" aria-hidden="true">
+      <span>Немає в наявності</span>
+    </div>
+
+    <button
+      class="cart_item__add-to-cart-btn"
+      type="button"
+      data-action="{% if default_attr and not default_attr.in_stock %}inquire{% else %}cart{% endif %}"
+      title="{% if default_attr and not default_attr.in_stock %}Дізнатись про наявність{% else %}Додати до кошика{% endif %}"
+    >
       <img src="/static/utils/assets/bag.svg" alt="bag"/>
-      </button>
+    </button>
 </div>
 
   <div class="cart_item_price__block">
@@ -32,11 +40,11 @@
       {% endif %}
       {% endfor %}
     >
-      {% if product.product_attr.first.custom_attribute %}
-      <span class="cart_item_price-value">{{ product.product_attr.first.custom_price }}</span>
+      {% if default_attr and default_attr.custom_attribute %}
+      <span class="cart_item_price-value">{{ default_attr.custom_price }}</span>
       <span>грн/м²</span>
-      {% else %}
-      <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
+      {% elif default_attr %}
+      <span class="cart_item_price-value">{{ default_attr.get_total_price }}</span>
       <span>грн</span>
       {% endif %}
     </div>
@@ -48,8 +56,8 @@
       {% endif %}
       {% endfor %}
     >
-      {% if product.product_attr.first.discount %}
-      {{ product.product_attr.first.discount }}%
+      {% if default_attr and default_attr.discount %}
+      {{ default_attr.discount }}%
       {% endif %}
     </div>
     <div
@@ -60,8 +68,8 @@
       {% endif %}
       {% endfor %}
     >
-      {% if product.product_attr.first.discount %}
-      <span class="cart_item_old_price-value">{{product.product_attr.first.price}}</span>
+      {% if default_attr and default_attr.discount %}
+      <span class="cart_item_old_price-value">{{ default_attr.price }}</span>
       <span>грн</span>
       {% endif %}
     </div>
@@ -93,15 +101,17 @@
 <div class="sizes-block cart_item_size__block">
   {% for attr in product.product_attr.all %}
   {% if not attr.custom_attribute %}
-  {% if forloop.first %}
-  <div data-item="{{ attr.id }}" data-novelty="{% if product.is_new %}true{%else%}false{% endif %}" class="size-label active">
+  <div
+    data-item="{{ attr.id }}"
+    data-qty="{{ attr.quantity }}"
+    data-in-stock="{% if attr.in_stock %}1{% else %}0{% endif %}"
+    data-size="{{ attr.size }}"
+    data-novelty="{% if product.is_new %}true{%else%}false{% endif %}"
+    class="size-label{% if default_attr and attr.id == default_attr.id %} active{% endif %}{% if not attr.in_stock %} size-label--oos{% endif %}"
+  >
     {{ attr.size }}
   </div>
-  {% else %}
-  <div data-item="{{ attr.id }}" data-novelty="{% if product.is_new %}true{%else%}false{% endif %}" class="size-label">
-    {{ attr.size }}
-  </div>
-  {% endif %}
   {% endif %}
   {% endfor %}
 </div>
+{% endwith %}

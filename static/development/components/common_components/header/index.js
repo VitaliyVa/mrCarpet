@@ -7,6 +7,7 @@ import "./favorites";
 import "./index.scss";
 import "./authorization.scss";
 import "./contacts-modal.scss";
+import "../../pages/basket/notification.scss";
 
 const headerMain = document.querySelector(".header");
 const header = document.querySelector(".header_bottom_panel__block");

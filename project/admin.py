@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-from .models import ContactRequest, Subscription, SMTPSettings
 
-# Register your models here.
+from .models import ContactRequest, SMTPSettings, StockInquiry, Subscription
+
+
 class SMTPSettingsAdmin(admin.ModelAdmin):
     list_display = ["host", "port", "server_email", "username", "use_tls", "use_ssl"]
     fieldsets = (
@@ -35,24 +36,57 @@ class SMTPSettingsAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return True
-    
+
 
 class ContactRequestAdmin(admin.ModelAdmin):
-    list_display = ['name', 'email', 'text', 'is_processed', 'created']
-    search_fields = ['name', 'email', 'text']
-    list_filter = ['created']
-    date_hierarchy = 'created'
-    ordering = ['-created']
-    readonly_fields = ['created', 'email', 'text', 'name']
-    
+    list_display = ["name", "email", "text", "is_processed", "created"]
+    search_fields = ["name", "email", "text"]
+    list_filter = ["created"]
+    date_hierarchy = "created"
+    ordering = ["-created"]
+    readonly_fields = ["created", "email", "text", "name"]
+
     def has_delete_permission(self, request, obj=None):
         return True
-    
+
     def has_add_permission(self, request, obj=None):
         return False
-    
+
     def has_change_permission(self, request, obj=None):
         return True
+
+
+@admin.register(StockInquiry)
+class StockInquiryAdmin(admin.ModelAdmin):
+    list_display = (
+        "created",
+        "name",
+        "phone",
+        "email",
+        "product_title",
+        "size_label",
+        "is_processed",
+    )
+    list_filter = ("is_processed", "created")
+    search_fields = ("name", "email", "phone", "product_title", "size_label")
+    date_hierarchy = "created"
+    ordering = ("-created",)
+    list_editable = ("is_processed",)
+    readonly_fields = (
+        "created",
+        "updated",
+        "name",
+        "email",
+        "phone",
+        "product",
+        "product_attr",
+        "product_title",
+        "size_label",
+    )
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
 
 
 admin.site.register(SMTPSettings, SMTPSettingsAdmin)

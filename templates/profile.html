@@ -12,6 +12,12 @@
         <div class="profile-modal__container">
           <form
             class="profile-modal__form validation__block"
+            id="profile-edit-form"
+            data-settlement-ref="{{ user.delivery_settlement_ref|default:'' }}"
+            data-warehouse-id="{{ user.delivery_warehouse_id|default:'' }}"
+            data-warehouse-title="{{ user.delivery_warehouse|default:'' }}"
+            data-warehouse-ref="{{ user.delivery_warehouse_ref|default:'' }}"
+            data-delivery-city="{{ user.delivery_city|default:'' }}"
           >
             <div
               class="profile-modal__form-edit-profile profile-modal__form-block"
@@ -31,6 +37,7 @@
                     type="text"
                     data-type="name"
                     placeholder="Ім’я"
+                    value="{{ user.first_name|default:'' }}"
                     required
                   />
                 </div>
@@ -45,6 +52,7 @@
                     type="text"
                     data-type="name"
                     placeholder="Прізвище"
+                    value="{{ user.last_name|default:'' }}"
                   />
                 </div>
 
@@ -58,6 +66,7 @@
                     type="tel"
                     data-type="phone"
                     placeholder="Телефон"
+                    value="{{ user.phone_number|default:'' }}"
                     required
                   />
                 </div>
@@ -72,8 +81,40 @@
                     type="email"
                     data-type="email"
                     placeholder="Емаіл"
+                    value="{{ user.email|default:'' }}"
                     required
                   />
+                </div>
+
+                <div class="profile-modal__form-field profile-modal__form-field--full">
+                  <label class="profile-modal__delivery-label">Доставка Nova Poshta</label>
+                  <div class="nova-post-city-wrapper" style="position: relative; width: 100%;">
+                    <input
+                      id="nova-post-city-input"
+                      class="input-transparent font-size-14"
+                      name="delivery_city"
+                      placeholder="Місто..."
+                      autocomplete="off"
+                      value="{{ user.delivery_city|default:'' }}"
+                    />
+                    <div id="nova-post-city-dropdown" class="nova-post-dropdown" style="display: none;"></div>
+                  </div>
+                </div>
+
+                <div class="profile-modal__form-field profile-modal__form-field--full">
+                  <div class="nova-post-warehouse-wrapper" style="position: relative; width: 100%;">
+                    <select
+                      id="nova-post-warehouse-select"
+                      class="nova-post-warehouse-select"
+                      name="delivery_warehouse"
+                    >
+                      <option value="">Спочатку оберіть місто</option>
+                    </select>
+                    <div class="warehouse-loading" id="warehouse-loading" style="display: none;">
+                      <div class="warehouse-loading-spinner"></div>
+                      <span>Завантаження відділень...</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -154,7 +195,7 @@
         <div class="profile__user-info">
           <div class="profile__user-info-left">
             <p class="profile__user-name">{{ user.first_name }} {{ user.last_name }}</p>
-            <p class="profile__user-phone">{{ user.phone_number }}</p>
+            <p class="profile__user-phone">{% if user.phone_number %}{{ user.phone_number }}{% else %}Редагувати дані{% endif %}</p>
           </div>
           <div class="profile__user-info-right">
             <button

@@ -44,7 +44,7 @@
     </div>
     <div class="catalog_section_bottom cart_item_wrapper">
       {% for product in category.products.all %}
-      <div class="cart_item" data-product-id="{{ product.product_attr.first.id }}">
+      <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
         {% include 'includes/products.html' %}
       </div>
       {% endfor %}

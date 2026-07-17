@@ -231,7 +231,8 @@
       <a href="{{ product.get_absolute_url }}" class="color_gold">{{ product.title }}</a>
     </div>
 
-    <div class="product" data-product-id="{{ product.product_attr.first.id }}" data-product-slug="{{ product.slug }}" {% if ar_ready %}data-ar-ready="1"{% endif %}>
+    {% with default_attr=product.get_default_size_attr %}
+    <div class="product" data-product-id="{{ default_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-slug="{{ product.slug }}" data-product-title="{{ product.title }}" {% if ar_ready %}data-ar-ready="1"{% endif %}>
       <div class="product_slider">
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
@@ -270,6 +271,9 @@
         </div>
 
         <div class="product_slider_main swiper">
+          <div class="product_oos{% if default_attr and not default_attr.in_stock %} is-visible{% endif %}" aria-hidden="true">
+            <span>Немає в наявності</span>
+          </div>
           <div class="swiper-wrapper">
             {% if images %}
             {% for image in images %}
@@ -353,11 +357,11 @@
               {% endif %}
               {% endfor %}
             >
-              {% if product.product_attr.first.custom_attribute %}
-              <span class="cart_item_price-value">{{ product.product_attr.first.custom_price }}</span>
+              {% if default_attr and default_attr.custom_attribute %}
+              <span class="cart_item_price-value">{{ default_attr.custom_price }}</span>
               <span>грн/м²</span>
-              {% else %}
-              <span class="cart_item_price-value">{{ product.product_attr.first.get_total_price }}</span>
+              {% elif default_attr %}
+              <span class="cart_item_price-value">{{ default_attr.get_total_price }}</span>
               <span>грн</span>
               {% endif %}
             </p>
@@ -369,8 +373,8 @@
               {% endif %}
               {% endfor %}
             >
-              {% if product.product_attr.first.discount %}
-              {{ product.product_attr.first.discount }}%
+              {% if default_attr and default_attr.discount %}
+              {{ default_attr.discount }}%
               {% endif %}
             </p>
             <p
@@ -381,8 +385,8 @@
               {% endif %}
               {% endfor %}
             >
-              {% if product.product_attr.first.discount %}
-              <span class="cart_item_old_price-value">{{product.product_attr.first.price}}</span>
+              {% if default_attr and default_attr.discount %}
+              <span class="cart_item_old_price-value">{{ default_attr.price }}</span>
               <span>грн</span>
               {% endif %}
             </p>
@@ -405,15 +409,16 @@
           <div class="sizes-block cart_item_size__block">
             {% for attr in product.product_attr.all %}
             {% if not attr.custom_attribute %}
-            {% if forloop.first %}
-            <div data-item="{{ attr.id }}" data-novelty="true" class="size-label active">
+            <div
+              data-item="{{ attr.id }}"
+              data-qty="{{ attr.quantity }}"
+              data-in-stock="{% if attr.in_stock %}1{% else %}0{% endif %}"
+              data-size="{{ attr.size }}"
+              data-novelty="true"
+              class="size-label{% if default_attr and attr.id == default_attr.id %} active{% endif %}{% if not attr.in_stock %} size-label--oos{% endif %}"
+            >
               {{ attr.size }}
             </div>
-            {% else %}
-            <div data-item="{{ attr.id }}" data-novelty="true" class="size-label">
-              {{ attr.size }}
-            </div>
-            {% endif %}
             {% endif %}
             {% endfor %}
           </div>
@@ -482,7 +487,20 @@
           </div>
 
           <div class="product__btn">
-            <button class="add-to-cart btn-gold">Добавити до кошика</button>
+            <button
+              type="button"
+              class="add-to-cart btn-gold"
+              {% if default_attr and not default_attr.in_stock %}hidden{% endif %}
+            >
+              Добавити до кошика
+            </button>
+            <button
+              type="button"
+              class="ask-availability btn-gold"
+              {% if not default_attr or default_attr.in_stock %}hidden{% endif %}
+            >
+              Дізнатись про наявність
+            </button>
             {% if ar_ready %}
             <button
               type="button"
@@ -731,6 +749,7 @@
         </div>
       </div>
     </div>
+    {% endwith %}
   </div>
 </section>
 
@@ -755,7 +774,9 @@
           {% for related_product in related %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ related_product.product.product_attr.first.id }}"
+            data-product-id="{{ related_product.product.get_default_size_attr.id }}"
+            data-catalog-product-id="{{ related_product.product.id }}"
+            data-product-title="{{ related_product.product.title }}"
           >
             {% include 'includes/products.html' with product=related_product.product %}
           </div>

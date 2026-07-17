@@ -38,6 +38,63 @@ class Subscription(models.Model):
         verbose_name_plural = "Підписані користувачі"
 
 
+class StockInquiry(AbstractCreatedUpdated):
+    """Запит клієнта про наявність розміру, якого немає на складі."""
+
+    name = models.CharField(max_length=115, verbose_name="Ім'я")
+    email = models.EmailField(verbose_name="Email")
+    phone = models.CharField(max_length=64, verbose_name="Телефон")
+    product = models.ForeignKey(
+        to="catalog.Product",
+        verbose_name="Товар",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_inquiries",
+    )
+    product_attr = models.ForeignKey(
+        to="catalog.ProductAttribute",
+        verbose_name="Варіація / розмір",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_inquiries",
+    )
+    product_title = models.CharField(
+        max_length=512,
+        verbose_name="Назва товару",
+        blank=True,
+        default="",
+    )
+    size_label = models.CharField(
+        max_length=128,
+        verbose_name="Розмір",
+        blank=True,
+        default="",
+    )
+    is_processed = models.BooleanField(
+        verbose_name="Оброблено",
+        default=False,
+    )
+
+    class Meta:
+        verbose_name = "Запит наявності"
+        verbose_name_plural = "Запити наявності"
+        ordering = ("-created",)
+
+    def __str__(self):
+        title = self.product_title or (self.product.title if self.product else "—")
+        size = self.size_label or "—"
+        return f"{self.name}: {title} ({size})"
+
+    def save(self, *args, **kwargs):
+        if self.product and not self.product_title:
+            self.product_title = self.product.title
+        if self.product_attr and not self.size_label:
+            self.size_label = str(self.product_attr.size) if self.product_attr.size else ""
+        return super().save(*args, **kwargs)
+
+
 class SMTPSettings(models.Model):
     port = models.IntegerField(verbose_name="Порт")
     host = models.CharField(verbose_name="Хост", max_length=255)

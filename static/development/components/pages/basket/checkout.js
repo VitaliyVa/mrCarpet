@@ -1,5 +1,5 @@
 import { initPromocode, restorePromocode } from "./promocode";
-import { initNovaPost, getNovaPostData } from "./nova-post";
+import { initNovaPost, getNovaPostData, prefillNovaPost } from "./nova-post";
 import { initOrderForm } from "./order-form";
 
 const checkboxItems = document.querySelectorAll(".basket__checkbox-item");
@@ -31,6 +31,20 @@ initOrderForm();
 
 document.addEventListener("DOMContentLoaded", () => {
   restorePromocode();
+
+  const saved = window.__CHECKOUT_USER__;
+  if (saved && typeof saved === "object") {
+    prefillNovaPost({
+      name: saved.name || "",
+      email: saved.email || "",
+      phone: saved.phone || "",
+      city: saved.city || "",
+      settlementRef: saved.settlementRef || "",
+      warehouseId: saved.warehouseId || "",
+      warehouseTitle: saved.warehouseTitle || "",
+      warehouseRef: saved.warehouseRef || "",
+    });
+  }
 });
 
 export { getNovaPostData };

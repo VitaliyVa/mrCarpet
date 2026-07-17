@@ -47,7 +47,9 @@
           {% for product in products %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ product.product_attr.first.id }}"
+            data-product-id="{{ product.get_default_size_attr.id }}"
+            data-catalog-product-id="{{ product.id }}"
+            data-product-title="{{ product.title }}"
           >
             {% include 'includes/products.html' %}
           </div>
@@ -90,7 +92,9 @@
           {% for product in sale_products %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ product.product_attr.first.id }}"
+            data-product-id="{{ product.get_default_size_attr.id }}"
+            data-catalog-product-id="{{ product.id }}"
+            data-product-title="{{ product.title }}"
           >
             {% include 'includes/products.html' %}
           </div>

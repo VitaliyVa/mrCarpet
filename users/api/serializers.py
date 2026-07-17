@@ -33,3 +33,18 @@ class ProfileUpdateSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     password = serializers.CharField(required=False)
     password2 = serializers.CharField(required=False)
+    delivery_city = serializers.CharField(
+        required=False, allow_blank=True, max_length=255
+    )
+    delivery_settlement_ref = serializers.CharField(
+        required=False, allow_blank=True, max_length=64
+    )
+    delivery_warehouse = serializers.CharField(
+        required=False, allow_blank=True, max_length=512
+    )
+    delivery_warehouse_ref = serializers.CharField(
+        required=False, allow_blank=True, max_length=64
+    )
+    delivery_warehouse_id = serializers.CharField(
+        required=False, allow_blank=True, max_length=64
+    )

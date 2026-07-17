@@ -1,0 +1,86 @@
+<div class="modal-overlay stock-inquiry-overlay">
+  <div class="stock-inquiry-modal modal modal__block">
+    <button
+      type="button"
+      class="stock-inquiry-modal__close-btn modal__close-btn modal_close"
+      aria-label="Закрити"
+    >
+      <img src="/static/utils/assets/close.svg" alt="close" />
+    </button>
+    <h3 class="stock-inquiry-modal__title">Дізнатись про наявність</h3>
+    <p class="stock-inquiry-modal__hint color_black_sub">
+      Залиште контакти — менеджер уточнить наявність і зв’яжеться з вами.
+    </p>
+    <form class="stock-inquiry-modal__form" id="stock-inquiry-form" novalidate>
+      <input type="hidden" name="product_id" id="stock-inquiry-product-id" />
+      <input type="hidden" name="product_attr_id" id="stock-inquiry-attr-id" />
+
+      <label class="stock-inquiry-modal__field">
+        <span>Товар</span>
+        <input
+          type="text"
+          id="stock-inquiry-product-title"
+          class="input-transparent"
+          name="product_title"
+          readonly
+        />
+      </label>
+
+      <label class="stock-inquiry-modal__field">
+        <span>Розмір</span>
+        <input
+          type="text"
+          id="stock-inquiry-size"
+          class="input-transparent"
+          name="size_label"
+          readonly
+        />
+      </label>
+
+      <label class="stock-inquiry-modal__field">
+        <span>Ваше ім’я</span>
+        <input
+          type="text"
+          id="stock-inquiry-name"
+          class="input-transparent"
+          name="name"
+          required
+          autocomplete="name"
+          placeholder="Ім’я"
+        />
+      </label>
+
+      <label class="stock-inquiry-modal__field">
+        <span>Телефон</span>
+        <input
+          type="tel"
+          id="stock-inquiry-phone"
+          class="input-transparent"
+          name="phone"
+          required
+          autocomplete="tel"
+          placeholder="+380 XX XXX XX XX"
+        />
+      </label>
+
+      <label class="stock-inquiry-modal__field">
+        <span>Email</span>
+        <input
+          type="email"
+          id="stock-inquiry-email"
+          class="input-transparent"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="you@email.com"
+        />
+      </label>
+
+      <p class="stock-inquiry-modal__error" id="stock-inquiry-error" hidden></p>
+
+      <button type="submit" class="btn-gold stock-inquiry-modal__submit" id="stock-inquiry-submit">
+        Надіслати запит
+      </button>
+    </form>
+  </div>
+</div>

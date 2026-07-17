@@ -179,6 +179,23 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     def get_absolute_url(self):
         return reverse("product", args=(self.slug,))
 
+    def get_size_attrs(self):
+        """Фіксовані розміри (без кастомної варіації), у порядку sort_order."""
+        return self.product_attr.filter(custom_attribute=False)
+
+    def get_default_size_attr(self):
+        """
+        Розмір за замовчуванням: перший у наявності.
+        Якщо всі out of stock — перший у списку (щоб UI не ламався).
+        """
+        attrs = list(self.get_size_attrs())
+        if not attrs:
+            return self.product_attr.filter(custom_attribute=True).first()
+        for attr in attrs:
+            if attr.in_stock:
+                return attr
+        return attrs[0]
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(
@@ -379,6 +396,16 @@ class ProductAttribute(models.Model):
 
     def __str__(self):
         return f"{self.product.title} - {self.size.title if self.size else 'кастомна варіація'}"
+
+    @property
+    def in_stock(self) -> bool:
+        """Чи можна купити цей розмір зараз."""
+        if self.custom_attribute:
+            if self.max_len is None:
+                return False
+            min_len = self.min_len or 0
+            return self.max_len > min_len
+        return (self.quantity or 0) > 0
 
     def get_total_price(self):
         if self.discount:

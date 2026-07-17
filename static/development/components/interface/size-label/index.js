@@ -1,4 +1,5 @@
 import "./index.scss";
+import { syncStockUI } from "../../module/stock_availability";
 
 document.addEventListener("click", ({ target }) => {
   const sizeLabel = target.closest(".size-label");
@@ -22,20 +23,26 @@ document.addEventListener("click", ({ target }) => {
         ".cart_item_old_price-value"
       );
 
-      const newPriceProduct = priceProduct.dataset[`item-${item}`];
-      const newDiscountProduct = discountProduct.dataset[`item-${item}`];
-      const newOldPriceProduct = oldPriceProduct.dataset[`item-${item}`];
+      const newPriceProduct = priceProduct?.dataset[`item-${item}`];
+      const newDiscountProduct = discountProduct?.dataset[`item-${item}`];
+      const newOldPriceProduct = oldPriceProduct?.dataset[`item-${item}`];
 
-      allSizeLabels.forEach((item) => {
-        item.classList.remove("active");
+      allSizeLabels.forEach((el) => {
+        el.classList.remove("active");
       });
 
       sizeLabel.classList.add("active");
 
       product.dataset.productId = item;
-      priceProductValue.textContent = newPriceProduct;
-      discountProduct.textContent = newDiscountProduct;
-      oldPriceProductValue.textContent = newOldPriceProduct;
+      if (priceProductValue && newPriceProduct !== undefined) {
+        priceProductValue.textContent = newPriceProduct;
+      }
+      if (discountProduct) {
+        discountProduct.textContent = newDiscountProduct || "";
+      }
+      if (oldPriceProductValue) {
+        oldPriceProductValue.textContent = newOldPriceProduct || "";
+      }
 
       if (newLabelProduct) {
         if (novelty === "false") {
@@ -43,6 +50,15 @@ document.addEventListener("click", ({ target }) => {
         } else {
           newLabelProduct.classList.remove("disabled");
         }
+      }
+
+      syncStockUI(product);
+
+      const bagBtn = product.querySelector(".cart_item__add-to-cart-btn");
+      if (bagBtn) {
+        const inStock = sizeLabel.dataset.inStock === "1";
+        bagBtn.dataset.action = inStock ? "cart" : "inquire";
+        bagBtn.title = inStock ? "Додати до кошика" : "Дізнатись про наявність";
       }
     }
   }

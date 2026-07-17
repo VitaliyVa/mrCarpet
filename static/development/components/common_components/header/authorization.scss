@@ -29,11 +29,12 @@
 
   &__sign-in-btn {
     max-width: 265px;
+    margin-bottom: 4px;
   }
 
   &__forgot-password-btn {
     max-width: 164px;
-    margin-top: 10px;
+    margin-top: 15px;
     padding: 0 !important;
     color: #89817c;
     line-height: 130%;
@@ -61,7 +62,7 @@
     }
 
     &__forgot-password-btn {
-      margin-top: 22px;
+      margin-top: 27px;
     }
 
     &__create-account-btn {

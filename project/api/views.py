@@ -6,8 +6,12 @@ from rest_framework import status
 from django.utils import timezone
 from catalog.models import PromoCode
 from cart.utils import get_cart
-from .serializers import ContactRequestSerializer, SubscriptionSerializer
-from ..models import ContactRequest, Subscription
+from .serializers import (
+    ContactRequestSerializer,
+    StockInquirySerializer,
+    SubscriptionSerializer,
+)
+from ..models import ContactRequest, SMTPSettings, StockInquiry, Subscription
 from ..smtp_utils import send_smtp_mail_async
 
 
@@ -26,6 +30,56 @@ class ContactRequestCreateView(APIView):
             [from_email.email],
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class StockInquiryCreateView(APIView):
+    """Запит про наявність розміру — зберігаємо в адмінці + лист на shop email."""
+
+    def post(self, request, *args, **kwargs):
+        serializer = StockInquirySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        inquiry = serializer.save()
+
+        try:
+            smtp = SMTPSettings.load()
+            notify_to = smtp.server_email
+        except Exception:
+            notify_to = None
+
+        body = (
+            f"Новий запит про наявність\n\n"
+            f"Ім'я: {inquiry.name}\n"
+            f"Телефон: {inquiry.phone}\n"
+            f"Email: {inquiry.email}\n"
+            f"Товар: {inquiry.product_title}\n"
+            f"Розмір: {inquiry.size_label}\n"
+            f"ID варіації: {inquiry.product_attr_id or '—'}\n"
+        )
+
+        if notify_to:
+            send_smtp_mail_async(
+                f"Запит наявності: {inquiry.product_title} ({inquiry.size_label})",
+                body,
+                [notify_to],
+            )
+
+        # Підтвердження клієнту (не блокує)
+        send_smtp_mail_async(
+            "mr.Carpet — ми отримали ваш запит про наявність",
+            (
+                f"Дякуємо, {inquiry.name}!\n\n"
+                f"Ми отримали запит щодо товару «{inquiry.product_title}», "
+                f"розмір {inquiry.size_label}.\n"
+                f"Менеджер зв’яжеться з вами найближчим часом.\n\n"
+                f"— mr.Carpet"
+            ),
+            [inquiry.email],
+        )
+
+        return Response(
+            {"success": True, "message": "Запит надіслано. Ми скоро з вами зв’яжемось."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class SubscriptionCreateView(CreateAPIView):

@@ -501,6 +501,18 @@
 <script>
     // Передаємо дані з Django в JavaScript
     window.cartProductsCount = {{ cart.cart_products.all|length }};
+    {% if user.is_authenticated %}
+    window.__CHECKOUT_USER__ = {
+      name: "{% if user.first_name %}{{ user.first_name|escapejs }}{% endif %}{% if user.last_name %} {{ user.last_name|escapejs }}{% endif %}".trim(),
+      email: "{{ user.email|default:''|escapejs }}",
+      phone: "{{ user.phone_number|default:''|escapejs }}",
+      city: "{{ user.delivery_city|default:''|escapejs }}",
+      settlementRef: "{{ user.delivery_settlement_ref|default:''|escapejs }}",
+      warehouseId: "{{ user.delivery_warehouse_id|default:''|escapejs }}",
+      warehouseTitle: "{{ user.delivery_warehouse|default:''|escapejs }}",
+      warehouseRef: "{{ user.delivery_warehouse_ref|default:''|escapejs }}"
+    };
+    {% endif %}
 </script>
 <script src="/static/source/pages/basket/index.js"></script>
 {% endblock scripts %}

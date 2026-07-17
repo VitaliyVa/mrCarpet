@@ -148,7 +148,7 @@ function renderSettlements(settlements) {
   cityDropdown.style.display = "block";
 }
 
-async function loadWarehouses(settlementRef) {
+async function loadWarehouses(settlementRef, selectWarehouseId = null) {
   const warehouseWrapper = document.querySelector(".nova-post-warehouse-wrapper");
   const loadingIndicator = document.getElementById("warehouse-loading");
 
@@ -177,7 +177,7 @@ async function loadWarehouses(settlementRef) {
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
-      renderWarehouses(data.results);
+      renderWarehouses(data.results, selectWarehouseId);
     } else if (warehouseChoices) {
       warehouseChoices.clearStore();
       warehouseChoices.setChoices(
@@ -224,24 +224,33 @@ async function loadWarehouses(settlementRef) {
   }
 }
 
-function renderWarehouses(warehouses) {
+function renderWarehouses(warehouses, selectWarehouseId = null) {
   if (!warehouseChoices) {
     return;
   }
+
+  const selectId = selectWarehouseId ? String(selectWarehouseId) : "";
+  let matched = null;
 
   const choices = [
     {
       value: "",
       label: "Оберіть відділення",
       placeholder: true,
-      selected: true,
+      selected: !selectId,
     },
   ];
 
   warehouses.forEach((warehouse) => {
+    const value = String(warehouse.id);
+    const isSelected = Boolean(selectId && value === selectId);
+    if (isSelected) {
+      matched = warehouse;
+    }
     choices.push({
-      value: String(warehouse.id),
+      value,
       label: warehouse.title,
+      selected: isSelected,
       customProperties: {
         title: warehouse.title,
         ref: warehouse.ref,
@@ -253,6 +262,71 @@ function renderWarehouses(warehouses) {
   warehouseChoices.clearStore();
   warehouseChoices.setChoices(choices, "value", "label", true);
   warehouseChoices.enable();
+
+  if (matched) {
+    warehouseChoices.setChoiceByValue(String(matched.id));
+    selectedWarehouse = {
+      id: String(matched.id),
+      title: matched.title,
+      ref: matched.ref,
+    };
+  } else if (selectId) {
+    // збережене відділення вже не в списку — лишаємо текстовий fallback у state
+    selectedWarehouse = {
+      id: selectId,
+      title: selectedWarehouse?.title || "",
+      ref: selectedWarehouse?.ref || "",
+    };
+  }
+}
+
+/**
+ * Автозаповнення з профілю користувача (місто + відділення + контакти).
+ */
+export async function prefillNovaPost(data = {}) {
+  const cityInput = document.getElementById("nova-post-city-input");
+  const nameInput = document.getElementById("nova-post-name");
+  const emailInput = document.getElementById("nova-post-email");
+  const phoneInput = document.getElementById("nova-post-phone");
+
+  if (!cityInput) return;
+
+  if (data.name && nameInput && !nameInput.value.trim()) {
+    nameInput.value = data.name;
+  }
+  if (data.email && emailInput && !emailInput.value.trim()) {
+    emailInput.value = data.email;
+  }
+  if (data.phone && phoneInput) {
+    if (phoneMask) {
+      phoneMask.value = data.phone;
+    } else if (!phoneInput.value.trim()) {
+      phoneInput.value = data.phone;
+    }
+  }
+
+  const city = (data.city || "").trim();
+  const settlementRef = (data.settlementRef || "").trim();
+  if (!city) return;
+
+  cityInput.value = city;
+  selectedSettlement = {
+    id: null,
+    ref: settlementRef,
+    title: city,
+  };
+
+  if (data.warehouseTitle || data.warehouseRef || data.warehouseId) {
+    selectedWarehouse = {
+      id: data.warehouseId ? String(data.warehouseId) : "",
+      title: data.warehouseTitle || "",
+      ref: data.warehouseRef || "",
+    };
+  }
+
+  if (settlementRef) {
+    await loadWarehouses(settlementRef, data.warehouseId || null);
+  }
 }
 
 export function getNovaPostData() {

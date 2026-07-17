@@ -16,6 +16,22 @@ class CustomUser(AbstractUser):
     phone_number = models.CharField(
         validators=[phone_regex], max_length=17, blank=True, null=True, unique=True
     )
+    # Збережена адреса НП для автозаповнення в чекауті
+    delivery_city = models.CharField(
+        max_length=255, blank=True, default="", verbose_name="Місто доставки"
+    )
+    delivery_settlement_ref = models.CharField(
+        max_length=64, blank=True, default="", verbose_name="Ref міста НП"
+    )
+    delivery_warehouse = models.CharField(
+        max_length=512, blank=True, default="", verbose_name="Відділення НП"
+    )
+    delivery_warehouse_ref = models.CharField(
+        max_length=64, blank=True, default="", verbose_name="Ref відділення НП"
+    )
+    delivery_warehouse_id = models.CharField(
+        max_length=64, blank=True, default="", verbose_name="ID відділення НП"
+    )
 
     objects = CustomUserManager()
 

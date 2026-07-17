@@ -103,6 +103,9 @@
   }
 
   &__submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 52px;
     font-size: 16px;
@@ -113,6 +116,8 @@
     transition: all 0.3s ease;
     text-transform: none;
     letter-spacing: 0.3px;
+    text-decoration: none;
+    box-sizing: border-box;
 
     &:hover {
       transform: translateY(-2px);
@@ -126,6 +131,87 @@
     @media (max-width: 768px) {
       height: 48px;
       font-size: 15px;
+    }
+  }
+
+  &__container--done {
+    text-align: center;
+  }
+
+  &__done {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__done-icon {
+    margin-bottom: 20px;
+
+    svg {
+      display: block;
+    }
+  }
+
+  &__email {
+    display: inline-block;
+    margin: 0 4px;
+    color: #a46c46;
+    font-weight: 600;
+    word-break: break-all;
+  }
+
+  &__done-tips {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    width: 100%;
+    text-align: left;
+    background: #fffcf2;
+    border: 1px solid #efe6dc;
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #666666;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #a46c46;
+      }
+    }
+  }
+
+  &__done-actions {
+    width: 100%;
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__secondary-link {
+    font-size: 14px;
+    color: #89817c;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #a46c46;
     }
   }
 
@@ -210,27 +296,16 @@
   }
 }
 
-// Success message (optional, for backend)
-.password-reset__success {
-  text-align: center;
-  padding: 20px;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 8px;
-  color: #155724;
-  margin-bottom: 24px;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-// Error message (optional, for backend)
 .password-reset__error {
   text-align: center;
-  padding: 20px;
+  padding: 14px 16px;
   background: #f8d7da;
   border: 1px solid #f5c6cb;
   border-radius: 8px;
   color: #721c24;
   margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.4;
   animation: fadeInUp 0.5s ease-out;
 }
 

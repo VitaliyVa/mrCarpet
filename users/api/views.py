@@ -88,6 +88,18 @@ class UserViewSet(ViewSet):
             user.last_name = last_name
         if phone_number:
             user.phone_number = phone_number
+
+        delivery_fields = (
+            "delivery_city",
+            "delivery_settlement_ref",
+            "delivery_warehouse",
+            "delivery_warehouse_ref",
+            "delivery_warehouse_id",
+        )
+        for field in delivery_fields:
+            if field in serializer.validated_data:
+                setattr(user, field, serializer.validated_data.get(field) or "")
+
         user.save()
         return Response(
             {"message": "Дані успішно змінені!"},
