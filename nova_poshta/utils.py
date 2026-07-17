@@ -21,27 +21,39 @@ def get_api_key():
 
 
 def get_full_response(model: str, method: str, properties: dict = None):
+    """Paginate NP API until an empty page (Limit=150 per page)."""
     result = {"data": []}
     if not properties:
         properties = {}
+    props = dict(properties)
+    props.setdefault("Limit", "150")
+    props["Page"] = "1"
     data = {
         "apiKey": get_api_key(),
         "modelName": model,
         "calledMethod": method,
-        "methodProperties": properties,
+        "methodProperties": props,
     }
-    data["methodProperties"]["Page"] = 1
+    page = 1
     while True:
+        data["methodProperties"]["Page"] = str(page)
         try:
-            response = requests.post(url, json=data).json()
-            for obj in response["data"]:
-                result["data"].append(obj)
-            if not response["data"]:
-                break
-            data["methodProperties"]["Page"] += 1
-            print(data["methodProperties"]["Page"])
+            response = requests.post(url, json=data, timeout=120).json()
         except requests.exceptions.Timeout:
             continue
+        errors = response.get("errors") or []
+        if errors:
+            raise RuntimeError(f"NP {method} page={page} errors: {errors}")
+        chunk = response.get("data") or []
+        if not chunk:
+            break
+        result["data"].extend(chunk)
+        if page == 1 or page % 10 == 0:
+            print(f"NP {method}: page={page} total={len(result['data'])}")
+        page += 1
+        # safety: NP cities/warehouses are large but finite
+        if page > 5000:
+            raise RuntimeError(f"NP {method}: pagination exceeded 5000 pages")
     return result
 
 

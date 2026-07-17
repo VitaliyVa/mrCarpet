@@ -252,5 +252,15 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "nova_poshta.api": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "nova_poshta.sync": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
