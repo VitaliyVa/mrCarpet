@@ -27,29 +27,6 @@
         el.style.color = isError ? '#ba2121' : '#417690';
     }
 
-    function clearLogs() {
-        var box = document.getElementById('seo-generate-logs');
-        var content = document.getElementById('seo-generate-logs-content');
-        if (content) content.innerHTML = '';
-        if (box) box.hidden = true;
-    }
-
-    function appendLogs(logs) {
-        var box = document.getElementById('seo-generate-logs');
-        var content = document.getElementById('seo-generate-logs-content');
-        if (!box || !content || !logs || !logs.length) return;
-
-        logs.forEach(function (entry) {
-            var line = document.createElement('div');
-            var level = (entry && entry.level) || 'info';
-            line.className = 'replicate-log-line replicate-log-' + level;
-            line.textContent = (entry && entry.text) || String(entry);
-            content.appendChild(line);
-        });
-        box.hidden = false;
-        content.scrollTop = content.scrollHeight;
-    }
-
     function applyFields(data) {
         var metaTitle = field('meta_title');
         var metaDesc = field('meta_description');
@@ -100,7 +77,6 @@
             }
 
             btn.disabled = true;
-            clearLogs();
             setStatus(statusEl, 'Генерація… (gpt-4o-mini)', false);
 
             var body = new FormData();
@@ -118,7 +94,6 @@
                     });
                 })
                 .then(function (result) {
-                    appendLogs(result.data && result.data.logs);
                     if (!result.ok || !result.data.success) {
                         var err =
                             (result.data && result.data.error) || 'Помилка генерації';
@@ -128,7 +103,7 @@
                     }
                     var applied = applyFields(result.data);
                     if (!applied) {
-                        setStatus(statusEl, 'Скасовано (логи вище)', false);
+                        setStatus(statusEl, 'Скасовано', false);
                         btn.disabled = false;
                         return;
                     }

@@ -18,3 +18,11 @@ def generate_ar_texture_task(self, product_id: int):
         return {"success": False, "product_id": product_id, "error": str(exc)}
     except Exception as exc:
         return {"success": False, "product_id": product_id, "error": str(exc)}
+
+
+@shared_task(bind=True, max_retries=0, soft_time_limit=3600, time_limit=3900)
+def generate_seo_batch_task(self, product_ids: list[int]):
+    """One task, sequential loop — never fan-out N parallel Replicate calls."""
+    from catalog.services.seo_generate import generate_seo_for_products
+
+    return generate_seo_for_products(list(product_ids or []))

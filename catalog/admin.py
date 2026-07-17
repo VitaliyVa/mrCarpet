@@ -32,7 +32,7 @@ from catalog.services.product_attr_sort import (
     ordered_size_queryset,
     reorder_product_attributes,
 )
-from catalog.tasks import generate_ar_texture_task
+from catalog.tasks import generate_ar_texture_task, generate_seo_batch_task
 from .models import (
     Product,
     ProductCategory,
@@ -192,6 +192,7 @@ class ProductAdmin(admin.ModelAdmin):
         'ungroup_color_variants_action',
         'duplicate_product_action',
         'generate_ar_texture_action',
+        'generate_seo_action',
     ]
     readonly_fields = ['ar_status', 'ar_error', 'ar_updated_at', 'ar_texture_preview']
     fieldsets = (
@@ -206,9 +207,6 @@ class ProductAdmin(admin.ModelAdmin):
                 '<span id="seo-generate-status" style="margin-left:10px;"></span>'
                 '<br><small>Бере каталожне фото + розміри/характеристики товару. '
                 'Якщо Description порожній — також згенерує короткий опис для PDP.</small>'
-                '<div id="seo-generate-logs" class="seo-generate-logs" hidden>'
-                '<div id="seo-generate-logs-content" class="replicate-logs-content"></div>'
-                '</div>'
             ),
         }),
         ('Зображення та категорії', {
@@ -785,27 +783,66 @@ class ProductAdmin(admin.ModelAdmin):
                     'fill_description': result.fill_description,
                     'model': result.model,
                     'duration_sec': result.duration_sec,
-                    'logs': result.logs,
                 }
             )
         except SeoGenerationError as exc:
-            return JsonResponse(
-                {
-                    'success': False,
-                    'error': str(exc),
-                    'logs': getattr(exc, 'logs', []) or [],
-                },
-                status=502,
-            )
+            return JsonResponse({'success': False, 'error': str(exc)}, status=502)
         except Exception as exc:
             return JsonResponse(
-                {
-                    'success': False,
-                    'error': f'Помилка SEO-генерації: {exc}',
-                    'logs': [],
-                },
+                {'success': False, 'error': f'Помилка SEO-генерації: {exc}'},
                 status=500,
             )
+
+    @admin.action(description='Згенерувати SEO-описи для вибраних')
+    def generate_seo_action(self, request, queryset):
+        """
+        Ставить у чергу ОДИН Celery-батч (цикл по 1 товару).
+        Якщо broker недоступний — синхронний цикл у цьому запиті.
+        """
+        from catalog.services.seo_generate import generate_seo_for_products
+
+        product_ids = []
+        skipped_no_image = 0
+        for product in queryset:
+            if not product.image:
+                skipped_no_image += 1
+                continue
+            product_ids.append(product.pk)
+
+        if not product_ids:
+            self.message_user(
+                request,
+                'Немає товарів з каталожним фото для SEO-генерації.',
+                level='warning',
+            )
+            return
+
+        try:
+            generate_seo_batch_task.delay(product_ids)
+            msg = (
+                f'SEO-генерацію поставлено в чергу для {len(product_ids)} товар(ів) '
+                f'(послідовно, по 1 запиту до Replicate).'
+            )
+            if skipped_no_image:
+                msg += f' Без фото пропущено: {skipped_no_image}.'
+            self.message_user(request, msg, level='success')
+            return
+        except Exception:
+            pass
+
+        # Celery broker may be unavailable — sequential sync fallback
+        summary = generate_seo_for_products(product_ids)
+        parts = [
+            f'готово: {summary["ok_count"]}',
+            f'помилки: {summary["failed_count"]}',
+            f'пропущено: {summary["skipped_count"] + skipped_no_image}',
+        ]
+        level = 'success' if summary['ok_count'] else 'warning'
+        self.message_user(
+            request,
+            'SEO синхронно (Celery недоступний): ' + ', '.join(parts) + '.',
+            level=level,
+        )
 
     @admin.action(description='Згенерувати AR-текстуру для вибраних')
     def generate_ar_texture_action(self, request, queryset):

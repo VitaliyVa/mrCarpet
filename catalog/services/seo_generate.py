@@ -22,6 +22,7 @@ logger = logging.getLogger("catalog.seo_generate")
 MODEL = "openai/gpt-4o-mini"
 PREDICTION_TIMEOUT_SEC = 120
 POLL_INTERVAL_SEC = 2
+BATCH_PAUSE_SEC = 0.75
 
 SYSTEM_PROMPT = """Ти SEO-копірайтер українського інтернет-магазину килимів mr.Carpet (Магазин Меблі Килими).
 
@@ -31,42 +32,32 @@ SYSTEM_PROMPT = """Ти SEO-копірайтер українського інт
 - Пиши природною українською, без keyword soup і без води.
 - Не вигадуй матеріал, країну, склад, бренд виробника, якщо цього немає в PRODUCT DATA.
 - З фото можна брати: колір, орнамент/стиль, візуальну форму (круглий/прямокутний тощо), загальне враження.
-- meta_title: до ~60 символів, БЕЗ суфікса «| mr.Carpet» і без слова «купити» на початку.
-- meta_description: 145–160 символів, як коротка відповідь на інтент покупця (що це, для кого/куди, доставка по Україні — якщо доречно).
-- meta_keys: 5–8 слів/фраз через кому, опційно; можна порожній рядок.
-- description: 1–2 короткі речення для картки товару (PDP). Лише щоб зрозуміти, що за килим. Без характеристик «на око», без довгих списків переваг.
-- Відповідь СТРОГО одним JSON-об'єктом без markdown і без коментарів:
+- Використовуй specs/categories/size з PRODUCT DATA, якщо вони є (форма, склад, виробник, «в дитячу» тощо).
+
+meta_title:
+- 45–60 символів.
+- НЕ копіюй title 1-в-1. Зроби SEO-варіант: товар + 1–2 атрибути (форма/колір/кімната/мотив з фото).
+- БЕЗ суфікса «| mr.Carpet», БЕЗ «купити» на початку.
+
+meta_description:
+- ОБОВ'ЯЗКОВО 145–160 символів (порахуй). Якщо коротше 145 — ДОПИШИ до діапазону.
+- Структура: що за килим → для кого/куди → 1 факт зі specs (склад/виробник/розмір) → доставка по Україні.
+- Без keyword soup.
+
+meta_keys:
+- 5–8 слів/фраз через кому; можна порожній рядок.
+
+description (PDP):
+- 1–2 короткі речення. Лише щоб зрозуміти, що за килим.
+- Без характеристик «на око», без довгих списків переваг, без ціни.
+
+Відповідь СТРОГО одним JSON-об'єктом без markdown і без коментарів:
 {"meta_title":"...","meta_description":"...","meta_keys":"...","description":"..."}
 """
 
 
 class SeoGenerationError(Exception):
     """Replicate / validation error for SEO generation."""
-
-    def __init__(self, message: str, logs: list[dict] | None = None):
-        super().__init__(message)
-        self.logs = logs or []
-
-
-class SeoJobLog:
-    def __init__(self):
-        self.entries: list[dict] = []
-
-    def _add(self, level: str, message: str) -> None:
-        self.entries.append({"level": level, "text": message})
-        if level == "error":
-            logger.error(message)
-        else:
-            logger.info(message)
-
-    def info(self, message: str) -> None:
-        self._add("info", message)
-
-    def ok(self, message: str) -> None:
-        self._add("ok", message)
-
-    def error(self, message: str) -> None:
-        self._add("error", message)
 
 
 @dataclass(frozen=True)
@@ -79,7 +70,6 @@ class SeoGenerationResult:
     duration_sec: float
     fill_description: bool
     raw_text: str
-    logs: list[dict]
 
 
 def collect_product_context(product: Product) -> dict[str, Any]:
@@ -174,7 +164,10 @@ def build_user_prompt(context: dict[str, Any]) -> str:
         "PRODUCT DATA (JSON):\n"
         f"{payload}\n\n"
         f"{desc_note}\n"
-        "На фото — саме цей килим. Згенеруй JSON."
+        "На фото — саме цей килим.\n"
+        "Перевір довжину meta_description: має бути 145–160 символів.\n"
+        "meta_title не копіюй з title один-в-один.\n"
+        "Згенеруй JSON."
     )
 
 
@@ -223,7 +216,6 @@ def parse_seo_payload(data: dict[str, Any], *, fill_description: bool) -> dict[s
     if fill_description and not description:
         raise SeoGenerationError("Модель не повернула description")
 
-    # Strip brand suffix if model ignored instructions
     for suffix in (" | mr.Carpet", " | mr.carpet", " — mr.Carpet", " - mr.Carpet"):
         if meta_title.endswith(suffix):
             meta_title = meta_title[: -len(suffix)].strip()
@@ -249,6 +241,65 @@ def resolve_product_image_bytes(product: Product) -> tuple[bytes, str]:
     return path.read_bytes(), name
 
 
+def apply_seo_to_product(product: Product, result: SeoGenerationResult) -> list[str]:
+    """Persist SEO fields; description only when empty. Returns updated field names."""
+    update_fields = ["meta_title", "meta_description", "meta_keys"]
+    product.meta_title = result.meta_title
+    product.meta_description = result.meta_description
+    product.meta_keys = result.meta_keys
+    if result.fill_description and not (product.description or "").strip():
+        product.description = result.description
+        update_fields.append("description")
+    product.save(update_fields=update_fields)
+    return update_fields
+
+
+def generate_seo_for_products(product_ids: list[int]) -> dict[str, Any]:
+    """
+    Sequential batch: one Replicate call at a time (no parallel flood).
+    Continues on per-product errors.
+    """
+    ok: list[int] = []
+    failed: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+
+    service = ReplicateSeoService()
+    total = len(product_ids)
+
+    for index, product_id in enumerate(product_ids, start=1):
+        try:
+            product = Product.admin_objects.get(pk=int(product_id))
+        except (Product.DoesNotExist, TypeError, ValueError):
+            skipped.append({"product_id": product_id, "error": "not found"})
+            continue
+
+        if not product.image:
+            skipped.append({"product_id": product.pk, "error": "no image"})
+            continue
+
+        try:
+            logger.info("SEO batch %s/%s: product #%s", index, total, product.pk)
+            result = service.generate_for_product(product)
+            apply_seo_to_product(product, result)
+            ok.append(product.pk)
+        except Exception as exc:
+            logger.exception("SEO batch failed for product #%s", product.pk)
+            failed.append({"product_id": product.pk, "error": str(exc)[:500]})
+
+        if index < total:
+            time.sleep(BATCH_PAUSE_SEC)
+
+    return {
+        "success": True,
+        "ok": ok,
+        "failed": failed,
+        "skipped": skipped,
+        "ok_count": len(ok),
+        "failed_count": len(failed),
+        "skipped_count": len(skipped),
+    }
+
+
 class ReplicateSeoService:
     def __init__(self):
         token = settings.REPLICATE_API_TOKEN
@@ -257,71 +308,25 @@ class ReplicateSeoService:
                 "REPLICATE_API_TOKEN не налаштовано. Додайте токен у .env"
             )
         self.client = replicate.Client(api_token=token)
-        self.job_log = SeoJobLog()
 
     def generate_for_product(self, product: Product) -> SeoGenerationResult:
-        self.job_log.info(f"Товар #{product.pk} «{product.title}»")
-        self.job_log.info(f"Модель: {MODEL}")
-
         context = collect_product_context(product)
         fill_description = bool(context["need_description"])
-        self.job_log.info(
-            "Контекст: "
-            f"categories={context.get('categories')}, "
-            f"primary_size={context.get('primary_size')!r}, "
-            f"sizes={len(context.get('sizes') or [])}, "
-            f"specs={len(context.get('specifications') or [])}, "
-            f"active_color={context.get('active_color')!r}, "
-            f"color_variants={len(context.get('color_variants') or [])}, "
-            f"need_description={fill_description}"
-        )
-        self.job_log.info(
-            "PRODUCT DATA JSON:\n"
-            + json.dumps(context, ensure_ascii=False, indent=2)
-        )
-
-        try:
-            image_bytes, image_name = resolve_product_image_bytes(product)
-        except SeoGenerationError as exc:
-            self.job_log.error(str(exc))
-            raise SeoGenerationError(str(exc), logs=self.job_log.entries) from exc
-
-        self.job_log.info(
-            f"Фото: {image_name} ({len(image_bytes)} bytes, "
-            f"path={getattr(product.image, 'name', '')})"
-        )
-
+        image_bytes, image_name = resolve_product_image_bytes(product)
         prompt = build_user_prompt(context)
-        self.job_log.info(f"User prompt ({len(prompt)} chars):\n{prompt}")
-        self.job_log.info(
-            f"System prompt ({len(SYSTEM_PROMPT)} chars) — SEO rules + JSON schema"
-        )
 
         started = time.monotonic()
-        try:
-            raw_text = self._run(image_bytes, image_name, prompt)
-        except SeoGenerationError as exc:
-            self.job_log.error(str(exc))
-            raise SeoGenerationError(str(exc), logs=self.job_log.entries) from exc
-
-        self.job_log.info(f"Raw model output ({len(raw_text)} chars):\n{raw_text}")
-
-        try:
-            data = _extract_json_object(raw_text)
-            fields = parse_seo_payload(data, fill_description=fill_description)
-        except SeoGenerationError as exc:
-            self.job_log.error(str(exc))
-            raise SeoGenerationError(str(exc), logs=self.job_log.entries) from exc
-
+        raw_text = self._run(image_bytes, image_name, prompt)
+        data = _extract_json_object(raw_text)
+        fields = parse_seo_payload(data, fill_description=fill_description)
         duration = round(time.monotonic() - started, 1)
-        self.job_log.ok(
-            f"Parsed: title={fields['meta_title']!r} "
-            f"({len(fields['meta_title'])} chars); "
-            f"meta_desc={len(fields['meta_description'])} chars; "
-            f"keys={fields['meta_keys']!r}; "
-            f"description={fields['description']!r}; "
-            f"fill_description={fill_description}; "
-            f"{duration}s"
+
+        logger.info(
+            "SEO ok product #%s title_len=%s desc_len=%s (%.1fs)",
+            product.pk,
+            len(fields["meta_title"]),
+            len(fields["meta_description"]),
+            duration,
         )
 
         return SeoGenerationResult(
@@ -333,14 +338,12 @@ class ReplicateSeoService:
             duration_sec=duration,
             fill_description=fill_description,
             raw_text=raw_text,
-            logs=list(self.job_log.entries),
         )
 
     def _run(self, image_bytes: bytes, image_name: str, prompt: str) -> str:
         file_obj = io.BytesIO(image_bytes)
         file_obj.name = image_name
 
-        self.job_log.info("Відправляю prediction на Replicate…")
         prediction = self.client.predictions.create(
             model=MODEL,
             input={
@@ -351,10 +354,8 @@ class ReplicateSeoService:
                 "max_completion_tokens": 700,
             },
         )
-        self.job_log.info(f"prediction id={prediction.id}, status={prediction.status}")
-        logger.info("SEO: prediction id=%s", prediction.id)
+        logger.info("SEO prediction id=%s", prediction.id)
         prediction = self._poll(prediction)
-        self.job_log.info(f"prediction finished: status={prediction.status}")
 
         if prediction.status != "succeeded":
             error = prediction.error or "Невідома помилка Replicate"
@@ -370,13 +371,9 @@ class ReplicateSeoService:
 
     def _poll(self, prediction):
         deadline = time.monotonic() + PREDICTION_TIMEOUT_SEC
-        last_status = prediction.status
         while prediction.status in ("starting", "processing"):
             if time.monotonic() > deadline:
                 raise SeoGenerationError("Таймаут очікування Replicate")
             time.sleep(POLL_INTERVAL_SEC)
             prediction.reload()
-            if prediction.status != last_status:
-                self.job_log.info(f"poll… status={prediction.status}")
-                last_status = prediction.status
         return prediction

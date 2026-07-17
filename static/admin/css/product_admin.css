@@ -354,23 +354,6 @@ html[data-theme="dark"] .replicate-generate-block {
     font-weight: 600;
 }
 
-.seo-generate-logs {
-    margin-top: 10px;
-    max-height: 320px;
-    overflow: hidden;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 4px;
-    background: var(--darkened-bg, #f8f8f8);
-    padding: 8px 10px;
-}
-
-.seo-generate-logs .replicate-logs-content {
-    max-height: 300px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-
 /* ProductImage inline sort order */
 #images-group .field-sort_order input {
     width: 4em;

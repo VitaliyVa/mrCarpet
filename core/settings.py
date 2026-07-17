@@ -233,5 +233,10 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "catalog.seo_generate": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
