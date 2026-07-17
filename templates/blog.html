@@ -24,12 +24,14 @@
             {% for article in articles %}
             <a href="{% url 'article' article.slug %}" class="blog_item">
                 <div class="blog_item_img">
-                    <img src="{{ article.image.url }}" alt="" />
+                    {% if article.image %}
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" />
+                    {% endif %}
                 </div>
                 <div class="blog_item_info">
-                    <h4 class="blog_item_title">{{ article.title }}</h4>
+                    <h2 class="blog_item_title">{{ article.title }}</h2>
                     <p class="blog_item_text">
-                        {{ article.description }}
+                        {{ article.meta_description|default:article.description|striptags|truncatechars:160 }}
                     </p>
                 </div>
             </a>

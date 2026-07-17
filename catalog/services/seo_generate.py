@@ -16,6 +16,7 @@ from django.conf import settings
 
 from catalog.models import Product
 from catalog.services.scene_size import get_first_product_size_label
+from project.replicate_utils import extract_json_object
 
 logger = logging.getLogger("catalog.seo_generate")
 
@@ -172,28 +173,7 @@ def build_user_prompt(context: dict[str, Any]) -> str:
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
-    raw = (text or "").strip()
-    if not raw:
-        raise SeoGenerationError("Порожня відповідь моделі")
-
-    fence = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", raw, re.I)
-    if fence:
-        raw = fence.group(1).strip()
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        match = re.search(r"\{[\s\S]*\}", raw)
-        if not match:
-            raise SeoGenerationError("Не вдалося розпарсити JSON з відповіді моделі")
-        try:
-            data = json.loads(match.group(0))
-        except json.JSONDecodeError as exc:
-            raise SeoGenerationError("Невалідний JSON у відповіді моделі") from exc
-
-    if not isinstance(data, dict):
-        raise SeoGenerationError("Очікувався JSON-об'єкт")
-    return data
+    return extract_json_object(text, error_cls=SeoGenerationError)
 
 
 def _clean_field(value: Any, *, max_len: int | None = None) -> str:

@@ -19,6 +19,11 @@ from .utils import get_available_filters, get_filter_counts
 
 # Create your views here.
 def catalog_detail(request, slug):
+    from django.urls import reverse
+
+    from project.seo_content import get_seo_guides
+    from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
+
     categorie = ProductCategory.objects.get(slug=slug)
     base_products = categorie.products.all()
     products = base_products
@@ -74,14 +79,23 @@ def catalog_detail(request, slug):
     except EmptyPage:
         products = paginator.page(paginator.num_pages)
     
+    from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
+
+    crumbs = [
+        ("Головна", "/"),
+        ("Каталог", reverse("catalog")),
+        (categorie.title, categorie.get_absolute_url()),
+    ]
     return render(
         request,
         "catalog_inside.html",
         {
-            "categorie": categorie, 
-            "products": products, 
+            "categorie": categorie,
+            "products": products,
             "available_filters": available_filters,
             "current_filters": request.GET,
+            "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
+            "seo_guides": get_seo_guides(),
         },
     )
 
@@ -131,6 +145,11 @@ def _apply_product_sort(products, sort_param):
 
 def all_collection(request):
     """Сторінка «Вся колекція» — усі товари з фільтрами (без прив'язки до категорії)."""
+    from django.urls import reverse
+
+    from project.seo_content import get_seo_guides
+    from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
+
     base_products = Product.objects.all()
 
     # Сортування
@@ -166,6 +185,16 @@ def all_collection(request):
             "products": products,
             "available_filters": available_filters,
             "current_filters": request.GET,
+            "seo_guides": get_seo_guides(),
+            "breadcrumb_jsonld": dumps_jsonld(
+                breadcrumb_graph(
+                    request,
+                    [
+                        ("Головна", "/"),
+                        ("Вся колекція", reverse("all_collection")),
+                    ],
+                )
+            ),
         },
     )
 
@@ -337,17 +366,39 @@ def favourites(request):
 
 
 def product(request, slug):
+    from django.urls import reverse
+
+    from project.seo_content import get_seo_guides, product_tldr
+    from project.seo_jsonld import (
+        breadcrumb_graph,
+        dumps_jsonld,
+        product_graph,
+    )
+
     product = Product.objects.get(slug=slug)
     images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
-    return render(
-        request,
-        "product.html",
-        {
-            "product": product,
-            "images": images,
-            "ar_ready": product.ar_status == Product.AR_STATUS_READY and bool(product.ar_texture),
-        },
-    )
+
+    category = product.categories.first()
+    crumbs = [("Головна", "/")]
+    if category:
+        crumbs.append((category.title, category.get_absolute_url()))
+    else:
+        crumbs.append(("Каталог", reverse("catalog")))
+    crumbs.append((product.title, product.get_absolute_url()))
+
+    product_ld = product_graph(request, product, images=images)
+    context = {
+        "product": product,
+        "images": images,
+        "ar_ready": product.ar_status == Product.AR_STATUS_READY
+        and bool(product.ar_texture),
+        "product_tldr": product_tldr(product),
+        "seo_guides": get_seo_guides(),
+        "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
+    }
+    if product_ld:
+        context["product_jsonld"] = dumps_jsonld(product_ld)
+    return render(request, "product.html", context)
 
 
 def product_ar_glb(request, slug):

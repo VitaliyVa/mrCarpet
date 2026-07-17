@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
+
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
 from cart.utils import get_cart
+from project.seo_jsonld import FAQ_ITEMS, dumps_jsonld, faq_graph
 
 # Create your views here.
 def index(request):
@@ -51,7 +53,14 @@ def delivery(request):
 
 
 def faq(request):
-    return render(request, 'faq.html')
+    return render(
+        request,
+        "faq.html",
+        {
+            "faq_items": FAQ_ITEMS,
+            "faq_jsonld": dumps_jsonld(faq_graph(FAQ_ITEMS)),
+        },
+    )
 
 
 def refund_page(request):
@@ -95,6 +104,7 @@ def robots_txt(request):
     # ASCII-only body: robots.txt + Windows text/plain без charset легко ламає кирилицю
     robots_content = (
         "# DEV: site under development -- full disallow\n"
+        "# Sitemap is available at /sitemap.xml for testing, but Disallow blocks crawlers\n"
         "# Go-live: replace with prod rules from docs/seo-ai-search-roadmap.md (Phase 8)\n"
         "User-agent: *\n"
         "Disallow: /\n"

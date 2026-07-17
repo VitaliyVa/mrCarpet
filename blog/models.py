@@ -1,7 +1,8 @@
 from django.db import models
+from django.urls import reverse
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
 
-# Create your models here.
+
 class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     description = models.TextField(
         verbose_name='Description', blank=True, null=True
@@ -15,7 +16,10 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
 
     def __str__(self):
         return self.title
-    
+
+    def get_absolute_url(self):
+        return reverse('article', kwargs={'slug': self.slug})
+
     class Meta:
         verbose_name = "Стаття блогу"
         verbose_name_plural = "Статті блогу"

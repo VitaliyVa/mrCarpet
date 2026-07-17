@@ -88,7 +88,7 @@
     </div>
   </div>
   <div class="cart_item_title small color_black">
-    {{ product.title }}
+    <a href="{{ product.get_absolute_url }}">{{ product.title }}</a>
   </div>
 <div class="sizes-block cart_item_size__block">
   {% for attr in product.product_attr.all %}

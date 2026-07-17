@@ -8,6 +8,16 @@
 />
 {% if categorie and categorie.meta_keys %}<meta name="keywords" content="{{ categorie.meta_keys }}" />{% endif %}
 {% endblock meta %}
+{% block canonical %}{% if categorie %}{{ request.scheme }}://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
+{% block og_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
+{% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet. Доставка по Україні.{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
+{% block og_url %}{% if categorie %}{{ request.scheme }}://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock og_url %}
+{% block twitter_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet.{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
+{% block structured_data %}
+{{ block.super }}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
@@ -40,9 +50,9 @@
             <div class="catalog_inside_filter accordion_container">
                 <div class="catalog_inside_filter-head">
                     <div class="catalog_inside_filter-head-left">
-                        <h3 class="catalog_inside_filter-title color_black bold">
+                        <h2 class="catalog_inside_filter-title color_black bold">
                             Фільтри
-                        </h3>
+                        </h2>
                     </div>
                     <button class="catalog_inside_filter-close-btn">
                         <img src="/static/utils/assets/close.svg" alt="close" />
@@ -228,6 +238,22 @@
                 <a href="?page={{ products.next_page_number }}{% for key, values in request.GET.lists %}{% if key != 'page' %}{% for value in values %}&{{ key }}={{ value }}{% endfor %}{% endif %}{% endfor %}">Далі</a>
             {% endif %}
         </div>
+        {% endif %}
+
+        {% if seo_guides %}
+        <aside class="catalog_seo_guides">
+          <h2 class="catalog_seo_guides__title color_black">Корисні статті</h2>
+          <p class="catalog_seo_guides__subtitle color_black_sub">Поради з вибору й догляду — допоможуть швидше знайти свій килим.</p>
+          <ul class="catalog_seo_guides__list">
+            {% for g in seo_guides %}
+            <li>
+              <a href="{{ g.get_absolute_url }}" class="color_gold">{{ g.title }}</a>
+              {% if g.meta_description %}<span class="color_black_sub"> — {{ g.meta_description|truncatechars:110 }}</span>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          <a href="{% url 'blog' %}" class="catalog_seo_guides__all color_black_sub">Усі статті блогу</a>
+        </aside>
         {% endif %}
     </div>
 </section>

@@ -7,6 +7,21 @@
 />
 {% if product.meta_keys %}<meta name="keywords" content="{{ product.meta_keys }}" />{% endif %}
 {% endblock meta %}
+{# Кольорові варіанти = окремі URL зі self-canonical (не зливаємо на «основний» колір) #}
+{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock canonical %}
+{% block og_type %}product{% endblock og_type %}
+{% block og_title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock og_title %}
+{% block og_description %}{% if product.meta_description %}{{ product.meta_description }}{% elif product.description %}{{ product.description|striptags|truncatechars:160 }}{% else %}Купити {{ product.title }} з доставкою по Україні.{% endif %}{% endblock og_description %}
+{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock og_url %}
+{% block og_image %}{% if product.image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}" />{% endif %}{% endblock og_image %}
+{% block twitter_title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}{% if product.meta_description %}{{ product.meta_description }}{% elif product.description %}{{ product.description|striptags|truncatechars:160 }}{% else %}Купити {{ product.title }} з доставкою по Україні.{% endif %}{% endblock twitter_description %}
+{% block twitter_image %}{% if product.image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}" />{% endif %}{% endblock twitter_image %}
+{% block structured_data %}
+{{ block.super }}
+{% if product_jsonld %}<script type="application/ld+json">{{ product_jsonld|safe }}</script>{% endif %}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/product/index.css" />
 {% endblock styles %}{% block content %}
@@ -305,6 +320,17 @@
         <div class="title">
           <h1>{{ product.title }}</h1>
         </div>
+        {% if product_tldr %}
+        <p class="product__tldr color_black_sub">{{ product_tldr }}</p>
+        {% endif %}
+        {% if seo_guides %}
+        <p class="product__guides color_black_sub">
+          Корисно:
+          {% for g in seo_guides %}
+          <a href="{{ g.get_absolute_url }}" class="color_gold">{{ g.title }}</a>{% if not forloop.last %} · {% endif %}
+          {% endfor %}
+        </p>
+        {% endif %}
 
         <div class="product__info">
           <div class="cart_item_price__block">
@@ -352,10 +378,17 @@
           </div>
 
           <div class="product__origin color_black_sub">
-            {% comment %} Тимчасово приховано статичні дані до підключення динамічних
-            <p class="product__material">Вовна, шовк</p>
-            <p class="product__country">Вироблено в Україні</p>
-            {% endcomment %}
+            {% for spec in product.product_specs.all %}
+              {% if spec.specification and spec.spec_value %}
+              {% with name=spec.specification.title|default:""|lower %}
+              {% if "матеріал" in name or "склад" in name or "материал" in name %}
+              <p class="product__material">{{ spec.spec_value }}</p>
+              {% elif "країн" in name or "виробник" in name or "виробництв" in name %}
+              <p class="product__country">{{ spec.spec_value }}</p>
+              {% endif %}
+              {% endwith %}
+              {% endif %}
+            {% endfor %}
           </div>
 
           <div class="sizes-block cart_item_size__block">
@@ -476,34 +509,41 @@
 
         <div class="product__info-bottom">
           <span class="accordion accordion_content__block">
-            <a class="color_black accordion__title"> Опис </a>
+            <h2 class="color_black accordion__title">Опис</h2>
             <span class="accordion_content content_column">
-              {{ product.description }}
+              {% if product.description %}{{ product.description|linebreaksbr }}{% else %}<span class="color_black_sub">Опис з’явиться незабаром.</span>{% endif %}
             </span>
           </span>
 
           <span class="accordion accordion_content__block">
-            <a class="color_black accordion__title"> Характеристики </a>
+            <h2 class="color_black accordion__title">Характеристики</h2>
             <div class="accordion_content content_column">
-              {% for spec in product.product_specs.all %}
-              <div class="characteristic">
-                <span>{{ spec.specification }}</span> 
-                <span 
-                  class="characteristic-value" 
-                  data-spec-name="{{ spec.specification.title }}"
-                  data-spec-value="{{ spec.spec_value.title }}"
-                  data-category-slug="{% if product.categories.first %}{{ product.categories.first.slug }}{% endif %}"
-                  style="cursor: pointer; color: #a46c46; text-decoration: underline;"
-                >{{ spec.spec_value }}</span>
-              </div>
-              {% endfor %}
+              {% if product.product_specs.all %}
+              <dl class="product__specs">
+                {% for spec in product.product_specs.all %}
+                {% if spec.specification and spec.spec_value %}
+                <div class="characteristic">
+                  <dt>{{ spec.specification }}</dt>
+                  <dd
+                    class="characteristic-value"
+                    data-spec-name="{{ spec.specification.title }}"
+                    data-spec-value="{{ spec.spec_value.title }}"
+                    data-category-slug="{% if product.categories.first %}{{ product.categories.first.slug }}{% endif %}"
+                  >{{ spec.spec_value }}</dd>
+                </div>
+                {% endif %}
+                {% endfor %}
+              </dl>
+              {% else %}
+              <span class="color_black_sub">Характеристики уточнюйте в менеджера.</span>
+              {% endif %}
             </div>
           </span>
 
           <span
             class="product_reviews accordion accordion_content__block active"
           >
-            <a class="color_black accordion__title"> Відгуки </a>
+            <h2 class="color_black accordion__title">Відгуки</h2>
             <div
               class="product_reviews__content accordion_content content_column"
             >
@@ -690,7 +730,7 @@
     <div class="slider__wrapper">
       <div class="info_for_product">
         <div class="info_for_product_title medium color_black">
-          Схожі товари, які вам можуть сподобатися
+          <h2 class="info_for_product_heading">Схожі товари, які вам можуть сподобатися</h2>
         </div>
         <div class="info_for_product_subtitle small color_black_sub">
           Оберіть Ваш ідеальний варіант килима

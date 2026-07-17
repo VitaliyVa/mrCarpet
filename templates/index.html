@@ -6,6 +6,10 @@
   content="Купити килим онлайн у mr.Carpet. Великий асортимент від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими."
 />
 {% endblock meta %}
+{% block og_title %}Килими від українських та турецьких виробників | mr.Carpet{% endblock og_title %}
+{% block og_description %}Купити килим онлайн у mr.Carpet. Великий асортимент від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими.{% endblock og_description %}
+{% block twitter_title %}Килими від українських та турецьких виробників | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}Купити килим онлайн у mr.Carpet. Доставка по Україні.{% endblock twitter_description %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/index/index.css" />
 {% endblock styles %}{% block content %}
@@ -13,10 +17,10 @@
   <div class="cover_img">
     <img src="/static/utils/assets/index/cover.png" alt="" />
     <div class="cover__block">
-      <div class="cover_title small color_white">Килими від mr.Carpet</div>
-      <div class="cover_subtitle small color_white">
+      <h1 class="cover_title small color_white">Килими від mr.Carpet</h1>
+      <p class="cover_subtitle small color_white">
         Великий асортимент килимів від українських та турецьких виробників
-      </div>
+      </p>
     </div>
   </div>
 </section>
@@ -27,9 +31,9 @@
   <div class="container">
     <div class="slider__wrapper">
       <div class="info_for_product">
-        <div class="info_for_product_title medium color_black">
+        <h2 class="info_for_product_title medium color_black">
           Відкрийте новий стиль
-        </div>
+        </h2>
         <div class="info_for_product_subtitle small color_black_sub">
           Прикрасьте вітальню, ванну чи дитячу кімнату килимами з
           натуральних матеріалів у модних та приємних відтінках
@@ -74,9 +78,9 @@
         <div class="info_for_product__timer color_gold bold font-size-36" data-end-time="{{ main_sale_date|date:'Y-m-d\\TH:i:s\\Z' }}">
           08:25:47
         </div>
-        <div class="info_for_product_title medium color_black">
+        <h2 class="info_for_product_title medium color_black">
           Розпродаж килимів
-        </div>
+        </h2>
         <div class="info_for_product_subtitle small color_black_sub">
           Завжди вигідні ціни на акційні та популярні товари
         </div>
@@ -105,9 +109,9 @@
   <div class="container">
     <div class="slider__wrapper">
       <div class="info_for_product">
-        <div class="info_for_product_title medium color_black">
+        <h2 class="info_for_product_title medium color_black">
           Останнє з нашого блогу
-        </div>
+        </h2>
         <div class="info_for_product_subtitle small color_black_sub">
           Пишемо статті для того щоб ваш вибір килима завжди був ідеальним!
         </div>
@@ -117,14 +121,18 @@
       </div>
       <div class="blog">
         {% for post in posts %}
-        <a href="#" class="blog_item">
+        <a href="{{ post.get_absolute_url }}" class="blog_item">
           <div class="blog_item_img">
-            <img src="/static/utils/assets/blog/img.png" alt="" />
+            {% if post.image %}
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" />
+            {% else %}
+            <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" />
+            {% endif %}
           </div>
           <div class="blog_item_info">
             <h4 class="blog_item_title">{{ post.title }}</h4>
             <p class="blog_item_text">
-              {{ post.description }}
+              {{ post.meta_description|default:post.description|striptags|truncatechars:120 }}
             </p>
           </div>
         </a>
@@ -134,14 +142,18 @@
       <div class="mob-blog swiper blog-swiper catalog-swiper">
         <div class="blog mob-blog slider__block swiper-wrapper">
           {% for post in posts %}
-          <a href="#" class="blog_item slider_item swiper-slide">
+          <a href="{{ post.get_absolute_url }}" class="blog_item slider_item swiper-slide">
             <div class="blog_item_img">
-              <img src="/static/utils/assets/blog/img.png" alt="" />
+              {% if post.image %}
+              <img src="{{ post.image.url }}" alt="{{ post.title }}" />
+              {% else %}
+              <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" />
+              {% endif %}
             </div>
             <div class="blog_item_info">
               <h4 class="blog_item_title">{{ post.title }}</h4>
               <p class="blog_item_text">
-                {{ post.description }}
+                {{ post.meta_description|default:post.description|striptags|truncatechars:120 }}
               </p>
             </div>
           </a>

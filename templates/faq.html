@@ -6,6 +6,10 @@
   content="Часті питання про килими, доставку, оплату та повернення в mr.Carpet. Короткі відповіді для покупців."
 />
 {% endblock meta %}
+{% block structured_data %}
+{{ block.super }}
+{% if faq_jsonld %}<script type="application/ld+json">{{ faq_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/faq/index.css" />
 {% endblock styles %}{% block content %}
@@ -14,7 +18,7 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold">Питання / Відповідь</a>
+      <a href="{% url 'faq' %}" class="color_gold">Питання / Відповідь</a>
     </div>
 
     <div class="faq__content">
@@ -26,122 +30,18 @@
       </div>
       <div class="faq__right">
         <div class="faq__items accordion_container">
+          {% for question, answer in faq_items %}
           <div class="faq__question accordion accordion_content__block">
-            <h4
+            <h3
               class="faq__question-title accordion__title accordion_content_item"
             >
-              Які матеріали використовуються для виготовлення килимів?
-            </h4>
+              {{ question }}
+            </h3>
             <p class="faq__question-answer-text accordion_content">
-              Для виготовлення килимів використовуються різні матеріали,
-              такі як шовк, вовна, бавовна, синтетичні волокна та інші.
-              Кожен матеріал має свої унікальні характеристики та переваги.
+              {{ answer }}
             </p>
           </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як правильно доглядати за килимом?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як вибрати правильний розмір килима для кімнати?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як правильно доглядати за килимом?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як вибрати правильний розмір килима для кімнати?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як правильно доглядати за килимом?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як вибрати правильний розмір килима для кімнати?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як правильно доглядати за килимом?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
-
-          <div class="faq__question accordion accordion_content__block">
-            <h4
-              class="faq__question-title accordion__title accordion_content_item"
-            >
-              Як вибрати правильний розмір килима для кімнати?
-            </h4>
-            <p class="faq__question-answer-text accordion_content">
-              Lorem Ipsum is simply dummy text of the printing and
-              typesetting industry. Lorem Ipsum is simply dummy text of the
-              printing and typesetting industry.
-            </p>
-          </div>
+          {% endfor %}
         </div>
       </div>
     </div>

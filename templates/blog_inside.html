@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+{% load blog_filters %}
 {% block title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -7,6 +8,20 @@
 />
 {% if article.meta_keys %}<meta name="keywords" content="{{ article.meta_keys }}" />{% endif %}
 {% endblock meta %}
+{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ article.get_absolute_url }}{% endblock canonical %}
+{% block og_type %}article{% endblock og_type %}
+{% block og_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock og_title %}
+{% block og_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock og_description %}
+{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ article.get_absolute_url }}{% endblock og_url %}
+{% block og_image %}{% if article.image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock og_image %}
+{% block twitter_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock twitter_description %}
+{% block twitter_image %}{% if article.image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock twitter_image %}
+{% block structured_data %}
+{{ block.super }}
+{% if article_jsonld %}<script type="application/ld+json">{{ article_jsonld|safe }}</script>{% endif %}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog_inside/index.css" />
 {% endblock styles %}{% block content %}
@@ -17,7 +32,7 @@
             <span class="color_black_sub">/</span>
             <a href="{% url 'blog' %}" class="color_black_sub">Блог</a>
             <span class="color_black_sub">/</span>
-            <a href="{% url 'article' article.slug %}" class="color_gold">Нова Серія LUXURY shaggy</a>
+            <a href="{% url 'article' article.slug %}" class="color_gold">{{ article.title }}</a>
             <a href="{% url 'blog' %}" class="bread-crumbs__mob">
                 <img src="/static/utils/assets/chevron-left.svg" alt="chevron-left" />
                 <span>Назад до блогу</span>
@@ -27,32 +42,36 @@
         <div class="blog-inside__center">
             <div class="blog-inside__block">
                 <div class="blog-inside__block-img">
-                    <img src="{{ article.image.url }}" alt="blog" />
+                    {% if article.image %}
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" />
+                    {% endif %}
                 </div>
                 <div class="blog-inside__block-info">
-                    <h2 class="blog-inside__block-title color_black bold">
+                    <h1 class="blog-inside__block-title color_black bold">
                         {{ article.title }}
-                    </h2>
-                    <div class="blog-inside__block-text">
-                        {{ article.description|linebreaks }}
+                    </h1>
+                    <div class="blog-inside__block-text article-body">
+                        {{ article.description|article_body }}
                     </div>
                 </div>
             </div>
 
             <div class="blog-inside__sidebar">
-                <h3 class="blog-inside__sidebar-title color_black bold">
+                <h2 class="blog-inside__sidebar-title color_black bold">
                     Читайте також
-                </h3>
+                </h2>
                 <div class="blog-inside__sidebar-items">
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item">
                         <div class="blog_item_img">
-                            <img src="{{ article.image.url }}" alt="" />
+                            {% if article.image %}
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}" />
+                            {% endif %}
                         </div>
                         <div class="blog_item_info">
-                            <h4 class="blog_item_title">{{ article.title }}</h4>
+                            <h3 class="blog_item_title">{{ article.title }}</h3>
                             <p class="blog_item_text">
-                                {{ article.description }}
+                                {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
                             </p>
                         </div>
                     </a>
@@ -61,19 +80,21 @@
             </div>
 
             <div class="blog-inside__swiper swiper blog-swiper catalog-swiper">
-                <h3 class="blog-inside__swiper-title color_black bold">
+                <h2 class="blog-inside__swiper-title color_black bold">
                     Читайте також
-                </h3>
+                </h2>
                 <div class="blog slider__block swiper-wrapper">
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item slider_item swiper-slide">
                         <div class="blog_item_img">
-                            <img src="{{ article.image.url }}" alt="" />
+                            {% if article.image %}
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}" />
+                            {% endif %}
                         </div>
                         <div class="blog_item_info">
-                            <h4 class="blog_item_title">{{ article.title }}</h4>
+                            <h3 class="blog_item_title">{{ article.title }}</h3>
                             <p class="blog_item_text">
-                                {{ article.description }}
+                                {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
                             </p>
                         </div>
                     </a>

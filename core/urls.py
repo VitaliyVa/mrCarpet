@@ -16,11 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.staticfiles.urls import static
+from django.contrib.sitemaps.views import sitemap
 from django.conf import settings
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+
+from project.sitemaps import sitemaps
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -52,6 +55,12 @@ urlpatterns = [
     path('api/', include('ukr_poshta.api.urls')),
     path('api/', include('nova_poshta.urls')),
     path('api/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path(
+        'sitemap.xml',
+        sitemap,
+        {'sitemaps': sitemaps},
+        name='sitemap',
+    ),
 ]
 
 if settings.DEBUG:

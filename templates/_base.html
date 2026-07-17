@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" prefix="og: https://ogp.me/ns#">
 
 <head>
     <meta charset="UTF-8" />
@@ -16,9 +16,27 @@
         content="Килими від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими / mr.Carpet."
     />
     {% endblock meta %}
+    <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock canonical %}" />
+    {% block social_meta %}
+    <meta property="og:type" content="{% block og_type %}website{% endblock og_type %}" />
+    <meta property="og:site_name" content="mr.Carpet" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:title" content="{% block og_title %}mr.Carpet — інтернет-магазин килимів{% endblock og_title %}" />
+    <meta property="og:description" content="{% block og_description %}Килими від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими / mr.Carpet.{% endblock og_description %}" />
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock og_url %}" />
+    {% block og_image %}{% endblock og_image %}
+    <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock twitter_card %}" />
+    <meta name="twitter:title" content="{% block twitter_title %}mr.Carpet — інтернет-магазин килимів{% endblock twitter_title %}" />
+    <meta name="twitter:description" content="{% block twitter_description %}Килими від українських та турецьких виробників. Доставка по Україні.{% endblock twitter_description %}" />
+    {% block twitter_image %}{% endblock twitter_image %}
+    {% endblock social_meta %}
     <link rel="stylesheet" href="/static/development/main.css" />
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
-    {% block structured_data %}{% endblock structured_data %}
+    {% block structured_data %}
+    {% if organization_jsonld %}
+    <script type="application/ld+json">{{ organization_jsonld|safe }}</script>
+    {% endif %}
+    {% endblock structured_data %}
 </head>
 
 <body class="body-main">
