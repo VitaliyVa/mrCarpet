@@ -25,7 +25,7 @@
             <a href="{% url 'article' article.slug %}" class="blog_item">
                 <div class="blog_item_img">
                     {% if article.image %}
-                    <img src="{{ article.image.url }}" alt="{{ article.title }}" />
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
                     {% endif %}
                 </div>
                 <div class="blog_item_info">

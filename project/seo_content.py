@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from django.utils.html import strip_tags
 
+from project.text_encoding import fix_utf8_mojibake
+
 
 def product_tldr(product) -> str:
     """2–3 sentence cite-friendly blurb under H1 (prefer meta_description)."""
-    text = (product.meta_description or "").strip()
+    text = fix_utf8_mojibake((product.meta_description or "").strip())
     if not text:
-        text = strip_tags(product.description or "").strip()
+        text = fix_utf8_mojibake(strip_tags(product.description or "").strip())
     if not text:
         return ""
     if len(text) <= 320:

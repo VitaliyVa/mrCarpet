@@ -12,3 +12,4 @@ abbr,address,article,aside,audio,b,blockquote,body,canvas,caption,cite,code,dd,d
 .product__specs .characteristic{display:flex;justify-content:space-between;max-width:300px;margin-top:10px}
 .product__specs dt,.product__specs dd{margin:0}
 .info_for_product_heading{margin:0;padding:0;font-size:inherit;font-weight:inherit;line-height:inherit;font-family:inherit;color:inherit}
+/* seo-cwv-phase6 */.cart_item_img{aspect-ratio:365/420}.blog_item_img{aspect-ratio:376/230}.blog_item_img img{aspect-ratio:376/230}

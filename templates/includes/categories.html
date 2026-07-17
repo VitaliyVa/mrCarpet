@@ -7,6 +7,10 @@
           <img
             src="/static/utils/assets/catalog_item/catalog_item-1.png"
             alt="Вся колекція"
+            width="280"
+            height="280"
+            loading="lazy"
+            decoding="async"
           />
         </span>
       </a>
@@ -19,6 +23,10 @@
           <img
             src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
             alt="{{ category.title }}"
+            width="280"
+            height="280"
+            loading="lazy"
+            decoding="async"
           />
         </span>
       </a>

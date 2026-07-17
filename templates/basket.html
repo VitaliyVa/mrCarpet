@@ -36,7 +36,7 @@
                     {% for cart_product in cart_products %}
                     <div class="basket_item" data-item-id="{{cart_product.id}}">
                         <div class="basket_item__img">
-                            <img src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" />
+                            <img src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" width="160" height="160" loading="lazy" decoding="async" />
                         </div>
                         <div class="basket_item__right">
                             <div class="basket_item__title">

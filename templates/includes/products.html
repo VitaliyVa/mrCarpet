@@ -7,13 +7,13 @@
 <div class="cart_item-top">
   <a href="{{ product.get_absolute_url }}">
     <div class="cart_item_img">
-        <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+        <img src="{{ product.image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
     </div>
     <div class="cart_item_img image-on-hover">
       {% if product.hover_image %}
-      <img src="{{ product.hover_image.url }}" alt="{{ product.title }}" />
+      <img src="{{ product.hover_image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
       {% else %}
-      <img src="{{ product.image.url }}" alt="{{ product.title }}" />
+      <img src="{{ product.image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
       {% endif %}
     </div>
     </a>

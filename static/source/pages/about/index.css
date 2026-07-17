@@ -2,3 +2,4 @@ abbr,address,article,aside,audio,b,blockquote,body,canvas,caption,cite,code,dd,d
 
 /* Phase 2: about H1/H2 keep existing title classes */
 h1.banner__title,h2.repair__title,h2.our-mission__title{margin-block-start:0}
+/* seo-cwv-phase6 */.cart_item_img{aspect-ratio:365/420}.blog_item_img{aspect-ratio:376/230}.blog_item_img img{aspect-ratio:376/230}

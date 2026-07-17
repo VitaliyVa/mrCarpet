@@ -17,6 +17,7 @@ from django.conf import settings
 from catalog.models import Product
 from catalog.services.scene_size import get_first_product_size_label
 from project.replicate_utils import extract_json_object
+from project.text_encoding import fix_utf8_mojibake
 
 logger = logging.getLogger("catalog.seo_generate")
 
@@ -177,7 +178,7 @@ def _extract_json_object(text: str) -> dict[str, Any]:
 
 
 def _clean_field(value: Any, *, max_len: int | None = None) -> str:
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    text = fix_utf8_mojibake(re.sub(r"\s+", " ", str(value or "")).strip())
     if max_len and len(text) > max_len:
         text = text[: max_len - 1].rstrip() + "…"
     return text

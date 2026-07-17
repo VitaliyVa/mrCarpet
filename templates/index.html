@@ -15,7 +15,7 @@
 {% endblock styles %}{% block content %}
 <section class="first_section">
   <div class="cover_img">
-    <img src="/static/utils/assets/index/cover.png" alt="" />
+    <img src="/static/utils/assets/index/cover.png" alt="" width="1920" height="900" fetchpriority="high" decoding="async" />
     <div class="cover__block">
       <h1 class="cover_title small color_white">Килими від mr.Carpet</h1>
       <p class="cover_subtitle small color_white">
@@ -124,9 +124,9 @@
         <a href="{{ post.get_absolute_url }}" class="blog_item">
           <div class="blog_item_img">
             {% if post.image %}
-            <img src="{{ post.image.url }}" alt="{{ post.title }}" />
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
             {% else %}
-            <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" />
+            <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
             {% endif %}
           </div>
           <div class="blog_item_info">
@@ -145,9 +145,9 @@
           <a href="{{ post.get_absolute_url }}" class="blog_item slider_item swiper-slide">
             <div class="blog_item_img">
               {% if post.image %}
-              <img src="{{ post.image.url }}" alt="{{ post.title }}" />
+              <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
               {% else %}
-              <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" />
+              <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
               {% endif %}
             </div>
             <div class="blog_item_info">

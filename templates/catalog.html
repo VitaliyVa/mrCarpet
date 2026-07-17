@@ -19,6 +19,10 @@
         <img
           src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
           alt="{{ category.title }}"
+          width="400"
+          height="400"
+          loading="lazy"
+          decoding="async"
         />
       </div>
       <div class="catalog_section_top_center">
@@ -31,6 +35,10 @@
         <img
           src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
           alt="{{ category.title }}"
+          width="400"
+          height="400"
+          loading="lazy"
+          decoding="async"
         />
       </div>
     </div>
