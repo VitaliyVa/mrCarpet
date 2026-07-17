@@ -5,11 +5,28 @@ from django.template.loader import render_to_string
 
 from payment.forms import PaymentForm
 from payment.liqpay_payment import LiqPay
+from payment.models import LiqPaySettings
 from cart.utils import get_cart
 from cart.models import Cart
 from order.models import Order
 
 import logging
+
+
+def get_liqpay_keys():
+    """Admin LiqPaySettings first, then env fallback (як Nova Poshta)."""
+    obj = LiqPaySettings.objects.first()
+    public = (
+        obj.public_key.strip()
+        if obj and obj.public_key
+        else (settings.LIQPAY_PUBLIC_KEY or None)
+    )
+    private = (
+        obj.private_key.strip()
+        if obj and obj.private_key
+        else (settings.LIQPAY_PRIVATE_KEY or None)
+    )
+    return public, private
 
 
 def get_liqpay_context(request):
@@ -26,11 +43,15 @@ def get_liqpay_context(request):
     if not total_price or total_price <= 0:
         raise ValueError("Невірна сума замовлення")
     
-    # Перевіряємо наявність ключів LiqPay
-    if not settings.LIQPAY_PUBLIC_KEY or not settings.LIQPAY_PRIVATE_KEY:
-        raise ValueError("LiqPay ключі не налаштовані")
+    public_key, private_key = get_liqpay_keys()
+    if not public_key or not private_key:
+        raise ValueError(
+            "LiqPay ключі не налаштовані. "
+            "Додайте їх у адмінці: Payment → Налаштування LiqPay "
+            "(або LIQPAY_PUBLIC_KEY / LIQPAY_PRIVATE_KEY у .env)."
+        )
     
-    liqpay = LiqPay(settings.LIQPAY_PUBLIC_KEY, settings.LIQPAY_PRIVATE_KEY)
+    liqpay = LiqPay(public_key, private_key)
     
     # Формуємо опис замовлення
     description = f"Оплата замовлення №{order.order_number}"
@@ -100,7 +121,7 @@ def get_liqpay_context(request):
     print(f"  sandbox: {params['sandbox']}")
     print(f"  server_url: {params['server_url']}")
     print(f"  result_url: {params['result_url']}")
-    print(f"  Public Key: {settings.LIQPAY_PUBLIC_KEY[:10]}..." if settings.LIQPAY_PUBLIC_KEY else "  Public Key: НЕ ВСТАНОВЛЕНО")
+    print(f"  Public Key: {public_key[:10]}..." if public_key else "  Public Key: НЕ ВСТАНОВЛЕНО")
     print("=" * 50)
     
     signature = liqpay.cnb_signature(params)
@@ -117,10 +138,15 @@ def get_liqpay_response(request):
     """
     Отримує та перевіряє відповідь від LiqPay
     """
-    if not settings.LIQPAY_PUBLIC_KEY or not settings.LIQPAY_PRIVATE_KEY:
-        raise ValueError("LiqPay ключі не налаштовані")
+    public_key, private_key = get_liqpay_keys()
+    if not public_key or not private_key:
+        raise ValueError(
+            "LiqPay ключі не налаштовані. "
+            "Додайте їх у адмінці: Payment → Налаштування LiqPay "
+            "(або LIQPAY_PUBLIC_KEY / LIQPAY_PRIVATE_KEY у .env)."
+        )
     
-    liqpay = LiqPay(settings.LIQPAY_PUBLIC_KEY, settings.LIQPAY_PRIVATE_KEY)
+    liqpay = LiqPay(public_key, private_key)
     signature = request.POST.get("signature")
     data = request.POST.get("data")
     

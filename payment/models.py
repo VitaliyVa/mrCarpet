@@ -22,3 +22,20 @@ class Payment(models.Model):
     class Meta:
         verbose_name = 'Оплата'
         verbose_name_plural = 'Оплати'
+
+
+class LiqPaySettings(models.Model):
+    public_key = models.CharField(verbose_name='Public key', max_length=255)
+    private_key = models.CharField(verbose_name='Private key', max_length=255)
+
+    def __str__(self):
+        return 'Налаштування LiqPay'
+
+    class Meta:
+        verbose_name = 'Налаштування LiqPay'
+        verbose_name_plural = 'Налаштування LiqPay'
+
+    def save(self, *args, **kwargs):
+        if not self.pk and LiqPaySettings.objects.exists():
+            return
+        return super().save(*args, **kwargs)
