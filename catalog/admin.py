@@ -26,7 +26,9 @@ from catalog.services.replicate_product_images import (
 )
 from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.scene_size import SceneSizeError, resolve_scene_size
+from catalog.admin_forms import ProductAdminForm, ProductAttributeAdminForm
 from catalog.services.ar_texture import ArTextureService, mark_ar_ready_from_manual_upload
+from catalog.services.product_attr_sort import reorder_product_attributes
 from catalog.tasks import generate_ar_texture_task
 from .models import (
     Product,
@@ -117,7 +119,12 @@ class FavouriteAdmin(admin.ModelAdmin):
 
 class ProductInLine(admin.TabularInline):
     model = ProductAttribute
-    extra = 0
+    form = ProductAttributeAdminForm
+    extra = 1
+    min_num = 1
+    validate_min = True
+    exclude = ("sort_order",)
+    ordering = ("sort_order", "id")
 
 
 class ProductImageInline(admin.TabularInline):
@@ -162,6 +169,7 @@ class SpecificationInline(admin.TabularInline):
 
 
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductAdminForm
     inlines = [ProductImageInline, ProductInLine, RelatedProductInline, SpecificationInline]
     formfield_overrides = {
         models.ImageField: {"widget": ImagePreviewWidget},
@@ -639,7 +647,7 @@ class ProductAdmin(admin.ModelAdmin):
                     is_ai=original_image.is_ai,
                 )
             
-            # Копіюємо ProductAttribute
+            # Копіюємо ProductAttribute (порядок уже відсортований Meta.ordering)
             for original_attr in original_product.product_attr.all():
                 original_widths = list(original_attr.width.all())
                 new_attr = ProductAttribute.objects.create(
@@ -651,10 +659,12 @@ class ProductAdmin(admin.ModelAdmin):
                     custom_attribute=original_attr.custom_attribute,
                     min_len=original_attr.min_len,
                     max_len=original_attr.max_len,
-                    custom_price=original_attr.custom_price
+                    custom_price=original_attr.custom_price,
+                    sort_order=original_attr.sort_order,
                 )
                 # Копіюємо ManyToMany width
                 new_attr.width.set(original_widths)
+            reorder_product_attributes(new_product)
             
             # Копіюємо ProductSpecification
             for original_spec in original_product.product_specs.all():
@@ -795,7 +805,12 @@ class ProductAdmin(admin.ModelAdmin):
         new_name = obj.ar_texture.name if obj.ar_texture else None
         if new_name and new_name != prev_texture:
             mark_ar_ready_from_manual_upload(obj)
-    
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if form.instance.pk:
+            reorder_product_attributes(form.instance)
+
     def get_color_display(self, obj):
         """Відображає active_color з візуальним індикатором кольору або текстури"""
         if obj.active_color:
@@ -964,6 +979,7 @@ class ProductAdmin(admin.ModelAdmin):
             'admin/js/ar_generate_texture.js',
             'admin/js/product_image_sortable.js',
             'admin/js/product_image_dropzone.js',
+            'admin/js/product_form_validate.js',
         )
         css = {
             'all': (

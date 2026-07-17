@@ -414,3 +414,63 @@ html[data-theme="dark"] .replicate-generate-block {
     color: var(--body-fg, #333);
     font-weight: 600;
 }
+
+/*
+ * Sticky save bar — always visible while scrolling the product form.
+ * sticky (not fixed): respects admin sidebar width / .main.shifted.
+ * Extra padding so the last inlines aren't hidden under the bar.
+ */
+body.app-catalog.model-product #product_form {
+    padding-bottom: 88px;
+}
+
+body.app-catalog.model-product #product_form .submit-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 1100;
+    margin: 16px 0 0 !important;
+    padding: 12px 20px !important;
+    background: var(--body-bg, #fff);
+    border-top: 1px solid var(--hairline-color, #e0e0e0);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.1);
+    /* Django default overflow:hidden clips the shadow; keep buttons usable */
+    overflow: visible;
+}
+
+html[data-theme="dark"] body.app-catalog.model-product #product_form .submit-row {
+    background: var(--body-bg, #121212);
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Client-side required-field validation (product_form_validate.js) */
+.client-validation-banner {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border: 1px solid #ba2121;
+    border-radius: 4px;
+    background: #fff1f1;
+    color: #ba2121;
+    font-weight: 600;
+}
+
+.client-field-invalid {
+    outline: 2px solid #ba2121 !important;
+    outline-offset: 1px;
+    border-color: #ba2121 !important;
+}
+
+.client-row-invalid {
+    background: rgba(186, 33, 33, 0.06);
+}
+
+.client-field-error-msg {
+    display: block;
+    margin-top: 4px;
+    color: #ba2121;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+html[data-theme="dark"] .client-validation-banner {
+    background: rgba(186, 33, 33, 0.15);
+}

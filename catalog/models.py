@@ -366,10 +366,16 @@ class ProductAttribute(models.Model):
         blank=True,
         null=True,
     )
+    sort_order = models.PositiveIntegerField(
+        verbose_name="Порядок",
+        default=0,
+        help_text="Менше число — вище в списку. Ставиться автоматично при збереженні товару (за шириною).",
+    )
 
     class Meta:
         verbose_name = "Варіація"
         verbose_name_plural = "Варіації"
+        ordering = ["sort_order", "id"]
 
     def __str__(self):
         return f"{self.product.title} - {self.size.title if self.size else 'кастомна варіація'}"
