@@ -6,6 +6,7 @@ import logging
 import time
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from ...models import (
     Area,
@@ -165,22 +166,17 @@ def create_warehouses(
         qs = (
             Settlement.objects.exclude(ref__isnull=True)
             .exclude(ref="")
-            .only("id", "ref", "title")
+            .only("id", "ref", "title", "warehouses_synced_at")
             .order_by("id")
         )
         if resume:
-            # reverse FK default related name: warehouse_set
-            already = (
-                Warehouse.objects.exclude(settlement_id__isnull=True)
-                .values_list("settlement_id", flat=True)
-                .distinct()
-            )
-            qs = qs.exclude(id__in=already)
+            # Stamp set after successful API call (incl. empty villages)
+            qs = qs.filter(warehouses_synced_at__isnull=True)
         settlements = list(qs)
 
     print(
         f"Warehouses sync for {len(settlements)} settlements"
-        f"{' (resume: only cities without warehouses)' if resume else ''}…"
+        f"{' (resume: not yet synced)' if resume else ''}…"
     )
 
     existing = {
@@ -189,9 +185,34 @@ def create_warehouses(
     }
     bulk_create_list = []
     bulk_update_list = []
+    pending_stamp_ids = []
     skipped = 0
     cities_done = 0
     cities_empty = 0
+    now = timezone.now
+
+    def flush_warehouses(*, label: str = ""):
+        nonlocal bulk_create_list, bulk_update_list, pending_stamp_ids, existing
+        if bulk_create_list:
+            Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
+            if label:
+                print(f"   flushed create={len(bulk_create_list)}{label}")
+            bulk_create_list = []
+        if bulk_update_list:
+            Warehouse.objects.bulk_update(
+                bulk_update_list,
+                fields=["title", "short_address", "type", "settlement", "ref"],
+            )
+            bulk_update_list = []
+        if pending_stamp_ids:
+            Settlement.objects.filter(pk__in=pending_stamp_ids).update(
+                warehouses_synced_at=now()
+            )
+            pending_stamp_ids = []
+        existing = {
+            w.ref: w
+            for w in Warehouse.objects.exclude(ref__isnull=True).exclude(ref="")
+        }
 
     for settlement in settlements:
         response = get_response(
@@ -204,6 +225,10 @@ def create_warehouses(
             rows = []
         if not rows:
             cities_empty += 1
+            # Empty city: nothing to flush — stamp now for --resume
+            Settlement.objects.filter(pk=settlement.pk).update(
+                warehouses_synced_at=now()
+            )
         for obj in rows:
             if not isinstance(obj, dict):
                 skipped += 1
@@ -234,39 +259,25 @@ def create_warehouses(
                 bulk_create_list.append(wh)
                 existing[ref] = wh  # avoid dupes within same run
 
+        if rows:
+            pending_stamp_ids.append(settlement.pk)
+
         cities_done += 1
+        left = len(settlements) - cities_done
+        added = len(rows)
+        if cities_done % 10 == 0 or added > 0:
+            print(
+                f"… {cities_done}/{len(settlements)} left={left} "
+                f"«{settlement.title}» +{added} wh "
+                f"(empty={cities_empty}, db={Warehouse.objects.count()})"
+            )
         if cities_done % 50 == 0:
-            if bulk_create_list:
-                Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
-                print(
-                    f"… cities {cities_done}/{len(settlements)}, "
-                    f"flushed create={len(bulk_create_list)}, "
-                    f"warehouses_now={Warehouse.objects.count()}"
-                )
-                bulk_create_list = []
-            if bulk_update_list:
-                Warehouse.objects.bulk_update(
-                    bulk_update_list,
-                    fields=["title", "short_address", "type", "settlement", "ref"],
-                )
-                bulk_update_list = []
-            existing = {
-                w.ref: w
-                for w in Warehouse.objects.exclude(ref__isnull=True).exclude(ref="")
-            }
+            flush_warehouses(label="")
 
         time.sleep(delay_sec)
 
-    if bulk_create_list:
-        Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
-    if bulk_update_list:
-        Warehouse.objects.bulk_update(
-            bulk_update_list,
-            fields=["title", "short_address", "type", "settlement", "ref"],
-        )
+    flush_warehouses(label=" (last chunk)")
 
-    print("Warehouse bulk_create (last chunk)", len(bulk_create_list))
-    print("Warehouse bulk_update (last chunk)", len(bulk_update_list))
     print(
         f"Warehouses done: cities={cities_done} empty_cities={cities_empty} "
         f"skipped={skipped} total_now={Warehouse.objects.count()}"

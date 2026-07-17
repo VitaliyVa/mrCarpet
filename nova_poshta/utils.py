@@ -62,7 +62,12 @@ def get_response(model: str, method: str, properties: dict = None, *, max_retrie
         errors = response.get("errors") or []
         if _is_rate_limit(errors):
             wait = min(2**attempt, 60)
-            print(f"NP {method}: rate-limit attempt={attempt}/{max_retries}, sleep {wait}s")
+            # Quiet spam: only first + every 3rd retry
+            if attempt == 1 or attempt % 3 == 0:
+                print(
+                    f"NP {method}: rate-limit attempt={attempt}/{max_retries}, "
+                    f"sleep {wait}s (НП тротлить; це не зависання)"
+                )
             time.sleep(wait)
             continue
         return response

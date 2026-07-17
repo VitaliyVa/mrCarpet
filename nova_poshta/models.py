@@ -96,6 +96,13 @@ class Settlement(models.Model):
         null=True,
         blank=True,
     )
+    # Set after a successful getWarehouses call (even if 0 rows) — for --resume
+    warehouses_synced_at = models.DateTimeField(
+        verbose_name="Склади синхронізовано",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
 
     def __str__(self):
         return f"{self.type} {self.title} {self.area}"
