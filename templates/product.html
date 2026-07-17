@@ -342,14 +342,6 @@
         {% if product_tldr %}
         <p class="product__tldr color_black_sub">{{ product_tldr }}</p>
         {% endif %}
-        {% if seo_guides %}
-        <p class="product__guides color_black_sub">
-          Корисно:
-          {% for g in seo_guides %}
-          <a href="{{ g.get_absolute_url }}" class="color_gold">{{ g.title }}</a>{% if not forloop.last %} · {% endif %}
-          {% endfor %}
-        </p>
-        {% endif %}
 
         <div class="product__info">
           <div class="cart_item_price__block">
@@ -844,4 +836,33 @@
 
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/product/index.js"></script>
+{% if analytics_enabled and analytics_view_item %}
+<script>
+(function () {
+  var item = {
+    item_id: "{{ analytics_view_item.item_id|escapejs }}",
+    item_name: "{{ analytics_view_item.item_name|escapejs }}",
+    item_brand: "{{ analytics_view_item.item_brand|escapejs }}",
+    item_category: "{{ analytics_view_item.item_category|escapejs }}",
+    price: {{ analytics_view_item.price }},
+    quantity: 1
+  };
+  var value = {{ analytics_view_item.price }};
+  var currency = "{{ analytics_view_item.currency|escapejs }}";
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({
+    event: "view_item",
+    ecommerce: { currency: currency, value: value, items: [item] }
+  });
+  if (typeof gtag === "function") {
+    gtag("event", "view_item", {
+      currency: currency,
+      value: value,
+      items: [item]
+    });
+  }
+})();
+</script>
+{% endif %}
 {% endblock scripts %}

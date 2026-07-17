@@ -1,5 +1,4 @@
-# DEV: site under development -- full disallow
 # Canonical robots: Django view /robots.txt (project.views.robots_txt)
-# Go-live: see docs/seo-ai-search-roadmap.md Phase 8
+# Controlled by SEO_INDEXING_ENABLED (default false = Disallow: /)
 User-agent: *
 Disallow: /

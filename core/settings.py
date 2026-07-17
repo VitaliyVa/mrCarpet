@@ -31,6 +31,18 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# SEO / indexing (Phase 8). Keep False until explicit go-live decision.
+# Flip: SEO_INDEXING_ENABLED=true in env → prod robots + index,follow on public pages.
+# Private pages (basket/checkout/…) always force noindex in templates.
+SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
+
+# Analytics / measurement (Phase 9). Empty = scripts not injected.
+# Example: GA4_MEASUREMENT_ID=G-XXXXXXXXXX
+# Prefer GTM_CONTAINER_ID=GTM-XXXXXXX if you manage tags in GTM (then skip raw GA4 id).
+GA4_MEASUREMENT_ID = config("GA4_MEASUREMENT_ID", default="")
+GTM_CONTAINER_ID = config("GTM_CONTAINER_ID", default="")
+GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
+
 # CSRF налаштування для webhook від LiqPay через ngrok
 # Додайте ваш ngrok URL сюди
 CSRF_TRUSTED_ORIGINS = [

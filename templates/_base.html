@@ -5,9 +5,13 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {# DEV: індексація закрита до go-live (див. docs/seo-ai-search-roadmap.md Фаза 8) #}
+    {# Indexing gated by SEO_INDEXING_ENABLED (default off). Private pages override. #}
     {% block robots %}
+    {% if seo_indexing_enabled %}
+    <meta name="robots" content="index, follow" />
+    {% else %}
     <meta name="robots" content="noindex, nofollow" />
+    {% endif %}
     {% endblock robots %}
     <title>{% block title %}mr.Carpet — інтернет-магазин килимів{% endblock title %}</title>
     {% block meta %}
@@ -30,6 +34,7 @@
     <meta name="twitter:description" content="{% block twitter_description %}Килими від українських та турецьких виробників. Доставка по Україні.{% endblock twitter_description %}" />
     {% block twitter_image %}{% endblock twitter_image %}
     {% endblock social_meta %}
+    {% include 'includes/analytics_head.html' %}
     <link rel="stylesheet" href="/static/development/main.css" />
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
     {% block structured_data %}
@@ -40,6 +45,7 @@
 </head>
 
 <body class="body-main">
+    {% include 'includes/analytics_body.html' %}
     {% block header %}{% include 'includes/header.html' %}{% endblock header %}
 
     {% block content %}{% endblock content %}

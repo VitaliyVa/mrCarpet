@@ -83,30 +83,20 @@ def reset_password(request):
 
 def robots_txt(request):
     """
-    DEV robots: повна заборона індексації, поки сайт у розробці.
+    robots.txt gated by SEO_INDEXING_ENABLED (default False = full Disallow).
 
-    PROD (НЕ вмикати без явного рішення / Фаза 8 у docs/seo-ai-search-roadmap.md):
-
-        User-agent: *
-        Allow: /
-        Disallow: /admin/
-        Disallow: /api/
-        Disallow: /basket/
-        Disallow: /checkout/
-        Disallow: /payment/
-        Disallow: /profile/
-        Disallow: /success/
-        Sitemap: https://mrcarpet24.com/sitemap.xml
-
-        # AI crawlers (GEO): на проді не блокувати зайво GPTBot / ClaudeBot / PerplexityBot
-        # якщо Allow: / вже відкриває сайт.
+    Go-live: set SEO_INDEXING_ENABLED=true — see docs/seo.md.
+    Private paths stay Disallow even when open (basket/checkout/profile/…).
     """
-    # ASCII-only body: robots.txt + Windows text/plain без charset легко ламає кирилицю
-    robots_content = (
-        "# DEV: site under development -- full disallow\n"
-        "# Sitemap is available at /sitemap.xml for testing, but Disallow blocks crawlers\n"
-        "# Go-live: replace with prod rules from docs/seo-ai-search-roadmap.md (Phase 8)\n"
-        "User-agent: *\n"
-        "Disallow: /\n"
+    from project.seo_indexing import SITE_CANONICAL_ORIGIN, build_robots_txt
+
+    sitemap_url = f"{SITE_CANONICAL_ORIGIN}/sitemap.xml"
+    if getattr(request, "get_host", None):
+        try:
+            sitemap_url = request.build_absolute_uri("/sitemap.xml")
+        except Exception:
+            pass
+    return HttpResponse(
+        build_robots_txt(sitemap_url=sitemap_url),
+        content_type="text/plain; charset=utf-8",
     )
-    return HttpResponse(robots_content, content_type="text/plain; charset=utf-8")

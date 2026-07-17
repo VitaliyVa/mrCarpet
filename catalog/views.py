@@ -17,6 +17,32 @@ from .models import (
 from .utils import get_available_filters, get_filter_counts
 
 
+def _analytics_view_item_payload(product: Product) -> dict | None:
+    """GA4/GTM ecommerce view_item payload (None when price unknown)."""
+    from decimal import Decimal
+
+    attr = product.product_attr.order_by("sort_order", "pk").first()
+    if not attr:
+        return None
+    if attr.custom_attribute:
+        price = attr.custom_price
+    else:
+        price = attr.get_total_price()
+    if price is None:
+        return None
+    if isinstance(price, Decimal):
+        price = float(price)
+    category = product.categories.first()
+    return {
+        "item_id": str(product.pk),
+        "item_name": product.title,
+        "item_brand": "mr.Carpet",
+        "item_category": category.title if category else "",
+        "price": price,
+        "currency": "UAH",
+    }
+
+
 # Create your views here.
 def catalog_detail(request, slug):
     from django.urls import reverse
@@ -368,7 +394,7 @@ def favourites(request):
 def product(request, slug):
     from django.urls import reverse
 
-    from project.seo_content import get_seo_guides, product_tldr
+    from project.seo_content import product_tldr
     from project.seo_jsonld import (
         breadcrumb_graph,
         dumps_jsonld,
@@ -393,8 +419,8 @@ def product(request, slug):
         "ar_ready": product.ar_status == Product.AR_STATUS_READY
         and bool(product.ar_texture),
         "product_tldr": product_tldr(product),
-        "seo_guides": get_seo_guides(),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
+        "analytics_view_item": _analytics_view_item_payload(product),
     }
     if product_ld:
         context["product_jsonld"] = dumps_jsonld(product_ld)
