@@ -24,7 +24,7 @@
         a.id = 'article-generate-btn';
         a.className = 'addlink';
         a.textContent = 'Згенерувати пост (Replicate)';
-        a.title = 'Тема → gpt-4o-mini + gpt-image-2 (quality=low)';
+        a.title = 'Тема → 2× gpt-4o-mini + gpt-image-2 (quality=low)';
         li.appendChild(a);
 
         var status = document.createElement('span');
@@ -66,7 +66,8 @@
                 !window.confirm(
                     'Згенерувати НОВИЙ пост за темою?\n\n«' +
                         topic +
-                        '»\n\nТекст: gpt-4o-mini\nФото: gpt-image-2 (quality=low)\n~30–90 с. Не закривайте вкладку.'
+                        '»\n\nТекст: 2× gpt-4o-mini (каркас → розгортання)\n' +
+                        'Фото: gpt-image-2 (quality=low)\n~1–2 хв. Не закривайте вкладку.'
                 )
             ) {
                 return;
@@ -74,7 +75,7 @@
 
             btn.dataset.busy = '1';
             btn.style.opacity = '0.6';
-            setStatus('Генерація тексту… потім фото (low)…', false);
+            setStatus('1/3 каркас… → 2/3 розгортання… → 3/3 фото (low)', false);
 
             var body = new FormData();
             body.append('topic', topic);

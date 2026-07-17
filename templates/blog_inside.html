@@ -57,9 +57,9 @@
             </div>
 
             <div class="blog-inside__sidebar">
-                <h2 class="blog-inside__sidebar-title color_black bold">
+                <h3 class="blog-inside__sidebar-title color_black bold">
                     Читайте також
-                </h2>
+                </h3>
                 <div class="blog-inside__sidebar-items">
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item">
@@ -69,7 +69,7 @@
                             {% endif %}
                         </div>
                         <div class="blog_item_info">
-                            <h3 class="blog_item_title">{{ article.title }}</h3>
+                            <p class="blog_item_title">{{ article.title }}</p>
                             <p class="blog_item_text">
                                 {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
                             </p>
@@ -80,9 +80,9 @@
             </div>
 
             <div class="blog-inside__swiper swiper blog-swiper catalog-swiper">
-                <h2 class="blog-inside__swiper-title color_black bold">
+                <h3 class="blog-inside__swiper-title color_black bold">
                     Читайте також
-                </h2>
+                </h3>
                 <div class="blog slider__block swiper-wrapper">
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item slider_item swiper-slide">
@@ -92,7 +92,7 @@
                             {% endif %}
                         </div>
                         <div class="blog_item_info">
-                            <h3 class="blog_item_title">{{ article.title }}</h3>
+                            <p class="blog_item_title">{{ article.title }}</p>
                             <p class="blog_item_text">
                                 {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
                             </p>
