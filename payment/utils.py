@@ -211,8 +211,8 @@ def create_payment(request, response):
     cart.save()
 
     if status in ("success", "sandbox"):
-        from order.email_utils import send_order_confirmation_email
+        from order.email_utils import enqueue_order_confirmation_email
 
-        send_order_confirmation_email(order)
+        enqueue_order_confirmation_email(order.pk)
 
     return payment

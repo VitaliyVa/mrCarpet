@@ -164,6 +164,9 @@ if _db_engine.endswith('sqlite3'):
 
     connection_created.connect(_sqlite_optimize)
 
+# Ліміт очікування SMTP (Gmail тощо), щоб сокет не висів хвилинами
+EMAIL_TIMEOUT = 12
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

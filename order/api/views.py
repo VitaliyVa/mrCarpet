@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from cart.utils import get_cart
 from catalog.models import PromoCode
 from ..models import Order
-from ..email_utils import send_order_confirmation_email
+from ..email_utils import enqueue_order_confirmation_email
 from .serializers import OrderSerializer
 
 
@@ -124,14 +124,16 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                 else:
                     raise ValueError("Неправильний спосіб оплати.")
 
-            # Після commit — можна слати лист / віддавати відповідь
+            # Лист у фоні після commit — API не чекає SMTP (на проді Gmail може висіти)
+            if payment_type == Order.PAYMENT_CASH:
+                enqueue_order_confirmation_email(order.pk)
+
             if payment_type == Order.PAYMENT_LIQPAY:
                 return Response(
                     {"success": True, "redirect_url": "/payment/"},
                     status=status.HTTP_201_CREATED,
                 )
 
-            send_order_confirmation_email(order)
             return Response(
                 {
                     "success": True,

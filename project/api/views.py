@@ -6,10 +6,9 @@ from rest_framework import status
 from django.utils import timezone
 from catalog.models import PromoCode
 from cart.utils import get_cart
-from django.core.mail import send_mail, get_connection
-
 from .serializers import ContactRequestSerializer, SubscriptionSerializer
-from ..models import ContactRequest, Subscription, SMTPSettings
+from ..models import ContactRequest, Subscription
+from ..smtp_utils import send_smtp_mail_async
 
 
 class ContactRequestCreateView(APIView):
@@ -20,27 +19,12 @@ class ContactRequestCreateView(APIView):
         serializer = ContactRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         from_email = serializer.save()
-        try:
-            smtp = SMTPSettings.load()
-            connection = get_connection(
-                host=smtp.host,
-                port=smtp.port,
-                username=smtp.username or None,
-                password=smtp.email_host_password or None,
-                use_tls=bool(smtp.use_tls),
-                use_ssl=bool(smtp.use_ssl),
-            )
-            send_mail(
-                "Нова контактна форма",
-                f"Ім'я: {from_email.name}\nПошта: {from_email.email}\nКоментар: {from_email.text}",
-                smtp.server_email,
-                [from_email.email],
-                fail_silently=False,
-                connection=connection,
-            )
-        except Exception as e:
-            print(e)
-        
+        # Як і раніше помилка пошти не ламає відповідь; тепер ще й не блокує запит
+        send_smtp_mail_async(
+            "Нова контактна форма",
+            f"Ім'я: {from_email.name}\nПошта: {from_email.email}\nКоментар: {from_email.text}",
+            [from_email.email],
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
