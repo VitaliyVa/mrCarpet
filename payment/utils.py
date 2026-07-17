@@ -199,16 +199,20 @@ def create_payment(request, response):
     cart = order.cart
     
     if status == "success":
-        order.status = "Комплектується, оплачено"  # Змінюємо статус на "Комплектується, оплачено" після успішної оплати
+        order.status = Order.STATUS_PAID
         cart.ordered = True
     elif status == "failure":
-        order.status = "Не оплачено"
+        order.status = Order.STATUS_AWAITING_PAYMENT
     elif status == "sandbox":
-        # В sandbox режимі також вважаємо оплату успішною
-        order.status = "Комплектується, оплачено"
+        order.status = Order.STATUS_PAID
         cart.ordered = True
-    
+
     order.save()
     cart.save()
-    
+
+    if status in ("success", "sandbox"):
+        from order.email_utils import send_order_confirmation_email
+
+        send_order_confirmation_email(order)
+
     return payment

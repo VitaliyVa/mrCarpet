@@ -3,69 +3,139 @@ import Cookies from "js-cookie";
 import { getNovaPostData } from "./nova-post";
 import { showSuccess, showError } from "./notification";
 
-// Валідація форми замовлення
-function validateOrderForm() {
-  const errors = [];
-  let hasErrors = false;
+function getScrollTarget(field) {
+  if (!field) return null;
 
-  // Отримуємо всі необхідні поля
+  if (field.id === "nova-post-warehouse-select") {
+    return (
+      field.closest(".nova-post-warehouse-wrapper") ||
+      field.closest(".choices") ||
+      field
+    );
+  }
+
+  return field.closest(".nova-post-city-wrapper") || field;
+}
+
+function scrollToField(field) {
+  const target = getScrollTarget(field);
+  if (!target) return;
+
+  const headerOffset = 80;
+  const top =
+    target.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+
+  window.scrollTo({
+    top: Math.max(0, top),
+    behavior: "smooth",
+  });
+
+  // focus після короткої затримки, щоб не зривати smooth scroll
+  window.setTimeout(() => {
+    if (field.id === "nova-post-warehouse-select") {
+      const choicesInner = target.querySelector(".choices__inner");
+      if (choicesInner) {
+        choicesInner.focus?.();
+      }
+      return;
+    }
+
+    if (typeof field.focus === "function") {
+      field.focus({ preventScroll: true });
+    }
+  }, 350);
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+// Валідація форми замовлення (порядок = зверху вниз у DOM)
+function validateOrderForm() {
   const nameInput = document.getElementById("nova-post-name");
+  const emailInput = document.getElementById("nova-post-email");
   const phoneInput = document.getElementById("nova-post-phone");
   const cityInput = document.getElementById("nova-post-city-input");
   const warehouseSelect = document.getElementById("nova-post-warehouse-select");
 
-  // Очищаємо попередні помилки
-  clearFieldError(nameInput);
-  clearFieldError(phoneInput);
   clearFieldError(cityInput);
   clearFieldError(warehouseSelect);
+  clearFieldError(nameInput);
+  clearFieldError(emailInput);
+  clearFieldError(phoneInput);
 
-  // Перевірка імені
-  if (!nameInput.value.trim()) {
-    setFieldError(nameInput, "Будь ласка, введіть ваше ім'я");
-    errors.push("name");
-    hasErrors = true;
+  const checks = [
+    {
+      field: cityInput,
+      invalid: () => !cityInput?.value.trim(),
+      message: "Будь ласка, оберіть місто",
+    },
+    {
+      field: warehouseSelect,
+      invalid: () => !warehouseSelect?.value,
+      message: "Будь ласка, оберіть відділення",
+    },
+    {
+      field: nameInput,
+      invalid: () => !nameInput?.value.trim(),
+      message: "Будь ласка, введіть ваше ім'я",
+    },
+    {
+      field: emailInput,
+      invalid: () => !isValidEmail(emailInput?.value.trim() || ""),
+      message: "Будь ласка, введіть коректний email",
+    },
+    {
+      field: phoneInput,
+      invalid: () => {
+        const phoneValue = phoneInput?.value.replace(/\D/g, "") || "";
+        return phoneValue.length < 12;
+      },
+      message: "Будь ласка, введіть коректний номер телефону",
+    },
+  ];
+
+  let firstInvalid = null;
+
+  checks.forEach(({ field, invalid, message }) => {
+    if (!field || !invalid()) return;
+    setFieldError(field, message);
+    if (!firstInvalid) {
+      firstInvalid = field;
+    }
+  });
+
+  if (firstInvalid) {
+    scrollToField(firstInvalid);
+    return false;
   }
 
-  // Перевірка телефону
-  const phoneValue = phoneInput.value.replace(/\D/g, ""); // Видаляємо всі нецифрові символи
-  if (!phoneValue || phoneValue.length < 12) {
-    setFieldError(phoneInput, "Будь ласка, введіть коректний номер телефону");
-    errors.push("phone");
-    hasErrors = true;
-  }
-
-  // Перевірка міста
-  if (!cityInput.value.trim()) {
-    setFieldError(cityInput, "Будь ласка, оберіть місто");
-    errors.push("city");
-    hasErrors = true;
-  }
-
-  // Перевірка відділення
-  if (!warehouseSelect.value) {
-    setFieldError(warehouseSelect, "Будь ласка, оберіть відділення");
-    errors.push("warehouse");
-    hasErrors = true;
-  }
-
-  return !hasErrors;
+  return true;
 }
 
 // Встановлення помилки для поля
 function setFieldError(field, message) {
+  if (!field) return;
+
   field.classList.add("input-error");
-  
-  // Перевіряємо чи вже є повідомлення про помилку
-  let errorMsg = field.parentElement.querySelector(".error-message");
+
+  const container =
+    field.closest(".nova-post-warehouse-wrapper") ||
+    field.closest(".nova-post-city-wrapper") ||
+    field.parentElement;
+
+  if (field.id === "nova-post-warehouse-select") {
+    container?.querySelector(".choices")?.classList.add("input-error");
+  }
+
+  let errorMsg = container.querySelector(".error-message");
   if (!errorMsg) {
     errorMsg = document.createElement("div");
     errorMsg.className = "error-message";
-    field.parentElement.appendChild(errorMsg);
+    container.appendChild(errorMsg);
   }
   errorMsg.textContent = message;
 
-  // Автоматично прибираємо помилку через 10 секунд
   setTimeout(() => {
     clearFieldError(field);
   }, 10000);
@@ -73,8 +143,18 @@ function setFieldError(field, message) {
 
 // Очищення помилки для поля
 function clearFieldError(field) {
+  if (!field) return;
+
   field.classList.remove("input-error");
-  const errorMsg = field.parentElement.querySelector(".error-message");
+
+  const container =
+    field.closest(".nova-post-warehouse-wrapper") ||
+    field.closest(".nova-post-city-wrapper") ||
+    field.parentElement;
+
+  container?.querySelector(".choices")?.classList.remove("input-error");
+
+  const errorMsg = container?.querySelector(".error-message");
   if (errorMsg) {
     errorMsg.remove();
   }
@@ -141,56 +221,42 @@ export async function submitOrder() {
   }
 
   const nameInput = document.getElementById("nova-post-name");
+  const emailInput = document.getElementById("nova-post-email");
   const phoneInput = document.getElementById("nova-post-phone");
   const cityInput = document.getElementById("nova-post-city-input");
-  
-  // Отримуємо обраний спосіб оплати
+
   const paymentMethod = document.querySelector('input[name="payment"]:checked');
-  
-  // Перевіряємо, чи обрано спосіб оплати
+
   if (!paymentMethod) {
     showError("Будь ласка, оберіть спосіб оплати");
     return;
   }
-  
-  // Отримуємо дані Нової Пошти
+
   const novaPostData = getNovaPostData();
 
-  // Отримуємо товари з кошика
-  const cartProducts = await getCartProducts();
-  
-  // Формуємо масив товарів для замовлення
-  const products = cartProducts.map(item => ({
-    product_attr_id: item.product_attr,
-    quantity: item.quantity,
-  }));
-
-  // Розділяємо ім'я на name та surname
   const fullName = nameInput.value.trim().split(" ");
   const firstName = fullName[0] || "";
   const lastName = fullName.slice(1).join(" ") || "";
-  
-  // Формуємо адресу з даних Нової Пошти
+
   const warehouseTitle = novaPostData.warehouse?.title || "";
   const cityName = capitalizeFirstLetter(cityInput.value.trim());
   const address = warehouseTitle ? `${cityName}, ${warehouseTitle}` : cityName;
 
-  // Визначаємо payment_type на основі обраного способу оплати
-  let paymentType = "cash"; // Значення за замовчуванням
+  let paymentType = "cash";
   if (paymentMethod.id === "card") {
     paymentType = "liqpay";
   } else if (paymentMethod.id === "cash") {
     paymentType = "cash";
   }
 
-  // Формуємо дані для відправки
   const orderData = {
     name: firstName,
-    surname: lastName || firstName, // Якщо прізвище не вказано, використовуємо ім'я
+    surname: lastName || firstName,
+    email: emailInput.value.trim(),
     phone: phoneInput.value.trim(),
+    city: cityName,
     address: address,
-    payment_type: paymentType, // Обов'язкове поле
-    // Додаємо промокод якщо він був застосований
+    payment_type: paymentType,
     promocode: localStorage.getItem("applied_promocode") || "",
   };
 
@@ -256,14 +322,17 @@ export async function submitOrder() {
       if (serverErrors.name) {
         setFieldError(nameInput, serverErrors.name[0] || serverErrors.name);
       }
+      if (serverErrors.email) {
+        setFieldError(emailInput, serverErrors.email[0] || serverErrors.email);
+        scrollToField(emailInput);
+      }
       if (serverErrors.phone) {
         setFieldError(phoneInput, serverErrors.phone[0] || serverErrors.phone);
       }
       if (serverErrors.city) {
         setFieldError(cityInput, serverErrors.city[0] || serverErrors.city);
       }
-      
-      // Загальна помилка
+
       if (serverErrors.message) {
         showError(serverErrors.message);
       } else if (serverErrors.error || serverErrors.detail) {

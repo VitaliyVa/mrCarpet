@@ -1,6 +1,5 @@
 {% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/basket/index.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
     <div class="container">
@@ -65,26 +64,6 @@
                                     <div class="basket__checkbox-item-body-block">
                                         <div class="basket__checkbox-item-body-block-head">
                                             <label>Обраний пункт</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                                    id="nova-post-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
-
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
                                         </div>
                                         <div class="basket__checkbox-item-body-block-fields">
                                             <div class="nova-post-city-wrapper" style="position: relative; width: 100%;">
@@ -94,16 +73,14 @@
                                                         name="city"
                                                         placeholder="Почніть вводити назву міста..."
                                                         autocomplete="off"
-                                                        readonly
                                                 />
                                                 <div id="nova-post-city-dropdown" class="nova-post-dropdown" style="display: none;"></div>
                                             </div>
                                             <div class="nova-post-warehouse-wrapper" style="position: relative; width: 100%;">
                                                 <select
                                                         id="nova-post-warehouse-select"
-                                                        class="input-transparent nova-post-warehouse-select"
+                                                        class="nova-post-warehouse-select"
                                                         name="warehouse"
-                                                        disabled
                                                 >
                                                     <option value="">Спочатку оберіть місто</option>
                                                 </select>
@@ -118,26 +95,6 @@
                                     <div class="basket__checkbox-item-body-block">
                                         <div class="basket__checkbox-item-body-block-head">
                                             <label>Інформація для доставки</label>
-                                            <button
-                                                    class="basket__checkbox-item-body-block-edit-btn"
-                                                    id="nova-post-info-edit-btn"
-                                            >
-                            <span class="is-completed">
-                              <img
-                                      src="/static/utils/assets/edit.svg"
-                                      alt="edit"
-                              />
-                              <span>Змінити</span>
-                            </span>
-
-                                                <span class="is-edited">
-                              <img
-                                      src="/static/utils/assets/check.svg"
-                                      alt="check"
-                              />
-                              <span>Готово</span>
-                            </span>
-                                            </button>
                                         </div>
                                         <div class="basket__checkbox-item-body-block-fields">
                                             <input
@@ -145,14 +102,20 @@
                                                     class="input-transparent"
                                                     name="name"
                                                     placeholder="Ваше ім'я"
-                                                    readonly
+                                            />
+                                            <input
+                                                    id="nova-post-email"
+                                                    class="input-transparent"
+                                                    type="email"
+                                                    name="email"
+                                                    placeholder="Email для підтвердження замовлення"
+                                                    autocomplete="email"
                                             />
                                             <input
                                                     id="nova-post-phone"
                                                     class="input-transparent"
                                                     name="phone"
                                                     placeholder="+380 XX XXX XX XX"
-                                                    readonly
                                             />
                                         </div>
                                     </div>
@@ -539,6 +502,5 @@
     // Передаємо дані з Django в JavaScript
     window.cartProductsCount = {{ cart.cart_products.all|length }};
 </script>
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script src="/static/source/pages/basket/index.js"></script>
 {% endblock scripts %}

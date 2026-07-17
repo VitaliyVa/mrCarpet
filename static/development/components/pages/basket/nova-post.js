@@ -1,6 +1,7 @@
 // Nova Post API Integration
 import IMask from "imask";
 import Choices from "choices.js";
+import "choices.js/public/assets/styles/choices.min.css";
 
 let selectedSettlement = null;
 let selectedWarehouse = null;
@@ -8,19 +9,16 @@ let searchTimeout = null;
 let phoneMask = null;
 let warehouseChoices = null;
 
-// Ініціалізація функціоналу Нової Пошти
 export function initNovaPost() {
   const cityInput = document.getElementById("nova-post-city-input");
   const cityDropdown = document.getElementById("nova-post-city-dropdown");
   const warehouseSelect = document.getElementById("nova-post-warehouse-select");
-  const editBtn = document.getElementById("nova-post-edit-btn");
   const phoneInput = document.getElementById("nova-post-phone");
 
-  if (!cityInput || !cityDropdown || !warehouseSelect || !editBtn) {
+  if (!cityInput || !cityDropdown || !warehouseSelect) {
     return;
   }
 
-  // Ініціалізація маски для телефону
   if (phoneInput && !phoneMask) {
     phoneMask = IMask(phoneInput, {
       mask: "+{38\\0} 00 000 00 00",
@@ -28,52 +26,24 @@ export function initNovaPost() {
     });
   }
 
-  // Ініціалізація Choices.js для селекту відділень
-  if (warehouseSelect && !warehouseChoices) {
+  if (!warehouseChoices) {
     warehouseChoices = new Choices(warehouseSelect, {
       searchEnabled: true,
       searchPlaceholderValue: "Пошук відділення...",
       noResultsText: "Нічого не знайдено",
-      itemSelectText: "", // Забираємо текст "Натисніть для вибору"
+      itemSelectText: "",
       shouldSort: false,
       removeItemButton: false,
-      placeholderValue: "Оберіть відділення",
+      placeholder: true,
+      placeholderValue: "Спочатку оберіть місто",
+      allowHTML: false,
     });
+    warehouseChoices.disable();
   }
 
-  // Обробка кнопки редагування
-  editBtn.addEventListener("click", function (e) {
-    e.preventDefault();
-    const bodyBlock = editBtn.closest(".basket__checkbox-item-body-block");
-    const fields = bodyBlock.querySelectorAll("input, select");
-
-    if (editBtn.classList.contains("active")) {
-      // Завершення редагування
-      editBtn.classList.remove("active");
-      fields.forEach((field) => {
-        field.readOnly = true;
-        if (field.tagName === "SELECT") {
-          field.disabled = true;
-        }
-      });
-    } else {
-      // Початок редагування
-      editBtn.classList.add("active");
-      fields.forEach((field) => {
-        field.readOnly = false;
-        if (field.tagName === "SELECT" && selectedSettlement) {
-          field.disabled = false;
-        }
-      });
-      cityInput.focus();
-    }
-  });
-
-  // Пошук міста з дебаунсом
   cityInput.addEventListener("input", function () {
     let query = cityInput.value.trim();
-    
-    // Автоматично робимо першу букву великою
+
     if (query.length > 0) {
       query = query.charAt(0).toUpperCase() + query.slice(1);
       cityInput.value = query;
@@ -91,62 +61,59 @@ export function initNovaPost() {
     }, 300);
   });
 
-  // Закриття випадаючого списку при кліку поза ним
   document.addEventListener("click", function (e) {
-    if (
-      !cityInput.contains(e.target) &&
-      !cityDropdown.contains(e.target)
-    ) {
+    if (!cityInput.contains(e.target) && !cityDropdown.contains(e.target)) {
       cityDropdown.style.display = "none";
     }
   });
 
-  // Обробка зміни відділення через Choices.js
-  if (warehouseSelect) {
-    warehouseSelect.addEventListener("change", function (event) {
-      const value = event.target.value;
-      
-      if (value && warehouseChoices) {
-        // Отримуємо вибрану опцію з customProperties
-        const selectedChoice = warehouseChoices._currentState.choices.find(
-          choice => choice.value === value
-        );
-        
-        if (selectedChoice && selectedChoice.customProperties) {
-          selectedWarehouse = {
-            id: value,
-            title: selectedChoice.customProperties.title,
-            ref: selectedChoice.customProperties.ref,
-          };
-        }
+  warehouseSelect.addEventListener("change", function (event) {
+    const value = event.target.value;
+
+    if (value && warehouseChoices) {
+      const selectedChoice = warehouseChoices._currentState.choices.find(
+        (choice) => choice.value === value
+      );
+
+      if (selectedChoice && selectedChoice.customProperties) {
+        selectedWarehouse = {
+          id: value,
+          title: selectedChoice.customProperties.title,
+          ref: selectedChoice.customProperties.ref,
+        };
       }
-    });
-  }
+    } else {
+      selectedWarehouse = null;
+    }
+  });
 }
 
-// Пошук населених пунктів
 async function searchSettlements(query) {
   const cityDropdown = document.getElementById("nova-post-city-dropdown");
 
   try {
-    cityDropdown.innerHTML = '<div class="nova-post-dropdown-item loading">Завантаження...</div>';
+    cityDropdown.innerHTML =
+      '<div class="nova-post-dropdown-item loading">Завантаження...</div>';
     cityDropdown.style.display = "block";
 
-    const response = await fetch(`/api/settlements/?q=${encodeURIComponent(query)}`);
+    const response = await fetch(
+      `/api/settlements/?q=${encodeURIComponent(query)}`
+    );
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
       renderSettlements(data.results);
     } else {
-      cityDropdown.innerHTML = '<div class="nova-post-dropdown-item no-results">Нічого не знайдено</div>';
+      cityDropdown.innerHTML =
+        '<div class="nova-post-dropdown-item no-results">Нічого не знайдено</div>';
     }
   } catch (error) {
     console.error("Помилка при пошуку міста:", error);
-    cityDropdown.innerHTML = '<div class="nova-post-dropdown-item error">Помилка завантаження</div>';
+    cityDropdown.innerHTML =
+      '<div class="nova-post-dropdown-item error">Помилка завантаження</div>';
   }
 }
 
-// Відображення списку населених пунктів
 function renderSettlements(settlements) {
   const cityDropdown = document.getElementById("nova-post-city-dropdown");
   const cityInput = document.getElementById("nova-post-city-input");
@@ -167,11 +134,11 @@ function renderSettlements(settlements) {
         ref: settlement.ref,
         title: settlement.title,
       };
+      selectedWarehouse = null;
 
       cityInput.value = settlement.title;
       cityDropdown.style.display = "none";
 
-      // Завантажуємо відділення для обраного міста
       loadWarehouses(settlement.ref);
     });
 
@@ -181,13 +148,11 @@ function renderSettlements(settlements) {
   cityDropdown.style.display = "block";
 }
 
-// Завантаження відділень
 async function loadWarehouses(settlementRef) {
   const warehouseWrapper = document.querySelector(".nova-post-warehouse-wrapper");
   const loadingIndicator = document.getElementById("warehouse-loading");
 
   try {
-    // Показуємо індикатор завантаження
     if (loadingIndicator) {
       loadingIndicator.style.display = "flex";
     }
@@ -195,38 +160,61 @@ async function loadWarehouses(settlementRef) {
       warehouseWrapper.classList.add("loading");
     }
 
-    // Очищаємо селект через Choices.js
     if (warehouseChoices) {
-      warehouseChoices.clearChoices();
-      warehouseChoices.setChoices([
-        { value: "", label: "Завантаження...", disabled: true },
-      ], "value", "label", true);
+      warehouseChoices.clearStore();
+      warehouseChoices.setChoices(
+        [{ value: "", label: "Завантаження...", disabled: true, selected: true }],
+        "value",
+        "label",
+        true
+      );
       warehouseChoices.disable();
     }
 
-    const response = await fetch(`/api/warehouses/?q=${encodeURIComponent(settlementRef)}`);
+    const response = await fetch(
+      `/api/warehouses/?q=${encodeURIComponent(settlementRef)}`
+    );
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
       renderWarehouses(data.results);
-    } else {
-      if (warehouseChoices) {
-        warehouseChoices.clearChoices();
-        warehouseChoices.setChoices([
-          { value: "", label: "Відділення не знайдено", disabled: true },
-        ], "value", "label", true);
-      }
+    } else if (warehouseChoices) {
+      warehouseChoices.clearStore();
+      warehouseChoices.setChoices(
+        [
+          {
+            value: "",
+            label: "Відділення не знайдено",
+            disabled: true,
+            selected: true,
+          },
+        ],
+        "value",
+        "label",
+        true
+      );
+      warehouseChoices.disable();
     }
   } catch (error) {
     console.error("Помилка при завантаженні відділень:", error);
     if (warehouseChoices) {
-      warehouseChoices.clearChoices();
-      warehouseChoices.setChoices([
-        { value: "", label: "Помилка завантаження", disabled: true },
-      ], "value", "label", true);
+      warehouseChoices.clearStore();
+      warehouseChoices.setChoices(
+        [
+          {
+            value: "",
+            label: "Помилка завантаження",
+            disabled: true,
+            selected: true,
+          },
+        ],
+        "value",
+        "label",
+        true
+      );
+      warehouseChoices.disable();
     }
   } finally {
-    // Ховаємо індикатор завантаження
     if (loadingIndicator) {
       loadingIndicator.style.display = "none";
     }
@@ -236,40 +224,40 @@ async function loadWarehouses(settlementRef) {
   }
 }
 
-// Відображення списку відділень
 function renderWarehouses(warehouses) {
-  if (warehouseChoices) {
-    // Очищаємо попередні варіанти
-    warehouseChoices.clearChoices();
-    
-    // Додаємо placeholder
-    const choices = [
-      { value: "", label: "Оберіть відділення", placeholder: true },
-    ];
-    
-    // Додаємо відділення
-    warehouses.forEach((warehouse) => {
-      choices.push({
-        value: warehouse.id,
-        label: warehouse.title,
-        customProperties: {
-          title: warehouse.title,
-          ref: warehouse.ref,
-          shortAddress: warehouse.short_address,
-        },
-      });
-    });
-    
-    warehouseChoices.setChoices(choices, "value", "label", true);
-    warehouseChoices.enable();
+  if (!warehouseChoices) {
+    return;
   }
+
+  const choices = [
+    {
+      value: "",
+      label: "Оберіть відділення",
+      placeholder: true,
+      selected: true,
+    },
+  ];
+
+  warehouses.forEach((warehouse) => {
+    choices.push({
+      value: String(warehouse.id),
+      label: warehouse.title,
+      customProperties: {
+        title: warehouse.title,
+        ref: warehouse.ref,
+        shortAddress: warehouse.short_address,
+      },
+    });
+  });
+
+  warehouseChoices.clearStore();
+  warehouseChoices.setChoices(choices, "value", "label", true);
+  warehouseChoices.enable();
 }
 
-// Отримання обраних даних для відправки замовлення
 export function getNovaPostData() {
   return {
     settlement: selectedSettlement,
     warehouse: selectedWarehouse,
   };
 }
-

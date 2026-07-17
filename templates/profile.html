@@ -217,8 +217,8 @@
                   </p>
                 </div>
                 <!-- If the order is cancelled, then class "color_black" is used, in all other cases class "color_gold"  -->
-                <p class="orders__block-status {% if order.status == 'Скасовано' %}color_black{% else %}color_gold{% endif %} medium">
-                  {{ order.status }}
+                <p class="orders__block-status {% if order.status == 'cancelled' %}color_black{% else %}color_gold{% endif %} medium">
+                  {{ order.get_status_display }}
                 </p>
               </div>
 
@@ -385,7 +385,7 @@
                         Оплата
                       </span>
                       <span class="orders__block-payment-value">
-                        {{ order.payment_type }}
+                        {{ order.get_payment_type_display }}
                       </span>
                     </p>
                     <p class="orders__block-delivery">

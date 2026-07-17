@@ -4,14 +4,35 @@ from .models import ContactRequest, Subscription, SMTPSettings
 
 # Register your models here.
 class SMTPSettingsAdmin(admin.ModelAdmin):
-    list_display = ['port', 'host', 'server_email', 'email_host_password']
+    list_display = ["host", "port", "server_email", "username", "use_tls", "use_ssl"]
+    fieldsets = (
+        (
+            "SMTP (Gmail)",
+            {
+                "description": (
+                    "Для Gmail: Host = smtp.gmail.com, Port = 587, TLS = увімкнено, SSL = вимкнено. "
+                    "У полі «Пароль» потрібен App Password (не звичайний пароль акаунта). "
+                    "Створити: Google Account → Security → 2-Step Verification → App passwords."
+                ),
+                "fields": (
+                    "host",
+                    "port",
+                    "server_email",
+                    "username",
+                    "email_host_password",
+                    "use_tls",
+                    "use_ssl",
+                ),
+            },
+        ),
+    )
 
     def has_delete_permission(self, request, obj=None):
         return False
-    
+
     def has_add_permission(self, request, obj=None):
         return SMTPSettings.objects.count() == 0
-    
+
     def has_change_permission(self, request, obj=None):
         return True
     

@@ -5,5 +5,5 @@ from order.models import Order
 
 @shared_task
 def remove_orders():
-    orders = Order.objects.filter(status="Не оплачено")
-    orders.delete()
+    """Видаляє неоплачені онлайн-замовлення (очікують оплати)."""
+    Order.objects.filter(status=Order.STATUS_AWAITING_PAYMENT).delete()
