@@ -140,13 +140,17 @@ def create_cities():
     print("Settlement skipped", skipped, "total_now", Settlement.objects.count())
 
 
-def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
+def create_warehouses(
+    *,
+    city_ref: str | None = None,
+    delay_sec: float = 0.35,
+    resume: bool = False,
+):
     """
     Original project design (see commented loop in old np.py):
     fetch warehouses per settlement CityRef — not one giant paginated dump.
 
-    That matches how local 40k+ warehouses were meant to be filled and avoids
-    NP rate-limit on getWarehouses page=2 without CityRef.
+    resume=True → skip settlements that already have ≥1 warehouse in DB.
     """
     type_by_ref = {t.ref: t for t in WarehouseType.objects.all()}
     if not type_by_ref:
@@ -158,14 +162,26 @@ def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
             Settlement.objects.filter(ref=city_ref).only("id", "ref", "title")
         )
     else:
-        settlements = list(
+        qs = (
             Settlement.objects.exclude(ref__isnull=True)
             .exclude(ref="")
             .only("id", "ref", "title")
             .order_by("id")
         )
+        if resume:
+            # reverse FK default related name: warehouse_set
+            already = (
+                Warehouse.objects.exclude(settlement_id__isnull=True)
+                .values_list("settlement_id", flat=True)
+                .distinct()
+            )
+            qs = qs.exclude(id__in=already)
+        settlements = list(qs)
 
-    print(f"Warehouses sync for {len(settlements)} settlements…")
+    print(
+        f"Warehouses sync for {len(settlements)} settlements"
+        f"{' (resume: only cities without warehouses)' if resume else ''}…"
+    )
 
     existing = {
         w.ref: w
@@ -184,9 +200,14 @@ def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
             {"CityRef": settlement.ref},
         )
         rows = response.get("data") or []
+        if not isinstance(rows, list):
+            rows = []
         if not rows:
             cities_empty += 1
         for obj in rows:
+            if not isinstance(obj, dict):
+                skipped += 1
+                continue
             title = obj.get("Description")
             ref = obj.get("Ref")
             short_address = obj.get("ShortAddress") or ""
@@ -215,7 +236,6 @@ def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
 
         cities_done += 1
         if cities_done % 50 == 0:
-            # flush periodically to keep memory down
             if bulk_create_list:
                 Warehouse.objects.bulk_create(bulk_create_list, ignore_conflicts=True)
                 print(
@@ -230,7 +250,6 @@ def create_warehouses(*, city_ref: str | None = None, delay_sec: float = 0.35):
                     fields=["title", "short_address", "type", "settlement", "ref"],
                 )
                 bulk_update_list = []
-            # refresh existing map ids after flush
             existing = {
                 w.ref: w
                 for w in Warehouse.objects.exclude(ref__isnull=True).exclude(ref="")
@@ -281,6 +300,11 @@ class Command(BaseCommand):
             default=0.35,
             help="Sleep seconds between per-city warehouse requests (default 0.35)",
         )
+        parser.add_argument(
+            "--resume",
+            action="store_true",
+            help="Skip settlements that already have warehouses in DB",
+        )
 
     def handle(self, *args, **options):
         only_raw = (options.get("only") or "").strip()
@@ -288,6 +312,7 @@ class Command(BaseCommand):
         skip_wh = options.get("skip_warehouses")
         city_ref = (options.get("city_ref") or "").strip() or None
         delay = float(options.get("delay") or 0.35)
+        resume = bool(options.get("resume"))
 
         def want(name: str) -> bool:
             if only:
@@ -312,8 +337,9 @@ class Command(BaseCommand):
             self.stdout.write(
                 "→ warehouses per city (original design; all settlements)"
                 + (f" filter={city_ref}" if city_ref else "")
+                + (" resume" if resume else "")
             )
-            create_warehouses(city_ref=city_ref, delay_sec=delay)
+            create_warehouses(city_ref=city_ref, delay_sec=delay, resume=resume)
 
         self.stdout.write(
             self.style.SUCCESS(

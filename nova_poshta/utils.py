@@ -27,6 +27,18 @@ def _is_rate_limit(errors) -> bool:
     return "many request" in text or "too many" in text or "rate" in text
 
 
+def _normalize_np_response(response):
+    """
+    NP usually returns a dict {success,data,errors,…}.
+    Occasionally the gateway returns a bare list / null — treat as empty payload.
+    """
+    if isinstance(response, dict):
+        return response
+    if isinstance(response, list):
+        return {"success": False, "data": [], "errors": [], "warnings": [str(response)[:200]]}
+    return {"success": False, "data": [], "errors": [f"Unexpected NP payload type: {type(response).__name__}"]}
+
+
 def get_response(model: str, method: str, properties: dict = None, *, max_retries: int = 8):
     """Single NP call with rate-limit retries (original helper + resilience)."""
     if properties is None:
@@ -39,8 +51,12 @@ def get_response(model: str, method: str, properties: dict = None, *, max_retrie
     }
     for attempt in range(1, max_retries + 1):
         try:
-            response = requests.post(url, json=data, timeout=120).json()
+            response = _normalize_np_response(requests.post(url, json=data, timeout=120).json())
         except requests.exceptions.Timeout:
+            time.sleep(min(2**attempt, 30))
+            continue
+        except ValueError:
+            # invalid JSON
             time.sleep(min(2**attempt, 30))
             continue
         errors = response.get("errors") or []
@@ -74,8 +90,13 @@ def get_full_response(model: str, method: str, properties: dict = None):
         response = None
         for attempt in range(1, 9):
             try:
-                response = requests.post(url, json=data, timeout=120).json()
+                response = _normalize_np_response(
+                    requests.post(url, json=data, timeout=120).json()
+                )
             except requests.exceptions.Timeout:
+                time.sleep(min(2**attempt, 30))
+                continue
+            except ValueError:
                 time.sleep(min(2**attempt, 30))
                 continue
             errors = response.get("errors") or []
@@ -88,13 +109,14 @@ def get_full_response(model: str, method: str, properties: dict = None):
                 time.sleep(wait)
                 continue
             if errors:
-                # Original swallowed odd pages; still surface hard errors
                 raise RuntimeError(f"NP {method} page={page} errors: {errors}")
             break
         else:
             raise RuntimeError(f"NP {method} page={page}: rate-limit retries exhausted")
 
         chunk = (response or {}).get("data") or []
+        if not isinstance(chunk, list):
+            chunk = []
         if not chunk:
             break
         result["data"].extend(chunk)
@@ -108,5 +130,7 @@ def get_full_response(model: str, method: str, properties: dict = None):
 
 def test_api():
     response = get_response("Address", "getSettlementTypes")
+    if not isinstance(response, dict):
+        raise Exception(f"Unexpected NP response: {type(response)}")
     if response.get("errors"):
         raise Exception(response["errors"])
