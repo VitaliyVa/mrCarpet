@@ -1,0 +1,156 @@
+.welcome-promo-overlay.modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.welcome-promo-modal {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 420px;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  padding: 36px 28px 28px;
+  background: #fffcf2;
+  border: 1px solid rgba(164, 108, 70, 0.22);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(69, 63, 58, 0.22);
+  transform: none;
+  opacity: 0;
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+
+  &.active {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  &__close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ebeae8;
+    color: #453f3a;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
+
+    &:hover {
+      background: #e0ddd8;
+    }
+  }
+
+  &__eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #a46c46;
+    margin-bottom: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  &__title {
+    margin: 0 0 10px;
+    font-size: 24px;
+    line-height: 1.25;
+    color: #453f3a;
+    font-weight: 700;
+  }
+
+  &__text {
+    margin: 0 0 22px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #5c554f;
+
+    strong {
+      color: #a46c46;
+    }
+  }
+
+  &__code-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  &__code {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 14px;
+    background: #fff;
+    border: 1px dashed rgba(164, 108, 70, 0.55);
+    border-radius: 8px;
+    color: #a46c46;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  &__copy {
+    flex-shrink: 0;
+    min-width: 128px;
+    padding: 0 16px;
+    border: 0;
+    cursor: pointer;
+  }
+
+  &__hint {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #198754;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+}
+
+.welcome-promo-overlay.modal-overlay:not(.active) .welcome-promo-modal {
+  display: none;
+}
+
+.welcome-promo-overlay.modal-overlay.active .welcome-promo-modal.active {
+  display: flex;
+  animation: welcomePromoIn 0.32s ease;
+}
+
+@keyframes welcomePromoIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-promo-modal {
+    padding: 28px 18px 20px;
+
+    &__code-row {
+      flex-direction: column;
+    }
+
+    &__copy {
+      min-height: 48px;
+    }
+  }
+}

@@ -11,14 +11,20 @@ export const subscribeToNewsletter = async (email) => {
     });
 
     hideLoader();
-    showSuccess(
-      data?.message ||
-        "Ви успішно підписалися на розсилку новин та акцій 🎉"
-    );
-
     return data;
   } catch ({ response }) {
     hideLoader();
-    showError(response?.data?.message || "Упс... щось пішло не так");
+
+    const payload = response?.data || {};
+    // Уже підписаний — все одно віддаємо промокод у модалку
+    if (payload.welcome_promocode) {
+      return {
+        ...payload,
+        already_subscribed: true,
+      };
+    }
+
+    showError(payload.message || "Упс... щось пішло не так");
+    return null;
   }
 };

@@ -1,6 +1,7 @@
 import "./promocode.scss";
 import { instance } from "../../../api/instance";
 import { showSuccess, showError } from "./notification";
+import { highlightNewsletterSubscribe } from "../../common_components/footer/subscription";
 
 function positionPromoTip(anchor, tooltip) {
   tooltip.style.display = "block";
@@ -149,9 +150,12 @@ function initPromoTip() {
     if (target) {
       event.preventDefault();
       target.scrollIntoView({ behavior: "smooth", block: "center" });
-      const emailInput = target.querySelector('input[type="email"], input[name="email"]');
+      highlightNewsletterSubscribe();
+      const emailInput = target.querySelector(
+        'input[type="email"], input[name="email"]'
+      );
       if (emailInput) {
-        setTimeout(() => emailInput.focus({ preventScroll: true }), 400);
+        setTimeout(() => emailInput.focus({ preventScroll: true }), 450);
       }
     }
   });

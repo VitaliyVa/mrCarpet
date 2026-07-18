@@ -11,16 +11,34 @@
 
   &_form {
     width: 20%;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 12px;
+    margin: -12px;
+    transition:
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      background-color 0.35s ease;
 
     &_title {
       margin-bottom: 20px;
     }
 
     &_text {
+      strong {
+        color: #a46c46;
+        font-weight: 600;
+      }
     }
 
     &_input {
       margin: 30px 0 12px 0;
+    }
+
+    &.is-highlighted {
+      border-color: #a46c46;
+      box-shadow: 0 0 0 4px rgba(164, 108, 70, 0.18);
+      background-color: rgba(164, 108, 70, 0.06);
     }
   }
 
@@ -87,6 +105,13 @@
 
     &_form {
       display: none;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto 24px;
+
+      &.is-highlighted {
+        display: block;
+      }
     }
 
     &__column {

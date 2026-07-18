@@ -400,7 +400,7 @@ class ShopSettings(models.Model):
     )
     free_shipping_threshold = models.PositiveIntegerField(
         verbose_name="Поріг безкоштовної доставки (грн)",
-        default=800,
+        default=1499,
         help_text="Сума товарів (після промокоду), від якої доставка за наш рахунок.",
     )
     delivery_from_price = models.PositiveIntegerField(

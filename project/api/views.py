@@ -107,9 +107,17 @@ class SubscriptionCreateView(CreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        welcome = {
+            "welcome_promocode": "WELCOME5",
+            "welcome_discount": 5,
+        }
+
         if status_key == "already_active":
             return Response(
-                {"message": "Ви уже підписані."},
+                {
+                    "message": "Ви уже підписані. Ось ваш промокод на −5%.",
+                    **welcome,
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -123,6 +131,7 @@ class SubscriptionCreateView(CreateAPIView):
                 "email": sub.email,
                 "is_active": sub.is_active,
                 "message": message,
+                **welcome,
             },
             status=status.HTTP_201_CREATED,
         )
