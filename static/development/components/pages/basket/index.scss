@@ -610,11 +610,21 @@
       border-bottom: 1px solid #dee2e6;
       flex-wrap: wrap;
       row-gap: 10px;
+      align-items: baseline;
+      column-gap: 12px;
+
+      &-title {
+        margin: 0;
+        white-space: nowrap;
+      }
 
       &-price {
         text-align: right;
+        white-space: nowrap;
 
         &.is-free {
+          white-space: normal;
+
           .basket__calculate-delivery-was {
             display: block;
             text-decoration: line-through;
@@ -629,6 +639,10 @@
             font-weight: 600;
           }
         }
+      }
+
+      &-carrier {
+        white-space: nowrap;
       }
 
       &-hint {

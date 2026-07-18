@@ -6,11 +6,7 @@
   data-fs-threshold="{{ fs.threshold }}"
   data-fs-from="{{ fs.delivery_from_price }}"
 >
-  <p class="basket__calculate-delivery-title">
-    Вартість
-    <br />
-    доставки
-  </p>
+  <p class="basket__calculate-delivery-title">Вартість доставки</p>
   <div
     class="basket__calculate-delivery-price{% if fs.qualifies %} is-free{% endif %}"
     id="basket-delivery-price"
@@ -22,11 +18,11 @@
     <span class="basket__calculate-delivery-now">Безкоштовно</span>
     {% elif fs.enabled %}
     <span class="basket__calculate-delivery-carrier"
-      >за тарифами<br />перевізника</span
+      >за тарифами перевізника</span
     >
     {% else %}
     <span class="basket__calculate-delivery-carrier"
-      >за тарифами<br />перевізника</span
+      >за тарифами перевізника</span
     >
     {% endif %}
   </div>

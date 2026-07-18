@@ -297,7 +297,7 @@ function updateFreeShippingUI(fs, finalPrice) {
   } else {
     priceEl.classList.remove("is-free");
     priceEl.innerHTML = `
-      <span class="basket__calculate-delivery-carrier">за тарифами<br />перевізника</span>
+      <span class="basket__calculate-delivery-carrier">за тарифами перевізника</span>
     `;
     if (hintEl) {
       if (enabled && remaining > 0) {
