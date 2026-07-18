@@ -60,7 +60,7 @@ def status_list_reply() -> str:
 def default_status_email(order_number: int, status: str, *, customer_name: str = "") -> tuple[str, str]:
     label = STATUS_LABEL_BY_CODE.get(status, status)
     name = (customer_name or "").strip() or "клієнте"
-    subject = f"Оновлення замовлення №{order_number} — {label}"
+    subject = f"mr.Carpet — замовлення №{order_number}: {label}"
     body = (
         f"Доброго дня, {name}!\n\n"
         f"Статус вашого замовлення №{order_number} змінено на: {label}.\n\n"

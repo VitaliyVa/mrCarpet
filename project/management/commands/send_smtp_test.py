@@ -1,11 +1,12 @@
 """Send a one-off SMTP test email via SMTPSettings (Brevo :2525 etc.)."""
 from django.core.management.base import BaseCommand
 
+from project.email_branding import render_branded_email, with_plain_footer
 from project.smtp_utils import get_smtp_connection, send_smtp_mail
 
 
 class Command(BaseCommand):
-    help = "Тестовий лист через SMTPSettings (напр. Brevo smtp-relay.brevo.com:2525)"
+    help = "Тестовий лист через SMTPSettings (брендований HTML-шаблон)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -39,15 +40,23 @@ class Command(BaseCommand):
             )
             return
 
+        html = render_branded_email(
+            "emails/smtp_test.html",
+            {"smtp_host": smtp.host, "smtp_port": smtp.port},
+            eyebrow="Тест доставки",
+            preheader="Тестовий брендований лист mr.Carpet",
+        )
+        plain = with_plain_footer(
+            "Тестовий лист з mr.Carpet (HTML-шаблон).\n"
+            f"Host: {smtp.host}:{smtp.port}\n"
+            "Якщо бачиш це — SMTP працює.\n"
+        )
         ok = send_smtp_mail(
             "mr.Carpet — SMTP test",
-            (
-                "Тестовий лист з mr.Carpet.\n"
-                f"Host: {smtp.host}:{smtp.port}\n"
-                "Якщо бачиш це — SMTP працює.\n"
-            ),
+            plain,
             [to],
             fail_silently=True,
+            html_message=html,
         )
         if ok:
             self.stdout.write(self.style.SUCCESS(f"Sent OK → {to}"))

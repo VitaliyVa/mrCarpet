@@ -4,12 +4,12 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.core.mail import send_mail
 from django.urls import reverse
-from django.conf import settings
 
 from cart.models import Cart
 from order.models import Order
+from project.email_branding import wrap_plain_email
+from project.smtp_utils import send_smtp_mail
 from .models import CustomUser
 
 
@@ -67,15 +67,23 @@ def password_reset_view(request):
         "З повагою,\n"
         "Команда mr.Carpet"
     )
+    plain, html = wrap_plain_email(
+        message,
+        title=subject,
+        eyebrow="Безпека акаунта",
+        preheader="Посилання для скидання паролю mr.Carpet",
+    )
 
     try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
+        ok = send_smtp_mail(
+            subject,
+            plain,
+            [email],
             fail_silently=False,
+            html_message=html,
         )
+        if not ok:
+            raise RuntimeError("SMTP send returned false")
         context["email_sent"] = True
     except Exception:
         context["form_error"] = (

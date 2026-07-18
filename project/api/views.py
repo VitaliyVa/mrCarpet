@@ -12,6 +12,7 @@ from .serializers import (
     SubscriptionSerializer,
 )
 from ..email_utils import (
+    build_contact_received_email,
     build_stock_inquiry_admin_email,
     build_stock_inquiry_customer_email,
 )
@@ -28,11 +29,12 @@ class ContactRequestCreateView(APIView):
         serializer = ContactRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         from_email = serializer.save()
-        # Як і раніше помилка пошти не ламає відповідь; тепер ще й не блокує запит
+        subject, plain, html = build_contact_received_email(from_email)
         send_smtp_mail_async(
-            "Нова контактна форма",
-            f"Ім'я: {from_email.name}\nПошта: {from_email.email}\nКоментар: {from_email.text}",
+            subject,
+            plain,
             [from_email.email],
+            html_message=html,
         )
         notify_contact(from_email)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

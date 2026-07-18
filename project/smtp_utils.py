@@ -5,7 +5,8 @@
 import logging
 import threading
 
-from django.core.mail import get_connection, send_mail
+from django.conf import settings as django_settings
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.db import close_old_connections
 
 from .models import SMTPSettings
@@ -36,6 +37,12 @@ def get_smtp_connection():
     return smtp, connection
 
 
+def _reply_to_list():
+    """Inbox that actually receives replies (not the Brevo From domain)."""
+    addr = (getattr(django_settings, "SUPPORT_EMAIL", "") or "").strip()
+    return [addr] if addr else []
+
+
 def send_smtp_mail(
     subject, message, recipient_list, fail_silently=True, html_message=None
 ):
@@ -43,18 +50,26 @@ def send_smtp_mail(
     Синхронна відправка (як у ContactRequestCreateView).
     За замовчуванням fail_silently=True — помилка лише в лог.
     html_message — опційний HTML (multipart/alternative).
+    Reply-To → SUPPORT_EMAIL (реальна скринька), From лишається SMTPSettings.server_email.
     """
     try:
         smtp, connection = get_smtp_connection()
-        send_mail(
-            subject,
-            message,
-            smtp.server_email,
-            recipient_list,
-            fail_silently=False,
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=message,
+            from_email=smtp.server_email,
+            to=list(recipient_list),
             connection=connection,
-            html_message=html_message,
+            reply_to=_reply_to_list(),
+            headers={
+                # transactional / auto-mail signals (shop-standard)
+                "Auto-Submitted": "auto-generated",
+                "X-Auto-Response-Suppress": "OOF, AutoReply",
+            },
         )
+        if html_message:
+            email.attach_alternative(html_message, "text/html")
+        email.send(fail_silently=False)
         return True
     except Exception as exc:
         logger.exception("SMTP send failed: %s", exc)

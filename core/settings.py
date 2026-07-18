@@ -228,6 +228,8 @@ REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
 
 # Absolute site URL for Telegram product links etc.
 SITE_URL = config("SITE_URL", default="https://mrcarpet24.com").rstrip("/")
+# Real mailbox for replies / footer (From for sending can stay orders@ via Brevo)
+SUPPORT_EMAIL = config("SUPPORT_EMAIL", default="mr.carpet.shop@gmail.com")
 
 # CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
 # CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")

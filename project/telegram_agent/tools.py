@@ -326,14 +326,22 @@ def execute_write_tool(name: str, args: dict) -> dict[str, Any]:
         }
 
     if name == "send_order_email":
+        from project.email_branding import wrap_plain_email
         from project.smtp_utils import send_smtp_mail
 
+        plain, html = wrap_plain_email(
+            args["body"],
+            title=args["subject"],
+            eyebrow=f"Замовлення №{args['order_number']}",
+            preheader=args["subject"],
+        )
         try:
             ok = send_smtp_mail(
                 args["subject"],
-                args["body"],
+                plain,
                 [args["email"]],
                 fail_silently=False,
+                html_message=html,
             )
         except Exception as exc:
             return {

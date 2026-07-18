@@ -1,0 +1,26 @@
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="padding:32px 28px 12px;">
+      <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#453f3a;font-weight:700;font-family:Arial,Helvetica,sans-serif;">
+        Дякуємо, {{ name }}!
+      </h1>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:#5c554f;font-family:Arial,Helvetica,sans-serif;">
+        Ми отримали ваше повідомлення і відповімо найближчим часом.
+      </p>
+    </td>
+  </tr>
+  {% if text %}
+  <tr>
+    <td style="padding:0 28px 28px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;border:1px solid #efe6dc;">
+        <tr>
+          <td style="padding:18px 20px;">
+            <div style="font-size:11px;line-height:1.3;color:#89817c;text-transform:uppercase;letter-spacing:0.05em;font-family:Arial,Helvetica,sans-serif;margin-bottom:8px;">Ваше повідомлення</div>
+            <div style="font-size:15px;line-height:1.55;color:#453f3a;font-family:Arial,Helvetica,sans-serif;white-space:pre-wrap;">{{ text }}</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {% endif %}
+</table>
