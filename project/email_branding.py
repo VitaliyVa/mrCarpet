@@ -45,7 +45,7 @@ def with_plain_footer(body: str) -> str:
 def brand_context(**extra) -> dict[str, Any]:
     base = {
         "site_url": site_url(),
-        "logo_url": absolute_static("utils/assets/email-logo-mark.png"),
+        "logo_url": absolute_static("utils/assets/brand/email-logo.png"),
         "brand_name": "mr.Carpet",
         "support_email": support_email(),
         "year": __import__("datetime").datetime.now().year,

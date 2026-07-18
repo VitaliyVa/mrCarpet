@@ -240,7 +240,9 @@ export async function submitOrder() {
 
   const warehouseTitle = novaPostData.warehouse?.title || "";
   const cityName = capitalizeFirstLetter(cityInput.value.trim());
-  const address = warehouseTitle ? `${cityName}, ${warehouseTitle}` : cityName;
+  // address = відділення (або місто, якщо відділення ще не обрано).
+  // Місто окремо в city — не дублюємо «Ланівці, Ланівці» в листах.
+  const address = warehouseTitle || cityName;
 
   let paymentType = "cash";
   if (paymentMethod.id === "card") {

@@ -1,42 +1,154 @@
-<div id="liqpay_checkout"></div>
-<div id="liqpay_error" style="display: none; color: red; padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 20px 0;"></div>
+<style>
+  .liqpay-page {
+    position: relative;
+    min-height: 70vh;
+    padding: 24px 16px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #liqpay_checkout {
+    position: relative;
+    top: 60px;
+    width: 100%;
+    max-width: 720px;
+    min-height: 420px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  #liqpay_checkout.is-ready {
+    opacity: 1;
+  }
+
+  .liqpay-page__loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    color: #5a4a3a;
+  }
+
+  .liqpay-page__loader.is-hidden {
+    display: none;
+  }
+
+  .liqpay-page__loader-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #f0e6d8;
+    border-top-color: #a46c46;
+    border-radius: 50%;
+    animation: liqpay-spin 0.8s linear infinite;
+  }
+
+  .liqpay-page__loader-text {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  @keyframes liqpay-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  #liqpay_error {
+    display: none;
+    position: relative;
+    top: 60px;
+    width: 100%;
+    max-width: 720px;
+    color: #842029;
+    padding: 20px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 20px 0 0;
+  }
+</style>
+
+<section class="liqpay-page" aria-busy="true">
+  <div class="liqpay-page__loader" id="liqpay_loader">
+    <div class="liqpay-page__loader-spinner" aria-hidden="true"></div>
+    <p class="liqpay-page__loader-text">Завантаження оплати…</p>
+  </div>
+  <div id="liqpay_checkout"></div>
+  <div id="liqpay_error" role="alert"></div>
+</section>
+
 <script>
     window.LiqPayCheckoutCallback = function() {
+        var loader = document.getElementById("liqpay_loader");
+        var checkout = document.getElementById("liqpay_checkout");
+        var errorEl = document.getElementById("liqpay_error");
+        var page = document.querySelector(".liqpay-page");
+
+        function hideLoader() {
+            if (loader) loader.classList.add("is-hidden");
+            if (page) page.setAttribute("aria-busy", "false");
+        }
+
+        function showCheckout() {
+            hideLoader();
+            if (checkout) checkout.classList.add("is-ready");
+        }
+
+        function showError(message) {
+            hideLoader();
+            if (errorEl) {
+                errorEl.style.display = "block";
+                errorEl.textContent = message;
+            }
+        }
+
         console.log("[LiqPay] Ініціалізація платежу...");
         console.log("[LiqPay] Data:", "{{ data|slice:':50' }}...");
         console.log("[LiqPay] Signature:", "{{ signature|slice:':20' }}...");
-        
+
         try {
             LiqPayCheckout.init({
                 data: "{{ data }}",
                 signature: "{{ signature }}",
                 embedTo: "#liqpay_checkout",
-                mode: "embed" // embed || popup,
+                mode: "embed"
             }).on("liqpay.callback", function(data){
                 console.log("[LiqPay] Callback отримано:", data);
                 console.log("[LiqPay] Status:", data.status);
-                
+
                 if (data.status === "success" || data.status === "sandbox") {
                     console.log("[LiqPay] Оплата успішна, перенаправляємо...");
                     window.location.href = "/success/";
                 } else if (data.status === "failure") {
                     console.error("[LiqPay] Оплата не вдалася:", data);
-                    document.getElementById("liqpay_error").style.display = "block";
-                    document.getElementById("liqpay_error").textContent = "Помилка при проведенні транзакції: " + (data.err_description || "Невідома помилка");
+                    showError("Помилка при проведенні транзакції: " + (data.err_description || "Невідома помилка"));
                 }
             }).on("liqpay.ready", function(data){
                 console.log("[LiqPay] Ready:", data);
+                showCheckout();
             }).on("liqpay.close", function(data){
                 console.log("[LiqPay] Close:", data);
             }).on("liqpay.error", function(data){
                 console.error("[LiqPay] Error:", data);
-                document.getElementById("liqpay_error").style.display = "block";
-                document.getElementById("liqpay_error").textContent = "Помилка LiqPay: " + (data.message || JSON.stringify(data));
+                showError("Помилка LiqPay: " + (data.message || JSON.stringify(data)));
             });
+
+            // Fallback якщо ready не прийде
+            setTimeout(function() {
+                if (checkout && !checkout.classList.contains("is-ready") && errorEl && errorEl.style.display !== "block") {
+                    showCheckout();
+                }
+            }, 8000);
         } catch (error) {
             console.error("[LiqPay] Помилка ініціалізації:", error);
-            document.getElementById("liqpay_error").style.display = "block";
-            document.getElementById("liqpay_error").textContent = "Помилка ініціалізації платежу: " + error.message;
+            showError("Помилка ініціалізації платежу: " + error.message);
         }
     };
 </script>

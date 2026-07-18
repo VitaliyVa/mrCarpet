@@ -38,6 +38,21 @@ class IntentRouterTests(TestCase):
         self.assertEqual(plan["type"], "reply")
         self.assertIn("Виконано", plan["text"])
 
+    def test_current_status_question_is_get_order(self):
+        plan = maybe_direct_plan("який статус в замовлені №9106492351856?")
+        self.assertEqual(plan["type"], "tool")
+        self.assertEqual(plan["name"], "get_order")
+        self.assertEqual(plan["args"]["order_number"], 9106492351856)
+
+    def test_current_status_from_reply_context(self):
+        plan = maybe_direct_plan(
+            "який статус в замовлені?",
+            context_text="✅ Замовлення оплачено №9106492351856 Статус: Оплачено",
+        )
+        self.assertEqual(plan["type"], "tool")
+        self.assertEqual(plan["name"], "get_order")
+        self.assertEqual(plan["args"]["order_number"], 9106492351856)
+
     def test_status_change_with_email_batch(self):
         Order.objects.create(
             order_number=9384126709151,

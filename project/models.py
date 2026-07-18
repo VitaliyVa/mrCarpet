@@ -196,8 +196,13 @@ class TelegramSettings(models.Model):
         verbose_name="Replicate model",
         max_length=255,
         blank=True,
-        default="meta/meta-llama-3-8b-instruct",
-        help_text="Slug моделі на Replicate, напр. meta/meta-llama-3-8b-instruct",
+        default="meta/llama-4-scout-instruct",
+        help_text=(
+            "Slug на Replicate. Рекомендовано: meta/llama-4-scout-instruct "
+            "(розумніше за 8B, дешевше за 70B). Альтернативи: "
+            "meta/meta-llama-3-8b-instruct (дешевше), "
+            "meta/meta-llama-3-70b-instruct (дорожче/розумніше)."
+        ),
     )
     webhook_secret = models.CharField(
         verbose_name="Webhook secret",

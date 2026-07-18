@@ -265,12 +265,40 @@ def maybe_direct_plan(user_text: str, *, context_text: str = "") -> dict | None:
     ):
         return {"type": "reply", "text": HELP_REPLY}
 
-    # List statuses — UA labels (never leave this to the LLM)
-    if re.search(
-        r"(як(і|ий)\s+(є\s+)?статус|список\s+статус|які\s+статус|"
-        r"status(es)?\s*\?|what\s+statuses)",
-        t,
-    ) and not re.search(r"(зміни|постав|зроби|на\s+статус\s+\w)", t):
+    # "який статус у замовленні №…" → current status via get_order
+    # (must run BEFORE the statuses catalog reply)
+    order_number_early = extract_order_number(user_text or "", context_text or "")
+    asks_current_status = bool(
+        re.search(
+            r"(як(ий|а|е)\s+(зараз\s+)?статус|"
+            r"статус\s+(цього\s+|у\s+|в\s+)?замовлен|"
+            r"в\s+якому\s+статус|"
+            r"який\s+статус\s+(в|у|замовлен))",
+            t,
+        )
+    )
+    if (
+        order_number_early
+        and asks_current_status
+        and not re.search(r"(зміни|постав|зроби|на\s+статус\s+\w|список)", t)
+    ):
+        return {
+            "type": "tool",
+            "name": "get_order",
+            "args": {"order_number": order_number_early},
+        }
+
+    # List statuses catalog — only when NOT asking about a specific order
+    if (
+        re.search(
+            r"(як(і|ий)\s+(є\s+)?статус|список\s+статус|які\s+статус|"
+            r"status(es)?\s*\?|what\s+statuses)",
+            t,
+        )
+        and not order_number_early
+        and not re.search(r"замовлен", t)
+        and not re.search(r"(зміни|постав|зроби|на\s+статус\s+\w)", t)
+    ):
         return {"type": "reply", "text": status_list_reply()}
 
     # Order status change (+ email) before stock — avoids context bleed
@@ -347,12 +375,11 @@ def maybe_direct_plan(user_text: str, *, context_text: str = "") -> dict | None:
     # Order lookup — number from text or reply/history context
     order_number = extract_order_number(user_text or "", context_text or "")
     wants_lookup = bool(
-        re.search(r"(замовлен|детал|покаж|покажи|що\s+там|інфо)", t)
+        re.search(r"(замовлен|детал|покаж|покажи|що\s+там|інфо|статус)", t)
     )
     if (
         order_number
         and wants_lookup
-        and "статус" not in t
         and not re.search(r"(зміни|постав|зроби|напиш)", t)
     ):
         return {

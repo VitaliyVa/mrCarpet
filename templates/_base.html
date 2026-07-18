@@ -28,13 +28,21 @@
     <meta property="og:title" content="{% block og_title %}mr.Carpet — інтернет-магазин килимів{% endblock og_title %}" />
     <meta property="og:description" content="{% block og_description %}Килими від українських та турецьких виробників. Доставка по Україні. Магазин Меблі Килими / mr.Carpet.{% endblock og_description %}" />
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock og_url %}" />
-    {% block og_image %}{% endblock og_image %}
+    {% block og_image %}
+    <meta property="og:image" content="https://mrcarpet24.com/static/utils/assets/brand/mr-carpet-logo.png" />
+    {% endblock og_image %}
     <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock twitter_card %}" />
     <meta name="twitter:title" content="{% block twitter_title %}mr.Carpet — інтернет-магазин килимів{% endblock twitter_title %}" />
     <meta name="twitter:description" content="{% block twitter_description %}Килими від українських та турецьких виробників. Доставка по Україні.{% endblock twitter_description %}" />
-    {% block twitter_image %}{% endblock twitter_image %}
+    {% block twitter_image %}
+    <meta name="twitter:image" content="https://mrcarpet24.com/static/utils/assets/brand/mr-carpet-logo.png" />
+    {% endblock twitter_image %}
     {% endblock social_meta %}
     {% include 'includes/analytics_head.html' %}
+    <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/utils/assets/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/utils/assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="/static/development/main.css" />
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
     {% block structured_data %}

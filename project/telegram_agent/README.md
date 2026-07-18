@@ -19,7 +19,7 @@
 - `ai_enabled` + те саме + `REPLICATE_API_TOKEN` → `ai_ready` — агент
 - `message_thread_id` — forum topic (напр. «mr.Carpet orders»)
 - `webhook_secret` — обов’язковий, якщо AI увімкнено (інакше webhook → 403)
-- `replicate_model` — за замовчуванням `meta/meta-llama-3-8b-instruct`
+- `replicate_model` — за замовчуванням `meta/llama-4-scout-instruct` (золота середина: розумніше за 8B, дешевше за 70B)
 - `wake_words` — типово «містер карпет»
 - `ai_rate_limit_per_user` — ліміт user-повідомлень / 10 хв
 

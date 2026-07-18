@@ -8,11 +8,36 @@ from project.smtp_utils import send_smtp_mail, send_smtp_mail_async
 logger = logging.getLogger(__name__)
 
 
+def format_delivery_line(city: str | None, address: str | None) -> str:
+    """
+    Checkout often stores city inside address too («Ланівці» / «Ланівці, Відд. №1»).
+    Avoid «Ланівці, Ланівці» in emails.
+    """
+    city = (city or "").strip()
+    address = (address or "").strip()
+    if not city and not address:
+        return "—"
+    if not address:
+        return city
+    if not city:
+        return address
+    if address.casefold() == city.casefold():
+        return city
+    # address already starts with city (with comma/space)
+    prefix = f"{city},"
+    if address.casefold().startswith(prefix.casefold()) or address.casefold().startswith(
+        f"{city} ".casefold()
+    ):
+        return address
+    return f"{city}, {address}"
+
+
 def _build_order_email(order):
     payment_label = order.get_payment_type_display()
     status_label = order.get_status_display()
     price = f"{order.total_price:.0f} грн" if order.total_price is not None else "—"
     customer = f"{order.name} {order.surname}".strip()
+    delivery = format_delivery_line(order.city, order.address)
 
     subject = f"mr.Carpet — замовлення №{order.order_number} прийнято"
     body = with_plain_footer(
@@ -21,8 +46,7 @@ def _build_order_email(order):
         f"Статус: {status_label}\n"
         f"Отримувач: {customer}\n"
         f"Телефон: {order.phone or '—'}\n"
-        f"Місто: {order.city or '—'}\n"
-        f"Адреса / відділення: {order.address or '—'}\n"
+        f"Доставка: {delivery}\n"
         f"Спосіб оплати: {payment_label}\n"
         f"Сума: {price}\n\n"
         f"Ми зв’яжемося з вами для підтвердження деталей.\n\n"
@@ -35,8 +59,7 @@ def _build_order_email(order):
             "status_label": status_label,
             "customer": customer,
             "phone": order.phone or "—",
-            "city": order.city or "—",
-            "address": order.address or "",
+            "delivery": delivery,
             "payment_label": payment_label,
             "price": price,
         },

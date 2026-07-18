@@ -40,6 +40,34 @@ def product_absolute_url(product) -> str:
     return f"{base}{path}"
 
 
+def _delivery_line(order) -> str:
+    try:
+        from order.email_utils import format_delivery_line
+
+        return format_delivery_line(order.city, order.address)
+    except Exception:
+        city = (getattr(order, "city", None) or "").strip()
+        address = (getattr(order, "address", None) or "").strip()
+        if city and address and city.casefold() != address.casefold():
+            return f"{city}, {address}"
+        return city or address or "—"
+
+
+def order_admin_absolute_url(order) -> str:
+    """Absolute Django admin change URL for an order (uses DB pk)."""
+    base = getattr(django_settings, "SITE_URL", "https://mrcarpet24.com").rstrip("/")
+    pk = getattr(order, "pk", None)
+    if not pk:
+        return f"{base}/admin/order/order/"
+    try:
+        from django.urls import reverse
+
+        path = reverse("admin:order_order_change", args=[pk])
+    except Exception:
+        path = f"/admin/order/order/{pk}/change/"
+    return f"{base}{path}"
+
+
 def send_telegram_message(text, fail_silently=True, parse_mode=None):
     """
     Синхронна відправка тексту в налаштований chat_id.
@@ -179,14 +207,15 @@ def format_order_message(order, event="new"):
     header = headers.get(event, "🛒 Замовлення")
     number = order.order_number or order.pk or "?"
     customer = f"{order.name} {order.surname}".strip() or "—"
+    admin_url = order_admin_absolute_url(order)
     lines = [
         f"{_esc(header)} №{_esc(number)}",
+        f'<a href="{_esc(admin_url)}">Відкрити в адмінці</a>',
         f"Статус: {_esc(order.get_status_display())}",
         f"Клієнт: {_esc(customer)}",
         f"Телефон: {_esc(order.phone or '—')}",
         f"Email: {_esc(order.email or '—')}",
-        f"Місто: {_esc(order.city or '—')}",
-        f"Адреса: {_esc(order.address or '—')}",
+        f"Доставка: {_esc(_delivery_line(order))}",
         f"Оплата: {_esc(order.get_payment_type_display())}",
         f"Сума: {_esc(_price(order.total_price))}",
     ]

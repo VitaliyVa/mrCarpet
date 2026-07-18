@@ -89,7 +89,7 @@ def offer_shipping_details() -> dict[str, Any]:
 
 
 def organization_graph(request) -> dict[str, Any]:
-    logo = absolute_uri(request, "/static/utils/assets/LogoBlack.svg")
+    logo = absolute_uri(request, "/static/utils/assets/brand/mr-carpet-logo.png")
     return {
         "@context": "https://schema.org",
         "@type": "Organization",
