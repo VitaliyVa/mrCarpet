@@ -51,20 +51,26 @@ jobs:
                 python -c "import sqlite3; c=sqlite3.connect('/app/db.sqlite3'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()" \
                 || true
             fi
-            cp -a db.sqlite3 "backups/db.sqlite3.pre_deploy_${TS}"
-            cp -a db.sqlite3 "/tmp/mrcarpet_db_live_${TS}.sqlite3"
+            # db.sqlite3 may be root-owned; use docker for reliable copy.
+            docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
+              sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && cp /app/db.sqlite3 /tmp/mrcarpet_db_live_${TS}.sqlite3 && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS} /tmp/mrcarpet_db_live_${TS}.sqlite3"
           fi
 
-          echo "Pulling latest changes..."
+          # Untracked files on the server must not block git pull.
+          echo "Clearing untracked conflicts that would block merge..."
           git fetch origin
-          git pull origin main || git pull origin master
+          git clean -fd -- scripts || true
+
+          echo "Pulling latest changes..."
+          git pull origin main
 
           echo "Restoring live SQLite (git must not own prod data)..."
           if [ -f "/tmp/mrcarpet_db_live_${TS}.sqlite3" ]; then
-            cp -a "/tmp/mrcarpet_db_live_${TS}.sqlite3" db.sqlite3
+            docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
+              sh -c "cp /tmp/mrcarpet_db_live_${TS}.sqlite3 /app/db.sqlite3 && chmod 666 /app/db.sqlite3 && rm -f /app/db.sqlite3-wal /app/db.sqlite3-shm"
+          else
+            rm -f db.sqlite3-wal db.sqlite3-shm
           fi
-          # Drop any WAL/SHM that git pull may have introduced from another machine.
-          rm -f db.sqlite3-wal db.sqlite3-shm
 
           echo "Rebuilding containers..."
           docker compose -f docker-compose.prod.yml build web
