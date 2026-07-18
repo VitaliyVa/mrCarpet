@@ -39,9 +39,16 @@ class WarehousesList(generics.ListAPIView):
             logger.warning("warehouses: empty q → none()")
             return Warehouse.objects.none()
 
+        # Килими не влізають у поштомати — не показуємо їх у чекауті
+        postomat_q = Q(type__title__icontains="поштомат") | Q(
+            title__icontains="поштомат"
+        )
+
         try:
             settlement_id = int(query)
-            qs = self.queryset.filter(settlement_id=settlement_id)
+            qs = self.queryset.filter(settlement_id=settlement_id).exclude(
+                postomat_q
+            )
             logger.info(
                 "warehouses: filter by settlement_id=%s → %s",
                 settlement_id,
@@ -49,7 +56,7 @@ class WarehousesList(generics.ListAPIView):
             )
             return qs
         except (TypeError, ValueError):
-            qs = self.queryset.filter(settlement__ref=query)
+            qs = self.queryset.filter(settlement__ref=query).exclude(postomat_q)
             logger.info(
                 "warehouses: filter by settlement__ref=%r → %s",
                 query,

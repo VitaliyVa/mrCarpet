@@ -1,0 +1,40 @@
+---
+description: Deploy only through git — no SSH/scp hotfixes to prod without high cause
+alwaysApply: true
+---
+
+# Deploy тільки через git
+
+Заборонено «гарячити» прод через `scp`, `rsync`, `docker cp`, ручне редагування на сервері або `ssh … > file`, **окрім високої причини** (прод лежить / безпека / юзер явно наказав hotfix).
+
+## Нормальний шлях
+
+1. Зміни в локальному репо
+2. Коміт (лише коли юзер попросив) → `git push`
+3. На сервері: `git pull --ff-only` (або CI/CD)
+4. Потім `migrate` / `collectstatic` / `docker compose … up -d --build` за потреби
+
+## Не робити
+
+```bash
+# ❌ BAD — роз’їзд з git, конфлікти на наступному pull
+scp templates/foo.html user@server:~/project/templates/
+docker compose cp local.py web:/app/...
+ssh user@server 'cat > file.py'
+```
+
+```bash
+# ✅ GOOD
+git add … && git commit … && git push
+# на сервері:
+git pull --ff-only
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+## Винятки (потрібна явна висока причина)
+
+- Прод down / критичний інцидент і юзер просить hotfix зараз
+- Read-only діагностика: логи, `manage.py shell`, `curl`, статус контейнерів — ок
+- Секрети/env на сервері не комітити; їх можна правити окремо, але код/шаблони/static — тільки через git
+
+Після вимушеного hotfix обов’язково той самий зміст потрапляє в git і на сервер підтягується через pull, щоб не лишалось «тіньових» файлів.
