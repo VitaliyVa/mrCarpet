@@ -87,8 +87,10 @@ jobs:
           echo "Running migrations..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
 
-          echo "Restarting services..."
-          docker compose -f docker-compose.prod.yml restart web nginx
+          # Nginx caches upstream IP for `web`. After web recreate that IP changes
+          # → 502 "No route to host" until nginx reloads DNS. Restart nginx LAST only.
+          echo "Restarting nginx to refresh web upstream DNS..."
+          docker compose -f docker-compose.prod.yml restart nginx
 
           echo "Cleaning up Docker..."
           docker system prune -f
