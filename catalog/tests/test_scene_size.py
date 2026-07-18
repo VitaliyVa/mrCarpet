@@ -9,10 +9,14 @@ from django.urls import reverse
 from PIL import Image
 
 from catalog.models import Product, ProductAttribute, Size
-from catalog.services.replicate_prompt_options import ScenePromptOptions
+from catalog.services.replicate_prompt_options import (
+    ScenePromptOptions,
+    auto_camera_distance,
+)
 from catalog.services.replicate_prompts import build_scene_prompt
 from catalog.services.scene_size import (
     SceneSizeError,
+    SceneSizeInfo,
     get_first_product_size_label,
     resolve_scene_size,
 )
@@ -103,6 +107,7 @@ class ScenePromptSizeTests(TestCase):
         self.assertIn("0.67", prompt)
         self.assertIn("ROUND rug", prompt)
         self.assertIn("SCALE (CRITICAL", prompt)
+        self.assertIn("wide establishing", prompt.lower())
 
     def test_prompt_includes_rectangular_size(self):
         opts = ScenePromptOptions(
@@ -114,9 +119,39 @@ class ScenePromptSizeTests(TestCase):
         self.assertIn("2.4x3.4", prompt)
         self.assertIn("2.4 m × 3.4 m", prompt)
 
-    def test_prompt_requires_size(self):
-        with self.assertRaises(ValueError):
-            build_scene_prompt(ScenePromptOptions())
+    def test_prompt_without_size_uses_soft_scale(self):
+        prompt = build_scene_prompt(ScenePromptOptions())
+        self.assertIn("SCALE:", prompt)
+        self.assertIn("unknown", prompt.lower())
+
+    def test_auto_camera_distance_by_size(self):
+        self.assertEqual(auto_camera_distance("0.8", "1.5"), "wide")
+        self.assertEqual(auto_camera_distance("1.6", "2.3"), "medium")
+        self.assertEqual(auto_camera_distance("2.4", "3.4"), "close")
+
+    def test_with_size_sets_auto_distance(self):
+        opts = ScenePromptOptions(room_type="living_room").with_size(
+            SceneSizeInfo(
+                label="0.8x1.5",
+                width_m=Decimal("0.8"),
+                length_m=Decimal("1.5"),
+                source="request",
+            )
+        )
+        self.assertEqual(opts.camera_distance, "wide")
+        self.assertEqual(opts.view_angle, "eye_level")
+        self.assertEqual(opts.color_mode, "preserve_exact")
+
+    def test_extra_prompt_appended(self):
+        opts = ScenePromptOptions(
+            size_label="1.6x2.3",
+            width_m="1.6",
+            length_m="2.3",
+            extra_prompt="Place the rug under a coffee table",
+        )
+        prompt = build_scene_prompt(opts)
+        self.assertIn("ADDITIONAL MANAGER NOTES", prompt)
+        self.assertIn("coffee table", prompt)
 
 
 class SceneGenerateAdminGateTests(TestCase):

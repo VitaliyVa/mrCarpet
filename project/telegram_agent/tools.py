@@ -1,6 +1,7 @@
 """Allowlist tools — LLM never gets ORM."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from django.db.models import Q
@@ -8,10 +9,13 @@ from django.db.models import Q
 from catalog.models import Product, ProductAttribute
 from order.models import Order
 
+from .status_labels import STATUS_CODES, STATUS_LABEL_BY_CODE, normalize_status
+
 READ_TOOLS = {
     "count_orders",
     "list_recent_orders",
     "get_order",
+    "find_orders",
     "count_products",
     "count_in_stock_products",
     "get_product_stock",
@@ -23,27 +27,38 @@ WRITE_TOOLS = {
     "change_stock_quantity",
 }
 
+BATCH_TOOL = "batch"
 ALLOWED_TOOLS = READ_TOOLS | WRITE_TOOLS
 
-STATUS_CODES = {c[0] for c in Order.STATUS_CHOICES}
 MAX_STOCK_QTY = 9999
 
 
 def tool_specs_for_prompt() -> str:
-    return """
+    status_lines = ", ".join(
+        f"{label} ({code})" for code, label in Order.STATUS_CHOICES
+    )
+    return f"""
 READ tools (execute immediately):
-- count_orders(status?: string) — count orders; status one of: new, awaiting_payment, paid, shipped, completed, cancelled
+- count_orders(status?: string) — status codes: {status_lines}
 - list_recent_orders(limit?: int<=10, status?: string)
 - get_order(order_number: int|string)
+- find_orders(phone?: string, query?: string, status?: string, limit?: int<=10)
+  — пошук за телефоном / ім'ям / містом
 - count_products()
 - count_in_stock_products()
 - get_product_stock(query: string) — search product by title/slug/url
 
 WRITE tools (NEVER execute yourself — system will ask human confirm):
-- set_order_status(order_number, status)
-- send_order_email(order_number, subject, body)
+- set_order_status(order_number, status) — status = code (completed) або UA (Виконано)
+- send_order_email(order_number, subject, body) — subject/body УКРАЇНСЬКОЮ
 - change_stock_quantity(url?: string, query?: string, size?: string, mode: "set"|"delta", value: int)
   Example set 5: mode=set value=5; add 2: mode=delta value=2; remove 1: mode=delta value=-1
+
+Якщо користувач просить КІЛЬКА write-дій (напр. статус + лист) —
+поверни type=tools з УСІМА write calls в одному JSON (не тільки першу).
+Номер замовлення бери з USER / HISTORY / REPLY_CONTEXT, не вигадуй.
+Не плутай change_stock_quantity зі зміною статусу замовлення.
+У type=reply людям пиши статуси УКРАЇНСЬКОЮ (код у дужках ок).
 """.strip()
 
 
@@ -119,6 +134,38 @@ def execute_read_tool(name: str, args: dict | None) -> dict[str, Any]:
         brief["items"] = items
         return {"ok": True, "order": brief}
 
+    if name == "find_orders":
+        phone = re.sub(r"\D+", "", str(args.get("phone") or ""))
+        query = (args.get("query") or "").strip()
+        status = (args.get("status") or "").strip()
+        try:
+            limit = int(args.get("limit") or 5)
+        except (TypeError, ValueError):
+            limit = 5
+        limit = max(1, min(limit, 10))
+        qs = Order.objects.all().order_by("-created")
+        if status:
+            status = normalize_status(status) or status
+            if status not in STATUS_CODES:
+                return {"ok": False, "error": f"invalid status: {status}"}
+            qs = qs.filter(status=status)
+        if phone:
+            # match last 9–10 digits (UA mobiles vary in formatting)
+            tail = phone[-9:] if len(phone) >= 9 else phone
+            qs = qs.filter(phone__icontains=tail)
+        elif query:
+            qs = qs.filter(
+                Q(name__icontains=query)
+                | Q(surname__icontains=query)
+                | Q(city__icontains=query)
+                | Q(email__icontains=query)
+                | Q(phone__icontains=query)
+            )
+        else:
+            return {"ok": False, "error": "phone or query required"}
+        orders = [_order_brief(o) for o in qs[:limit]]
+        return {"ok": True, "found": len(orders), "orders": orders}
+
     if name == "count_products":
         return {"ok": True, "count": Product.admin_objects.count()}
 
@@ -185,7 +232,8 @@ def validate_write_args(name: str, args: dict | None) -> tuple[bool, str, dict]:
 
     if name == "set_order_status":
         number = args.get("order_number")
-        status = (args.get("status") or "").strip()
+        status_raw = (args.get("status") or "").strip()
+        status = normalize_status(status_raw) or status_raw
         if number is None:
             return False, "order_number required", {}
         try:
@@ -193,7 +241,7 @@ def validate_write_args(name: str, args: dict | None) -> tuple[bool, str, dict]:
         except ValueError:
             return False, "order_number must be integer", {}
         if status not in STATUS_CODES:
-            return False, f"invalid status: {status}", {}
+            return False, f"invalid status: {status_raw}", {}
         if not Order.objects.filter(order_number=number).exists():
             return False, "order not found", {}
         return True, "", {"order_number": number, "status": status}
@@ -280,16 +328,25 @@ def execute_write_tool(name: str, args: dict) -> dict[str, Any]:
     if name == "send_order_email":
         from project.smtp_utils import send_smtp_mail
 
-        ok = send_smtp_mail(
-            args["subject"],
-            args["body"],
-            [args["email"]],
-            fail_silently=True,
-        )
+        try:
+            ok = send_smtp_mail(
+                args["subject"],
+                args["body"],
+                [args["email"]],
+                fail_silently=False,
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": str(exc)[:300],
+                "email": args["email"],
+                "order_number": args["order_number"],
+            }
         return {
             "ok": bool(ok),
             "email": args["email"],
             "order_number": args["order_number"],
+            **({} if ok else {"error": "SMTP send returned false"}),
         }
 
     if name == "change_stock_quantity":
@@ -310,10 +367,16 @@ def execute_write_tool(name: str, args: dict) -> dict[str, Any]:
 
 
 def describe_write(name: str, args: dict) -> str:
+    if name == BATCH_TOOL:
+        steps = args.get("steps") or []
+        parts = [f"Пакетна дія ({len(steps)}):"]
+        for i, step in enumerate(steps, 1):
+            parts.append(f"{i}) {describe_write(step['name'], step['args'])}")
+        return "\n".join(parts)
     if name == "set_order_status":
-        label = dict(Order.STATUS_CHOICES).get(args["status"], args["status"])
+        label = STATUS_LABEL_BY_CODE.get(args["status"], args["status"])
         return (
-            f"Змінити статус замовлення №{args['order_number']} → {label} ({args['status']})"
+            f"Змінити статус замовлення №{args['order_number']} → {label}"
         )
     if name == "send_order_email":
         return (
@@ -330,3 +393,72 @@ def describe_write(name: str, args: dict) -> str:
             f"{args['old_quantity']} → {args['new_quantity']} шт"
         )
     return f"{name}: {args}"
+
+
+def validate_write_calls(calls: list[dict]) -> tuple[bool, str, list[dict]]:
+    """Validate a list of WRITE tool calls for a batch pending action."""
+    clean_steps = []
+    for call in calls:
+        name = (call.get("name") or "").strip()
+        args = call.get("args") or {}
+        if name not in WRITE_TOOLS:
+            return False, f"unknown write tool: {name}", []
+        ok, err, clean = validate_write_args(name, args)
+        if not ok:
+            return False, f"{name}: {err}", []
+        clean_steps.append({"name": name, "args": clean})
+    if not clean_steps:
+        return False, "empty write batch", []
+    return True, "", clean_steps
+
+
+def execute_write_calls(steps: list[dict]) -> dict:
+    results = []
+    all_ok = True
+    for step in steps:
+        result = execute_write_tool(step["name"], step["args"])
+        step_ok = bool(result.get("ok"))
+        if not step_ok:
+            all_ok = False
+        results.append(
+            {
+                "name": step["name"],
+                "ok": step_ok,
+                "result": result,
+            }
+        )
+    return {"ok": all_ok, "steps": results}
+
+
+def format_write_result_ua(name: str, result: dict) -> str:
+    """Human-readable UA summary after confirm (for chat edit + memory)."""
+    if name == BATCH_TOOL:
+        lines = []
+        for step in result.get("steps") or []:
+            mark = "✅" if step.get("ok") else "❌"
+            lines.append(
+                f"{mark} {format_write_result_ua(step['name'], step.get('result') or {})}"
+            )
+        header = "✅ Усі кроки виконано" if result.get("ok") else "⚠️ Виконано частково"
+        return header + "\n" + "\n".join(lines)
+
+    if not result.get("ok"):
+        err = result.get("error") or "помилка"
+        return f"Не вдалося ({name}): {err}"
+
+    if name == "set_order_status":
+        label = result.get("status_label") or STATUS_LABEL_BY_CODE.get(
+            result.get("status"), result.get("status")
+        )
+        return f"Статус №{result.get('order_number')} → {label}"
+    if name == "send_order_email":
+        return (
+            f"Лист надіслано на {result.get('email')} "
+            f"(замовлення №{result.get('order_number')})"
+        )
+    if name == "change_stock_quantity":
+        return (
+            f"Склад: {result.get('product')} ({result.get('size')}) "
+            f"{result.get('old_quantity')} → {result.get('new_quantity')} шт"
+        )
+    return str(result)[:500]

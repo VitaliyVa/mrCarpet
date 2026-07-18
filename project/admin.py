@@ -15,12 +15,23 @@ class SMTPSettingsAdmin(admin.ModelAdmin):
     list_display = ["host", "port", "server_email", "username", "use_tls", "use_ssl"]
     fieldsets = (
         (
-            "SMTP (Gmail)",
+            "SMTP",
             {
                 "description": (
-                    "Для Gmail: Host = smtp.gmail.com, Port = 587, TLS = увімкнено, SSL = вимкнено. "
-                    "У полі «Пароль» потрібен App Password (не звичайний пароль акаунта). "
-                    "Створити: Google Account → Security → 2-Step Verification → App passwords."
+                    "<b>Рекомендовано на DigitalOcean (безкоштовно): Brevo</b><br>"
+                    "Порт 587 до Gmail з дропа заблокований — використовуй relay на <b>2525</b>.<br><br>"
+                    "1) Зареєструйся на <a href='https://www.brevo.com/' target='_blank'>brevo.com</a> (free ≈ 300 листів/день).<br>"
+                    "2) SMTP &amp; API → SMTP → створи SMTP key.<br>"
+                    "3) Заповни поля нижче:<br>"
+                    "• Host = <code>smtp-relay.brevo.com</code><br>"
+                    "• Port = <code>2525</code><br>"
+                    "• TLS = увімкнено, SSL = вимкнено<br>"
+                    "• Логін = SMTP login з Brevo (зазвичай твій email акаунта)<br>"
+                    "• Пароль = SMTP key<br>"
+                    "• Email сервера (From) = верифікований у Brevo адрес "
+                    "(спочатку можна той самий login; для продакшену — свій домен).<br><br>"
+                    "Перевірка: <code>python manage.py send_smtp_test you@email.com</code><br><br>"
+                    "<i>Gmail smtp.gmail.com:587 на цьому сервері не працює (Network unreachable).</i>"
                 ),
                 "fields": (
                     "host",

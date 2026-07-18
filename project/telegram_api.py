@@ -43,6 +43,7 @@ def send_message(
     reply_markup=None,
     reply_to_message_id=None,
     token=None,
+    parse_mode=None,
 ):
     settings = TelegramSettings.load()
     chat_id = str(chat_id if chat_id is not None else settings.chat_id).strip()
@@ -51,6 +52,8 @@ def send_message(
         "text": text[:4000],
         "disable_web_page_preview": True,
     }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
     thread = message_thread_id
     if thread is None:
         thread = (settings.message_thread_id or "").strip() or None
@@ -73,6 +76,28 @@ def send_message(
         payload.pop("reply_to_message_id", None)
         data = api_call("sendMessage", payload, token=token)
     return data
+
+
+def send_chat_action(
+    action="typing",
+    *,
+    chat_id=None,
+    message_thread_id=None,
+    token=None,
+):
+    """Telegram typing / upload indicator (clears when next message is sent)."""
+    settings = TelegramSettings.load()
+    chat_id = str(chat_id if chat_id is not None else settings.chat_id).strip()
+    payload = {"chat_id": chat_id, "action": action}
+    thread = message_thread_id
+    if thread is None:
+        thread = (settings.message_thread_id or "").strip() or None
+    if thread not in (None, ""):
+        try:
+            payload["message_thread_id"] = int(thread)
+        except (TypeError, ValueError):
+            payload["message_thread_id"] = thread
+    return api_call("sendChatAction", payload, token=token)
 
 
 def edit_message_text(chat_id, message_id, text, *, reply_markup=None, token=None):

@@ -4,13 +4,43 @@ from __future__ import annotations
 import re
 
 from .product_resolve import PRODUCT_URL_RE, extract_size_from_text
+from .status_labels import (
+    default_status_email,
+    normalize_status,
+    status_list_reply,
+)
 
 # LLM sometimes narrates tools instead of returning type=tool
 _FAKE_TOOL_REPLY = re.compile(
     r"(виконуємо|виконую|виконаю|запускаю|calling|running)\s+"
     r"(команду\s+)?(?P<name>count_orders|list_recent_orders|get_order|"
-    r"count_products|count_in_stock_products|get_product_stock|"
+    r"find_orders|count_products|count_in_stock_products|get_product_stock|"
     r"set_order_status|send_order_email|change_stock_quantity)",
+    re.I,
+)
+
+_ORDER_NUM_RE = re.compile(
+    r"(?:замовлення\s*)?№\s*(\d{6,})|(?:order\s*#?\s*|замовлен\w*\s+)(\d{6,})",
+    re.I,
+)
+
+_STATUS_TOKEN_RE = re.compile(
+    r"(new|awaiting_payment|paid|shipped|completed|cancelled|canceled|"
+    r"нове|новий|оплачено|оплачене|відправлено|виконано|завершено|"
+    r"скасовано|відмінено|очікує\s+оплати)",
+    re.I,
+)
+
+_WANTS_EMAIL_RE = re.compile(
+    r"(напиш\w*.{0,20}(лист|email|пошт)|"
+    r"надісл\w*.{0,20}(лист|email|пошт)|"
+    r"(лист|email|листа)\s+(клієнт|покупц)|"
+    r"повідом\w*\s+клієнт)",
+    re.I,
+)
+
+_ORDER_STATUS_CTX_RE = re.compile(
+    r"\bстатус\b|\bcompleted\b|\bshipped\b|\bcancelled\b|\bawaiting_payment\b",
     re.I,
 )
 
@@ -27,9 +57,11 @@ def fake_tool_narration_plan(reply_text: str) -> dict | None:
 HELP_REPLY = (
     "Я містер Карпет — помічник магазину в цій групі.\n\n"
     "Можу розказати:\n"
-    "• скільки замовлень (усіх / нових)\n"
+    "• скільки замовлень (усіх / нових / очікують оплати)\n"
     "• останні замовлення\n"
     "• деталі замовлення за номером\n"
+    "• пошук замовлення за телефоном / ім'ям\n"
+    "• які є статуси замовлення\n"
     "• скільки товарів на сайті / в наявності\n"
     "• залишки конкретного килима\n\n"
     "З підтвердженням кнопкою в чаті:\n"
@@ -38,11 +70,47 @@ HELP_REPLY = (
     "• змінити кількість на складі (за посиланням або назвою + розмір)\n\n"
     "Приклади:\n"
     "• містер карпет, скільки замовлень?\n"
-    "• https://mrcarpet24.com/catalog/product/.../ розмір 0.8х1.5 постав 5\n"
-    "• Килим … 0.8х1.5 +2\n\n"
+    "• містер карпет, які є статуси?\n"
+    "• знайди замовлення по телефону 0501234567\n"
+    "• в замовленні №… зміни статус на Виконано і напиши клієнту лист\n"
+    "• https://mrcarpet24.com/catalog/product/.../ розмір 0.8х1.5 постав 5\n\n"
     "Звертайся: «містер карпет, …», @бот або reply на моє повідомлення.\n"
     "Пам’ять: тримаю короткий контекст діалогу (останні репліки + summary)."
 )
+
+_PHONE_RE = re.compile(
+    r"(?:\+?38)?0\d{9}"
+    r"|(?:\+?380\d{9})"
+    r"|(?<!\d)0\d{2}[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}(?!\d)",
+)
+
+
+def extract_order_number(*texts: str) -> int | None:
+    for text in texts:
+        if not text:
+            continue
+        m = _ORDER_NUM_RE.search(text)
+        if not m:
+            # bare long number near «замовлен»
+            m2 = re.search(r"замовлен\w*.{0,40}?(\d{10,})", text, re.I)
+            if m2:
+                return int(m2.group(1))
+            continue
+        num = m.group(1) or m.group(2)
+        if num:
+            return int(num)
+    return None
+
+
+def _wants_email(text: str) -> bool:
+    return bool(_WANTS_EMAIL_RE.search(text or ""))
+
+
+def _extract_status_token(text: str) -> str | None:
+    m = _STATUS_TOKEN_RE.search(text or "")
+    if not m:
+        return None
+    return normalize_status(m.group(0))
 
 
 def _parse_stock_change(text: str) -> dict | None:
@@ -52,6 +120,15 @@ def _parse_stock_change(text: str) -> dict | None:
     """
     raw = text or ""
     t = raw.casefold()
+
+    # Never hijack order-status / email requests as stock changes
+    if _ORDER_STATUS_CTX_RE.search(raw) and not re.search(
+        r"(склад|залиш|кількіст\w*\s+на\s+склад)", t
+    ):
+        return None
+    if _wants_email(raw) and "статус" in t:
+        return None
+
     has_url = bool(PRODUCT_URL_RE.search(raw))
     size = extract_size_from_text(raw)
 
@@ -78,7 +155,6 @@ def _parse_stock_change(text: str) -> dict | None:
     if mode is None or value is None:
         return None
 
-    # Need a product signal: URL, or title-ish + size, or explicit stock words
     stockish = bool(
         re.search(r"(склад|залиш|кількіст|наявніст|шт\b|штук)", t)
         or has_url
@@ -89,7 +165,6 @@ def _parse_stock_change(text: str) -> dict | None:
 
     url_m = PRODUCT_URL_RE.search(raw)
     url = url_m.group(0) if url_m else ""
-    # absolute URL if relative matched poorly
     if url and not url.startswith("http"):
         abs_m = re.search(r"https?://[^\s]+/catalog/product/[\w\-]+/?", raw, re.I)
         if abs_m:
@@ -109,7 +184,79 @@ def _parse_stock_change(text: str) -> dict | None:
     }
 
 
-def maybe_direct_plan(user_text: str) -> dict | None:
+def _status_change_plan(user_text: str, *, context_text: str = "") -> dict | None:
+    """
+    Detect order status change (+ optional email) from text / reply context.
+    """
+    raw = user_text or ""
+    t = raw.casefold()
+    if "статус" not in t and not re.search(
+        r"(зміни|постав|поставте|зроби).{0,30}(completed|виконано|shipped|відправлено)",
+        t,
+    ):
+        return None
+
+    # Must look like a change request, not "які є статуси?"
+    if re.search(r"як(і|ий)\s+(є\s+)?статус", t) and not re.search(
+        r"(зміни|постав|зроби|на\s+статус)", t
+    ):
+        return None
+
+    status = _extract_status_token(raw)
+    if not status:
+        return None
+
+    # Prefer explicit change phrasing
+    changing = bool(
+        re.search(
+            r"(зміни|поміняй|постав|зроби|онови|переведи|став|на\s+статус|"
+            r"статус\s+на|→|->)",
+            t,
+        )
+    )
+    if not changing:
+        return None
+
+    order_number = extract_order_number(raw, context_text)
+    if not order_number:
+        return None
+
+    calls = [
+        {
+            "name": "set_order_status",
+            "args": {"order_number": order_number, "status": status},
+        }
+    ]
+    if _wants_email(raw):
+        customer = ""
+        try:
+            from order.models import Order
+
+            order = Order.objects.filter(order_number=order_number).first()
+            if order:
+                customer = f"{order.name} {order.surname}".strip()
+        except Exception:
+            pass
+        subject, body = default_status_email(
+            order_number, status, customer_name=customer
+        )
+        calls.append(
+            {
+                "name": "send_order_email",
+                "args": {
+                    "order_number": order_number,
+                    "subject": subject,
+                    "body": body,
+                },
+            }
+        )
+
+    if len(calls) == 1:
+        return {"type": "write", "name": calls[0]["name"], "args": calls[0]["args"]}
+    return {"type": "tools", "calls": calls}
+
+
+def maybe_direct_plan(user_text: str, *, context_text: str = "") -> dict | None:
     t = (user_text or "").casefold()
 
     if re.search(
@@ -117,6 +264,19 @@ def maybe_direct_plan(user_text: str) -> dict | None:
         t,
     ):
         return {"type": "reply", "text": HELP_REPLY}
+
+    # List statuses — UA labels (never leave this to the LLM)
+    if re.search(
+        r"(як(і|ий)\s+(є\s+)?статус|список\s+статус|які\s+статус|"
+        r"status(es)?\s*\?|what\s+statuses)",
+        t,
+    ) and not re.search(r"(зміни|постав|зроби|на\s+статус\s+\w)", t):
+        return {"type": "reply", "text": status_list_reply()}
+
+    # Order status change (+ email) before stock — avoids context bleed
+    status_plan = _status_change_plan(user_text or "", context_text=context_text or "")
+    if status_plan:
+        return status_plan
 
     stock_plan = _parse_stock_change(user_text or "")
     if stock_plan:
@@ -129,15 +289,45 @@ def maybe_direct_plan(user_text: str) -> dict | None:
             return {"type": "tool", "name": "count_orders", "args": {"status": "new"}}
         return {"type": "tool", "name": "count_orders", "args": {}}
 
+    if re.search(
+        r"(очіку\w*\s+оплати|неоплачен|awaiting_payment|не\s+оплачен)",
+        t,
+    ) and re.search(r"замовлен", t):
+        return {
+            "type": "tool",
+            "name": "list_recent_orders",
+            "args": {"limit": 8, "status": "awaiting_payment"},
+        }
+
     if re.search(r"останн\w*.{0,20}замовлен", t) or "list orders" in t:
         return {"type": "tool", "name": "list_recent_orders", "args": {"limit": 5}}
+
+    # Find by phone / name
+    phone_m = _PHONE_RE.search(user_text or "")
+    if phone_m and re.search(r"(замовлен|знайд|пошук|телефон|номер)", t):
+        digits = re.sub(r"\D+", "", phone_m.group(0))
+        return {
+            "type": "tool",
+            "name": "find_orders",
+            "args": {"phone": digits, "limit": 5},
+        }
+    m_find = re.search(
+        r"(?:знайд\w*|пошук|шукай)\s+замовлен\w*.{0,20}"
+        r"(?:по|за)?\s*(?:ім.?ям|прізвищ|клієнт)?\s*[«\"]?(.+?)[»\"]?\s*$",
+        t,
+    )
+    if m_find and len(m_find.group(1).strip()) >= 2:
+        return {
+            "type": "tool",
+            "name": "find_orders",
+            "args": {"query": m_find.group(1).strip(" «»\"'"), "limit": 5},
+        }
 
     if re.search(r"скільки.{0,40}(товар|килим)", t):
         if "наявност" in t or "склад" in t or "в наявност" in t:
             return {"type": "tool", "name": "count_in_stock_products", "args": {}}
         return {"type": "tool", "name": "count_products", "args": {}}
 
-    # stock lookup by URL alone
     if PRODUCT_URL_RE.search(user_text or "") and not _parse_stock_change(user_text or ""):
         return {
             "type": "tool",
@@ -154,34 +344,21 @@ def maybe_direct_plan(user_text: str) -> dict | None:
         if "карпет" not in q and "замовлен" not in q:
             return {"type": "tool", "name": "get_product_stock", "args": {"query": q}}
 
-    m2 = re.search(r"замовлення\s*№?\s*(\d{6,})", t)
-    if m2:
+    # Order lookup — number from text or reply/history context
+    order_number = extract_order_number(user_text or "", context_text or "")
+    wants_lookup = bool(
+        re.search(r"(замовлен|детал|покаж|покажи|що\s+там|інфо)", t)
+    )
+    if (
+        order_number
+        and wants_lookup
+        and "статус" not in t
+        and not re.search(r"(зміни|постав|зроби|напиш)", t)
+    ):
         return {
             "type": "tool",
             "name": "get_order",
-            "args": {"order_number": int(m2.group(1))},
-        }
-
-    m3 = re.search(
-        r"статус\s+замовлення\s*№?\s*(\d{6,})\s+(?:на|→|->|в)?\s*"
-        r"(new|awaiting_payment|paid|shipped|completed|cancelled|"
-        r"нове|відправлено|виконано|скасовано|оплачено)",
-        t,
-    )
-    if m3:
-        status_map = {
-            "нове": "new",
-            "відправлено": "shipped",
-            "виконано": "completed",
-            "скасовано": "cancelled",
-            "оплачено": "paid",
-        }
-        st = m3.group(2)
-        st = status_map.get(st, st)
-        return {
-            "type": "write",
-            "name": "set_order_status",
-            "args": {"order_number": int(m3.group(1)), "status": st},
+            "args": {"order_number": order_number},
         }
 
     return None

@@ -235,12 +235,36 @@ def notify_stock(inquiry):
     send_telegram_message_async(format_stock_message(inquiry))
 
 
+def _remember_agent_notify(plain_text: str) -> None:
+    """Feed outbound order notifies into AI chat memory (same thread)."""
+    try:
+        settings = _get_settings()
+        if not settings or not settings.ai_ready:
+            return
+        from project.telegram_agent.memory import append_message
+
+        append_message(
+            settings.chat_id,
+            settings.message_thread_id,
+            "assistant",
+            (plain_text or "")[:2000],
+        )
+    except Exception:
+        logger.exception("remember agent notify failed")
+
+
 def notify_order(order, event="new"):
     if not _should_notify("order"):
         return
-    send_telegram_message_async(
-        format_order_message(order, event=event),
-        parse_mode="HTML",
+    html_text = format_order_message(order, event=event)
+    send_telegram_message_async(html_text, parse_mode="HTML")
+    # Plain fact for LLM context (order № survives for later «покажи деталі»)
+    _remember_agent_notify(
+        f"Нотифікація: замовлення №{order.order_number} "
+        f"статус={order.get_status_display()} ({order.status}) "
+        f"клієнт={order.name} {order.surname} "
+        f"тел={order.phone or '—'} email={order.email or '—'} "
+        f"сума={order.total_price} event={event}"
     )
 
 

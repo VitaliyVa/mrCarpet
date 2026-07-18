@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 def telegram_webhook(request):
     settings = TelegramSettings.load()
     secret = (settings.webhook_secret or "").strip()
+    # AI on + empty secret → refuse (open ingress). Telegram sends
+    # X-Telegram-Bot-Api-Secret-Token when setWebhook(secret_token=…).
+    if settings.ai_ready and not secret:
+        logger.error("telegram webhook: ai_ready but webhook_secret empty")
+        return HttpResponse(status=403)
     if secret:
         header = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
         if not hmac.compare_digest(header, secret):

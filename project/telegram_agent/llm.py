@@ -25,12 +25,19 @@ class AgentLlmError(Exception):
 
 
 SYSTEM_PROMPT = """Ти — оператор магазину mr.Carpet у Telegram-групі команди.
-Відповідай українською, коротко і по суті.
+Відповідай ТІЛЬКИ українською, коротко і по суті.
+Статуси замовлень у відповідях людям — українською (напр. «Виконано»), код у дужках ок.
 НІКОЛИ не вигадуй цифри зі складу/замовлень — тільки з TOOL_RESULTS.
 ЗАБОРОНЕНО писати "виконую команду" текстом — для даних завжди type=tool.
-У відповідях людям НЕ називай внутрішні імена tools (count_orders тощо) —
-пояснюй звичайною мовою.
-WRITE tools не виконуються одразу: type=write, система попросить підтвердження людини.
+У відповідях людям НЕ називай внутрішні імена tools (count_orders тощо).
+WRITE tools не виконуються одразу: type=write або type=tools, система попросить ✅.
+
+Контекст:
+- Номер замовлення бери з USER / HISTORY / REPLY_CONTEXT (повідомлення, на яке відповіли).
+- Не плутай склад (change_stock_quantity) зі статусом замовлення.
+- Якщо просять «зміни статус І напиши лист» — ОБОВ'ЯЗКОВО обидві write-дії в одному
+  type=tools.calls (set_order_status + send_order_email). subject/body українською.
+- Якщо номер замовлення невідомий — type=reply з коротким уточненням, не вигадуй.
 
 Повертай ЛИШЕ один JSON-об'єкт (без markdown fence), рівно один з форматів:
 {"type":"reply","text":"..."}
@@ -119,6 +126,7 @@ def build_user_prompt(
     history: list[dict],
     user_text: str,
     tool_results: list[dict] | None = None,
+    reply_context: str = "",
 ) -> str:
     parts = []
     if summary:
@@ -128,6 +136,8 @@ def build_user_prompt(
         for h in history:
             lines.append(f"{h['role'].upper()}: {h['content']}")
         parts.append("HISTORY:\n" + "\n".join(lines))
+    if reply_context:
+        parts.append(f"REPLY_CONTEXT (повідомлення, на яке відповідає USER):\n{reply_context}")
     parts.append(f"USER:\n{user_text}")
     if tool_results:
         parts.append(
@@ -135,6 +145,7 @@ def build_user_prompt(
         )
         parts.append(
             "На основі TOOL_RESULTS дай фінальну відповідь JSON type=reply "
+            "українською (статуси — українськими назвами) "
             "або ще один READ tool якщо даних бракує."
         )
     else:
@@ -149,6 +160,7 @@ def plan_once(
     history: list[dict],
     user_text: str,
     tool_results: list[dict] | None = None,
+    reply_context: str = "",
     retry: bool = True,
 ) -> dict[str, Any]:
     system = SYSTEM_PROMPT + "\n" + tool_specs_for_prompt()
@@ -157,6 +169,7 @@ def plan_once(
         history=history,
         user_text=user_text,
         tool_results=tool_results,
+        reply_context=reply_context,
     )
     try:
         raw = run_model(model, system, prompt)

@@ -38,26 +38,6 @@
                 { value: 'office', label: 'Кабінет' },
             ],
         },
-        camera_distance: {
-            label: 'Відстань камери',
-            name: 'camera_distance',
-            default: 'medium',
-            choices: [
-                { value: 'close', label: 'Зблизька (килим у фокусі)' },
-                { value: 'medium', label: 'Середня' },
-                { value: 'wide', label: 'Здалека (вся кімната)' },
-            ],
-        },
-        view_angle: {
-            label: 'Ракурс',
-            name: 'view_angle',
-            default: 'eye_level',
-            choices: [
-                { value: 'eye_level', label: 'На рівні очей' },
-                { value: 'high_angle', label: 'Зверху вниз' },
-                { value: 'top_down_partial', label: 'Майже зверху' },
-            ],
-        },
         floor_style: {
             label: 'Підлога',
             name: 'floor_style',
@@ -70,17 +50,9 @@
                 { value: 'concrete', label: 'Бетон' },
             ],
         },
-        color_mode: {
-            label: 'Колір килима',
-            name: 'color_mode',
-            default: 'auto',
-            choices: [
-                { value: 'auto', label: 'Авто' },
-                { value: 'preserve_exact', label: 'Точно як на фото' },
-                { value: 'monochrome', label: 'Монохром' },
-            ],
-        },
     };
+
+    var EXTRA_PROMPT_MAX = 800;
 
     function getCookie(name) {
         var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -208,6 +180,17 @@
             });
             html += '</div></fieldset>';
         });
+        html +=
+            '<fieldset class="replicate-option-group replicate-extra-prompt-group">' +
+            '<legend>Додатково до промпта</legend>' +
+            '<p class="replicate-extra-prompt-hint">' +
+            'Необов\'язково. Камера і масштаб підбираються автоматично з розміру варіації. ' +
+            'Сюди можна дописати уточнення (наприклад: «килим біля дивана», «більше денного світла»).' +
+            '</p>' +
+            '<textarea class="replicate-extra-prompt" name="scene_extra_prompt" ' +
+            'rows="3" maxlength="' + EXTRA_PROMPT_MAX + '" ' +
+            'placeholder="Додаткові вказівки для генерації…"></textarea>' +
+            '</fieldset>';
         html += '</div>';
         return html;
     }
@@ -220,7 +203,20 @@
             var selected = block.querySelector('input[name="' + groupName + '"]:checked');
             result[group.name] = selected ? selected.value : group.default;
         });
+        var extra = block.querySelector('.replicate-extra-prompt');
+        var extraText = extra ? String(extra.value || '').trim() : '';
+        if (extraText) {
+            result.extra_prompt = extraText.slice(0, EXTRA_PROMPT_MAX);
+        }
         return result;
+    }
+
+    function setSceneControlsDisabled(block, disabled) {
+        block.querySelectorAll('.replicate-scene-options input, .replicate-scene-options textarea').forEach(
+            function (el) {
+                el.disabled = !!disabled;
+            }
+        );
     }
 
     function setNextSortOrder(targetInput) {
@@ -403,7 +399,8 @@
             '<h3>Генерація фото для сторінки товару (інтер\'єр)</h3>' +
             '<p class="replicate-generate-hint">' +
             'Завантажте фото килима — Replicate згенерує lifestyle-знімок у кімнаті (4:3). ' +
-            'У промпт підставляється <b>перший розмір</b> з «Варіації → Розмір» (як на вітрині). ' +
+            'У промпт підставляється <b>перший розмір</b> з «Варіації → Розмір»; ' +
+            'відстань камери підбирається автоматично за розміром. ' +
             'Результат потрапить у перший порожній рядок «Зображення продуктів» нижче.' +
             '</p>' +
             '<div class="replicate-size-info" aria-live="polite"></div>' +
@@ -451,9 +448,7 @@
 
         btn.disabled = true;
         fileInput.disabled = true;
-        block.querySelectorAll('.replicate-scene-options input').forEach(function (el) {
-            el.disabled = true;
-        });
+        setSceneControlsDisabled(block, true);
         clearLogs(block);
         block.querySelector('.replicate-preview').hidden = true;
         block.querySelector('.replicate-status').hidden = true;
@@ -515,9 +510,7 @@
             })
             .finally(function () {
                 clearInterval(elapsedTimer);
-                block.querySelectorAll('.replicate-scene-options input').forEach(function (el) {
-                    el.disabled = false;
-                });
+                setSceneControlsDisabled(block, false);
                 block.classList.remove('is-loading');
                 updateSizeGate(block);
             });

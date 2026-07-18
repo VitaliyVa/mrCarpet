@@ -171,6 +171,34 @@ html[data-theme="dark"] .replicate-size-missing {
     gap: 10px;
 }
 
+.replicate-scene-block .replicate-extra-prompt-group {
+    grid-column: 1 / -1;
+}
+
+.replicate-extra-prompt-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--body-quiet-color, #666);
+}
+
+.replicate-extra-prompt {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 4.5em;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 4px;
+    font: inherit;
+    resize: vertical;
+}
+
+.replicate-extra-prompt:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 @media (max-width: 900px) {
     .replicate-scene-block .replicate-options {
         grid-template-columns: 1fr;
