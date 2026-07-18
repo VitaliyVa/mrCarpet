@@ -75,11 +75,27 @@ jobs:
           echo "Rebuilding containers..."
           docker compose -f docker-compose.prod.yml build web
 
-          echo "Starting containers..."
-          docker compose -f docker-compose.prod.yml up -d
+          echo "Starting web first..."
+          docker compose -f docker-compose.prod.yml up -d web
 
-          echo "Waiting for web container to be ready..."
-          sleep 10
+          echo "Waiting until gunicorn answers inside web..."
+          for i in $(seq 1 30); do
+            if docker compose -f docker-compose.prod.yml exec -T web \
+              python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)" \
+              >/dev/null 2>&1; then
+              echo "web ready (attempt $i)"
+              break
+            fi
+            sleep 2
+            if [ "$i" -eq 30 ]; then
+              echo "web failed to become ready"
+              docker compose -f docker-compose.prod.yml logs web --tail 80
+              exit 1
+            fi
+          done
+
+          echo "Starting remaining services..."
+          docker compose -f docker-compose.prod.yml up -d
 
           echo "Collecting static files..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
@@ -87,10 +103,35 @@ jobs:
           echo "Running migrations..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
 
-          # Nginx caches upstream IP for `web`. After web recreate that IP changes
-          # → 502 "No route to host" until nginx reloads DNS. Restart nginx LAST only.
-          echo "Restarting nginx to refresh web upstream DNS..."
-          docker compose -f docker-compose.prod.yml restart nginx
+          # Pick up nginx config changes + refresh any cached upstream state.
+          echo "Reloading nginx..."
+          docker compose -f docker-compose.prod.yml up -d nginx
+          docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload \
+            || docker compose -f docker-compose.prod.yml restart nginx
+
+          echo "Healthcheck via public HTTPS (must be 200)..."
+          OK=0
+          for i in $(seq 1 12); do
+            CODE=$(python3 -c "import urllib.request; 
+try:
+  print(urllib.request.urlopen('https://mrcarpet24.com/', timeout=10).status)
+except Exception:
+  print(000)" 2>/dev/null || echo 000)
+            echo "health attempt $i -> HTTP $CODE"
+            if [ "$CODE" = "200" ]; then
+              OK=1
+              break
+            fi
+            docker compose -f docker-compose.prod.yml restart nginx
+            sleep 3
+          done
+          if [ "$OK" != "1" ]; then
+            echo "Deploy healthcheck failed — site not returning 200"
+            docker compose -f docker-compose.prod.yml ps
+            docker compose -f docker-compose.prod.yml logs web --tail 50
+            docker compose -f docker-compose.prod.yml logs nginx --tail 50
+            exit 1
+          fi
 
           echo "Cleaning up Docker..."
           docker system prune -f
