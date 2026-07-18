@@ -4,10 +4,12 @@
 
 Фаза 2 (керування через бота: статус / email / viber) — див. telegram_bot.py.
 """
+import html
 import logging
 import threading
 
 import requests
+from django.conf import settings as django_settings
 from django.db import close_old_connections, transaction
 
 from .models import TelegramSettings
@@ -26,7 +28,19 @@ def _get_settings():
         return None
 
 
-def send_telegram_message(text, fail_silently=True):
+def product_absolute_url(product) -> str:
+    base = getattr(django_settings, "SITE_URL", "https://mrcarpet24.com").rstrip("/")
+    try:
+        path = product.get_absolute_url()
+    except Exception:
+        slug = getattr(product, "slug", "") or ""
+        path = f"/catalog/product/{slug}/" if slug else ""
+    if not path:
+        return base
+    return f"{base}{path}"
+
+
+def send_telegram_message(text, fail_silently=True, parse_mode=None):
     """
     Синхронна відправка тексту в налаштований chat_id.
     Повертає True при успіху, False якщо вимкнено / помилка.
@@ -43,6 +57,8 @@ def send_telegram_message(text, fail_silently=True):
         "text": text,
         "disable_web_page_preview": True,
     }
+    if parse_mode:
+        payload["parse_mode"] = parse_mode
     thread_id = (settings.message_thread_id or "").strip()
     if thread_id:
         try:
@@ -55,6 +71,13 @@ def send_telegram_message(text, fail_silently=True):
         data = response.json() if response.content else {}
         if response.ok and data.get("ok"):
             return True
+        # HTML parse error → retry plain
+        if parse_mode and not data.get("ok"):
+            payload.pop("parse_mode", None)
+            response = requests.post(url, json=payload, timeout=TELEGRAM_TIMEOUT_SECONDS)
+            data = response.json() if response.content else {}
+            if response.ok and data.get("ok"):
+                return True
         logger.warning(
             "Telegram send failed: status=%s body=%s",
             response.status_code,
@@ -72,13 +95,13 @@ def send_telegram_message(text, fail_silently=True):
         return False
 
 
-def send_telegram_message_async(text):
+def send_telegram_message_async(text, parse_mode=None):
     """Фонова відправка — HTTP-відповідь клієнту не чекає Telegram."""
 
     def _run():
         close_old_connections()
         try:
-            ok = send_telegram_message(text, fail_silently=True)
+            ok = send_telegram_message(text, fail_silently=True, parse_mode=parse_mode)
             if ok:
                 print("[telegram] sent OK")
         finally:
@@ -108,7 +131,11 @@ def _price(value):
         return str(value)
 
 
-def _order_items_lines(order):
+def _esc(value) -> str:
+    return html.escape(str(value if value is not None else ""), quote=False)
+
+
+def _order_items_lines(order, *, html_links=False):
     try:
         cart = order.cart
     except Exception:
@@ -121,7 +148,8 @@ def _order_items_lines(order):
     except Exception:
         return []
     for cp in products:
-        title = getattr(getattr(cp.product_attr, "product", None), "title", None) or "—"
+        product = getattr(cp.product_attr, "product", None)
+        title = getattr(product, "title", None) or "—"
         size = ""
         try:
             if cp.product_attr and cp.product_attr.size:
@@ -129,13 +157,19 @@ def _order_items_lines(order):
         except Exception:
             pass
         length = f", {cp.length} м" if cp.length else ""
-        lines.append(f"• {title}{size}{length} × {cp.quantity}")
+        label = f"{title}{size}{length} × {cp.quantity}"
+        if html_links and product is not None:
+            href = html.escape(product_absolute_url(product), quote=True)
+            lines.append(f"• <a href=\"{href}\">{_esc(label)}</a>")
+        else:
+            lines.append(f"• {label}")
     return lines
 
 
 def format_order_message(order, event="new"):
     """
     event: new | awaiting_payment | paid
+    Returns HTML (Telegram parse_mode=HTML) with clickable product links.
     """
     headers = {
         "new": "🛒 Нове замовлення",
@@ -146,19 +180,19 @@ def format_order_message(order, event="new"):
     number = order.order_number or order.pk or "?"
     customer = f"{order.name} {order.surname}".strip() or "—"
     lines = [
-        f"{header} №{number}",
-        f"Статус: {order.get_status_display()}",
-        f"Клієнт: {customer}",
-        f"Телефон: {order.phone or '—'}",
-        f"Email: {order.email or '—'}",
-        f"Місто: {order.city or '—'}",
-        f"Адреса: {order.address or '—'}",
-        f"Оплата: {order.get_payment_type_display()}",
-        f"Сума: {_price(order.total_price)}",
+        f"{_esc(header)} №{_esc(number)}",
+        f"Статус: {_esc(order.get_status_display())}",
+        f"Клієнт: {_esc(customer)}",
+        f"Телефон: {_esc(order.phone or '—')}",
+        f"Email: {_esc(order.email or '—')}",
+        f"Місто: {_esc(order.city or '—')}",
+        f"Адреса: {_esc(order.address or '—')}",
+        f"Оплата: {_esc(order.get_payment_type_display())}",
+        f"Сума: {_esc(_price(order.total_price))}",
     ]
     if order.message:
-        lines.append(f"Коментар: {order.message}")
-    items = _order_items_lines(order)
+        lines.append(f"Коментар: {_esc(order.message)}")
+    items = _order_items_lines(order, html_links=True)
     if items:
         lines.append("Товари:")
         lines.extend(items)
@@ -204,7 +238,10 @@ def notify_stock(inquiry):
 def notify_order(order, event="new"):
     if not _should_notify("order"):
         return
-    send_telegram_message_async(format_order_message(order, event=event))
+    send_telegram_message_async(
+        format_order_message(order, event=event),
+        parse_mode="HTML",
+    )
 
 
 def enqueue_order_telegram(order_id, event="new"):

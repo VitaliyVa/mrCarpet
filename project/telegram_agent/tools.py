@@ -20,11 +20,13 @@ READ_TOOLS = {
 WRITE_TOOLS = {
     "set_order_status",
     "send_order_email",
+    "change_stock_quantity",
 }
 
 ALLOWED_TOOLS = READ_TOOLS | WRITE_TOOLS
 
 STATUS_CODES = {c[0] for c in Order.STATUS_CHOICES}
+MAX_STOCK_QTY = 9999
 
 
 def tool_specs_for_prompt() -> str:
@@ -35,11 +37,13 @@ READ tools (execute immediately):
 - get_order(order_number: int|string)
 - count_products()
 - count_in_stock_products()
-- get_product_stock(query: string) — search product by title/slug
+- get_product_stock(query: string) — search product by title/slug/url
 
 WRITE tools (NEVER execute yourself — system will ask human confirm):
 - set_order_status(order_number, status)
 - send_order_email(order_number, subject, body)
+- change_stock_quantity(url?: string, query?: string, size?: string, mode: "set"|"delta", value: int)
+  Example set 5: mode=set value=5; add 2: mode=delta value=2; remove 1: mode=delta value=-1
 """.strip()
 
 
@@ -131,12 +135,23 @@ def execute_read_tool(name: str, args: dict | None) -> dict[str, Any]:
         query = (args.get("query") or "").strip()
         if not query:
             return {"ok": False, "error": "query required"}
-        products = (
-            Product.admin_objects.filter(
-                Q(title__icontains=query) | Q(slug__icontains=query)
+        from .product_resolve import extract_slug_from_text, find_product
+
+        products = []
+        by_slug = find_product(query=query, url=query)
+        if by_slug:
+            products = [by_slug]
+        else:
+            slug = extract_slug_from_text(query)
+            q = query
+            if slug:
+                q = slug
+            products = list(
+                Product.admin_objects.filter(
+                    Q(title__icontains=q) | Q(slug__icontains=q)
+                )
+                .prefetch_related("product_attr__size")[:5]
             )
-            .prefetch_related("product_attr__size")[:5]
-        )
         result = []
         for p in products:
             attrs = []
@@ -207,6 +222,46 @@ def validate_write_args(name: str, args: dict | None) -> tuple[bool, str, dict]:
             "email": order.email,
         }
 
+    if name == "change_stock_quantity":
+        from .product_resolve import find_product, find_product_attr
+
+        mode = (args.get("mode") or "set").strip().lower()
+        if mode not in ("set", "delta"):
+            return False, "mode must be set|delta", {}
+        try:
+            value = int(args.get("value"))
+        except (TypeError, ValueError):
+            return False, "value must be int", {}
+        url = (args.get("url") or "").strip()
+        query = (args.get("query") or "").strip()
+        size = (args.get("size") or "").strip() or None
+        product = find_product(query=query or url, url=url)
+        if not product:
+            return False, "product not found", {}
+        attr = find_product_attr(product, size)
+        if not attr:
+            return False, f"size not found for product ({size or 'default'})", {}
+        old_qty = int(attr.quantity or 0)
+        if mode == "set":
+            new_qty = value
+        else:
+            new_qty = old_qty + value
+        if new_qty < 0:
+            return False, f"quantity would be negative ({old_qty} + delta)", {}
+        if new_qty > MAX_STOCK_QTY:
+            return False, f"quantity too large (max {MAX_STOCK_QTY})", {}
+        size_label = str(attr.size) if attr.size else "—"
+        return True, "", {
+            "product_attr_id": attr.pk,
+            "product_id": product.pk,
+            "product_title": product.title,
+            "size_label": size_label,
+            "mode": mode,
+            "value": value,
+            "old_quantity": old_qty,
+            "new_quantity": new_qty,
+        }
+
     return False, "unhandled", {}
 
 
@@ -237,6 +292,20 @@ def execute_write_tool(name: str, args: dict) -> dict[str, Any]:
             "order_number": args["order_number"],
         }
 
+    if name == "change_stock_quantity":
+        attr = ProductAttribute.objects.select_related("product", "size").get(
+            pk=args["product_attr_id"]
+        )
+        attr.quantity = int(args["new_quantity"])
+        attr.save(update_fields=["quantity"])
+        return {
+            "ok": True,
+            "product": attr.product.title,
+            "size": str(attr.size) if attr.size else "—",
+            "old_quantity": args["old_quantity"],
+            "new_quantity": attr.quantity,
+        }
+
     return {"ok": False, "error": "unknown write tool"}
 
 
@@ -252,5 +321,12 @@ def describe_write(name: str, args: dict) -> str:
             f"(замовлення №{args['order_number']})\n"
             f"Тема: {args['subject']}\n"
             f"Текст:\n{args['body'][:500]}"
+        )
+    if name == "change_stock_quantity":
+        return (
+            f"Змінити залишок на складі\n"
+            f"Товар: {args['product_title']}\n"
+            f"Розмір: {args['size_label']}\n"
+            f"{args['old_quantity']} → {args['new_quantity']} шт"
         )
     return f"{name}: {args}"
