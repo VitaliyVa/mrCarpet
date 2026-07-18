@@ -1195,7 +1195,53 @@ admin.site.register(ProductReview)
 admin.site.register(ProductSale)
 admin.site.register(ProductColor, ProductColorAdmin)
 admin.site.register(ProductWidth)
-admin.site.register(PromoCode)
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = (
+        "code",
+        "discount",
+        "end_time",
+        "max_uses_total",
+        "max_uses_per_user",
+        "uses_display",
+        "is_active_display",
+    )
+    list_filter = ("end_time",)
+    search_fields = ("code",)
+    ordering = ("-created",)
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": ("code", "discount", "end_time"),
+                "description": (
+                    "Дата закінчення порожня = без терміну. "
+                    "Ліміти використань — окремо нижче; можна комбінувати."
+                ),
+            },
+        ),
+        (
+            "Ліміти використань",
+            {
+                "fields": ("max_uses_total", "max_uses_per_user"),
+                "description": (
+                    "Порожнє поле = без ліміту. "
+                    "«На користувача = 1» — одноразовий код на email/акаунт."
+                ),
+            },
+        ),
+    )
+
+    @admin.display(description="Використано")
+    def uses_display(self, obj):
+        used = obj.uses_count()
+        if obj.max_uses_total is not None:
+            return f"{used} / {obj.max_uses_total}"
+        return str(used)
+
+    @admin.display(description="Активний", boolean=True)
+    def is_active_display(self, obj):
+        return obj.is_active
 
 
 class ColorGroupAdmin(admin.ModelAdmin):

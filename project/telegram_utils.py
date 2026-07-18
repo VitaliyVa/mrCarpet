@@ -225,6 +225,9 @@ def format_order_message(order, event="new"):
             else "🎁 Безкоштовна доставка"
         )
         lines.append(_esc(fs_label))
+    promo_label = getattr(order, "promocode_label", "") or ""
+    if promo_label:
+        lines.append(f"Промокод: {_esc(promo_label)}")
     lines.extend(
         [
             f"Оплата: {_esc(order.get_payment_type_display())}",

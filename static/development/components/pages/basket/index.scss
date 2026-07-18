@@ -485,6 +485,9 @@
 
   &__promocode {
     &-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 13px;
       font-weight: 400;
       line-height: 96%;
@@ -492,6 +495,104 @@
 
     input {
       margin-right: 12px;
+    }
+  }
+
+  &__promo-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid rgba(164, 108, 70, 0.55);
+    border-radius: 50%;
+    background: transparent;
+    color: #a46c46;
+    cursor: help;
+    flex-shrink: 0;
+
+    &-mark {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      font-family: "Futura PT Book", sans-serif;
+    }
+
+    &:hover,
+    &:focus-visible,
+    &.is-open {
+      background: rgba(164, 108, 70, 0.12);
+      outline: none;
+    }
+
+    &-tooltip {
+      position: fixed;
+      z-index: 10000;
+      width: max-content;
+      max-width: min(260px, calc(100vw - 24px));
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 400;
+      font-family: "Futura PT Book", sans-serif;
+      color: rgba(69, 63, 58, 0.92);
+      text-align: left;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(164, 108, 70, 0.18);
+      border-radius: 6px;
+      box-shadow: 0 10px 28px rgba(69, 63, 58, 0.14);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition:
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        visibility 0.22s ease;
+      pointer-events: none;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 14px;
+        width: 7px;
+        height: 7px;
+        background: rgba(255, 255, 255, 0.98);
+        border-right: 1px solid rgba(164, 108, 70, 0.18);
+        border-bottom: 1px solid rgba(164, 108, 70, 0.18);
+        transform: rotate(45deg);
+      }
+
+      &.is-below::after {
+        bottom: auto;
+        top: -4px;
+        border-right: none;
+        border-bottom: none;
+        border-left: 1px solid rgba(164, 108, 70, 0.18);
+        border-top: 1px solid rgba(164, 108, 70, 0.18);
+      }
+
+      &.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      strong {
+        color: #a46c46;
+        font-weight: 600;
+      }
+    }
+
+    &-link {
+      display: inline-block;
+      margin-top: 6px;
+      color: #a46c46;
+      text-decoration: underline;
+      font-weight: 600;
     }
   }
 

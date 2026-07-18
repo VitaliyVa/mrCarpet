@@ -817,16 +817,33 @@ class PromoCode(AbstractCreatedUpdated):
         verbose_name="Код",
         max_length=115,
         blank=False,
-        null=False
+        null=False,
     )
-    end_time = models.DateTimeField(verbose_name="Дата закінчення")
+    end_time = models.DateTimeField(
+        verbose_name="Дата закінчення",
+        blank=True,
+        null=True,
+        help_text="Порожньо = без терміну дії (діє необмежено в часі).",
+    )
     discount = models.PositiveIntegerField(
         verbose_name="Знижка",
         validators=[MaxValueValidator(100)],
         blank=False,
         null=False,
         default=None,
-        help_text="У відсотках"
+        help_text="У відсотках",
+    )
+    max_uses_total = models.PositiveIntegerField(
+        verbose_name="Макс. використань загалом",
+        blank=True,
+        null=True,
+        help_text="Порожньо = без ліміту. Наприклад 100 — код помре після 100 замовлень.",
+    )
+    max_uses_per_user = models.PositiveIntegerField(
+        verbose_name="Макс. використань на користувача",
+        blank=True,
+        null=True,
+        help_text="Порожньо = без ліміту. 1 = одноразовий на email/акаунт.",
     )
 
     class Meta:
@@ -838,6 +855,14 @@ class PromoCode(AbstractCreatedUpdated):
 
     @property
     def is_active(self):
-        if self.end_time < timezone.now():
-            return False
-        return True
+        if self.end_time is None:
+            return True
+        return self.end_time >= timezone.now()
+
+    def active_redemptions(self):
+        from order.models import Order
+
+        return self.redemptions.exclude(order__status=Order.STATUS_CANCELLED)
+
+    def uses_count(self) -> int:
+        return self.active_redemptions().count()

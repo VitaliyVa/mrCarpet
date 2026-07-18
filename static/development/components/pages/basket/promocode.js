@@ -2,10 +2,166 @@ import "./promocode.scss";
 import { instance } from "../../../api/instance";
 import { showSuccess, showError } from "./notification";
 
+function positionPromoTip(anchor, tooltip) {
+  tooltip.style.display = "block";
+  tooltip.style.visibility = "hidden";
+  tooltip.style.left = "-9999px";
+  tooltip.style.top = "0";
+
+  const tooltipHeight = tooltip.offsetHeight;
+  const tooltipWidth = tooltip.offsetWidth;
+  const rect = anchor.getBoundingClientRect();
+  const gap = 8;
+  const margin = 12;
+
+  let top = rect.top - tooltipHeight - gap;
+  let left = rect.left;
+  let below = false;
+
+  if (top < margin) {
+    top = rect.bottom + gap;
+    below = true;
+  }
+
+  if (left + tooltipWidth > window.innerWidth - margin) {
+    left = window.innerWidth - tooltipWidth - margin;
+  }
+
+  if (left < margin) {
+    left = margin;
+  }
+
+  tooltip.classList.toggle("is-below", below);
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.visibility = "";
+}
+
+function openPromoTip(tip) {
+  const tooltip = tip.querySelector(".basket__promo-tip-tooltip");
+  const mark = tip.querySelector(".basket__promo-tip-mark");
+  if (!tooltip || !mark) return;
+
+  if (tooltip.parentElement !== document.body) {
+    document.body.appendChild(tooltip);
+  }
+
+  positionPromoTip(mark, tooltip);
+  tooltip.classList.add("is-visible");
+  tip.classList.add("is-open");
+}
+
+function closePromoTip(tip) {
+  const tipId = tip.dataset.tipId;
+  const tooltip =
+    document.querySelector(`.basket__promo-tip-tooltip[data-tip-for="${tipId}"]`) ||
+    tip.querySelector(".basket__promo-tip-tooltip");
+
+  tip.classList.remove("is-open");
+  if (!tooltip) return;
+
+  tooltip.classList.remove("is-visible");
+  tip.appendChild(tooltip);
+}
+
+function initPromoTip() {
+  const tips = document.querySelectorAll(".basket__promo-tip");
+  if (!tips.length) return;
+
+  const hasHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const hideTimers = new WeakMap();
+
+  tips.forEach((tip, index) => {
+    const tooltip = tip.querySelector(".basket__promo-tip-tooltip");
+    const tipId = `promo-tip-${index}`;
+    tip.dataset.tipId = tipId;
+
+    if (tooltip) {
+      tooltip.dataset.tipFor = tipId;
+    }
+
+    const scheduleClose = () => {
+      clearTimeout(hideTimers.get(tip));
+      hideTimers.set(tip, setTimeout(() => closePromoTip(tip), 160));
+    };
+
+    const cancelClose = () => {
+      clearTimeout(hideTimers.get(tip));
+    };
+
+    if (hasHover) {
+      tip.addEventListener("mouseenter", () => {
+        cancelClose();
+        openPromoTip(tip);
+      });
+      tip.addEventListener("mouseleave", scheduleClose);
+
+      if (tooltip) {
+        tooltip.addEventListener("mouseenter", cancelClose);
+        tooltip.addEventListener("mouseleave", scheduleClose);
+      }
+    }
+
+    tip.addEventListener("focus", () => openPromoTip(tip));
+    tip.addEventListener("blur", () => closePromoTip(tip));
+
+    tip.addEventListener("click", (event) => {
+      if (event.target.closest(".basket__promo-tip-link")) return;
+      if (hasHover) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      const isOpen = tip.classList.contains("is-open");
+      tips.forEach((item) => closePromoTip(item));
+      if (!isOpen) openPromoTip(tip);
+    });
+  });
+
+  window.addEventListener("resize", () => {
+    tips.forEach((tip) => {
+      if (!tip.classList.contains("is-open")) return;
+      const tooltip = document.querySelector(
+        `.basket__promo-tip-tooltip[data-tip-for="${tip.dataset.tipId}"]`
+      );
+      const mark = tip.querySelector(".basket__promo-tip-mark");
+      if (tooltip && mark) positionPromoTip(mark, tooltip);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".basket__promo-tip")) return;
+    if (event.target.closest(".basket__promo-tip-tooltip")) return;
+    tips.forEach((tip) => closePromoTip(tip));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      tips.forEach((tip) => closePromoTip(tip));
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest(".basket__promo-tip-link");
+    if (!link) return;
+
+    tips.forEach((tip) => closePromoTip(tip));
+    const target = document.getElementById("newsletter-subscribe");
+    if (target) {
+      event.preventDefault();
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      const emailInput = target.querySelector('input[type="email"], input[name="email"]');
+      if (emailInput) {
+        setTimeout(() => emailInput.focus({ preventScroll: true }), 400);
+      }
+    }
+  });
+}
+
 // Функціональність для промокоду
 export function initPromocode() {
   console.log("initPromocode called"); // Логування
-  
+  initPromoTip();
+
   document.addEventListener("click", ({ target }) => {
     console.log("Click event triggered", target); // Логування
     
@@ -31,8 +187,13 @@ export function initPromocode() {
       
       console.log("Sending request to /api/check-promocode/"); // Логування
       
+      const emailInput = document.querySelector(
+        '#checkout-form input[name="email"], input[name="email"]'
+      );
+      const email = emailInput?.value?.trim() || "";
+
       // Відправляємо запит на перевірку промокоду
-      instance.post("/check-promocode/", { promocode })
+      instance.post("/check-promocode/", { promocode, email })
         .then(({ data }) => {
           console.log("Response received:", data); // Логування
           

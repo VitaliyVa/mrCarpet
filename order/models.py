@@ -101,6 +101,20 @@ class Order(AbstractCreatedUpdated):
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
+        related_name="orders",
+    )
+    promocode_code = models.CharField(
+        verbose_name="Промокод (код)",
+        max_length=115,
+        blank=True,
+        default="",
+        help_text="Знімок коду на момент замовлення (навіть якщо промокод видалять).",
+    )
+    promocode_discount = models.PositiveIntegerField(
+        verbose_name="Промокод (знижка %)",
+        blank=True,
+        null=True,
+        help_text="Знімок знижки % на момент замовлення.",
     )
     free_shipping = models.BooleanField(
         verbose_name="Безкоштовна доставка",
@@ -138,3 +152,60 @@ class Order(AbstractCreatedUpdated):
         if not self.order_number:
             self.order_number = self.generate_order_number()
         return super().save(*args, **kwargs)
+
+    @property
+    def promocode_label(self) -> str:
+        """Текст для адмінки / Telegram / листів."""
+        code = (self.promocode_code or "").strip()
+        if not code and self.promocode_id:
+            code = self.promocode.code
+        if not code:
+            return ""
+        discount = self.promocode_discount
+        if discount is None and self.promocode_id:
+            discount = self.promocode.discount
+        if discount is not None:
+            return f"{code} (−{discount}%)"
+        return code
+
+
+class PromoCodeRedemption(AbstractCreatedUpdated):
+    """Факт використання промокоду в замовленні (лічильник лімітів)."""
+
+    promocode = models.ForeignKey(
+        verbose_name="Промокод",
+        to="catalog.PromoCode",
+        on_delete=models.CASCADE,
+        related_name="redemptions",
+    )
+    order = models.OneToOneField(
+        verbose_name="Замовлення",
+        to=Order,
+        on_delete=models.CASCADE,
+        related_name="promo_redemption",
+    )
+    user = models.ForeignKey(
+        verbose_name="Користувач",
+        to="users.CustomUser",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="promo_redemptions",
+    )
+    email = models.EmailField(
+        verbose_name="Email",
+        max_length=254,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
+    class Meta:
+        verbose_name = "Використання промокоду"
+        verbose_name_plural = "Використання промокодів"
+        indexes = [
+            models.Index(fields=["promocode", "email"]),
+        ]
+
+    def __str__(self):
+        return f"{self.promocode_id} → order {self.order_id}"

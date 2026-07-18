@@ -187,21 +187,37 @@ class ProductCategoryViewSet(mixins.ListModelMixin, GenericViewSet):
 
 @api_view(["POST"])
 def apply_promocode(request):
-    code = request.data["code"]
+    from catalog.promocode import PromoCodeError, resolve_and_validate
+
+    code = request.data.get("code") or request.data.get("promocode")
     cart = get_cart(request)
-    promocode = PromoCode.objects.filter(code=code).first()
-    if not promocode or not promocode.is_active:
-        return Response(
-            {"message": "Промокод не дійсний"}, status=status.HTTP_400_BAD_REQUEST
+    try:
+        email = request.data.get("email") or ""
+        if request.user.is_authenticated and not email:
+            email = request.user.email or ""
+        promocode = resolve_and_validate(
+            code,
+            user=request.user if request.user.is_authenticated else None,
+            email=email,
+            require_identity=False,
         )
-    promocode_price = round(cart.get_total_price() - cart.get_total_price() * (promocode.discount / 100), 1)
+    except PromoCodeError as exc:
+        return Response(
+            {"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST
+        )
+    promocode_price = round(
+        cart.get_total_price() - cart.get_total_price() * (promocode.discount / 100),
+        1,
+    )
     if promocode_price % 1 == 0:
         promocode_price = int(promocode_price)
-    # cart.promocode = promocode
-    # cart.save()
     return Response(
-        {"promocode_id": promocode.id, "promocode_total_price": f"{promocode_price} грн", "message": "Промокод додано"},
-        status=status.HTTP_200_OK
+        {
+            "promocode_id": promocode.id,
+            "promocode_total_price": f"{promocode_price} грн",
+            "message": "Промокод додано",
+        },
+        status=status.HTTP_200_OK,
     )
     
     

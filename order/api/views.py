@@ -6,7 +6,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 
 from cart.utils import get_cart
-from catalog.models import PromoCode
+from catalog.promocode import PromoCodeError, apply_promocode_to_order
 from project.free_shipping import free_shipping_for_total
 from project.telegram_utils import enqueue_order_telegram
 from ..models import Order
@@ -96,15 +96,22 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
 
                 if promo:
                     try:
-                        promocode = PromoCode.objects.get(code=promo)
-                        order.promocode = promocode
+                        promocode = apply_promocode_to_order(
+                            order,
+                            promo,
+                            user=(
+                                request.user
+                                if request.user.is_authenticated
+                                else None
+                            ),
+                        )
                         order.total_price = float(
                             cart.get_total_price(promo=promocode.discount)
                         )
                         if hasattr(request, "session"):
                             request.session.pop("applied_promocode", None)
-                    except PromoCode.DoesNotExist:
-                        raise ValueError("Неправильний промокод.")
+                    except PromoCodeError as exc:
+                        raise ValueError(str(exc)) from exc
                 else:
                     order.total_price = float(total_price)
 

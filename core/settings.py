@@ -78,7 +78,7 @@ INSTALLED_APPS = [
     's_content',
     's_utils',
     'catalog',
-    'order',
+    'order.apps.OrderConfig',
     'users',
     'nova_poshta',
     'ukr_poshta',

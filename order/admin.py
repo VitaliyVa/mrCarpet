@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Order
+from .models import Order, PromoCodeRedemption
 
 
 @admin.register(Order)
@@ -14,6 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
         "email",
         "city",
         "payment_type",
+        "promocode_badge",
         "free_shipping_badge",
         "total_price_display",
         "created",
@@ -23,6 +24,7 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "payment_type",
         "free_shipping",
+        "promocode",
         "city",
         "created",
     )
@@ -34,11 +36,19 @@ class OrderAdmin(admin.ModelAdmin):
         "phone",
         "city",
         "address",
+        "promocode_code",
+        "promocode__code",
     )
     date_hierarchy = "created"
     ordering = ("-created",)
     list_per_page = 50
-    readonly_fields = ("order_number", "created", "updated")
+    readonly_fields = (
+        "order_number",
+        "created",
+        "updated",
+        "promocode_code",
+        "promocode_discount",
+    )
     list_select_related = ("promocode",)
 
     fieldsets = (
@@ -51,6 +61,8 @@ class OrderAdmin(admin.ModelAdmin):
                     "payment_type",
                     "total_price",
                     "promocode",
+                    "promocode_code",
+                    "promocode_discount",
                     "created",
                     "updated",
                 )
@@ -95,6 +107,17 @@ class OrderAdmin(admin.ModelAdmin):
             return "—"
         return f"{obj.total_price:.0f} грн"
 
+    @admin.display(description="Промокод", ordering="promocode_code")
+    def promocode_badge(self, obj):
+        label = obj.promocode_label
+        if not label:
+            return "—"
+        return format_html(
+            '<span style="display:inline-block;padding:2px 8px;border-radius:4px;'
+            'background:#a46c46;color:#fff;font-size:12px;white-space:nowrap;">{}</span>',
+            label,
+        )
+
     @admin.display(description="Доставка", ordering="free_shipping", boolean=False)
     def free_shipping_badge(self, obj):
         if obj.free_shipping:
@@ -124,3 +147,17 @@ class OrderAdmin(admin.ModelAdmin):
             color,
             obj.get_status_display(),
         )
+
+
+@admin.register(PromoCodeRedemption)
+class PromoCodeRedemptionAdmin(admin.ModelAdmin):
+    list_display = ("promocode", "order", "email", "user", "created")
+    list_filter = ("promocode", "created")
+    search_fields = (
+        "email",
+        "promocode__code",
+        "order__order_number",
+    )
+    readonly_fields = ("created", "updated")
+    raw_id_fields = ("order", "user", "promocode")
+    date_hierarchy = "created"

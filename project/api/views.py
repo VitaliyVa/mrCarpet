@@ -3,8 +3,6 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.utils import timezone
-from catalog.models import PromoCode
 from cart.utils import get_cart
 from project.free_shipping import free_shipping_for_total
 from .serializers import (
@@ -134,32 +132,35 @@ class SubscriptionCreateView(CreateAPIView):
 def check_promocode(request):
     """Перевірка промокоду та застосування знижки"""
     promocode = request.data.get('promocode')
-    
+
     if not promocode:
         return Response(
-            {'error': 'Промокод не вказано'}, 
+            {'error': 'Промокод не вказано'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     try:
-        # Перевіряємо чи існує промокод та чи не закінчився термін дії
-        promo = PromoCode.objects.get(
-            code=promocode,
-            end_time__gt=timezone.now()
+        from catalog.promocode import PromoCodeError, resolve_and_validate
+
+        email = request.data.get('email') or ''
+        if request.user.is_authenticated and not email:
+            email = request.user.email or ''
+
+        promo = resolve_and_validate(
+            promocode,
+            user=request.user if request.user.is_authenticated else None,
+            email=email,
+            require_identity=False,
         )
-        
-        # Отримуємо корзину користувача
+
         cart = get_cart(request)
-        
-        # Розраховуємо ціну зі знижкою
         original_price = cart.get_total_price()
         discount_amount = original_price * (promo.discount / 100)
         final_price = original_price - discount_amount
-        
-        # Зберігаємо промокод в сесії для подальшого використання
+
         if hasattr(request, 'session'):
-            request.session['applied_promocode'] = promocode
-        
+            request.session['applied_promocode'] = promo.code
+
         return Response({
             'success': True,
             'message': f'Промокод застосовано! Знижка: {promo.discount}%',
@@ -167,17 +168,17 @@ def check_promocode(request):
             'discount_percent': promo.discount,
             'discount_amount': discount_amount,
             'final_price': final_price,
-            'promocode': promocode,
+            'promocode': promo.code,
             'free_shipping': free_shipping_for_total(final_price),
         })
-        
-    except PromoCode.DoesNotExist:
+
+    except PromoCodeError as e:
         return Response(
-            {'error': 'Промокод не знайдено або термін дії закінчився'}, 
+            {'error': str(e)},
             status=status.HTTP_400_BAD_REQUEST
         )
-    except Exception as e:
+    except Exception:
         return Response(
-            {'error': 'Помилка при перевірці промокоду'}, 
+            {'error': 'Помилка при перевірці промокоду'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

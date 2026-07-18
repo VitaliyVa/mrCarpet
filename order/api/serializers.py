@@ -18,5 +18,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "order_number",
             "free_shipping",
             "free_shipping_threshold",
+            # snapshot лише з apply_promocode_to_order — не з клієнтського POST
+            "promocode_code",
+            "promocode_discount",
         )
         read_only_fields = ("created", "updated")

@@ -48,8 +48,10 @@ def _build_order_email(order):
     customer = f"{order.name} {order.surname}".strip()
     delivery = format_delivery_line(order.city, order.address)
     shipping_cost = _free_shipping_email_line(order)
+    promocode_label = getattr(order, "promocode_label", "") or ""
 
     subject = f"mr.Carpet — замовлення №{order.order_number} прийнято"
+    promo_plain = f"Промокод: {promocode_label}\n" if promocode_label else ""
     body = with_plain_footer(
         f"Дякуємо за замовлення!\n\n"
         f"Номер замовлення: {order.order_number}\n"
@@ -58,6 +60,7 @@ def _build_order_email(order):
         f"Телефон: {order.phone or '—'}\n"
         f"Доставка: {delivery}\n"
         f"Вартість доставки: {shipping_cost}\n"
+        f"{promo_plain}"
         f"Спосіб оплати: {payment_label}\n"
         f"Сума: {price}\n\n"
         f"Ми зв’яжемося з вами для підтвердження деталей.\n\n"
@@ -73,6 +76,7 @@ def _build_order_email(order):
             "delivery": delivery,
             "shipping_cost": shipping_cost,
             "free_shipping": bool(getattr(order, "free_shipping", False)),
+            "promocode_label": promocode_label,
             "payment_label": payment_label,
             "price": price,
         },
