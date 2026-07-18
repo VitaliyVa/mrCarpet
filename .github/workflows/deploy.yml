@@ -32,35 +32,61 @@ jobs:
         ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
           cd ~/projects/mrCarpet
-          
+          mkdir -p backups
+          TS=$(date +%Y%m%d_%H%M%S)
+
+          # IMPORTANT: SQLite lives inside the git worktree (bind mount).
+          # Never let git pull overwrite db.sqlite3 / WAL / SHM.
+
+          echo "Stopping web before DB backup + git pull..."
+          docker compose -f docker-compose.prod.yml stop web || true
+
+          echo "Checkpointing WAL into db.sqlite3, then backing up..."
+          if [ -f db.sqlite3 ]; then
+            # Merge WAL into main file so a single-file copy is consistent.
+            if command -v sqlite3 >/dev/null 2>&1; then
+              sqlite3 db.sqlite3 "PRAGMA wal_checkpoint(TRUNCATE);" || true
+            else
+              docker compose -f docker-compose.prod.yml run --rm --no-deps web \
+                python -c "import sqlite3; c=sqlite3.connect('/app/db.sqlite3'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()" \
+                || true
+            fi
+            cp -a db.sqlite3 "backups/db.sqlite3.pre_deploy_${TS}"
+            cp -a db.sqlite3 "/tmp/mrcarpet_db_live_${TS}.sqlite3"
+          fi
+
           echo "Pulling latest changes..."
           git fetch origin
           git pull origin main || git pull origin master
-          
+
+          echo "Restoring live SQLite (git must not own prod data)..."
+          if [ -f "/tmp/mrcarpet_db_live_${TS}.sqlite3" ]; then
+            cp -a "/tmp/mrcarpet_db_live_${TS}.sqlite3" db.sqlite3
+          fi
+          # Drop any WAL/SHM that git pull may have introduced from another machine.
+          rm -f db.sqlite3-wal db.sqlite3-shm
+
           echo "Rebuilding containers..."
           docker compose -f docker-compose.prod.yml build web
-          
-          echo "Stopping containers..."
-          docker compose -f docker-compose.prod.yml down
-          
+
           echo "Starting containers..."
           docker compose -f docker-compose.prod.yml up -d
-          
+
           echo "Waiting for web container to be ready..."
           sleep 10
-          
+
           echo "Collecting static files..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
-          
+
           echo "Running migrations..."
           docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
-          
+
           echo "Restarting services..."
           docker compose -f docker-compose.prod.yml restart web nginx
-          
+
           echo "Cleaning up Docker..."
           docker system prune -f
-          
+
           echo "Deployment completed successfully!"
         EOF
         

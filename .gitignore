@@ -14,11 +14,14 @@ yarn.lock
 .vscode
 .idea
 /venv/*
+# SQLite — never commit DB or WAL sidecars (see ops/INCIDENT-2026-07-17-sqlite-corruption.md)
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
+db.sqlite3
 db.sqlite3-shm
 db.sqlite3-wal
+backups/
 *.pyc
 *.log
 *.vscode/*
@@ -29,3 +32,5 @@ db.sqlite3-wal
 # internal documentation (local only, not for the repo)
 /docs/
 docs/
+/ops/
+ops/

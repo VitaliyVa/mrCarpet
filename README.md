@@ -97,6 +97,14 @@ docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
 
+### Production SQLite safety (read this)
+
+The app uses SQLite with **WAL** (`db.sqlite3` + `db.sqlite3-wal` + `db.sqlite3-shm`). Those files must **never** be committed or overwritten by `git pull`.
+
+- `.gitignore` ignores `*.sqlite3`, `*.sqlite3-wal`, `*.sqlite3-shm`
+- Deploy backs up and restores the live DB around `git pull` (see `.github/workflows/deploy.yml`)
+- Local incident notes / runbooks live under `ops/` (gitignored, like `docs/`)
+
 ## SSL/HTTPS Setup
 
 The project includes automatic SSL certificate generation and renewal:
@@ -128,6 +136,7 @@ mrCarpet/
 ├── order/             # Order management
 ├── payment/           # Payment processing (LiqPay)
 ├── project/           # Core project models and utilities
+├── scripts/           # Ops / recovery helpers
 ├── users/             # User authentication and profiles
 ├── templates/         # HTML templates
 ├── static/            # Static files (CSS, JS)
