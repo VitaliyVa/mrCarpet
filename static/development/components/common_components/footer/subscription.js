@@ -2,11 +2,19 @@ import { subscribeToNewsletter } from "../../../api/subscription";
 import { getFormFields } from "../../module/form_action";
 import validation from "../../module/validation";
 import "./welcome-promo-modal.scss";
+import "./newsletter-subscribe-modal.scss";
 
 const WELCOME_PROMO_FALLBACK = "WELCOME5";
 const HIGHLIGHT_MS = 2800;
+const MOBILE_NEWSLETTER_MQ = "(max-width: 1024px)";
 
-const subscribeButton = document.querySelector(".subscribe-btn");
+const subscribeButton = document.querySelector(
+  ".footer .subscribe-btn, .subscription-form__subscribe-btn.subscribe-btn"
+);
+
+function isMobileNewsletter() {
+  return window.matchMedia(MOBILE_NEWSLETTER_MQ).matches;
+}
 
 export function highlightNewsletterSubscribe() {
   const form = document.getElementById("newsletter-subscribe");
@@ -19,14 +27,20 @@ export function highlightNewsletterSubscribe() {
   }, HIGHLIGHT_MS);
 }
 
-function closeWelcomePromoModal() {
-  const modal = document.querySelector(".welcome-promo-modal");
-  const overlay = modal?.closest(".modal-overlay");
-  if (!modal || !overlay) return;
-
+function closeModalBlock(modal) {
+  if (!modal) return;
+  const overlay = modal.closest(".modal-overlay");
   modal.classList.remove("active");
-  overlay.classList.remove("active");
+  overlay?.classList.remove("active");
   document.body.style.overflowY = "initial";
+}
+
+function closeWelcomePromoModal() {
+  closeModalBlock(document.querySelector(".welcome-promo-modal"));
+}
+
+export function closeNewsletterSubscribeModal() {
+  closeModalBlock(document.querySelector(".newsletter-subscribe-modal"));
 }
 
 export function openWelcomePromoModal(code = WELCOME_PROMO_FALLBACK) {
@@ -50,6 +64,52 @@ export function openWelcomePromoModal(code = WELCOME_PROMO_FALLBACK) {
   overlay.classList.add("active");
   modal.classList.add("active");
   document.body.style.overflowY = "hidden";
+}
+
+export function openNewsletterSubscribeModal() {
+  const modal = document.querySelector(".newsletter-subscribe-modal");
+  const overlay = modal?.closest(".modal-overlay");
+  if (!modal || !overlay) return;
+
+  document.querySelectorAll(".modal__block.active").forEach((el) => {
+    el.classList.remove("active");
+    el.closest(".modal-overlay")?.classList.remove("active");
+  });
+
+  const errorEl = document.getElementById("newsletter-subscribe-modal-error");
+  if (errorEl) {
+    errorEl.hidden = true;
+    errorEl.textContent = "";
+  }
+
+  overlay.classList.add("active");
+  modal.classList.add("active");
+  document.body.style.overflowY = "hidden";
+
+  const emailInput = modal.querySelector('input[type="email"]');
+  if (emailInput) {
+    setTimeout(() => emailInput.focus({ preventScroll: true }), 200);
+  }
+}
+
+/** Desktop → скрол у футер; mobile → модалка (футер-форму сховано). */
+export function goToNewsletterSubscribe() {
+  if (isMobileNewsletter()) {
+    openNewsletterSubscribeModal();
+    return;
+  }
+
+  const target = document.getElementById("newsletter-subscribe");
+  if (!target) return;
+
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  highlightNewsletterSubscribe();
+  const emailInput = target.querySelector(
+    'input[type="email"], input[name="email"]'
+  );
+  if (emailInput) {
+    setTimeout(() => emailInput.focus({ preventScroll: true }), 450);
+  }
 }
 
 async function copyWelcomePromoCode() {
@@ -80,6 +140,13 @@ async function copyWelcomePromoCode() {
   }
 }
 
+async function handleSubscribeSuccess(data) {
+  if (!data) return;
+  closeNewsletterSubscribeModal();
+  const code = data.welcome_promocode || WELCOME_PROMO_FALLBACK;
+  openWelcomePromoModal(code);
+}
+
 function initWelcomePromoModal() {
   const copyBtn = document.querySelector("[data-welcome-promo-copy]");
   if (copyBtn) {
@@ -92,12 +159,51 @@ function initWelcomePromoModal() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    const modal = document.querySelector(".welcome-promo-modal.active");
-    if (modal) closeWelcomePromoModal();
+    if (document.querySelector(".welcome-promo-modal.active")) {
+      closeWelcomePromoModal();
+    }
+    if (document.querySelector(".newsletter-subscribe-modal.active")) {
+      closeNewsletterSubscribeModal();
+    }
+  });
+}
+
+function initNewsletterSubscribeModal() {
+  const form = document.getElementById("newsletter-subscribe-modal-form");
+  const submitBtn = document.getElementById("newsletter-subscribe-modal-submit");
+  if (!form || !submitBtn) return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const errorEl = document.getElementById("newsletter-subscribe-modal-error");
+    if (errorEl) {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    }
+
+    const formValues = getFormFields(
+      "#newsletter-subscribe-modal-form",
+      ".validation_input"
+    );
+    const status = validation(submitBtn);
+    if (!status) return;
+
+    const data = await subscribeToNewsletter(formValues.email);
+    if (!data) {
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent = "Не вдалося підписатися. Спробуйте ще раз.";
+      }
+      return;
+    }
+
+    await handleSubscribeSuccess(data);
   });
 }
 
 initWelcomePromoModal();
+initNewsletterSubscribeModal();
 
 if (subscribeButton) {
   subscribeButton.addEventListener("click", async (event) => {
@@ -105,13 +211,11 @@ if (subscribeButton) {
 
     const formValues = getFormFields(".subscription-form", ".validation_input");
     const status = validation(subscribeButton);
-
     if (!status) return;
 
     const data = await subscribeToNewsletter(formValues.email);
     if (!data) return;
 
-    const code = data.welcome_promocode || WELCOME_PROMO_FALLBACK;
-    openWelcomePromoModal(code);
+    await handleSubscribeSuccess(data);
   });
 }

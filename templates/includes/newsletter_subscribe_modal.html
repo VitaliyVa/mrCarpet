@@ -1,0 +1,81 @@
+<div class="modal-overlay newsletter-subscribe-overlay">
+  <div
+    class="newsletter-subscribe-modal modal modal__block"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="newsletter-subscribe-modal-title"
+  >
+    <button
+      type="button"
+      class="newsletter-subscribe-modal__close-btn modal__close-btn modal_close"
+      aria-label="Закрити"
+    >
+      <img src="/static/utils/assets/close.svg" alt="close" />
+    </button>
+    <h3
+      id="newsletter-subscribe-modal-title"
+      class="newsletter-subscribe-modal__title"
+    >
+      Розсилка новин та акцій
+    </h3>
+    <p class="newsletter-subscribe-modal__hint color_black_sub">
+      Акції, розпродажі та промокод на <strong>−5%</strong> для першого
+      замовлення — підпишіться на розсилку.
+    </p>
+    <form
+      class="newsletter-subscribe-modal__form validation__block"
+      id="newsletter-subscribe-modal-form"
+      novalidate
+    >
+      <label class="newsletter-subscribe-modal__field validation_container">
+        <span>Email</span>
+        <input
+          type="email"
+          name="email"
+          class="input-transparent validation_input"
+          data-type="email"
+          required
+          autocomplete="email"
+          placeholder="Поле пошти"
+        />
+      </label>
+
+      <div class="newsletter-subscribe-modal__accept validation_container">
+        <input
+          id="newsletter-modal-accept"
+          class="validation_input"
+          name="accept"
+          type="checkbox"
+          data-type="checkbox"
+          value="accept"
+        />
+        <label for="newsletter-modal-accept">
+          <span class="accept"
+            >Приймаю
+            <a
+              href="{% url 'policy' %}"
+              class="color_gold"
+              target="_blank"
+              rel="noopener"
+              >умови розсилки</a
+            ></span
+          >
+        </label>
+      </div>
+
+      <p
+        class="newsletter-subscribe-modal__error"
+        id="newsletter-subscribe-modal-error"
+        hidden
+      ></p>
+
+      <button
+        type="submit"
+        class="btn-gold newsletter-subscribe-modal__submit validation_btn"
+        id="newsletter-subscribe-modal-submit"
+      >
+        Підписатися на розсилку
+      </button>
+    </form>
+  </div>
+</div>

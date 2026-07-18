@@ -105,13 +105,6 @@
 
     &_form {
       display: none;
-      width: 100%;
-      max-width: 360px;
-      margin: 0 auto 24px;
-
-      &.is-highlighted {
-        display: block;
-      }
     }
 
     &__column {

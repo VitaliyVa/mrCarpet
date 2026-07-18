@@ -1,7 +1,7 @@
 import "./promocode.scss";
 import { instance } from "../../../api/instance";
 import { showSuccess, showError } from "./notification";
-import { highlightNewsletterSubscribe } from "../../common_components/footer/subscription";
+import { goToNewsletterSubscribe } from "../../common_components/footer/subscription";
 
 function positionPromoTip(anchor, tooltip) {
   tooltip.style.display = "block";
@@ -146,18 +146,8 @@ function initPromoTip() {
     if (!link) return;
 
     tips.forEach((tip) => closePromoTip(tip));
-    const target = document.getElementById("newsletter-subscribe");
-    if (target) {
-      event.preventDefault();
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      highlightNewsletterSubscribe();
-      const emailInput = target.querySelector(
-        'input[type="email"], input[name="email"]'
-      );
-      if (emailInput) {
-        setTimeout(() => emailInput.focus({ preventScroll: true }), 450);
-      }
-    }
+    event.preventDefault();
+    goToNewsletterSubscribe();
   });
 }
 
