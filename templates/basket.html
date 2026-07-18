@@ -131,18 +131,7 @@
                         </p>
                         <p class="basket__calculate-sum-products-cost">{{ cart.get_total_price }} грн.</p>
                     </div>
-                    <div class="basket__calculate-delivery basket_right_block">
-                        <p class="basket__calculate-delivery-title">
-                            Вартість
-                            <br />
-                            доставки
-                        </p>
-                        <p class="basket__calculate-delivery-price">
-                            за тарифами
-                            <br />
-                            перевізника
-                        </p>
-                    </div>
+                    {% include "includes/basket_delivery_cost.html" %}
                     <div class="basket__calculate-total-price basket_right_block">
                         <p class="basket__calculate-total-price-title">До сплати</p>
                         <p class="basket__calculate-total-price-value font-size-26 bold color_gold">

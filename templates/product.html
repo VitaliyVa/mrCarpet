@@ -483,7 +483,9 @@
               <img src="/static/utils/assets/plus.svg" alt="plus"/>
               </button>
             </div>
-            <span class="info-text__free-delivery">Безкоштовна доставка від 800 грн.</span>
+            {% if shop_settings and shop_settings.free_shipping_enabled %}
+            <span class="info-text__free-delivery">Безкоштовна доставка від {{ shop_settings.free_shipping_threshold }} грн.</span>
+            {% endif %}
           </div>
 
           <div class="product__btn">

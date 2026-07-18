@@ -216,9 +216,21 @@ def format_order_message(order, event="new"):
         f"Телефон: {_esc(order.phone or '—')}",
         f"Email: {_esc(order.email or '—')}",
         f"Доставка: {_esc(_delivery_line(order))}",
-        f"Оплата: {_esc(order.get_payment_type_display())}",
-        f"Сума: {_esc(_price(order.total_price))}",
     ]
+    if getattr(order, "free_shipping", False):
+        threshold = getattr(order, "free_shipping_threshold", None)
+        fs_label = (
+            f"🎁 Безкоштовна доставка (від {threshold} грн)"
+            if threshold
+            else "🎁 Безкоштовна доставка"
+        )
+        lines.append(_esc(fs_label))
+    lines.extend(
+        [
+            f"Оплата: {_esc(order.get_payment_type_display())}",
+            f"Сума: {_esc(_price(order.total_price))}",
+        ]
+    )
     if order.message:
         lines.append(f"Коментар: {_esc(order.message)}")
     items = _order_items_lines(order, html_links=True)

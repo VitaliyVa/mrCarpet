@@ -68,20 +68,23 @@ export function initPromocode() {
 
 // Функція для оновлення цін зі знижкою
 function updatePricesWithDiscount(data) {
-  const { original_price, final_price, discount_percent } = data;
-  
+  const { final_price, discount_percent, free_shipping } = data;
+
   // Оновлюємо загальну ціну товарів
-  const totalPriceElements = document.querySelectorAll(".basket__calculate-sum-products-cost, .basket__calculate-total-price-value");
-  totalPriceElements.forEach(element => {
+  const totalPriceElements = document.querySelectorAll(
+    ".basket__calculate-sum-products-cost, .basket__calculate-total-price-value"
+  );
+  totalPriceElements.forEach((element) => {
     element.textContent = `${final_price} грн.`;
   });
-  
+
   // Додаємо інформацію про знижку
   const calculateBlock = document.querySelector(".basket__calculate");
   if (calculateBlock) {
-    // Перевіряємо чи вже є блок зі знижкою
-    let discountBlock = calculateBlock.querySelector(".basket__calculate-discount");
-    
+    let discountBlock = calculateBlock.querySelector(
+      ".basket__calculate-discount"
+    );
+
     if (!discountBlock) {
       discountBlock = document.createElement("div");
       discountBlock.className = "basket__calculate-discount basket_right_block";
@@ -89,12 +92,81 @@ function updatePricesWithDiscount(data) {
         <p class="basket__calculate-discount-title">Знижка</p>
         <p class="basket__calculate-discount-value color_gold">-${discount_percent}%</p>
       `;
-      
-      // Вставляємо блок зі знижкою після блоку з ціною товарів
-      const sumProductsBlock = calculateBlock.querySelector(".basket__calculate-sum-products");
+
+      const sumProductsBlock = calculateBlock.querySelector(
+        ".basket__calculate-sum-products"
+      );
       sumProductsBlock.after(discountBlock);
     } else {
-      discountBlock.querySelector(".basket__calculate-discount-value").textContent = `-${discount_percent}%`;
+      discountBlock.querySelector(
+        ".basket__calculate-discount-value"
+      ).textContent = `-${discount_percent}%`;
+    }
+  }
+
+  updateFreeShippingUI(free_shipping || null, final_price);
+}
+
+function updateFreeShippingUI(fs, finalPrice) {
+  const root = document.getElementById("basket-delivery-cost");
+  const priceEl = document.getElementById("basket-delivery-price");
+  const hintEl = document.getElementById("basket-delivery-hint");
+  if (!root || !priceEl) return;
+
+  const enabled =
+    fs?.enabled ?? root.dataset.fsEnabled === "1";
+  const threshold = Number(fs?.threshold ?? root.dataset.fsThreshold ?? 0);
+  const fromPrice = Number(fs?.delivery_from_price ?? root.dataset.fsFrom ?? 90);
+  const total = Number(finalPrice);
+  const qualifies =
+    fs?.qualifies ?? (enabled && threshold > 0 && total >= threshold);
+  const remaining =
+    fs?.remaining ??
+    (enabled && !qualifies ? Math.max(0, threshold - Math.round(total)) : 0);
+
+  root.dataset.fsEnabled = enabled ? "1" : "0";
+  root.dataset.fsThreshold = String(threshold);
+  root.dataset.fsFrom = String(fromPrice);
+
+  if (qualifies) {
+    priceEl.classList.add("is-free");
+    priceEl.innerHTML = `
+      <span class="basket__calculate-delivery-was">Від ${fromPrice} грн.</span>
+      <span class="basket__calculate-delivery-now">Безкоштовно</span>
+    `;
+    if (hintEl) {
+      hintEl.hidden = false;
+      hintEl.classList.add("is-free");
+      hintEl.textContent = `Безкоштовна доставка від ${threshold} грн.`;
+    }
+  } else {
+    priceEl.classList.remove("is-free");
+    priceEl.innerHTML = `
+      <span class="basket__calculate-delivery-carrier">за тарифами<br />перевізника</span>
+    `;
+    if (hintEl) {
+      if (enabled && remaining > 0) {
+        hintEl.hidden = false;
+        hintEl.classList.remove("is-free");
+        hintEl.textContent = `До безкоштовної доставки ще ${remaining} грн.`;
+      } else {
+        hintEl.hidden = true;
+        hintEl.textContent = "";
+      }
+    }
+  }
+
+  const npPrice = document.getElementById("nova-post-delivery-price");
+  if (npPrice) {
+    if (qualifies) {
+      npPrice.classList.add("is-free");
+      npPrice.innerHTML = `
+        <span class="basket__checkbox-item-price-was">Від ${fromPrice} грн.</span>
+        <span class="basket__checkbox-item-price-now">Безкоштовно</span>
+      `;
+    } else {
+      npPrice.classList.remove("is-free");
+      npPrice.textContent = `Від ${fromPrice} грн.`;
     }
   }
 }

@@ -116,6 +116,7 @@ TEMPLATES = [
                 'catalog.context_processors.context',
                 'cart.context_processors.context',
                 'project.context_processors.seo_jsonld',
+                'project.context_processors.shop_settings',
             ],
         },
     },

@@ -32,12 +32,22 @@ def format_delivery_line(city: str | None, address: str | None) -> str:
     return f"{city}, {address}"
 
 
+def _free_shipping_email_line(order) -> str:
+    if not getattr(order, "free_shipping", False):
+        return "за тарифами перевізника"
+    threshold = getattr(order, "free_shipping_threshold", None)
+    if threshold:
+        return f"безкоштовно (від {threshold} грн)"
+    return "безкоштовно"
+
+
 def _build_order_email(order):
     payment_label = order.get_payment_type_display()
     status_label = order.get_status_display()
     price = f"{order.total_price:.0f} грн" if order.total_price is not None else "—"
     customer = f"{order.name} {order.surname}".strip()
     delivery = format_delivery_line(order.city, order.address)
+    shipping_cost = _free_shipping_email_line(order)
 
     subject = f"mr.Carpet — замовлення №{order.order_number} прийнято"
     body = with_plain_footer(
@@ -47,6 +57,7 @@ def _build_order_email(order):
         f"Отримувач: {customer}\n"
         f"Телефон: {order.phone or '—'}\n"
         f"Доставка: {delivery}\n"
+        f"Вартість доставки: {shipping_cost}\n"
         f"Спосіб оплати: {payment_label}\n"
         f"Сума: {price}\n\n"
         f"Ми зв’яжемося з вами для підтвердження деталей.\n\n"
@@ -60,6 +71,8 @@ def _build_order_email(order):
             "customer": customer,
             "phone": order.phone or "—",
             "delivery": delivery,
+            "shipping_cost": shipping_cost,
+            "free_shipping": bool(getattr(order, "free_shipping", False)),
             "payment_label": payment_label,
             "price": price,
         },

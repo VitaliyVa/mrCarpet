@@ -340,4 +340,39 @@ class TelegramProcessedUpdate(models.Model):
         verbose_name = "Telegram processed update"
         verbose_name_plural = "Telegram processed updates"
 
-    
+
+class ShopSettings(models.Model):
+    """Singleton: магазинні опції (безкоштовна доставка тощо)."""
+
+    free_shipping_enabled = models.BooleanField(
+        verbose_name="Безкоштовна доставка увімкнена",
+        default=True,
+        help_text="Вимкни — опція зникне з кошика, карток товару й нових замовлень.",
+    )
+    free_shipping_threshold = models.PositiveIntegerField(
+        verbose_name="Поріг безкоштовної доставки (грн)",
+        default=800,
+        help_text="Сума товарів (після промокоду), від якої доставка за наш рахунок.",
+    )
+    delivery_from_price = models.PositiveIntegerField(
+        verbose_name="Мін. тариф доставки для UI (грн)",
+        default=90,
+        help_text="Показується як «Від X грн» і перекреслюється при безкоштовній доставці.",
+    )
+
+    class Meta:
+        verbose_name = "Налаштування магазину"
+        verbose_name_plural = "Налаштування магазину"
+
+    def __str__(self):
+        return "Налаштування магазину"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and ShopSettings.objects.exists():
+            return
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _created = cls.objects.get_or_create(pk=1)
+        return obj

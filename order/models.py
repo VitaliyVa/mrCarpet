@@ -102,6 +102,18 @@ class Order(AbstractCreatedUpdated):
         blank=True,
         null=True,
     )
+    free_shipping = models.BooleanField(
+        verbose_name="Безкоштовна доставка",
+        default=False,
+        db_index=True,
+        help_text="Доставка за рахунок магазину (поріг на момент оформлення).",
+    )
+    free_shipping_threshold = models.PositiveIntegerField(
+        verbose_name="Поріг безкоштовної доставки (грн)",
+        null=True,
+        blank=True,
+        help_text="Який поріг діяв, коли замовлення отримало безкоштовну доставку.",
+    )
 
     class Meta:
         verbose_name = "Замовлення"

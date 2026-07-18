@@ -57,8 +57,17 @@ def merchant_return_policy(request) -> dict[str, Any]:
     }
 
 
-def offer_shipping_details() -> dict[str, Any]:
-    """Free shipping from 800 UAH — matches storefront copy."""
+def offer_shipping_details() -> dict[str, Any] | None:
+    """Free shipping OfferShippingDetails when enabled in ShopSettings."""
+    try:
+        from project.free_shipping import get_shop_settings
+
+        settings = get_shop_settings()
+        if not settings.free_shipping_enabled:
+            return None
+    except Exception:
+        pass
+
     return {
         "@type": "OfferShippingDetails",
         "shippingRate": {
@@ -152,7 +161,9 @@ def _price_valid_until() -> str:
 
 def _attach_merchant_offer_fields(offers: dict[str, Any], request) -> None:
     offers["priceValidUntil"] = _price_valid_until()
-    offers["shippingDetails"] = offer_shipping_details()
+    shipping = offer_shipping_details()
+    if shipping is not None:
+        offers["shippingDetails"] = shipping
     offers["hasMerchantReturnPolicy"] = merchant_return_policy(request)
 
 
@@ -439,38 +450,58 @@ def faq_graph(qa_items: list[tuple[str, str]]) -> dict[str, Any]:
     }
 
 
-# Shared FAQ copy for HTML + JSON-LD (Phase 4.4 / 5.1 minimum)
-FAQ_ITEMS: list[tuple[str, str]] = [
-    (
-        "Які матеріали використовуються для виготовлення килимів?",
-        "У асортименті mr.Carpet є килими з поліпропілену, вовни, бавовни та сумішей. "
-        "Точний склад кожного товару вказаний у блоці «Характеристики» на сторінці килима.",
-    ),
-    (
-        "Як вибрати розмір килима для кімнати?",
-        "Виміряйте вільну зону підлоги й залиште відступ від стін/меблів 20–40 см. "
-        "Для вітальні часто беруть килим під передню лінію дивана; у дитячій — "
-        "щоб покрити ігрову зону. Розміри варіантів є в картці товару.",
-    ),
-    (
-        "Як правильно доглядати за килимом?",
-        "Регулярно пилососьте за ворсом, уникайте надлишку води. Локальні плями "
-        "прибирайте м’яким засобом для текстилю. Для вовни й делікатних сумішей "
-        "краще професійне чищення.",
-    ),
-    (
-        "Які умови доставки?",
-        "Доставляємо Новою Поштою по Україні. Безкоштовна доставка від 800 грн "
-        "(умови можуть уточнюватись на сторінці «Доставка і оплата»).",
-    ),
-    (
-        "Як оплатити замовлення?",
-        "Можна оплатити онлайн через LiqPay на сайті або іншими способами, "
-        "вказаними при оформленні. Деталі — на сторінці «Доставка і оплата».",
-    ),
-    (
-        "Чи можна повернути килим?",
-        "Так, згідно з умовами повернення на сайті. Збережіть товарний вигляд "
-        "і чек; детальний порядок — на сторінці «Повернення».",
-    ),
-]
+def _delivery_faq_answer() -> str:
+    try:
+        from project.free_shipping import get_shop_settings
+
+        settings = get_shop_settings()
+        if settings.free_shipping_enabled:
+            return (
+                f"Доставляємо Новою Поштою по Україні. Безкоштовна доставка від "
+                f"{settings.free_shipping_threshold} грн "
+                "(умови можуть уточнюватись на сторінці «Доставка і оплата»)."
+            )
+    except Exception:
+        pass
+    return (
+        "Доставляємо Новою Поштою по Україні. "
+        "Деталі — на сторінці «Доставка і оплата»."
+    )
+
+
+def get_faq_items() -> list[tuple[str, str]]:
+    """Shared FAQ copy for HTML + JSON-LD (threshold from ShopSettings)."""
+    return [
+        (
+            "Які матеріали використовуються для виготовлення килимів?",
+            "У асортименті mr.Carpet є килими з поліпропілену, вовни, бавовни та сумішей. "
+            "Точний склад кожного товару вказаний у блоці «Характеристики» на сторінці килима.",
+        ),
+        (
+            "Як вибрати розмір килима для кімнати?",
+            "Виміряйте вільну зону підлоги й залиште відступ від стін/меблів 20–40 см. "
+            "Для вітальні часто беруть килим під передню лінію дивана; у дитячій — "
+            "щоб покрити ігрову зону. Розміри варіантів є в картці товару.",
+        ),
+        (
+            "Як правильно доглядати за килимом?",
+            "Регулярно пилососьте за ворсом, уникайте надлишку води. Локальні плями "
+            "прибирайте м’яким засобом для текстилю. Для вовни й делікатних сумішей "
+            "краще професійне чищення.",
+        ),
+        (
+            "Які умови доставки?",
+            _delivery_faq_answer(),
+        ),
+        (
+            "Як оплатити замовлення?",
+            "Можна оплатити онлайн через LiqPay на сайті або іншими способами, "
+            "вказаними при оформленні. Деталі — на сторінці «Доставка і оплата».",
+        ),
+        (
+            "Чи можна повернути килим?",
+            "Так, згідно з умовами повернення на сайті. Збережіть товарний вигляд "
+            "і чек; детальний порядок — на сторінці «Повернення».",
+        ),
+    ]
+

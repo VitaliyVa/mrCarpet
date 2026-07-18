@@ -56,8 +56,17 @@
                                     </div>
                                     <h4 class="basket__checkbox-item-title">Нова Пошта</h4>
                                     <div class="basket__checkbox-item-time">Від 3 днів</div>
-                                    <div class="basket__checkbox-item-price medium">
-                                        Від 90 грн.
+                                    <div
+                                        class="basket__checkbox-item-price medium{% if free_shipping.qualifies %} is-free{% endif %}"
+                                        id="nova-post-delivery-price"
+                                        data-from-price="{{ free_shipping.delivery_from_price }}"
+                                    >
+                                        {% if free_shipping.qualifies %}
+                                        <span class="basket__checkbox-item-price-was">Від {{ free_shipping.delivery_from_price }} грн.</span>
+                                        <span class="basket__checkbox-item-price-now">Безкоштовно</span>
+                                        {% else %}
+                                        Від {{ free_shipping.delivery_from_price }} грн.
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="basket__checkbox-item-body accordion_content">
@@ -451,18 +460,7 @@
                         </p>
                         <p class="basket__calculate-sum-products-cost">{{ cart.get_total_price }} грн.</p>
                     </div>
-                    <div class="basket__calculate-delivery basket_right_block">
-                        <p class="basket__calculate-delivery-title">
-                            Вартість
-                            <br/>
-                            доставки
-                        </p>
-                        <p class="basket__calculate-delivery-price">
-                            за тарифами
-                            <br/>
-                            перевізника
-                        </p>
-                    </div>
+                    {% include "includes/basket_delivery_cost.html" %}
                     <div class="basket__calculate-total-price basket_right_block">
                         <p class="basket__calculate-total-price-title">До сплати</p>
                         <p

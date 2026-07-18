@@ -5,7 +5,7 @@ from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
 from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
 from blog.models import Article
 from cart.utils import get_cart
-from project.seo_jsonld import FAQ_ITEMS, dumps_jsonld, faq_graph
+from project.seo_jsonld import dumps_jsonld, faq_graph, get_faq_items
 
 # Create your views here.
 def index(request):
@@ -53,12 +53,13 @@ def delivery(request):
 
 
 def faq(request):
+    faq_items = get_faq_items()
     return render(
         request,
         "faq.html",
         {
-            "faq_items": FAQ_ITEMS,
-            "faq_jsonld": dumps_jsonld(faq_graph(FAQ_ITEMS)),
+            "faq_items": faq_items,
+            "faq_jsonld": dumps_jsonld(faq_graph(faq_items)),
         },
     )
 

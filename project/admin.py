@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group
 
 from .models import (
     ContactRequest,
+    ShopSettings,
     SMTPSettings,
     StockInquiry,
     Subscription,
@@ -199,8 +200,44 @@ class TelegramPendingActionAdmin(admin.ModelAdmin):
         return False
 
 
+class ShopSettingsAdmin(admin.ModelAdmin):
+    list_display = [
+        "free_shipping_enabled",
+        "free_shipping_threshold",
+        "delivery_from_price",
+    ]
+    fieldsets = (
+        (
+            "Безкоштовна доставка",
+            {
+                "description": (
+                    "Керує кошиком, карткою товару, SEO-текстами та прапорцем у замовленнях. "
+                    "Вимкни «увімкнена» — опція зникне без деплою. "
+                    "Поріг рахується від суми товарів після промокоду. "
+                    "Сума LiqPay не змінюється — доставку компенсуємо операційно."
+                ),
+                "fields": (
+                    "free_shipping_enabled",
+                    "free_shipping_threshold",
+                    "delivery_from_price",
+                ),
+            },
+        ),
+    )
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return ShopSettings.objects.count() == 0
+
+    def has_change_permission(self, request, obj=None):
+        return True
+
+
 admin.site.register(SMTPSettings, SMTPSettingsAdmin)
 admin.site.register(TelegramSettings, TelegramSettingsAdmin)
+admin.site.register(ShopSettings, ShopSettingsAdmin)
 admin.site.register(ContactRequest, ContactRequestAdmin)
 admin.site.register(Subscription)
 admin.site.unregister(Group)

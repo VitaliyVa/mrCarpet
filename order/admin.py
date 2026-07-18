@@ -14,6 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
         "email",
         "city",
         "payment_type",
+        "free_shipping_badge",
         "total_price_display",
         "created",
     )
@@ -21,6 +22,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = (
         "status",
         "payment_type",
+        "free_shipping",
         "city",
         "created",
     )
@@ -72,7 +74,13 @@ class OrderAdmin(admin.ModelAdmin):
                     "city",
                     "address",
                     "message",
-                )
+                    "free_shipping",
+                    "free_shipping_threshold",
+                ),
+                "description": (
+                    "Якщо «Безкоштовна доставка» — оплачуємо НП за клієнта "
+                    "(сума товарів ≥ порогу на момент замовлення)."
+                ),
             },
         ),
     )
@@ -86,6 +94,18 @@ class OrderAdmin(admin.ModelAdmin):
         if obj.total_price is None:
             return "—"
         return f"{obj.total_price:.0f} грн"
+
+    @admin.display(description="Доставка", ordering="free_shipping", boolean=False)
+    def free_shipping_badge(self, obj):
+        if obj.free_shipping:
+            threshold = obj.free_shipping_threshold
+            label = f"Безкошт.{f' від {threshold}' if threshold else ''}"
+            return format_html(
+                '<span style="display:inline-block;padding:2px 8px;border-radius:4px;'
+                'background:#198754;color:#fff;font-size:12px;white-space:nowrap;">{}</span>',
+                label,
+            )
+        return "—"
 
     @admin.display(description="Статус", ordering="status")
     def status_badge(self, obj):

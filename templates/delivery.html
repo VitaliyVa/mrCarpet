@@ -3,7 +3,7 @@
 {% block meta %}
 <meta
   name="description"
-  content="Доставка та оплата в mr.Carpet: Нова Пошта, онлайн-оплата LiqPay. Безкоштовна доставка від 800 грн. Умови по Україні."
+  content="Доставка та оплата в mr.Carpet: Нова Пошта, онлайн-оплата LiqPay.{% if shop_settings and shop_settings.free_shipping_enabled %} Безкоштовна доставка від {{ shop_settings.free_shipping_threshold }} грн.{% endif %} Умови по Україні."
 />
 {% endblock meta %}
 {% block styles %}

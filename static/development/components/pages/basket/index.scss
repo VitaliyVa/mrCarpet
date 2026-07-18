@@ -362,6 +362,28 @@
       }
     }
 
+    .basket__checkbox-item-price {
+      &.is-free {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        text-align: right;
+      }
+
+      &-was {
+        text-decoration: line-through;
+        opacity: 0.55;
+        font-size: 0.85em;
+      }
+
+      &-now {
+        color: #a46c46;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+    }
+
     &.active {
       &.basket__delivery-item {
         .basket__checkbox-item-head {
@@ -486,6 +508,40 @@
       margin: 0 0 28px;
       padding-bottom: 28px;
       border-bottom: 1px solid #dee2e6;
+      flex-wrap: wrap;
+      row-gap: 10px;
+
+      &-price {
+        text-align: right;
+
+        &.is-free {
+          .basket__calculate-delivery-was {
+            display: block;
+            text-decoration: line-through;
+            opacity: 0.55;
+            font-size: 0.85em;
+          }
+
+          .basket__calculate-delivery-now {
+            display: block;
+            margin-top: 4px;
+            color: #a46c46;
+            font-weight: 600;
+          }
+        }
+      }
+
+      &-hint {
+        flex: 1 0 100%;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.3;
+        color: #89817c;
+
+        &.is-free {
+          color: #a46c46;
+        }
+      }
     }
 
     &-info {

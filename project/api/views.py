@@ -6,6 +6,7 @@ from rest_framework import status
 from django.utils import timezone
 from catalog.models import PromoCode
 from cart.utils import get_cart
+from project.free_shipping import free_shipping_for_total
 from .serializers import (
     ContactRequestSerializer,
     StockInquirySerializer,
@@ -138,7 +139,8 @@ def check_promocode(request):
             'discount_percent': promo.discount,
             'discount_amount': discount_amount,
             'final_price': final_price,
-            'promocode': promocode
+            'promocode': promocode,
+            'free_shipping': free_shipping_for_total(final_price),
         })
         
     except PromoCode.DoesNotExist:

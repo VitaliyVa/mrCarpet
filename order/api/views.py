@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from cart.utils import get_cart
 from catalog.models import PromoCode
+from project.free_shipping import free_shipping_for_total
 from project.telegram_utils import enqueue_order_telegram
 from ..models import Order
 from ..email_utils import enqueue_order_confirmation_email
@@ -106,6 +107,12 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                         raise ValueError("Неправильний промокод.")
                 else:
                     order.total_price = float(total_price)
+
+                fs = free_shipping_for_total(order.total_price)
+                order.free_shipping = fs["qualifies"]
+                order.free_shipping_threshold = (
+                    fs["threshold"] if fs["qualifies"] else None
+                )
 
                 if order.payment_type == Order.PAYMENT_LIQPAY:
                     order.status = Order.STATUS_AWAITING_PAYMENT

@@ -12,5 +12,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        exclude = ("total_price", "status", "order_number")
+        exclude = (
+            "total_price",
+            "status",
+            "order_number",
+            "free_shipping",
+            "free_shipping_threshold",
+        )
         read_only_fields = ("created", "updated")
