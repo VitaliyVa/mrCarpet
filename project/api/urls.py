@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .telegram_webhook import telegram_webhook
 from .views import (
     ContactRequestCreateView,
     StockInquiryCreateView,
@@ -13,4 +14,5 @@ urlpatterns = [
     path("stock-inquiry/", StockInquiryCreateView.as_view(), name="stock-inquiry"),
     path("subscription/", SubscriptionCreateView.as_view(), name="subscription"),
     path("check-promocode/", check_promocode, name="check_promocode"),
+    path("telegram/webhook/", telegram_webhook, name="telegram-webhook"),
 ]

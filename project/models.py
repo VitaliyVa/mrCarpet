@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 from s_content.models import AbstractCreatedUpdated
@@ -120,5 +122,217 @@ class SMTPSettings(models.Model):
     def load(cls):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+DEFAULT_TELEGRAM_WAKE_WORDS = (
+    "містер карпет\n"
+    "мистер карпет\n"
+    "мр карпет\n"
+    "містеркарпет\n"
+    "mr carpet\n"
+    "mrcarpet\n"
+    "mr.carpet\n"
+    "mr carpet bot"
+)
+
+
+class TelegramSettings(models.Model):
+    """Singleton: дублювання заявок/замовлень у Telegram-групу (або чат)."""
+
+    bot_token = models.CharField(
+        verbose_name="Bot token",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Від @BotFather. Формат: 123456:ABC-DEF...",
+    )
+    chat_id = models.CharField(
+        verbose_name="Chat ID",
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="ID групи/супергрупи (зазвичай від’ємний, напр. -100123…) або особистого чату.",
+    )
+    message_thread_id = models.CharField(
+        verbose_name="Topic ID (forum)",
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=(
+            "Для груп з топіками (Topics). "
+            "Напиши /start боту всередині потрібного топіку → getUpdates → message_thread_id. "
+            "Порожньо = General (часто закритий → TOPIC_CLOSED)."
+        ),
+    )
+    is_enabled = models.BooleanField(
+        verbose_name="Увімкнено",
+        default=False,
+        help_text="Якщо вимкнено — повідомлення не надсилаються.",
+    )
+    notify_orders = models.BooleanField(
+        verbose_name="Замовлення",
+        default=True,
+    )
+    notify_contacts = models.BooleanField(
+        verbose_name="Контактні форми",
+        default=True,
+    )
+    notify_stock = models.BooleanField(
+        verbose_name="Запити наявності",
+        default=True,
+    )
+    ai_enabled = models.BooleanField(
+        verbose_name="AI агент увімкнено",
+        default=False,
+        help_text="Двосторонній агент (wake words / згадка / reply). Потрібен REPLICATE_API_TOKEN.",
+    )
+    wake_words = models.TextField(
+        verbose_name="Wake words",
+        blank=True,
+        default=DEFAULT_TELEGRAM_WAKE_WORDS,
+        help_text="По одному на рядок. Для wake words у BotFather вимкни Group Privacy.",
+    )
+    replicate_model = models.CharField(
+        verbose_name="Replicate model",
+        max_length=255,
+        blank=True,
+        default="meta/meta-llama-3-8b-instruct",
+        help_text="Slug моделі на Replicate, напр. meta/meta-llama-3-8b-instruct",
+    )
+    webhook_secret = models.CharField(
+        verbose_name="Webhook secret",
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="X-Telegram-Bot-Api-Secret-Token для prod webhook.",
+    )
+    ai_rate_limit_per_user = models.PositiveSmallIntegerField(
+        verbose_name="AI rate limit / 10 хв",
+        default=10,
+        help_text="Макс. AI-запитів на одного Telegram user за 10 хвилин.",
+    )
+
+    class Meta:
+        verbose_name = "Налаштування Telegram"
+        verbose_name_plural = "Налаштування Telegram"
+
+    def __str__(self):
+        return "Налаштування Telegram"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and TelegramSettings.objects.exists():
+            return
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(self.is_enabled and self.bot_token.strip() and self.chat_id.strip())
+
+    @property
+    def ai_ready(self) -> bool:
+        return bool(self.ai_enabled and self.bot_token.strip() and self.chat_id.strip())
+
+    def get_wake_words(self):
+        raw = self.wake_words or DEFAULT_TELEGRAM_WAKE_WORDS
+        return [line.strip() for line in raw.splitlines() if line.strip()]
+
+
+class TelegramPendingAction(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_CONFIRMED = "confirmed"
+    STATUS_REJECTED = "rejected"
+    STATUS_EXPIRED = "expired"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Очікує"),
+        (STATUS_CONFIRMED, "Підтверджено"),
+        (STATUS_REJECTED, "Скасовано"),
+        (STATUS_EXPIRED, "Протерміновано"),
+        (STATUS_FAILED, "Помилка"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tool_name = models.CharField(max_length=64)
+    args_json = models.JSONField(default=dict)
+    description = models.TextField(blank=True, default="")
+    created_by_tg_user = models.BigIntegerField(null=True, blank=True)
+    chat_id = models.CharField(max_length=64)
+    message_thread_id = models.CharField(max_length=32, blank=True, default="")
+    telegram_message_id = models.BigIntegerField(null=True, blank=True)
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True
+    )
+    result_text = models.TextField(blank=True, default="")
+    expires_at = models.DateTimeField(db_index=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Telegram pending action"
+        verbose_name_plural = "Telegram pending actions"
+        ordering = ("-created",)
+
+    def __str__(self):
+        return f"{self.tool_name} ({self.status})"
+
+
+class TelegramChatMemory(models.Model):
+    chat_id = models.CharField(max_length=64, db_index=True)
+    thread_id = models.CharField(max_length=32, blank=True, default="", db_index=True)
+    summary = models.TextField(blank=True, default="")
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Telegram chat memory"
+        verbose_name_plural = "Telegram chat memories"
+        unique_together = (("chat_id", "thread_id"),)
+
+    def __str__(self):
+        return f"memory {self.chat_id}/{self.thread_id or '-'}"
+
+
+class TelegramChatMessage(models.Model):
+    ROLE_USER = "user"
+    ROLE_ASSISTANT = "assistant"
+    ROLE_TOOL = "tool"
+    ROLE_CHOICES = (
+        (ROLE_USER, "User"),
+        (ROLE_ASSISTANT, "Assistant"),
+        (ROLE_TOOL, "Tool"),
+    )
+
+    chat_id = models.CharField(max_length=64, db_index=True)
+    thread_id = models.CharField(max_length=32, blank=True, default="", db_index=True)
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES)
+    content = models.TextField()
+    tg_user_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Telegram chat message"
+        verbose_name_plural = "Telegram chat messages"
+        ordering = ("created",)
+        indexes = [
+            models.Index(fields=["chat_id", "thread_id", "-created"]),
+        ]
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:40]}"
+
+
+class TelegramProcessedUpdate(models.Model):
+    """Dedupe update_id across workers."""
+
+    update_id = models.BigIntegerField(unique=True, primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Telegram processed update"
+        verbose_name_plural = "Telegram processed updates"
 
     

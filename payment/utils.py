@@ -212,7 +212,9 @@ def create_payment(request, response):
 
     if status in ("success", "sandbox"):
         from order.email_utils import enqueue_order_confirmation_email
+        from project.telegram_utils import enqueue_order_telegram
 
         enqueue_order_confirmation_email(order.pk)
+        enqueue_order_telegram(order.pk, event="paid")
 
     return payment

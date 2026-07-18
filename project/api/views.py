@@ -17,6 +17,7 @@ from ..email_utils import (
 )
 from ..models import ContactRequest, SMTPSettings, StockInquiry, Subscription
 from ..smtp_utils import send_smtp_mail_async
+from ..telegram_utils import notify_contact, notify_stock
 
 
 class ContactRequestCreateView(APIView):
@@ -33,6 +34,7 @@ class ContactRequestCreateView(APIView):
             f"Ім'я: {from_email.name}\nПошта: {from_email.email}\nКоментар: {from_email.text}",
             [from_email.email],
         )
+        notify_contact(from_email)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -71,6 +73,7 @@ class StockInquiryCreateView(APIView):
             [inquiry.email],
             html_message=cust_html,
         )
+        notify_stock(inquiry)
 
         return Response(
             {"success": True, "message": "Запит надіслано. Ми скоро з вами зв’яжемось."},

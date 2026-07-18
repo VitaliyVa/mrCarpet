@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 from cart.utils import get_cart
 from catalog.models import PromoCode
+from project.telegram_utils import enqueue_order_telegram
 from ..models import Order
 from ..email_utils import enqueue_order_confirmation_email
 from .serializers import OrderSerializer
@@ -124,9 +125,12 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                 else:
                     raise ValueError("Неправильний спосіб оплати.")
 
-            # Лист у фоні після commit — API не чекає SMTP (на проді Gmail може висіти)
+            # Лист / Telegram у фоні після commit — API не чекає зовнішні сервіси
             if payment_type == Order.PAYMENT_CASH:
                 enqueue_order_confirmation_email(order.pk)
+                enqueue_order_telegram(order.pk, event="new")
+            elif payment_type == Order.PAYMENT_LIQPAY:
+                enqueue_order_telegram(order.pk, event="awaiting_payment")
 
             if payment_type == Order.PAYMENT_LIQPAY:
                 return Response(
