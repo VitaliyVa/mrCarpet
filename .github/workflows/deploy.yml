@@ -60,6 +60,20 @@ jobs:
         git checkout -- . || true
         git clean -fd -- scripts || true
 
+        # scp/manual leftovers: untracked files that already exist in origin/main
+        # block `git pull` ("would be overwritten by merge"). Remove only those.
+        echo "Clearing untracked paths that would block merge from origin/main..."
+        git ls-tree -r --name-only origin/main | while IFS= read -r path; do
+          [ -e "$path" ] || continue
+          if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+            continue
+          fi
+          case "$path" in
+            db.sqlite3|db.sqlite3-wal|db.sqlite3-shm) continue ;;
+          esac
+          rm -rf -- "$path"
+        done
+
         echo "Pulling latest changes..."
         git pull origin main
 
