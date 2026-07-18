@@ -109,9 +109,22 @@
             <div
               class="header_bottom_panel_catalog_content_item small color_black"
             >
-            <a href="{% url 'categorie' category.slug %}">
-            {{ category.title }}
-            </a>
+              <a href="{% url 'categorie' category.slug %}">
+                <span
+                  class="header_bottom_panel_catalog_content_item_text"
+                  >{{ category.title }}</span
+                >
+                <span class="header_bottom_panel_catalog_content_item_img">
+                  <img
+                    src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+                    alt="{{ category.title }}"
+                    width="80"
+                    height="80"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </span>
+              </a>
             </div>
             {% endfor %}
           </div>
@@ -184,7 +197,7 @@
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <g clip-path="url(#clip0_678_5225)">
+                <g clip-path="url(#clip0_678_5225_mobile)">
                   <path
                     d="M3.97701 9.84C4.01724 9.33881 4.24477 8.87115 4.61429 8.53017C4.98381 8.18918 5.46821 7.9999 5.97101 8H18.029C18.5318 7.9999 19.0162 8.18918 19.3857 8.53017C19.7553 8.87115 19.9828 9.33881 20.023 9.84L20.826 19.84C20.8481 20.1152 20.813 20.392 20.7228 20.6529C20.6327 20.9139 20.4895 21.1533 20.3023 21.3562C20.1151 21.5592 19.8879 21.7211 19.635 21.8319C19.3822 21.9427 19.1091 21.9999 18.833 22H5.16701C4.89093 21.9999 4.61786 21.9427 4.36499 21.8319C4.11212 21.7211 3.88492 21.5592 3.69771 21.3562C3.51049 21.1533 3.36731 20.9139 3.27718 20.6529C3.18705 20.392 3.15193 20.1152 3.17401 19.84L3.97701 9.84V9.84Z"
                     stroke="#A46C46"
@@ -201,11 +214,14 @@
                   />
                 </g>
                 <defs>
-                  <clipPath id="clip0_678_5225">
+                  <clipPath id="clip0_678_5225_mobile">
                     <rect width="24" height="24" fill="white" />
                   </clipPath>
                 </defs>
               </svg>
+              <span class="header_bottom_panel_item_count">
+                {{ cart.get_cart_product_total_quantity }}
+              </span>
             </span>
           </a>
         </div>
@@ -408,8 +424,12 @@
             >
             <span class="catalog_item_img">
               <img
-                src="/static/utils/assets/catalog_item/catalog_item-1.png"
-                alt=""
+                src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+                alt="{{ category.title }}"
+                width="280"
+                height="280"
+                loading="lazy"
+                decoding="async"
               />
             </span>
           </a>
