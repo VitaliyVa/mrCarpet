@@ -16,9 +16,15 @@ class ContactRequestSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    # unique знімаємо: існуючий email реактивує subscribe_email (не create)
+    email = serializers.EmailField()
+
     class Meta:
         model = Subscription
         fields = ["email"]
+        extra_kwargs = {
+            "email": {"validators": []},
+        }
 
 
 class StockInquirySerializer(serializers.ModelSerializer):

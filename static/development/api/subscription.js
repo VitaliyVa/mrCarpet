@@ -24,7 +24,10 @@ export const subscribeToNewsletter = async (email) => {
       };
     }
 
-    showError(payload.message || "Упс... щось пішло не так");
+    const fieldError = Array.isArray(payload.email)
+      ? payload.email[0]
+      : payload.email;
+    showError(payload.message || fieldError || "Упс... щось пішло не так");
     return null;
   }
 };

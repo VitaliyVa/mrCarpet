@@ -35,6 +35,17 @@ class SubscriptionAdmin(admin.ModelAdmin):
     ordering = ("-subscribed_at",)
     list_per_page = 50
 
+    def save_model(self, request, obj, form, change):
+        """Синхронізувати unsubscribed_at при ручній зміні is_active в адмінці."""
+        from django.utils import timezone
+
+        if change and "is_active" in form.changed_data:
+            if obj.is_active:
+                obj.unsubscribed_at = None
+            elif not obj.unsubscribed_at:
+                obj.unsubscribed_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
 
 class SMTPSettingsAdmin(admin.ModelAdmin):
     list_display = ["host", "port", "server_email", "username", "use_tls", "use_ssl"]
