@@ -76,6 +76,15 @@ def policy(request):
     return render(request, 'policy.html')
 
 
+def newsletter_unsubscribe_preview(request):
+    """Demo page for admin email preview (не реальна відписка)."""
+    return render(
+        request,
+        "unsubscribe.html",
+        {"state": "preview"},
+    )
+
+
 def newsletter_unsubscribe(request, token):
     """One-click відписка з листа (GET confirm → POST)."""
     from project.models import Subscription

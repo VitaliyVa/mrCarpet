@@ -51,6 +51,7 @@ module.exports = {
     terms: "./terms.js",
     faq: "./faq.js",
     password_reset: "./password_reset.js",
+    unsubscribe: "./unsubscribe.js",
   },
   output: {
     filename: "[name]/index.js",

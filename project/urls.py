@@ -11,6 +11,11 @@ urlpatterns = [
     path('terms/', views.terms, name='terms'),
     path('policy/', views.policy, name='policy'),
     path(
+        'unsubscribe/preview/',
+        views.newsletter_unsubscribe_preview,
+        name='newsletter_unsubscribe_preview',
+    ),
+    path(
         'unsubscribe/<uuid:token>/',
         views.newsletter_unsubscribe,
         name='newsletter_unsubscribe',

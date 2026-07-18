@@ -51,22 +51,26 @@
                 if (genBtn.dataset.busy === '1') return;
                 if (
                     !window.confirm(
-                        'Згенерувати HTML через Replicate (gpt-4o-mini)?\n' +
-                            'Бриф має бути заповнений. 30–90 с, не закривайте вкладку.'
+                        'Згенерувати лист через Replicate?\n' +
+                            '• текст: gpt-4o-mini\n' +
+                            '• фото (якщо немає hero): gpt-image-2 low + WebP\n' +
+                            'Бриф обовʼязковий. 1–3 хв, не закривайте вкладку.'
                     )
                 ) {
                     return;
                 }
                 genBtn.dataset.busy = '1';
                 genBtn.style.opacity = '0.6';
-                setStatus('Генеруємо HTML…', false);
+                setStatus('Генеруємо HTML + фото…', false);
                 var subjectEl = document.getElementById('id_subject');
                 var preheaderEl = document.getElementById('id_preheader');
                 var briefEl = document.getElementById('id_brief');
+                var imagePromptEl = document.getElementById('id_image_prompt');
                 post('/admin/project/newslettercampaign/' + id + '/generate-html/', {
                     subject: subjectEl ? subjectEl.value : '',
                     preheader: preheaderEl ? preheaderEl.value : '',
                     brief: briefEl ? briefEl.value : '',
+                    image_prompt: imagePromptEl ? imagePromptEl.value : '',
                 })
                     .then(function (result) {
                         if (!result.ok || !result.data.success) {
@@ -77,24 +81,34 @@
                         var body = document.getElementById('id_body_html');
                         var subject = document.getElementById('id_subject');
                         var preheader = document.getElementById('id_preheader');
+                        var imagePrompt = document.getElementById('id_image_prompt');
                         if (body) body.value = result.data.body_html || '';
                         if (subject && result.data.subject) subject.value = result.data.subject;
                         if (preheader && result.data.preheader) {
                             preheader.value = result.data.preheader;
                         }
+                        if (imagePrompt && result.data.image_prompt) {
+                            imagePrompt.value = result.data.image_prompt;
+                        }
+                        var imgNote = result.data.image_generated
+                            ? ' + нове hero-фото'
+                            : '';
                         setStatus(
                             'Готово за ' +
                                 (result.data.duration_sec || '?') +
                                 ' с (' +
                                 (result.data.model || '') +
-                                '). Збережіть форму.',
+                                ')' +
+                                imgNote +
+                                '. Оновлюємо форму…',
                             false
                         );
+                        window.setTimeout(function () {
+                            window.location.reload();
+                        }, 700);
                     })
                     .catch(function (err) {
                         setStatus(err.message || String(err), true);
-                    })
-                    .finally(function () {
                         genBtn.dataset.busy = '0';
                         genBtn.style.opacity = '1';
                     });

@@ -58,11 +58,19 @@ ALLOWED_ATTRS = {
 
 UNSUBSCRIBE_PLACEHOLDER = "{{unsubscribe_url}}"
 UNSUBSCRIBE_FOOTER = (
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">'
-    "<tr><td align=\"center\" style=\"padding:20px 16px 8px;font-size:12px;"
-    "line-height:1.4;color:#89817c;font-family:Arial,Helvetica,sans-serif;\">"
-    f'<a href="{UNSUBSCRIBE_PLACEHOLDER}" style="color:#89817c;text-decoration:underline;">'
-    "Відписатися від розсилки</a></td></tr></table>"
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" '
+    'style="margin-top:4px;">'
+    '<tr><td align="center" style="padding:28px 16px 8px;">'
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0">'
+    "<tr>"
+    '<td align="center" style="border:1px solid #d4cbc3;border-radius:999px;'
+    "padding:10px 22px;background-color:#f7f2ec;\">"
+    f'<a href="{UNSUBSCRIBE_PLACEHOLDER}" '
+    'style="color:#8a7f76;text-decoration:none;font-size:12px;line-height:1.3;'
+    'font-family:Arial,Helvetica,sans-serif;letter-spacing:0.02em;">'
+    "Відписатися від розсилки</a>"
+    "</td></tr></table>"
+    "</td></tr></table>"
 )
 
 
@@ -123,7 +131,6 @@ class _AllowlistParser(HTMLParser):
                 if not value:
                     continue
             if name == "style":
-                # strip expression() / url(javascript
                 style = value or ""
                 if re.search(r"expression\s*\(|javascript:", style, re.I):
                     continue
@@ -146,7 +153,6 @@ class _AllowlistParser(HTMLParser):
     def handle_data(self, data):
         if not data:
             return
-        # Preserve placeholder literally
         self._out.append(
             data.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         )
@@ -161,18 +167,35 @@ class _AllowlistParser(HTMLParser):
         return "".join(self._out)
 
 
+def _strip_ai_unsubscribe(html: str) -> str:
+    """Remove AI / leftover unsub links; we always append our styled footer."""
+    text = html or ""
+    text = re.sub(
+        r"(?is)<a\b[^>]*href=[\"'][^\"']*unsubscribe[^\"']*[\"'][^>]*>.*?</a>",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(?is)<a\b[^>]*>\s*Відписатися[^<]*</a>",
+        "",
+        text,
+    )
+    text = text.replace(UNSUBSCRIBE_PLACEHOLDER, "")
+    text = text.replace("&#123;&#123;unsubscribe_url&#125;&#125;", "")
+    return text.strip()
+
+
 def sanitize_newsletter_html(raw: str) -> str:
     text = (raw or "").strip()
-    # strip full documents if model ignored instructions
     text = re.sub(r"(?is)<!DOCTYPE.*?>", "", text)
     text = re.sub(r"(?is)</?(html|head|body|script|iframe|object|embed)[^>]*>", "", text)
     parser = _AllowlistParser()
     parser.feed(text)
     parser.close()
     html = parser.get_html().strip()
-    # restore placeholder if escaped
     html = html.replace("{{unsubscribe_url}}", UNSUBSCRIBE_PLACEHOLDER)
-    html = html.replace("&#123;&#123;unsubscribe_url&#125;&#125;", UNSUBSCRIBE_PLACEHOLDER)
-    if UNSUBSCRIBE_PLACEHOLDER not in html:
-        html = f"{html}\n{UNSUBSCRIBE_FOOTER}"
-    return html
+    html = html.replace(
+        "&#123;&#123;unsubscribe_url&#125;&#125;", UNSUBSCRIBE_PLACEHOLDER
+    )
+    html = _strip_ai_unsubscribe(html)
+    return f"{html}\n{UNSUBSCRIBE_FOOTER}"

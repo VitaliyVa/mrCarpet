@@ -315,14 +315,17 @@ class NewsletterCampaignAdmin(admin.ModelAdmin):
                     "subject",
                     "preheader",
                     "brief",
+                    "hero_image",
+                    "image_prompt",
                     "body_html",
                     "test_email",
                     "status",
                     "admin_actions_panel",
                 ),
                 "description": (
-                    "1) Збережи чернетку → 2) Згенеруй HTML (Replicate) → "
-                    "3) Перегляд → 4) Тест → 5) Надіслати всім активним."
+                    "1) Збережи чернетку → 2) (опц.) завантаж hero → "
+                    "3) Згенеруй HTML+фото (Replicate) → "
+                    "4) Перегляд → 5) Тест → 6) Надіслати всім активним."
                 ),
             },
         ),
@@ -366,6 +369,8 @@ class NewsletterCampaignAdmin(admin.ModelAdmin):
                     "subject",
                     "preheader",
                     "brief",
+                    "hero_image",
+                    "image_prompt",
                     "body_html",
                     "test_email",
                 ]
@@ -441,6 +446,8 @@ class NewsletterCampaignAdmin(admin.ModelAdmin):
             campaign.preheader = (request.POST.get("preheader") or "")[:255]
         if "brief" in request.POST:
             campaign.brief = request.POST.get("brief") or ""
+        if "image_prompt" in request.POST:
+            campaign.image_prompt = request.POST.get("image_prompt") or ""
         campaign.save()
         try:
             result = ReplicateNewsletterService().generate_for_campaign(campaign)
@@ -457,12 +464,18 @@ class NewsletterCampaignAdmin(admin.ModelAdmin):
                 status=500,
             )
         campaign.refresh_from_db()
+        hero_url = ""
+        if campaign.hero_image:
+            hero_url = campaign.hero_image.url
         return JsonResponse(
             {
                 "success": True,
                 "subject": campaign.subject,
                 "preheader": campaign.preheader,
                 "body_html": campaign.body_html,
+                "image_prompt": campaign.image_prompt,
+                "hero_image_url": hero_url,
+                "image_generated": result.image_generated,
                 "status": campaign.status,
                 "duration_sec": result.duration_sec,
                 "model": result.model,

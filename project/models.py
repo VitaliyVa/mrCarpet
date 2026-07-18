@@ -465,6 +465,22 @@ class NewsletterCampaign(models.Model):
         default="",
         help_text="Тези акції, CTA URL, тон. Для кнопки «Згенерувати HTML».",
     )
+    hero_image = models.ImageField(
+        verbose_name="Hero-фото листа",
+        upload_to="newsletter/heroes",
+        blank=True,
+        null=True,
+        help_text=(
+            "Опційно завантаж своє фото. Якщо порожньо — при генерації "
+            "Replicate намалює hero (gpt-image-2 low) і оптимізує у WebP."
+        ),
+    )
+    image_prompt = models.TextField(
+        verbose_name="Промпт для фото (AI)",
+        blank=True,
+        default="",
+        help_text="Заповнюється текстовою моделлю під час генерації; можна правити вручну.",
+    )
     body_html = models.TextField(
         verbose_name="HTML тіла (inner)",
         blank=True,

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from django.template import Context, Template
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.html import strip_tags
 
-from project.email_branding import brand_context
+from project.email_branding import brand_context, site_url
 from project.newsletter import unsubscribe_absolute_url
 
 
@@ -18,7 +19,6 @@ def personalize_body(body_html: str, *, unsubscribe_url: str) -> str:
 def render_campaign_email(campaign, *, unsubscribe_url: str) -> str:
     """Full HTML for one recipient (or preview)."""
     inner = personalize_body(campaign.body_html, unsubscribe_url=unsubscribe_url)
-    # Allow Django {{ }} only for known vars if any remain
     try:
         inner = Template(inner).render(
             Context({"unsubscribe_url": unsubscribe_url})
@@ -34,9 +34,9 @@ def render_campaign_email(campaign, *, unsubscribe_url: str) -> str:
 
 
 def render_campaign_preview(campaign) -> str:
-    return render_campaign_email(
-        campaign, unsubscribe_url="#unsubscribe-preview"
-    )
+    """Admin preview: absolute demo unsubscribe URL (not admin hash)."""
+    unsub = f"{site_url()}{reverse('newsletter_unsubscribe_preview')}"
+    return render_campaign_email(campaign, unsubscribe_url=unsub)
 
 
 def render_campaign_for_subscription(campaign, subscription) -> tuple[str, str]:
