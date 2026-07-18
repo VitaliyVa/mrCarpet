@@ -89,7 +89,6 @@ cd mrCarpet
 
 # Create SSL certificates (first time only)
 docker compose -f docker-compose.prod.yml run --rm certbot
-
 # Start services
 docker compose -f docker-compose.prod.yml up -d
 
