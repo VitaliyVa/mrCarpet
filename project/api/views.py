@@ -89,16 +89,44 @@ class SubscriptionCreateView(CreateAPIView):
     serializer_class = SubscriptionSerializer
 
     def create(self, request, *args, **kwargs):
-        if Subscription.objects.filter(email=request.data["email"]).exists():
-            return Response(
-                {"message": "Ви уже підписані."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        from project.newsletter import subscribe_email
+        from project.models import Subscription as SubModel
+
         serializer = SubscriptionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        email = serializer.validated_data["email"]
+        user = request.user if request.user.is_authenticated else None
+
+        try:
+            sub, status_key = subscribe_email(
+                email,
+                source=SubModel.SOURCE_FOOTER,
+                user=user,
+            )
+        except ValueError as exc:
+            return Response(
+                {"message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if status_key == "already_active":
+            return Response(
+                {"message": "Ви уже підписані."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        message = (
+            "Підписку відновлено. Дякуємо!"
+            if status_key == "reactivated"
+            else "Ви успішно підписалися на розсилку новин та акцій."
+        )
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED
+            {
+                "email": sub.email,
+                "is_active": sub.is_active,
+                "message": message,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 

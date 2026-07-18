@@ -1,0 +1,54 @@
+{% extends '_base.html' %}
+{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}
+{% block title %}Відписка від розсилки | mr.Carpet{% endblock title %}
+{% block styles %}
+<link rel="stylesheet" href="/static/source/pages/success/index.css" />
+{% endblock styles %}
+{% block content %}
+<section class="success first_section">
+  <div class="success__container container">
+    <div class="success__info" style="max-width: 560px; margin: 0 auto;">
+      <div class="success__info-top">
+        {% if state == "confirm" %}
+        <h1 class="success__title color_black bold">Відписатися від розсилки?</h1>
+        <h2 class="success__subtitle color_gold small">
+          {{ email }} більше не отримуватиме новини та акції mr.Carpet.
+        </h2>
+        {% elif state == "done" %}
+        <h1 class="success__title color_black bold">Ви відписалися</h1>
+        <h2 class="success__subtitle color_gold small">
+          {{ email }} вилучено з розсилки. Можна знову підписатися у футері сайту або в кабінеті.
+        </h2>
+        {% elif state == "already" %}
+        <h1 class="success__title color_black bold">Вже відписані</h1>
+        <h2 class="success__subtitle color_gold small">
+          {{ email }} не отримує розсилку.
+        </h2>
+        {% else %}
+        <h1 class="success__title color_black bold">Посилання недійсне</h1>
+        <h2 class="success__subtitle color_gold small">
+          Токен відписки не знайдено. Якщо лист старий — підпишіться знову і використайте нове посилання.
+        </h2>
+        {% endif %}
+      </div>
+
+      <div class="success__info-bottom" style="margin-top: 28px; gap: 16px; display: flex; flex-wrap: wrap;">
+        {% if state == "confirm" %}
+        <form method="post" action="{% url 'newsletter_unsubscribe' token=token %}">
+          {% csrf_token %}
+          <button type="submit" class="success__back-to-main-btn btn btn-gold medium">
+            Підтвердити відписку
+          </button>
+        </form>
+        {% endif %}
+        <a href="/" class="success__cabinet-btn btn btn-underline medium">На головну</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'profile' %}" class="success__cabinet-btn btn btn-underline medium">
+          Особистий кабінет
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %}

@@ -44,16 +44,29 @@ def _reply_to_list():
 
 
 def send_smtp_mail(
-    subject, message, recipient_list, fail_silently=True, html_message=None
+    subject,
+    message,
+    recipient_list,
+    fail_silently=True,
+    html_message=None,
+    extra_headers=None,
 ):
     """
     Синхронна відправка (як у ContactRequestCreateView).
     За замовчуванням fail_silently=True — помилка лише в лог.
     html_message — опційний HTML (multipart/alternative).
     Reply-To → SUPPORT_EMAIL (реальна скринька), From лишається SMTPSettings.server_email.
+    extra_headers — dict додаткових SMTP headers (напр. List-Unsubscribe).
     """
     try:
         smtp, connection = get_smtp_connection()
+        headers = {
+            # transactional / auto-mail signals (shop-standard)
+            "Auto-Submitted": "auto-generated",
+            "X-Auto-Response-Suppress": "OOF, AutoReply",
+        }
+        if extra_headers:
+            headers.update(extra_headers)
         email = EmailMultiAlternatives(
             subject=subject,
             body=message,
@@ -61,11 +74,7 @@ def send_smtp_mail(
             to=list(recipient_list),
             connection=connection,
             reply_to=_reply_to_list(),
-            headers={
-                # transactional / auto-mail signals (shop-standard)
-                "Auto-Submitted": "auto-generated",
-                "X-Auto-Response-Suppress": "OOF, AutoReply",
-            },
+            headers=headers,
         )
         if html_message:
             email.attach_alternative(html_message, "text/html")
@@ -79,7 +88,9 @@ def send_smtp_mail(
         return False
 
 
-def send_smtp_mail_async(subject, message, recipient_list, html_message=None):
+def send_smtp_mail_async(
+    subject, message, recipient_list, html_message=None, extra_headers=None
+):
     """Фонова відправка — HTTP-відповідь не чекає SMTP."""
 
     def _run():
@@ -91,6 +102,7 @@ def send_smtp_mail_async(subject, message, recipient_list, html_message=None):
                 recipient_list,
                 fail_silently=True,
                 html_message=html_message,
+                extra_headers=extra_headers,
             )
             if ok:
                 print(f"[smtp] sent OK → {recipient_list}")

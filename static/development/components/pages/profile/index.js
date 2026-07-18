@@ -4,6 +4,8 @@ import "./profile-modal.scss";
 import "../basket/nova-post.scss";
 
 import { updateCurrentUser } from "../../../api/currentUser";
+import { instance } from "../../../api/instance";
+import { showSuccess, showError } from "../../../utils/notifications";
 import { getFormFields } from "../../module/form_action";
 import validation from "../../module/validation";
 import {
@@ -82,6 +84,38 @@ if (updatePasswordButton) {
 
     if (status) {
       await updateCurrentUser(formValues);
+    }
+  });
+}
+
+const newsletterToggle = document.getElementById("newsletter-toggle");
+const newsletterStatus = document.getElementById("newsletter-toggle-status");
+if (newsletterToggle) {
+  newsletterToggle.addEventListener("change", async () => {
+    const enabled = newsletterToggle.checked;
+    newsletterToggle.disabled = true;
+    if (newsletterStatus) {
+      newsletterStatus.textContent = "Зберігаємо…";
+    }
+    try {
+      const { data } = await instance.patch("/users/newsletter/", { enabled });
+      if (newsletterStatus) {
+        newsletterStatus.textContent = data?.message || "";
+      }
+      showSuccess(
+        data?.message ||
+          (enabled ? "Підписку увімкнено" : "Підписку вимкнено")
+      );
+    } catch ({ response }) {
+      newsletterToggle.checked = !enabled;
+      const msg =
+        response?.data?.message || "Не вдалося змінити підписку на розсилку";
+      if (newsletterStatus) {
+        newsletterStatus.textContent = msg;
+      }
+      showError(msg);
+    } finally {
+      newsletterToggle.disabled = false;
     }
   });
 }

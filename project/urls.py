@@ -10,6 +10,11 @@ urlpatterns = [
     path('refund/', views.refund_page, name='refund'),
     path('terms/', views.terms, name='terms'),
     path('policy/', views.policy, name='policy'),
+    path(
+        'unsubscribe/<uuid:token>/',
+        views.newsletter_unsubscribe,
+        name='newsletter_unsubscribe',
+    ),
     path('success/', views.success, name='success'),
     path('reset-password/', views.reset_password, name='reset_password'),
     path('robots.txt', views.robots_txt, name='robots_txt'),

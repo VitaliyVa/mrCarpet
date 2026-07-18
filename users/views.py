@@ -16,10 +16,21 @@ from .models import CustomUser
 # Create your views here.
 @login_required
 def profile(request):
+    from project.newsletter import get_or_link_subscription_for_user
+
     user = request.user
     carts = Cart.objects.filter(user=user, ordered=True)
     orders = Order.objects.filter(cart__in=carts)
-    return render(request, "profile.html", context={"orders": orders})
+    sub = get_or_link_subscription_for_user(user)
+    newsletter_enabled = bool(sub and sub.is_active)
+    return render(
+        request,
+        "profile.html",
+        context={
+            "orders": orders,
+            "newsletter_enabled": newsletter_enabled,
+        },
+    )
 
 
 def password_reset_view(request):

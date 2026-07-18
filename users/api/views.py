@@ -15,6 +15,15 @@ from ..models import CustomUser
 from ..permissions import IsProfileOwner
 
 
+def _link_newsletter(user):
+    try:
+        from project.newsletter import get_or_link_subscription_for_user
+
+        get_or_link_subscription_for_user(user)
+    except Exception:
+        pass
+
+
 class UserViewSet(ViewSet):
     @action(detail=False, methods=["post"])
     def register(self, request):
@@ -38,6 +47,7 @@ class UserViewSet(ViewSet):
                 password=password,
             )
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            _link_newsletter(user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"])
@@ -53,8 +63,58 @@ class UserViewSet(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        _link_newsletter(user)
         url = reverse("index")
         return Response({"url": url}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["patch", "get"], permission_classes=[IsProfileOwner])
+    def newsletter(self, request):
+        from project.newsletter import set_newsletter_enabled
+        from project.models import Subscription
+
+        if request.method == "GET":
+            email = (request.user.email or "").strip().lower()
+            sub = (
+                Subscription.objects.filter(email__iexact=email).first()
+                if email
+                else None
+            )
+            return Response(
+                {
+                    "enabled": bool(sub and sub.is_active),
+                    "email": email,
+                }
+            )
+
+        enabled = request.data.get("enabled")
+        if enabled is None:
+            return Response(
+                {"message": "Передайте enabled: true|false"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if isinstance(enabled, str):
+            enabled = enabled.strip().lower() in ("1", "true", "yes", "on")
+        else:
+            enabled = bool(enabled)
+
+        try:
+            sub = set_newsletter_enabled(request.user, enabled)
+        except ValueError as exc:
+            return Response(
+                {"message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            {
+                "enabled": sub.is_active,
+                "email": sub.email,
+                "message": (
+                    "Підписку на розсилку увімкнено"
+                    if sub.is_active
+                    else "Підписку на розсилку вимкнено"
+                ),
+            }
+        )
 
     @action(detail=False, methods=["patch"], permission_classes=[IsProfileOwner])
     def update_profile(self, request):

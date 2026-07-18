@@ -75,6 +75,43 @@ def terms(request):
 def policy(request):
     return render(request, 'policy.html')
 
+
+def newsletter_unsubscribe(request, token):
+    """One-click відписка з листа (GET confirm → POST)."""
+    from project.models import Subscription
+    from project.newsletter import unsubscribe_subscription
+
+    sub = Subscription.objects.filter(unsubscribe_token=token).first()
+    if not sub:
+        return render(
+            request,
+            "unsubscribe.html",
+            {"state": "not_found"},
+            status=404,
+        )
+
+    if request.method == "POST":
+        unsubscribe_subscription(sub)
+        return render(
+            request,
+            "unsubscribe.html",
+            {"state": "done", "email": sub.email},
+        )
+
+    if not sub.is_active:
+        return render(
+            request,
+            "unsubscribe.html",
+            {"state": "already", "email": sub.email},
+        )
+
+    return render(
+        request,
+        "unsubscribe.html",
+        {"state": "confirm", "email": sub.email, "token": token},
+    )
+
+
 def success(request):
     return render(request, 'success.html')
 

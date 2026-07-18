@@ -212,6 +212,27 @@
           </div>
         </div>
 
+        <div class="profile__newsletter" style="margin: 20px 0; padding: 16px 0; border-top: 1px solid #ebeae8;">
+          <label
+            for="newsletter-toggle"
+            style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; font-size: 15px; line-height: 1.35; color: #453f3a;"
+          >
+            <input
+              type="checkbox"
+              id="newsletter-toggle"
+              {% if newsletter_enabled %}checked{% endif %}
+              style="margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0;"
+            />
+            <span>
+              <strong>Розсилка новин та акцій</strong><br />
+              <span class="color_black_sub" style="font-size: 13px;">
+                Отримувати повідомлення про акції на {{ user.email }}
+              </span>
+            </span>
+          </label>
+          <p id="newsletter-toggle-status" class="color_black_sub" style="font-size: 13px; margin: 8px 0 0;"></p>
+        </div>
+
         <div class="profile__sidebar-bottom">
           <a href="{% url 'logout' %}" class="profile__user-exit-btn">
             <img src="/static/utils/assets/exit.svg" alt="exit" />

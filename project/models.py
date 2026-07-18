@@ -30,14 +30,63 @@ class ContactRequest(AbstractCreatedUpdated):
 
 
 class Subscription(models.Model):
-    email = models.EmailField(unique=True)
+    SOURCE_FOOTER = "footer"
+    SOURCE_PROFILE = "profile"
+    SOURCE_IMPORT = "import"
+    SOURCE_CHOICES = (
+        (SOURCE_FOOTER, "Футер"),
+        (SOURCE_PROFILE, "Кабінет"),
+        (SOURCE_IMPORT, "Імпорт"),
+    )
+
+    email = models.EmailField(unique=True, verbose_name="Email")
+    user = models.ForeignKey(
+        verbose_name="Користувач",
+        to="users.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subscriptions",
+    )
+    is_active = models.BooleanField(
+        verbose_name="Активна підписка",
+        default=True,
+        db_index=True,
+    )
+    subscribed_at = models.DateTimeField(
+        verbose_name="Підписано",
+        auto_now_add=True,
+        null=True,
+        blank=True,
+    )
+    unsubscribed_at = models.DateTimeField(
+        verbose_name="Відписано",
+        null=True,
+        blank=True,
+    )
+    unsubscribe_token = models.UUIDField(
+        verbose_name="Токен відписки",
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+    source = models.CharField(
+        verbose_name="Джерело",
+        max_length=32,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_FOOTER,
+        db_index=True,
+    )
 
     def __str__(self):
-        return self.email
+        state = "активна" if self.is_active else "відписаний"
+        return f"{self.email} ({state})"
 
     class Meta:
         verbose_name = "Підписаний користувач"
         verbose_name_plural = "Підписані користувачі"
+        ordering = ("-subscribed_at",)
 
 
 class StockInquiry(AbstractCreatedUpdated):
@@ -384,3 +433,113 @@ class ShopSettings(models.Model):
     def load(cls):
         obj, _created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class NewsletterCampaign(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_GENERATING = "generating"
+    STATUS_READY = "ready"
+    STATUS_SENDING = "sending"
+    STATUS_SENT = "sent"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = (
+        (STATUS_DRAFT, "Чернетка"),
+        (STATUS_GENERATING, "Генерація HTML"),
+        (STATUS_READY, "Готово до відправки"),
+        (STATUS_SENDING, "Відправляється"),
+        (STATUS_SENT, "Надіслано"),
+        (STATUS_FAILED, "Помилка"),
+    )
+
+    subject = models.CharField(verbose_name="Тема листа", max_length=255)
+    preheader = models.CharField(
+        verbose_name="Preheader",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Короткий текст у inbox поруч із темою.",
+    )
+    brief = models.TextField(
+        verbose_name="Бриф для AI",
+        blank=True,
+        default="",
+        help_text="Тези акції, CTA URL, тон. Для кнопки «Згенерувати HTML».",
+    )
+    body_html = models.TextField(
+        verbose_name="HTML тіла (inner)",
+        blank=True,
+        default="",
+        help_text="Лише внутрішній контент; shell — emails/base.html.",
+    )
+    status = models.CharField(
+        verbose_name="Статус",
+        max_length=32,
+        choices=STATUS_CHOICES,
+        default=STATUS_DRAFT,
+        db_index=True,
+    )
+    created_by = models.ForeignKey(
+        verbose_name="Автор",
+        to="users.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="newsletter_campaigns",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    recipients_total = models.PositiveIntegerField(default=0)
+    recipients_sent = models.PositiveIntegerField(default=0)
+    recipients_failed = models.PositiveIntegerField(default=0)
+    ai_model = models.CharField(max_length=255, blank=True, default="")
+    ai_prompt_snapshot = models.TextField(blank=True, default="")
+    test_email = models.EmailField(blank=True, default="")
+
+    class Meta:
+        verbose_name = "Розсилка (кампанія)"
+        verbose_name_plural = "Розсилки (кампанії)"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.subject} [{self.get_status_display()}]"
+
+    @property
+    def is_locked(self) -> bool:
+        return self.status in (self.STATUS_SENDING, self.STATUS_SENT)
+
+
+class NewsletterDelivery(models.Model):
+    STATUS_SENT = "sent"
+    STATUS_FAILED = "failed"
+    STATUS_SKIPPED = "skipped"
+    STATUS_CHOICES = (
+        (STATUS_SENT, "Надіслано"),
+        (STATUS_FAILED, "Помилка"),
+        (STATUS_SKIPPED, "Пропущено"),
+    )
+
+    campaign = models.ForeignKey(
+        NewsletterCampaign,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    subscription = models.ForeignKey(
+        Subscription,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_SENT, db_index=True
+    )
+    error = models.TextField(blank=True, default="")
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Доставка розсилки"
+        verbose_name_plural = "Доставки розсилок"
+        ordering = ("-sent_at",)
+        unique_together = (("campaign", "subscription"),)
+
+    def __str__(self):
+        return f"{self.campaign_id} → {self.subscription_id} ({self.status})"
