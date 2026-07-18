@@ -54,8 +54,10 @@ jobs:
             sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && cp /app/db.sqlite3 /tmp/mrcarpet_db_live_${TS}.sqlite3 && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS} /tmp/mrcarpet_db_live_${TS}.sqlite3"
         fi
 
-        echo "Clearing untracked conflicts that would block merge..."
+        echo "Resetting tracked worktree drift so git pull cannot abort..."
+        # DB/backups are untracked — safe. Never commit them.
         git fetch origin
+        git checkout -- . || true
         git clean -fd -- scripts || true
 
         echo "Pulling latest changes..."
