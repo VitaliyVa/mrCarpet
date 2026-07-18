@@ -1,6 +1,6 @@
 {% with default_attr=product.get_default_size_attr %}
 
-{% if product.is_new %}
+{% if product.is_novelty %}
 <div class="cart_item_new color_white small">Новинка</div>
 {% endif %}
 <div class="cart_item-top">
@@ -106,7 +106,7 @@
     data-qty="{{ attr.quantity }}"
     data-in-stock="{% if attr.in_stock %}1{% else %}0{% endif %}"
     data-size="{{ attr.size }}"
-    data-novelty="{% if product.is_new %}true{%else%}false{% endif %}"
+    data-novelty="{% if product.is_novelty %}true{%else%}false{% endif %}"
     class="size-label{% if default_attr and attr.id == default_attr.id %} active{% endif %}{% if not attr.in_stock %} size-label--oos{% endif %}"
   >
     {{ attr.size }}

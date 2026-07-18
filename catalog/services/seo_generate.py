@@ -140,7 +140,7 @@ def collect_product_context(product: Product) -> dict[str, Any]:
         "title": product.title or "",
         "existing_description": (product.description or "").strip(),
         "categories": categories,
-        "is_new": bool(product.is_new),
+        "is_new": bool(product.is_novelty),
         "has_discount": bool(product.has_discount),
         "active_color": (
             product.active_color.title if product.active_color_id else None

@@ -210,7 +210,11 @@ class ProductAdmin(admin.ModelAdmin):
             ),
         }),
         ('Зображення та категорії', {
-            'fields': ('image', 'hover_image', 'categories', 'is_new')
+            'fields': ('image', 'hover_image', 'categories', 'is_new'),
+            'description': (
+                "«Новинка» на сайті = галочка + вікно днів від створення "
+                "(див. Налаштування магазину, за замовчуванням 90 днів)."
+            ),
         }),
         ('Кольори', {
             'fields': ('active_color', 'color_group'),

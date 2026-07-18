@@ -359,6 +359,14 @@ class ShopSettings(models.Model):
         default=90,
         help_text="Показується як «Від X грн» і перекреслюється при безкоштовній доставці.",
     )
+    novelty_days = models.PositiveIntegerField(
+        verbose_name="Новинка: днів від створення",
+        default=90,
+        help_text=(
+            "Бейдж «Новинка» показується, якщо у товару увімкнено прапорець "
+            "і з дати створення минуло не більше цієї кількості днів."
+        ),
+    )
 
     class Meta:
         verbose_name = "Налаштування магазину"

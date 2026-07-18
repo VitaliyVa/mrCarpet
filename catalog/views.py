@@ -376,7 +376,7 @@ def search_products(request):
             'price': min_price,
             'discount': max_discount,
             'categories': category_text,
-            'is_new': product.is_new,
+            'is_new': product.is_novelty,
             'has_discount': product.has_discount
         })
     

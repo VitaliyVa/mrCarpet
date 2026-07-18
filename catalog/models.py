@@ -72,7 +72,15 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         to="catalog.ProductCategory",
         related_name="products",
     )
-    is_new = models.BooleanField(verbose_name="Новинка", default=True)
+    is_new = models.BooleanField(
+        verbose_name="Новинка",
+        default=True,
+        help_text=(
+            "Увімкнено за замовчуванням. Бейдж на сайті лише протягом N днів "
+            "від дати створення (N у Налаштуваннях магазину, зараз 90). "
+            "Зніми галочку, щоб сховати «Новинку» раніше."
+        ),
+    )
     colors = models.ManyToManyField(
         verbose_name="Кольори",
         blank=True,
@@ -195,6 +203,13 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
             if attr.in_stock:
                 return attr
         return attrs[0]
+
+    @property
+    def is_novelty(self) -> bool:
+        """Бейдж «Новинка» на вітрині: is_new + вікно днів від created."""
+        from project.novelty import product_is_novelty
+
+        return product_is_novelty(self)
 
 
 class ProductImage(models.Model):

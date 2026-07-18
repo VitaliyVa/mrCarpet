@@ -205,6 +205,7 @@ class ShopSettingsAdmin(admin.ModelAdmin):
         "free_shipping_enabled",
         "free_shipping_threshold",
         "delivery_from_price",
+        "novelty_days",
     ]
     fieldsets = (
         (
@@ -221,6 +222,17 @@ class ShopSettingsAdmin(admin.ModelAdmin):
                     "free_shipping_threshold",
                     "delivery_from_price",
                 ),
+            },
+        ),
+        (
+            "Новинка",
+            {
+                "description": (
+                    "Бейдж на картці товару: прапорець «Новинка» у товарі "
+                    "+ не більше N днів від дати створення. "
+                    "Після строку бейдж зникає сам (прапорець у БД можна не чіпати)."
+                ),
+                "fields": ("novelty_days",),
             },
         ),
     )
