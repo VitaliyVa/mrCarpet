@@ -1,4 +1,60 @@
-# Meta Phase 0 — handoff (стан на 2026-07-19)
+# Meta Phase 0 — handoff (стан на 2026-07-19, оновлено ввечері)
+
+## UPDATE 2026-07-19 (пізніше): перевірка прод-токена + код авто-постів
+
+`debug_token` прод-токена (перевірено з сервера, токен не світився):
+
+- **type PAGE, valid, expires: NEVER** — страх "згорить за 60 днів" не підтвердився,
+  Шлях A/B (System User) став опційним, не терміновим.
+- `data_access_expires: 2026-10-17` — перевірити в жовтні, чи не відвалились виклики.
+- Scopes: `pages_show_list, business_management, instagram_basic,
+  instagram_content_publish, pages_read_engagement, public_profile`.
+- **IG готовий до публікації вже зараз.**
+- ~~FB заблокований~~ **ВИРІШЕНО тим же вечором** (див. нижче).
+
+## UPDATE 2026-07-19 (ніч): FB scope отримано, токен перевипущено ✅
+
+Зроблено через Playwright-браузер (логін вводив юзер):
+- `pages_manage_posts` / `pages_manage_engagement` / `pages_manage_metadata` вже
+  були в PAGES_API use case («Готово к тестированию») — попередній Add таки пройшов.
+- Кнопка Add для `pages_read_user_content` досі дає «Произошла ошибка» — не критично.
+- OAuth через Graph Explorer падав: `Invalid Scopes: pages_read_user_content`
+  (тягнеться з `auth_type=rerequest`). **Обхід: прямий OAuth URL БЕЗ
+  `auth_type=rerequest` з явним списком scopes** — діалог пройшов чисто.
+- Short-lived user token → «Продлить маркер доступа» у Token Debugger
+  (без App Secret!) → long-lived user → `me/accounts` → **Page token
+  expires=NEVER** з усіма scopes (включно pages_manage_posts і навіть
+  pages_read_user_content).
+- Прод `.env` оновлено, web перезапущено, `social_setup_check`:
+  `ig_ready: True`, `fb_ready: True`, isolation OK.
+
+**Phase 0 Meta = DONE.** Лишилось: smoke publish IG+FB з адмінки → увімкнути
+`auto_post_new_products_meta`. Потім TikTok Phase 0.
+
+## UPDATE 2026-07-19 (пізня ніч): Path A System User — ЗРОБЛЕНО ✅
+
+Через Playwright + Business Suite UI (пароль не знадобився):
+- System User **mrCarpet-prod** (ID `61592181598227`), роль Admin,
+  Business Settings → Users → System users.
+- Призначені активи: Page Mr.Carpet (Контент + Действия в сообществе +
+  Статистика) і App mrCarpet (Разработка приложения).
+- Generate token: app mrCarpet, термін **Никогда**, 10 дозволів (всі pages_* +
+  instagram_basic/content_publish/manage_comments + business_management).
+  `instagram_manage_comments` не був у use cases — Meta додав його сам при
+  Continue (корисно для майбутнього дзеркала IG-коментів).
+- Server-side: SU token → `me/accounts` → **Page token: expires NEVER,
+  data_access NEVER** (у попереднього data_access був 2026-10-17).
+- Прод `.env` оновлено (бекап `.env.bak_*_sysuser`), web перезапущено,
+  `social_setup_check`: ig_ready/fb_ready True.
+
+Ротація в майбутньому: Business Settings → System users → mrCarpet-prod →
+Generate token (старий інвалідується) або «Отозвать маркеры».
+
+Код product→IG/FB готовий (див. `social/services/product_post.py`):
+авто-пост нових товарів (toggle `auto_post_new_products_meta` у Social settings)
++ ручні actions у Product admin («Створити IG/FB пост (чернетка)» /
+«Опублікувати в Instagram/Facebook зараз»). Файли фото не копіюються —
+SocialPostImage вказує на існуючі media-файли товару.
 
 Контекст для наступного агента / людини. Не комітити секрети. Токени лише в серверний `.env`.
 

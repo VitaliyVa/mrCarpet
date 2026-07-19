@@ -32,6 +32,13 @@ class SocialSettings(models.Model):
         default=False,
         help_text="Автоматично слати нові товари в TG products channel.",
     )
+    auto_post_new_products_meta = models.BooleanField(
+        default=False,
+        help_text=(
+            "Автоматично публікувати нові товари в Instagram/Facebook "
+            "(photos-пост з головного фото + галереї)."
+        ),
+    )
     products_channel_id = models.CharField(
         max_length=64,
         blank=True,

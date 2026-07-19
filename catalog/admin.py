@@ -194,6 +194,8 @@ class ProductAdmin(admin.ModelAdmin):
         'generate_ar_texture_action',
         'generate_seo_action',
         'post_to_telegram_products_channel',
+        'create_meta_social_post_draft',
+        'publish_meta_now',
     ]
     readonly_fields = ['ar_status', 'ar_error', 'ar_updated_at', 'ar_texture_preview']
     fieldsets = (
@@ -869,6 +871,70 @@ class ProductAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f'TG channel: ok={ok}, fail={fail}',
+            level='success' if ok else 'warning',
+        )
+
+    @admin.action(description='Створити IG/FB пост (чернетка)')
+    def create_meta_social_post_draft(self, request, queryset):
+        from django.urls import reverse
+        from django.utils.html import format_html
+
+        from social.services.product_post import build_product_social_post
+
+        ok = 0
+        for product in queryset:
+            try:
+                post = build_product_social_post(product)
+            except Exception as exc:
+                self.message_user(request, f'{product}: {exc}', level='error')
+                continue
+            url = reverse('admin:social_socialpost_change', args=[post.pk])
+            self.message_user(
+                request,
+                format_html(
+                    '{}: чернетка <a href="{}">SocialPost #{}</a> — '
+                    'перевір caption/фото і натисни Publish',
+                    product, url, post.pk,
+                ),
+            )
+            ok += 1
+        if not ok:
+            self.message_user(request, 'Жодної чернетки не створено', level='warning')
+
+    @admin.action(description='Опублікувати в Instagram/Facebook зараз')
+    def publish_meta_now(self, request, queryset):
+        from social.models import SocialPost
+        from social.services.product_post import build_product_social_post
+        from social.services.publish import (
+            enqueue_publish,
+            validate_post_for_publish,
+        )
+
+        ok = 0
+        fail = 0
+        for product in queryset:
+            try:
+                post = build_product_social_post(product)
+            except Exception as exc:
+                fail += 1
+                self.message_user(request, f'{product}: {exc}', level='error')
+                continue
+            err = validate_post_for_publish(post)
+            if err:
+                fail += 1
+                post.status = SocialPost.Status.FAILED
+                post.last_error = err
+                post.save(update_fields=['status', 'last_error', 'updated'])
+                self.message_user(request, f'{product}: {err}', level='error')
+                continue
+            post.status = SocialPost.Status.QUEUED
+            post.save(update_fields=['status', 'updated'])
+            enqueue_publish(post.pk)
+            ok += 1
+        self.message_user(
+            request,
+            f'IG/FB: у черзі {ok}, помилок {fail}. '
+            f'Статус — у Social → Social posts.',
             level='success' if ok else 'warning',
         )
 

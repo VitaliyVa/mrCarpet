@@ -299,6 +299,18 @@ class SocialSettingsAdmin(admin.ModelAdmin):
             {"fields": ("ai_i2v_enabled", "ai_i2v_daily_limit", "ai_i2v_model")},
         ),
         (
+            "Meta (Instagram/Facebook) products",
+            {
+                "fields": ("auto_post_new_products_meta",),
+                "description": (
+                    "Авто-пост нових товарів у IG/FB (photos-пост). "
+                    "Потребує META_* у прод .env (social_setup_check). "
+                    "Ручний варіант: Catalog → Products → actions "
+                    "«Створити IG/FB пост» / «Опублікувати в IG/FB зараз»."
+                ),
+            },
+        ),
+        (
             "Telegram products channel",
             {
                 "fields": (
