@@ -39,9 +39,14 @@
     {% endblock twitter_image %}
     {% endblock social_meta %}
     {% include 'includes/analytics_head.html' %}
+    {# Dark OS/browser theme → white logo; light theme → dark logo. Fallback = dark ink. #}
+    <link rel="icon" href="/static/utils/assets/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/static/utils/assets/favicon-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/utils/assets/favicon-32x32-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/utils/assets/favicon-32x32.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16.png" media="(prefers-color-scheme: light)" />
     <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/utils/assets/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/utils/assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="/static/development/main.css" />
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
