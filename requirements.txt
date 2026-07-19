@@ -10,6 +10,7 @@ click-plugins==1.1.1
 click-repl==0.3.0
 colorama==0.4.6
 cron-descriptor==1.4.5
+cryptography==42.0.8
 defusedxml==0.7.1
 diff-match-patch==20230430
 Django==4.2.7
