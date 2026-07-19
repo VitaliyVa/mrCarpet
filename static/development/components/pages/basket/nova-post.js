@@ -329,9 +329,48 @@ export async function prefillNovaPost(data = {}) {
   }
 }
 
+function resolveWarehouseFromDom() {
+  const warehouseSelect = document.getElementById("nova-post-warehouse-select");
+  if (!warehouseSelect?.value) {
+    return selectedWarehouse;
+  }
+
+  const id = String(warehouseSelect.value);
+  let title = (selectedWarehouse?.title || "").trim();
+  let ref = selectedWarehouse?.ref || "";
+
+  // Choices.js — preferred source of label after selection
+  if (warehouseChoices && typeof warehouseChoices.getValue === "function") {
+    try {
+      const raw = warehouseChoices.getValue();
+      const choice = Array.isArray(raw) ? raw[0] : raw;
+      if (choice && typeof choice === "object") {
+        if (choice.label) title = String(choice.label).trim();
+        const props = choice.customProperties || {};
+        if (props.title) title = String(props.title).trim();
+        if (props.ref) ref = props.ref;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  // Native <select> fallback (Choices keeps it in sync)
+  if (!title && warehouseSelect.selectedOptions?.length) {
+    title = (warehouseSelect.selectedOptions[0].textContent || "").trim();
+  }
+
+  // Placeholder label is not a real warehouse
+  if (!title || /^оберіть/i.test(title)) {
+    return selectedWarehouse;
+  }
+
+  return { id, title, ref };
+}
+
 export function getNovaPostData() {
   return {
     settlement: selectedSettlement,
-    warehouse: selectedWarehouse,
+    warehouse: resolveWarehouseFromDom(),
   };
 }

@@ -241,11 +241,18 @@ export async function submitOrder() {
   const firstName = fullName[0] || "";
   const lastName = fullName.slice(1).join(" ") || "";
 
-  const warehouseTitle = novaPostData.warehouse?.title || "";
+  const warehouseTitle = (novaPostData.warehouse?.title || "").trim();
   const cityName = capitalizeFirstLetter(cityInput.value.trim());
-  // address = відділення (або місто, якщо відділення ще не обрано).
-  // Місто окремо в city — не дублюємо «Ланівці, Ланівці» в листах.
-  const address = warehouseTitle || cityName;
+  // address = відділення НП (обов’язкове). Місто окремо в city.
+  if (
+    !warehouseTitle ||
+    warehouseTitle.toLowerCase() === cityName.toLowerCase()
+  ) {
+    showError("Оберіть відділення Нової Пошти");
+    scrollToField(document.getElementById("nova-post-warehouse-select"));
+    return;
+  }
+  const address = warehouseTitle;
 
   let paymentType = "cash";
   if (paymentMethod.id === "card") {

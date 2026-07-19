@@ -17,7 +17,7 @@ class OrderNotifyLinkTests(TestCase):
             payment_type=Order.PAYMENT_LIQPAY,
             total_price=1000,
             city="Ланівці",
-            address="Ланівці",
+            address="Відділення №1: вул. Незалежності, 10",
         )
         url = order_admin_absolute_url(order)
         self.assertEqual(
@@ -26,3 +26,5 @@ class OrderNotifyLinkTests(TestCase):
         html = format_order_message(order, event="paid")
         self.assertIn(f'href="{url}"', html)
         self.assertIn("Відкрити в адмінці", html)
+        self.assertIn("Місто: Ланівці", html)
+        self.assertIn("Відділення НП: Відділення №1", html)

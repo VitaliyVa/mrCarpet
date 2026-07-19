@@ -43,7 +43,7 @@ GA4_MEASUREMENT_ID = config("GA4_MEASUREMENT_ID", default="")
 GTM_CONTAINER_ID = config("GTM_CONTAINER_ID", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
-STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719c")
+STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719d")
 
 # CSRF налаштування для webhook від LiqPay через ngrok
 # Додайте ваш ngrok URL сюди

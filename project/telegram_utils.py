@@ -215,8 +215,22 @@ def format_order_message(order, event="new"):
         f"Клієнт: {_esc(customer)}",
         f"Телефон: {_esc(order.phone or '—')}",
         f"Email: {_esc(order.email or '—')}",
-        f"Доставка: {_esc(_delivery_line(order))}",
     ]
+    try:
+        from order.email_utils import delivery_parts
+
+        city_part, warehouse = delivery_parts(order.city, order.address)
+    except Exception:
+        city_part = (getattr(order, "city", None) or "").strip()
+        warehouse = (getattr(order, "address", None) or "").strip()
+        if warehouse and city_part and warehouse.casefold() == city_part.casefold():
+            warehouse = ""
+    lines.append(f"Місто: {_esc(city_part or '—')}")
+    lines.append(
+        f"Відділення НП: {_esc(warehouse)}"
+        if warehouse
+        else "Відділення НП: ⚠️ не вказано"
+    )
     if getattr(order, "free_shipping", False):
         threshold = getattr(order, "free_shipping_threshold", None)
         fs_label = (

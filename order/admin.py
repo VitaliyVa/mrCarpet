@@ -80,7 +80,7 @@ class OrderAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Доставка",
+            "Доставка (Нова Пошта)",
             {
                 "fields": (
                     "city",
@@ -90,6 +90,7 @@ class OrderAdmin(admin.ModelAdmin):
                     "free_shipping_threshold",
                 ),
                 "description": (
+                    "Місто + відділення НП (поле «Відділення НП»). "
                     "Якщо «Безкоштовна доставка» — оплачуємо НП за клієнта "
                     "(сума товарів ≥ порогу на момент замовлення)."
                 ),

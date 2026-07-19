@@ -45,7 +45,9 @@ def with_plain_footer(body: str) -> str:
 def brand_context(**extra) -> dict[str, Any]:
     base = {
         "site_url": site_url(),
-        "logo_url": absolute_static("utils/assets/brand/email-logo.png"),
+        # White ink on transparent — for #a46c46 email header (not the dark badge).
+        # Distinct filename busts Gmail/Outlook image cache after logo swaps.
+        "logo_url": absolute_static("utils/assets/brand/email-logo-white.png"),
         "brand_name": "mr.Carpet",
         "support_email": support_email(),
         "year": __import__("datetime").datetime.now().year,

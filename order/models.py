@@ -71,10 +71,11 @@ class Order(AbstractCreatedUpdated):
         db_index=True,
     )
     address = models.CharField(
-        verbose_name="Адреса",
+        verbose_name="Відділення НП",
         max_length=512,
         blank=True,
         null=True,
+        help_text="Назва відділення / поштомату Нової Пошти",
     )
     message = models.CharField(
         verbose_name="Повідомлення",

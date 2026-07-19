@@ -8,28 +8,37 @@ from project.smtp_utils import send_smtp_mail, send_smtp_mail_async
 logger = logging.getLogger(__name__)
 
 
-def format_delivery_line(city: str | None, address: str | None) -> str:
+def delivery_parts(city: str | None, address: str | None) -> tuple[str, str]:
     """
-    Checkout often stores city inside address too («Ланівці» / «Ланівці, Відд. №1»).
-    Avoid «Ланівці, Ланівці» in emails.
+    Split city vs Nova Poshta warehouse (stored in Order.address).
+    When address duplicates city, warehouse is treated as missing.
     """
     city = (city or "").strip()
     address = (address or "").strip()
-    if not city and not address:
+    if address and city and address.casefold() == city.casefold():
+        return city, ""
+    return city, address
+
+
+def format_delivery_line(city: str | None, address: str | None) -> str:
+    """
+    Single-line delivery for plain text / Telegram.
+    Prefer «Місто · Відділення»; avoid «Ланівці, Ланівці».
+    """
+    city_part, warehouse = delivery_parts(city, address)
+    if not city_part and not warehouse:
         return "—"
-    if not address:
-        return city
-    if not city:
-        return address
-    if address.casefold() == city.casefold():
-        return city
-    # address already starts with city (with comma/space)
-    prefix = f"{city},"
-    if address.casefold().startswith(prefix.casefold()) or address.casefold().startswith(
-        f"{city} ".casefold()
+    if not warehouse:
+        return city_part or "—"
+    if not city_part:
+        return warehouse
+    # warehouse already starts with city
+    prefix = f"{city_part},"
+    if warehouse.casefold().startswith(prefix.casefold()) or warehouse.casefold().startswith(
+        f"{city_part} ".casefold()
     ):
-        return address
-    return f"{city}, {address}"
+        return warehouse
+    return f"{city_part} · {warehouse}"
 
 
 def _free_shipping_email_line(order) -> str:
@@ -46,19 +55,22 @@ def _build_order_email(order):
     status_label = order.get_status_display()
     price = f"{order.total_price:.0f} грн" if order.total_price is not None else "—"
     customer = f"{order.name} {order.surname}".strip()
+    city_part, warehouse = delivery_parts(order.city, order.address)
     delivery = format_delivery_line(order.city, order.address)
     shipping_cost = _free_shipping_email_line(order)
     promocode_label = getattr(order, "promocode_label", "") or ""
 
     subject = f"mr.Carpet — замовлення №{order.order_number} прийнято"
     promo_plain = f"Промокод: {promocode_label}\n" if promocode_label else ""
+    warehouse_plain = warehouse or "⚠️ не вказано"
     body = with_plain_footer(
         f"Дякуємо за замовлення!\n\n"
         f"Номер замовлення: {order.order_number}\n"
         f"Статус: {status_label}\n"
         f"Отримувач: {customer}\n"
         f"Телефон: {order.phone or '—'}\n"
-        f"Доставка: {delivery}\n"
+        f"Місто: {city_part or '—'}\n"
+        f"Відділення НП: {warehouse_plain}\n"
         f"Вартість доставки: {shipping_cost}\n"
         f"{promo_plain}"
         f"Спосіб оплати: {payment_label}\n"
@@ -73,6 +85,8 @@ def _build_order_email(order):
             "status_label": status_label,
             "customer": customer,
             "phone": order.phone or "—",
+            "city": city_part or "—",
+            "warehouse": warehouse or "—",
             "delivery": delivery,
             "shipping_cost": shipping_cost,
             "free_shipping": bool(getattr(order, "free_shipping", False)),
