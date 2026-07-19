@@ -20,6 +20,31 @@
     }
   }
 
+  // Flip only when hover image exists (desktop). Avoid blank card if no hover asset.
+  &:has(.image-on-hover):hover {
+    .cart_item_img:not(.image-on-hover) {
+      opacity: 0;
+      transform: scaleX(-1);
+    }
+
+    .cart_item_img.image-on-hover {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  // Touch / small screens: no hover swap (and no download via JS)
+  @media (hover: none), (max-width: 768px) {
+    &:hover .cart_item_img {
+      opacity: 1;
+      transform: none;
+    }
+
+    .cart_item_img.image-on-hover {
+      display: none !important;
+    }
+  }
+
   &_wrapper {
     // display: flex;
     // flex-wrap: wrap;
@@ -40,6 +65,11 @@
     height: 420px;
     aspect-ratio: 365 / 420;
     text-align: center;
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    // GPU-шар: фото растеризується раз, scaleX виконується на готовому растрі →
+    // прибирає суб-піксельну «тряску»/мерехтіння при анімації на детальних фото
+    backface-visibility: hidden;
+    will-change: transform, opacity;
 
     img {
       object-fit: contain;
@@ -48,6 +78,14 @@
       // height: 95%;
       max-width: 365px;
       border-radius: 16px;
+    }
+
+    &.image-on-hover {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      transform: scaleX(-1);
     }
   }
 

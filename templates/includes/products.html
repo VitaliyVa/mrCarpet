@@ -16,6 +16,14 @@
           decoding="async"
         />
     </div>
+    {# Hover image loaded only on desktop (see cart_item/index.js) — saves mobile bandwidth #}
+    {% if product.hover_image %}
+    <div
+      class="cart_item_img image-on-hover"
+      data-hover-src="{{ product.hover_image.url }}"
+      aria-hidden="true"
+    ></div>
+    {% endif %}
     </a>
 
     <div class="cart_item_oos{% if default_attr and not default_attr.in_stock %} is-visible{% endif %}" aria-hidden="true">
