@@ -7,7 +7,7 @@
 />
 {% endblock meta %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/about/index.css" />
+<link rel="stylesheet" href="/static/source/pages/about/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="banner first_section">
   <div class="container">
@@ -110,5 +110,5 @@
   </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/about/index.js"></script>
+<script src="/static/source/pages/about/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}

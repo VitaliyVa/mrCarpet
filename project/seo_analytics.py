@@ -28,4 +28,6 @@ def analytics_context() -> dict:
         "gtm_container_id": gtm_container_id(),
         "google_site_verification": google_site_verification(),
         "analytics_enabled": analytics_enabled(),
+        # Cache-bust for /static/source/pages/* (nginx immutable otherwise).
+        "static_v": (getattr(settings, "STATIC_ASSET_VERSION", "") or "1").strip(),
     }

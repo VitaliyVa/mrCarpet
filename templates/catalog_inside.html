@@ -19,7 +19,7 @@
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
 {% endblock structured_data %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css" />
+<link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css?v={{ static_v }}" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
 {% endblock styles %}{% block content %}
 <section class="catalog_inside first_section">
@@ -259,7 +259,7 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
-<script src="/static/source/pages/catalog_inside/index.js"></script>
+<script src="/static/source/pages/catalog_inside/index.js?v={{ static_v }}"></script>
 <script>
 // Ініціалізація фільтрів без автоматичного submit
 document.addEventListener('DOMContentLoaded', function() {

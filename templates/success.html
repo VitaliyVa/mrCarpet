@@ -1,5 +1,5 @@
 {% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
-<link rel="stylesheet" href="/static/source/pages/success/index.css" />
+<link rel="stylesheet" href="/static/source/pages/success/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="success first_section">
   <div class="success__container container">
@@ -30,7 +30,34 @@
   </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/success/index.js"></script>
+<script src="/static/source/pages/success/index.js?v={{ static_v }}"></script>
+{% if analytics_purchase %}
+<script>
+(function () {
+  // Inline purchase — must not depend on webpack cache.
+  var el = document.getElementById("ga4-purchase-data");
+  if (!el) return;
+  var purchase;
+  try {
+    purchase = JSON.parse(el.textContent);
+  } catch (e) {
+    return;
+  }
+  if (!purchase || !purchase.transaction_id) return;
+  var key = "ga4_purchase_" + purchase.transaction_id;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch (e) {}
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({ event: "purchase", ecommerce: purchase });
+  if (typeof gtag === "function") {
+    gtag("event", "purchase", purchase);
+  }
+})();
+</script>
+{% endif %}
 {% if analytics_purchase_retry %}
 <script>
 (function () {

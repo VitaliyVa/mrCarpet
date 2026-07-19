@@ -11,7 +11,7 @@
 {% if faq_jsonld %}<script type="application/ld+json">{{ faq_jsonld|safe }}</script>{% endif %}
 {% endblock structured_data %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/faq/index.css" />
+<link rel="stylesheet" href="/static/source/pages/faq/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="faq first_section">
   <div class="container">
@@ -48,5 +48,5 @@
   </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/faq/index.js"></script>
+<script src="/static/source/pages/faq/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}

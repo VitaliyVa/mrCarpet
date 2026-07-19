@@ -23,7 +23,7 @@
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
 {% endblock structured_data %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/product/index.css" />
+<link rel="stylesheet" href="/static/source/pages/product/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="first_section">
   <div class="review-write-modal-overlay modal-overlay">
@@ -855,7 +855,7 @@
 {% endif %}
 
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/product/index.js"></script>
+<script src="/static/source/pages/product/index.js?v={{ static_v }}"></script>
 {% if analytics_enabled and analytics_view_item %}
 <script>
 (function () {

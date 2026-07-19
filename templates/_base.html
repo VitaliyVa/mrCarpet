@@ -49,7 +49,7 @@
     <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/utils/assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="/static/development/main.css" />
-    {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css" />{% endblock styles %}
+    {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css?v={{ static_v }}" />{% endblock styles %}
     {% block structured_data %}
     {% if organization_jsonld %}
     <script type="application/ld+json">{{ organization_jsonld|safe }}</script>

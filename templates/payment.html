@@ -1,8 +1,8 @@
 {% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block title %}Оплата замовлення — mr.Carpet{% endblock title %}{% block styles %}
-<link rel="stylesheet" href="/static/source/pages/index/index.css" />
+<link rel="stylesheet" href="/static/source/pages/index/index.css?v={{ static_v }}" />
 {% endblock styles %}
 {% block content %}
 {% include 'liqpay.html' %}
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/index/index.js"></script>
+<script src="/static/source/pages/index/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}

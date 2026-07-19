@@ -23,7 +23,7 @@
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
 {% endblock structured_data %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/blog_inside/index.css" />
+<link rel="stylesheet" href="/static/source/pages/blog_inside/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="blog-inside first_section">
     <div class="container">
@@ -107,5 +107,5 @@
     </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/blog_inside/index.js"></script>
+<script src="/static/source/pages/blog_inside/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}

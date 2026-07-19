@@ -1,5 +1,5 @@
 {% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
-<link rel="stylesheet" href="/static/source/pages/favorite/index.css" />
+<link rel="stylesheet" href="/static/source/pages/favorite/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="favorite first_section">
   <div class="container">
@@ -38,5 +38,5 @@
   </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/favorite/index.js"></script>
+<script src="/static/source/pages/favorite/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}

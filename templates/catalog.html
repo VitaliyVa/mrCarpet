@@ -7,7 +7,7 @@
 />
 {% endblock meta %}
 {% block styles %}
-<link rel="stylesheet" href="/static/source/pages/catalog/index.css" />
+<link rel="stylesheet" href="/static/source/pages/catalog/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 {% include 'includes/categories.html' %}
 <section class="catalog container">
@@ -53,5 +53,5 @@
   {% endfor %}
 </section>
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/catalog/index.js"></script>
+<script src="/static/source/pages/catalog/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}
