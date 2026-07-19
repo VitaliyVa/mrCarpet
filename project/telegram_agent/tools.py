@@ -243,8 +243,8 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
         build_realtime_caption,
         render_funnel_chart,
         render_realtime_chart,
+        render_revenue_chart,
         render_sources_chart,
-        render_kpi_table,
     )
     from project.ga4_client import (
         Ga4ClientError,
@@ -291,7 +291,6 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
             summary = {"active_users": data.get("active_users"), "screens": data.get("screens")}
         elif report == "ecommerce":
             data = fetch_ecommerce(days)
-            # lightweight dashboard slice for charts
             dash = {
                 "days": days,
                 "funnel": data.get("funnel"),
@@ -299,17 +298,17 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
                 "kpis": {},
                 "revenue": data.get("revenue"),
                 "top_pages": [],
+                "daily": [],
             }
             photos_raw = [
-                ("funnel.png", render_funnel_chart(dash["funnel"] or [], days=days)),
-                ("sources.png", render_sources_chart(dash["sources"] or [], days=days)),
+                ("01_funnel.png", render_funnel_chart(dash["funnel"] or [], days=days)),
+                ("02_sources.png", render_sources_chart(dash["sources"] or [], days=days)),
                 (
-                    "kpi.png",
-                    render_kpi_table(
-                        {},
+                    "03_sales.png",
+                    render_revenue_chart(
                         dash.get("revenue") or {},
+                        dash.get("funnel") or [],
                         days=days,
-                        top_pages=[],
                     ),
                 ),
             ]

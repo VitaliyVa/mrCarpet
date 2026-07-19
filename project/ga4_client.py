@@ -200,6 +200,42 @@ def fetch_overview(days: int) -> dict[str, Any]:
     return {"days": days, "kpis": kpis, "top_pages": pages}
 
 
+def fetch_daily_trend(days: int) -> list[dict[str, Any]]:
+    """Per-day users / sessions / pageViews."""
+    pid = property_id()
+    start = f"{int(days)}daysAgo"
+    base = f"https://analyticsdata.googleapis.com/v1beta/properties/{pid}:runReport"
+    resp = api_json(
+        "POST",
+        base,
+        payload={
+            "dateRanges": [{"startDate": start, "endDate": "today"}],
+            "dimensions": [{"name": "date"}],
+            "metrics": [
+                {"name": "activeUsers"},
+                {"name": "sessions"},
+                {"name": "screenPageViews"},
+            ],
+            "orderBys": [{"dimension": {"dimensionName": "date"}, "desc": False}],
+            "limit": "31",
+        },
+    )
+    out: list[dict[str, Any]] = []
+    for row in resp.get("rows") or []:
+        raw = row["dimensionValues"][0]["value"]  # YYYYMMDD
+        label = f"{raw[6:8]}.{raw[4:6]}" if len(raw) == 8 else raw
+        out.append(
+            {
+                "date": raw,
+                "label": label,
+                "users": int(float(row["metricValues"][0]["value"] or 0)),
+                "sessions": int(float(row["metricValues"][1]["value"] or 0)),
+                "views": int(float(row["metricValues"][2]["value"] or 0)),
+            }
+        )
+    return out
+
+
 def fetch_ecommerce(days: int) -> dict[str, Any]:
     pid = property_id()
     start = f"{int(days)}daysAgo"
@@ -331,6 +367,11 @@ def fetch_dashboard(days: int) -> dict[str, Any]:
     """Combined payload for Telegram charts."""
     overview = fetch_overview(days)
     ecom = fetch_ecommerce(days)
+    daily: list[dict[str, Any]] = []
+    try:
+        daily = fetch_daily_trend(days)
+    except Ga4ClientError as exc:
+        logger.info("GA4 daily trend unavailable: %s", exc)
     return {
         "days": days,
         "kpis": overview["kpis"],
@@ -338,4 +379,5 @@ def fetch_dashboard(days: int) -> dict[str, Any]:
         "funnel": ecom["funnel"],
         "revenue": ecom["revenue"],
         "sources": ecom["sources"],
+        "daily": daily,
     }

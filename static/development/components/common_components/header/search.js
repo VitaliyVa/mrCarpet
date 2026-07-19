@@ -36,11 +36,12 @@ function safeUrl(value, { allowRelative = true } = {}) {
   return allowRelative ? "#" : "";
 }
 
-function renderSearchItem({ id, title, image, href }) {
+function renderSearchItem({ id, title, image, image_url, href }) {
   const safeId = escapeHtml(id);
   const safeTitle = escapeHtml(title);
   const safeHref = escapeHtml(safeUrl(href));
-  const safeImage = escapeHtml(safeUrl(image));
+  // API: ProductSerializer → image_url; /catalog/api/search/ → image
+  const safeImage = escapeHtml(safeUrl(image_url || image));
 
   return `
 <div class="header__search-product" data-product-id="${safeId}" data-catalog-product-id="${safeId}" data-product-title="${safeTitle}">
