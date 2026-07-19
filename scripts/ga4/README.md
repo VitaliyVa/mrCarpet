@@ -108,6 +108,19 @@ python scripts/ga4/admin.py conversions
 - Після лінку з’являться organic search queries у GA; індексація лишається в GSC.
 - Canonical / `og:url` на сайті = `https://` через `SITE_URL` + `SECURE_PROXY_SSL_HEADER`.
 
+### Telegram bot analytics
+
+Django tool `get_ga4_report` (див. `project/ga4_client.py` + `project/ga4_charts.py`) читає Data API і шле PNG у Telegram.
+
+На **проді** в `.env`:
+
+```bash
+GA4_PROPERTY_ID=546178687
+GA4_SERVICE_ACCOUNT_JSON=<one-line JSON of service-account.json>
+```
+
+`docker-compose.prod.yml` прокидає обидві змінні. Локально можна `GOOGLE_APPLICATION_CREDENTIALS=ops/ga4/service-account.json`.
+
 ### Measurement Protocol (server purchase)
 
 Django шле `purchase` з бекенду (cash create + LiqPay paid), щоб не губити revenue без success page.

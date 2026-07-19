@@ -33,6 +33,26 @@ class StatusLabelsTests(TestCase):
 
 
 class IntentRouterTests(TestCase):
+    def test_analytics_dashboard(self):
+        plan = maybe_direct_plan("містер карпет, покажи аналітику")
+        self.assertEqual(plan["type"], "tool")
+        self.assertEqual(plan["name"], "get_ga4_report")
+        self.assertEqual(plan["args"]["report"], "dashboard")
+        self.assertEqual(plan["args"]["days"], 7)
+
+    def test_analytics_funnel_days(self):
+        plan = maybe_direct_plan("воронка за 14 днів")
+        self.assertEqual(plan["type"], "tool")
+        self.assertEqual(plan["name"], "get_ga4_report")
+        self.assertEqual(plan["args"]["report"], "ecommerce")
+        self.assertEqual(plan["args"]["days"], 14)
+
+    def test_analytics_realtime(self):
+        plan = maybe_direct_plan("покажи realtime ga4")
+        self.assertEqual(plan["type"], "tool")
+        self.assertEqual(plan["name"], "get_ga4_report")
+        self.assertEqual(plan["args"]["report"], "realtime")
+
     def test_list_statuses(self):
         plan = maybe_direct_plan("які є статуси?")
         self.assertEqual(plan["type"], "reply")

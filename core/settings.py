@@ -43,6 +43,12 @@ GA4_MEASUREMENT_ID = config("GA4_MEASUREMENT_ID", default="")
 GTM_CONTAINER_ID = config("GTM_CONTAINER_ID", default="")
 # Measurement Protocol API secret (server-only). Create in GA4 → Data stream → MP secrets.
 GA4_API_SECRET = config("GA4_API_SECRET", default="")
+# Data API (Telegram analytics reports). Property ID = digits only.
+GA4_PROPERTY_ID = config("GA4_PROPERTY_ID", default="")
+# Full service-account JSON as a single env string (preferred on prod).
+GA4_SERVICE_ACCOUNT_JSON = config("GA4_SERVICE_ACCOUNT_JSON", default="")
+# Optional path fallback (local ops/ga4/service-account.json).
+GOOGLE_APPLICATION_CREDENTIALS = config("GOOGLE_APPLICATION_CREDENTIALS", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
 STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719e")

@@ -8,7 +8,12 @@ from typing import Any
 from django.db import close_old_connections, IntegrityError
 
 from project.models import TelegramProcessedUpdate, TelegramSettings
-from project.telegram_api import get_me, send_chat_action, send_message
+from project.telegram_api import (
+    get_me,
+    send_chat_action,
+    send_media_group,
+    send_message,
+)
 
 from . import llm as agent_llm
 from .intent import fake_tool_narration_plan, maybe_direct_plan
@@ -19,7 +24,12 @@ from .memory import (
     user_rate_exceeded,
 )
 from .pending import create_pending_writes, handle_callback
-from .tools import READ_TOOLS, WRITE_TOOLS, execute_read_tool
+from .tools import (
+    READ_TOOLS,
+    WRITE_TOOLS,
+    execute_read_tool,
+    strip_tool_result_for_memory,
+)
 from .triggers import chat_allowed, should_wake
 
 logger = logging.getLogger(__name__)
@@ -347,18 +357,80 @@ def _process_user_message(settings: TelegramSettings, message: dict) -> None:
         # Reads first (preview), then one pending for all writes
         for call in read_calls:
             name = call.get("name") or ""
-            args = call.get("args") or {}
+            args = dict(call.get("args") or {})
             if name not in READ_TOOLS:
                 tool_results.append({"name": name, "ok": False, "error": "not allowed"})
                 continue
+            if name == "get_ga4_report":
+                args["_chat_id"] = str(chat_id)
+                try:
+                    send_chat_action(
+                        "upload_photo",
+                        chat_id=chat_id,
+                        message_thread_id=thread_id,
+                    )
+                except Exception:
+                    pass
             result = execute_read_tool(name, args)
-            tool_results.append({"name": name, "result": result})
+            tool_results.append({"name": name, "result": strip_tool_result_for_memory(result)})
             append_message(
                 chat_id,
                 thread_id,
                 "tool",
-                f"{name}: {result}",
+                f"{name}: {strip_tool_result_for_memory(result)}",
             )
+
+            # GA4 charts: send album + caption, skip LLM re-plan
+            if (
+                name == "get_ga4_report"
+                and isinstance(result, dict)
+                and result.get("skip_llm")
+                and result.get("ok")
+                and result.get("photos")
+            ):
+                import base64
+
+                photos = []
+                for item in result.get("photos") or []:
+                    try:
+                        blob = base64.b64decode(item.get("b64") or "")
+                    except Exception:
+                        continue
+                    if blob:
+                        photos.append((item.get("name") or "chart.png", blob))
+                caption = (result.get("caption") or "").strip() or "GA4 звіт"
+                if photos:
+                    send_media_group(
+                        photos,
+                        caption=caption,
+                        chat_id=chat_id,
+                        message_thread_id=thread_id,
+                        reply_to_message_id=msg_id,
+                    )
+                else:
+                    send_message(
+                        caption,
+                        chat_id=chat_id,
+                        message_thread_id=thread_id,
+                        reply_to_message_id=msg_id,
+                    )
+                append_message(chat_id, thread_id, "assistant", caption)
+                return
+
+            if (
+                name == "get_ga4_report"
+                and isinstance(result, dict)
+                and not result.get("ok")
+            ):
+                err = (result.get("error") or "Не вдалося отримати аналітику").strip()
+                send_message(
+                    err,
+                    chat_id=chat_id,
+                    message_thread_id=thread_id,
+                    reply_to_message_id=msg_id,
+                )
+                append_message(chat_id, thread_id, "assistant", err)
+                return
 
         if write_calls:
             preview = _brief_tool_preview(tool_results) if tool_results else ""

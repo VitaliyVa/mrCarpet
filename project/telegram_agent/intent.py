@@ -15,9 +15,47 @@ _FAKE_TOOL_REPLY = re.compile(
     r"(виконуємо|виконую|виконаю|запускаю|calling|running)\s+"
     r"(команду\s+)?(?P<name>count_orders|list_recent_orders|get_order|"
     r"find_orders|count_products|count_in_stock_products|get_product_stock|"
+    r"get_ga4_report|"
     r"set_order_status|send_order_email|change_stock_quantity)",
     re.I,
 )
+
+_ANALYTICS_RE = re.compile(
+    r"(аналітик|analytics|га4|ga4|воронк|трафік|трафик|realtime|"
+    r"real[\s-]?time|звіт\s+ga|покажи\s+(статистик|метрики)|"
+    r"статистик\w*\s+(сайт|га|ga)|dashboard)",
+    re.I,
+)
+
+
+def _analytics_days(text: str) -> int:
+    t = (text or "").casefold()
+    if re.search(r"(сьогодні|today|1\s*дн)", t):
+        return 1
+    if re.search(r"(місяц|month|30\s*дн)", t):
+        return 30
+    if re.search(r"(2\s*тиж|14\s*дн)", t):
+        return 14
+    m = re.search(r"за\s+(\d{1,2})\s*дн", t)
+    if m:
+        try:
+            return max(1, min(int(m.group(1)), 30))
+        except ValueError:
+            pass
+    return 7
+
+
+def _analytics_report(text: str) -> str:
+    t = (text or "").casefold()
+    if re.search(r"realtime|real[\s-]?time|зараз\s+на\s+сайт|онлайн\s+зараз", t):
+        return "realtime"
+    if re.search(r"воронк|ecommerce|e-?commerce|покупк", t) and not re.search(
+        r"аналітик|dashboard|трафік", t
+    ):
+        # "воронка" alone → ecommerce; "аналітика" → full dashboard
+        if re.search(r"воронк", t):
+            return "ecommerce"
+    return "dashboard"
 
 _ORDER_NUM_RE = re.compile(
     r"(?:замовлення\s*)?№\s*(\d{6,})|(?:order\s*#?\s*|замовлен\w*\s+)(\d{6,})",
@@ -63,13 +101,17 @@ HELP_REPLY = (
     "• пошук замовлення за телефоном / ім'ям\n"
     "• які є статуси замовлення\n"
     "• скільки товарів на сайті / в наявності\n"
-    "• залишки конкретного килима\n\n"
+    "• залишки конкретного килима\n"
+    "• аналітика GA4 (воронка, трафік, KPI) — графіки в чат\n\n"
     "З підтвердженням кнопкою в чаті:\n"
     "• змінити статус замовлення\n"
     "• надіслати лист клієнту\n"
     "• змінити кількість на складі (за посиланням або назвою + розмір)\n\n"
     "Приклади:\n"
     "• містер карпет, скільки замовлень?\n"
+    "• містер карпет, покажи аналітику\n"
+    "• містер карпет, воронка за 14 днів\n"
+    "• містер карпет, realtime\n"
     "• містер карпет, які є статуси?\n"
     "• знайди замовлення по телефону 0501234567\n"
     "• в замовленні №… зміни статус на Виконано і напиши клієнту лист\n"
@@ -309,6 +351,19 @@ def maybe_direct_plan(user_text: str, *, context_text: str = "") -> dict | None:
     stock_plan = _parse_stock_change(user_text or "")
     if stock_plan:
         return stock_plan
+
+    # GA4 analytics (charts) — before order lookups that match «покажи»
+    if _ANALYTICS_RE.search(t) or re.search(
+        r"покажи\s+(аналітик|статистик|воронк|трафік|ga4|га4)", t
+    ):
+        return {
+            "type": "tool",
+            "name": "get_ga4_report",
+            "args": {
+                "days": _analytics_days(user_text or ""),
+                "report": _analytics_report(user_text or ""),
+            },
+        }
 
     if re.search(r"скільки.{0,40}замовлен", t) or re.search(
         r"кількість.{0,40}замовлен", t

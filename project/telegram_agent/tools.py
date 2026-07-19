@@ -1,7 +1,9 @@
 """Allowlist tools — LLM never gets ORM."""
 from __future__ import annotations
 
+import base64
 import re
+import time
 from typing import Any
 
 from django.db.models import Q
@@ -19,7 +21,11 @@ READ_TOOLS = {
     "count_products",
     "count_in_stock_products",
     "get_product_stock",
+    "get_ga4_report",
 }
+
+ANALYTICS_COOLDOWN_SEC = 60
+_analytics_cooldown: dict[str, float] = {}
 
 WRITE_TOOLS = {
     "set_order_status",
@@ -47,6 +53,8 @@ READ tools (execute immediately):
 - count_products()
 - count_in_stock_products()
 - get_product_stock(query: string) — search product by title/slug/url
+- get_ga4_report(days?: int 1..30, report?: dashboard|ecommerce|realtime)
+  — GA4 analytics with chart images (Ukrainian shop metrics)
 
 WRITE tools (NEVER execute yourself — system will ask human confirm):
 - set_order_status(order_number, status) — status = code (completed) або UA (Виконано)
@@ -222,7 +230,137 @@ def execute_read_tool(name: str, args: dict | None) -> dict[str, Any]:
             )
         return {"ok": True, "products": result, "found": len(result)}
 
+    if name == "get_ga4_report":
+        return _execute_ga4_report(args)
+
     return {"ok": False, "error": "unhandled"}
+
+
+def _execute_ga4_report(args: dict) -> dict[str, Any]:
+    from project.ga4_charts import (
+        build_caption,
+        build_dashboard_photos,
+        build_realtime_caption,
+        render_funnel_chart,
+        render_realtime_chart,
+        render_sources_chart,
+        render_kpi_table,
+    )
+    from project.ga4_client import (
+        Ga4ClientError,
+        fetch_dashboard,
+        fetch_ecommerce,
+        fetch_realtime,
+        ga4_configured,
+    )
+
+    chat_key = str(args.get("_chat_id") or "global")
+    now = time.time()
+    last = _analytics_cooldown.get(chat_key) or 0
+    wait = ANALYTICS_COOLDOWN_SEC - (now - last)
+    if wait > 0:
+        return {
+            "ok": False,
+            "error": f"Зачекай {int(wait)} с перед наступним звітом GA4",
+            "cooldown": True,
+        }
+
+    if not ga4_configured():
+        return {
+            "ok": False,
+            "error": (
+                "GA4 не налаштовано на сервері "
+                "(GA4_PROPERTY_ID + GA4_SERVICE_ACCOUNT_JSON)."
+            ),
+        }
+
+    try:
+        days = int(args.get("days") or 7)
+    except (TypeError, ValueError):
+        days = 7
+    days = max(1, min(days, 30))
+    report = (args.get("report") or "dashboard").strip().lower()
+    if report not in ("dashboard", "ecommerce", "realtime"):
+        report = "dashboard"
+
+    try:
+        if report == "realtime":
+            data = fetch_realtime()
+            photos_raw = [("realtime.png", render_realtime_chart(data))]
+            caption = build_realtime_caption(data)
+            summary = {"active_users": data.get("active_users"), "screens": data.get("screens")}
+        elif report == "ecommerce":
+            data = fetch_ecommerce(days)
+            # lightweight dashboard slice for charts
+            dash = {
+                "days": days,
+                "funnel": data.get("funnel"),
+                "sources": data.get("sources"),
+                "kpis": {},
+                "revenue": data.get("revenue"),
+                "top_pages": [],
+            }
+            photos_raw = [
+                ("funnel.png", render_funnel_chart(dash["funnel"] or [], days=days)),
+                ("sources.png", render_sources_chart(dash["sources"] or [], days=days)),
+                (
+                    "kpi.png",
+                    render_kpi_table(
+                        {},
+                        dash.get("revenue") or {},
+                        days=days,
+                        top_pages=[],
+                    ),
+                ),
+            ]
+            caption = build_caption(dash)
+            summary = {
+                "days": days,
+                "revenue": data.get("revenue"),
+                "funnel": data.get("funnel"),
+            }
+        else:
+            data = fetch_dashboard(days)
+            photos_raw = build_dashboard_photos(data)
+            caption = build_caption(data)
+            summary = {
+                "days": days,
+                "kpis": data.get("kpis"),
+                "revenue": data.get("revenue"),
+            }
+    except Ga4ClientError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "error": f"Помилка звіту GA4: {exc}"}
+
+    _analytics_cooldown[chat_key] = time.time()
+    photos = [
+        {
+            "name": fname,
+            "b64": base64.b64encode(blob).decode("ascii"),
+        }
+        for fname, blob in photos_raw
+        if blob
+    ]
+    return {
+        "ok": True,
+        "report": report,
+        "days": days,
+        "caption": caption,
+        "summary": summary,
+        "photos": photos,
+        "skip_llm": True,
+    }
+
+
+def strip_tool_result_for_memory(result: dict[str, Any]) -> dict[str, Any]:
+    """Drop bulky photo payloads from chat memory."""
+    if not isinstance(result, dict):
+        return result
+    out = dict(result)
+    if "photos" in out:
+        out["photos"] = f"[{len(result.get('photos') or [])} images]"
+    return out
 
 
 def validate_write_args(name: str, args: dict | None) -> tuple[bool, str, dict]:
