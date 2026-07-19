@@ -56,6 +56,13 @@
   }
 
   &__info {
+    .cart_item_price__block {
+      padding-left: 0;
+      padding-right: 0;
+      margin-top: 4px;
+      justify-content: flex-start;
+    }
+
     &-bottom {
       margin-top: 40px;
 

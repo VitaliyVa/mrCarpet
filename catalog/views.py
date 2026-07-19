@@ -394,7 +394,6 @@ def favourites(request):
 def product(request, slug):
     from django.urls import reverse
 
-    from project.seo_content import product_tldr
     from project.seo_jsonld import (
         breadcrumb_graph,
         dumps_jsonld,
@@ -418,7 +417,6 @@ def product(request, slug):
         "images": images,
         "ar_ready": product.ar_status == Product.AR_STATUS_READY
         and bool(product.ar_texture),
-        "product_tldr": product_tldr(product),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
         "analytics_view_item": _analytics_view_item_payload(product),
     }
