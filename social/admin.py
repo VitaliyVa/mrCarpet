@@ -2,18 +2,47 @@
 
 from __future__ import annotations
 
+from django import forms
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 
-from social.models import SocialDelivery, SocialPost, SocialSettings
-from social.services.publish import enqueue_publish, ensure_deliveries
+from social.models import SocialDelivery, SocialPost, SocialPostImage, SocialSettings
+from social.services.publish import (
+    enqueue_publish,
+    ensure_deliveries,
+    validate_post_for_publish,
+)
+from social.services.tg_isolation import isolation_issues
 from social.services.wan_i2v import (
     WanBudgetError,
     WanConfigError,
     WanGenerateError,
     generate_draft_from_product,
 )
+
+
+class SocialSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SocialSettings
+        fields = "__all__"
+
+    def clean(self):
+        cleaned = super().clean()
+        issues = isolation_issues(
+            channel_id=cleaned.get("products_channel_id") or "",
+            discussion_id=cleaned.get("products_discussion_chat_id") or "",
+        )
+        if issues:
+            raise forms.ValidationError(issues)
+        return cleaned
+
+
+class SocialPostImageInline(admin.TabularInline):
+    model = SocialPostImage
+    extra = 2
+    ordering = ("sort_order", "id")
+    fields = ("sort_order", "image")
 
 
 class SocialDeliveryInline(admin.TabularInline):
@@ -37,6 +66,7 @@ class SocialDeliveryInline(admin.TabularInline):
 class SocialPostAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "media_kind",
         "product",
         "status",
         "targets",
@@ -44,11 +74,18 @@ class SocialPostAdmin(admin.ModelAdmin):
         "created",
         "published_at",
     )
-    list_filter = ("status", "ai_generated", "target_instagram", "target_facebook", "target_tiktok")
+    list_filter = (
+        "media_kind",
+        "status",
+        "ai_generated",
+        "target_instagram",
+        "target_facebook",
+        "target_tiktok",
+    )
     search_fields = ("caption", "product__title", "promo_code")
     autocomplete_fields = ("product",)
     readonly_fields = ("status", "published_at", "last_error", "ai_generated", "created", "updated")
-    inlines = [SocialDeliveryInline]
+    inlines = [SocialPostImageInline, SocialDeliveryInline]
     actions = ("action_publish", "action_generate_ai_draft")
 
     fieldsets = (
@@ -56,13 +93,18 @@ class SocialPostAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": (
+                    "media_kind",
                     "product",
                     "video",
                     "cover",
                     "status",
                     "published_at",
                     "last_error",
-                )
+                ),
+                "description": (
+                    "video: завантаж MP4. photos: додай зображення в inline Gallery "
+                    "(1 = single, 2–10 = carousel / slideshow)."
+                ),
             },
         ),
         (
@@ -96,7 +138,7 @@ class SocialPostAdmin(admin.ModelAdmin):
                 "description": (
                     "Privacy level must be chosen explicitly (no silent default). "
                     "Until TikTok app audit passes, posts are forced to SELF_ONLY. "
-                    "Music usage must be confirmed. See "
+                    "Music usage must be confirmed (video + photo). See "
                     "https://developers.tiktok.com/doc/content-sharing-guidelines"
                 ),
             },
@@ -122,26 +164,12 @@ class SocialPostAdmin(admin.ModelAdmin):
     def action_publish(self, request, queryset):
         n = 0
         for post in queryset:
-            if not post.video:
+            err = validate_post_for_publish(post)
+            if err:
                 self.message_user(
-                    request, f"Post #{post.pk}: no video", level=messages.ERROR
+                    request, f"Post #{post.pk}: {err}", level=messages.ERROR
                 )
                 continue
-            if post.target_tiktok:
-                if not (post.tt_privacy_level or "").strip():
-                    self.message_user(
-                        request,
-                        f"Post #{post.pk}: set TikTok privacy level",
-                        level=messages.ERROR,
-                    )
-                    continue
-                if not post.tt_music_usage_confirmed:
-                    self.message_user(
-                        request,
-                        f"Post #{post.pk}: confirm TikTok music usage",
-                        level=messages.ERROR,
-                    )
-                    continue
             ensure_deliveries(post)
             post.status = SocialPost.Status.QUEUED
             post.save(update_fields=["status", "updated"])
@@ -152,6 +180,13 @@ class SocialPostAdmin(admin.ModelAdmin):
     @admin.action(description="Generate AI video draft (Wan I2V)")
     def action_generate_ai_draft(self, request, queryset):
         for post in queryset:
+            if post.media_kind != SocialPost.MediaKind.VIDEO:
+                self.message_user(
+                    request,
+                    f"Post #{post.pk}: AI draft only for media_kind=video",
+                    level=messages.ERROR,
+                )
+                continue
             try:
                 generate_draft_from_product(post)
                 self.message_user(
@@ -243,6 +278,8 @@ class SocialDeliveryAdmin(admin.ModelAdmin):
 
 @admin.register(SocialSettings)
 class SocialSettingsAdmin(admin.ModelAdmin):
+    form = SocialSettingsForm
+
     def has_add_permission(self, request):
         return not SocialSettings.objects.exists()
 
@@ -267,7 +304,11 @@ class SocialSettingsAdmin(admin.ModelAdmin):
                     "products_discussion_chat_id",
                     "products_bot_replies",
                 ),
-                "description": "See social/README.md for channel setup.",
+                "description": (
+                    "IDs тут (Social settings), не в Telegram settings. "
+                    "family chat_id ≠ channel ≠ discussion — інакше бот "
+                    "змішає ордери/AI з публічними постами. Див. social/README.md."
+                ),
             },
         ),
     )

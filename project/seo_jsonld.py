@@ -97,6 +97,14 @@ def offer_shipping_details() -> dict[str, Any] | None:
     }
 
 
+ORG_SAME_AS = (
+    "https://www.facebook.com/mrcarpet24/",
+    "https://www.instagram.com/mr.carpet.shop/",
+    "https://www.tiktok.com/@mrcarpet24",
+    "https://t.me/mrcarpet24",
+)
+
+
 def organization_graph(request) -> dict[str, Any]:
     logo = absolute_uri(request, "/static/utils/assets/brand/mr-carpet-logo.png")
     return {
@@ -108,6 +116,7 @@ def organization_graph(request) -> dict[str, Any]:
         "logo": logo,
         "email": ORG_EMAIL,
         "telephone": ORG_PHONE,
+        "sameAs": list(ORG_SAME_AS),
         "address": {
             "@type": "PostalAddress",
             "streetAddress": ORG_STREET,

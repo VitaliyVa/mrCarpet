@@ -61,6 +61,10 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
         self.assertEqual(policy["merchantReturnDays"], 14)
         self.assertEqual(policy["applicableCountry"], "UA")
         self.assertIn("/refund/", policy["merchantReturnLink"])
+        self.assertIn(
+            "https://www.instagram.com/mr.carpet.shop/", org["sameAs"]
+        )
+        self.assertEqual(len(org["sameAs"]), 4)
 
     def test_single_product_merchant_fields(self):
         product = _product()

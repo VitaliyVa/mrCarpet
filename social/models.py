@@ -76,12 +76,23 @@ class SocialPost(AbstractCreatedUpdated):
         PARTIAL = "partial", "Partial success"
         FAILED = "failed", "Failed"
 
+    class MediaKind(models.TextChoices):
+        VIDEO = "video", "Video"
+        PHOTOS = "photos", "Photo gallery"
+
     product = models.ForeignKey(
         "catalog.Product",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="social_posts",
+    )
+    media_kind = models.CharField(
+        max_length=16,
+        choices=MediaKind.choices,
+        default=MediaKind.VIDEO,
+        db_index=True,
+        help_text="video → Reels/FB/TT video; photos → IG/FB/TT photo carousel.",
     )
     video = models.FileField(
         upload_to="social/videos/%Y/%m/",
@@ -158,6 +169,27 @@ class SocialPost(AbstractCreatedUpdated):
         from social.services.media_urls import product_share_url
 
         return product_share_url(self)
+
+    def ordered_images(self):
+        return self.images.order_by("sort_order", "id")
+
+
+class SocialPostImage(AbstractCreatedUpdated):
+    post = models.ForeignKey(
+        SocialPost,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="social/images/%Y/%m/")
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ("sort_order", "id")
+        verbose_name = "Social post image"
+        verbose_name_plural = "Social post images"
+
+    def __str__(self) -> str:
+        return f"SocialPostImage {self.pk} post={self.post_id} #{self.sort_order}"
 
 
 class SocialDelivery(AbstractCreatedUpdated):

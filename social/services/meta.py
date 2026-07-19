@@ -1,4 +1,4 @@
-"""Meta Graph API — Instagram Reels + Facebook Page video."""
+"""Meta Graph API — Instagram Reels/photos + Facebook Page video/photos."""
 
 from __future__ import annotations
 
@@ -141,6 +141,126 @@ def publish_facebook_page_video(*, video_url: str, caption: str, title: str = ""
     return {
         "external_id": video_id,
         "external_url": f"https://www.facebook.com/{page}/videos/{video_id}/",
+    }
+
+
+def publish_instagram_photos(*, image_urls: list[str], caption: str) -> dict[str, str]:
+    """Single IMAGE or CAROUSEL (2–10) via Graph Content Publishing."""
+    ig = _ig_user_id()
+    if not ig:
+        raise MetaConfigError("META_IG_USER_ID empty")
+    urls = [u for u in image_urls if (u or "").startswith("https://")]
+    if not urls:
+        raise MetaPublishError("Need at least one public HTTPS image_url")
+    if len(urls) > 10:
+        raise MetaPublishError("Instagram carousel supports max 10 images")
+
+    if len(urls) == 1:
+        created = _graph(
+            "POST",
+            f"{ig}/media",
+            data={"image_url": urls[0], "caption": caption or ""},
+        )
+        container_id = str(created.get("id") or "")
+        if not container_id:
+            raise MetaPublishError(f"No IG image container: {created}")
+        _wait_container(container_id)
+        published = _graph(
+            "POST", f"{ig}/media_publish", data={"creation_id": container_id}
+        )
+        media_id = str(published.get("id") or container_id)
+        return {
+            "external_id": media_id,
+            "external_url": f"https://www.instagram.com/p/{media_id}/",
+        }
+
+    child_ids: list[str] = []
+    for url in urls:
+        child = _graph(
+            "POST",
+            f"{ig}/media",
+            data={"image_url": url, "is_carousel_item": "true"},
+        )
+        cid = str(child.get("id") or "")
+        if not cid:
+            raise MetaPublishError(f"No IG carousel child: {child}")
+        _wait_container(cid)
+        child_ids.append(cid)
+
+    parent = _graph(
+        "POST",
+        f"{ig}/media",
+        data={
+            "media_type": "CAROUSEL",
+            "children": ",".join(child_ids),
+            "caption": caption or "",
+        },
+    )
+    parent_id = str(parent.get("id") or "")
+    if not parent_id:
+        raise MetaPublishError(f"No IG carousel container: {parent}")
+    _wait_container(parent_id)
+    published = _graph(
+        "POST", f"{ig}/media_publish", data={"creation_id": parent_id}
+    )
+    media_id = str(published.get("id") or parent_id)
+    return {
+        "external_id": media_id,
+        "external_url": f"https://www.instagram.com/p/{media_id}/",
+    }
+
+
+def publish_facebook_page_photos(*, image_urls: list[str], caption: str) -> dict[str, str]:
+    """One photo or multi-photo feed post via unpublished photos + attached_media."""
+    page = _page_id()
+    if not page:
+        raise MetaConfigError("META_PAGE_ID empty")
+    urls = [u for u in image_urls if (u or "").startswith("https://")]
+    if not urls:
+        raise MetaPublishError("Need at least one public HTTPS image_url")
+
+    if len(urls) == 1:
+        published = _graph(
+            "POST",
+            f"{page}/photos",
+            data={
+                "url": urls[0],
+                "caption": caption or "",
+                "published": "true",
+            },
+        )
+        photo_id = str(published.get("id") or published.get("post_id") or "")
+        if not photo_id:
+            raise MetaPublishError(f"No FB photo id: {published}")
+        return {
+            "external_id": photo_id,
+            "external_url": f"https://www.facebook.com/{page}/photos/{photo_id}/",
+        }
+
+    media_fbids: list[str] = []
+    for url in urls:
+        unpublished = _graph(
+            "POST",
+            f"{page}/photos",
+            data={"url": url, "published": "false"},
+        )
+        fid = str(unpublished.get("id") or "")
+        if not fid:
+            raise MetaPublishError(f"No unpublished FB photo id: {unpublished}")
+        media_fbids.append(fid)
+
+    # Graph accepts attached_media[0]=… form fields
+    data: dict[str, Any] = {"message": caption or ""}
+    for i, fid in enumerate(media_fbids):
+        data[f"attached_media[{i}]"] = f'{{"media_fbid":"{fid}"}}'
+
+    published = _graph("POST", f"{page}/feed", data=data)
+    post_id = str(published.get("id") or "")
+    if not post_id:
+        raise MetaPublishError(f"No FB feed post id: {published}")
+    return {
+        "external_id": post_id,
+        "external_url": f"https://www.facebook.com/{post_id}",
     }
 
 

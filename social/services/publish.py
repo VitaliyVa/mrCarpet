@@ -16,6 +16,34 @@ from social.services.media_urls import absolute_media_url, build_caption
 logger = logging.getLogger(__name__)
 
 
+def validate_post_for_publish(post: SocialPost) -> str:
+    """Return error message or empty string if OK to queue."""
+    if not any(
+        (post.target_instagram, post.target_facebook, post.target_tiktok)
+    ):
+        return "No target platforms selected"
+
+    kind = post.media_kind or SocialPost.MediaKind.VIDEO
+    if kind == SocialPost.MediaKind.VIDEO:
+        if not post.video:
+            return "No video file"
+    elif kind == SocialPost.MediaKind.PHOTOS:
+        count = post.images.count()
+        if count < 1:
+            return "Add at least one gallery image"
+        if count > 10:
+            return "Max 10 images for gallery posts"
+    else:
+        return f"Unknown media_kind={kind}"
+
+    if post.target_tiktok:
+        if not (post.tt_privacy_level or "").strip():
+            return "set TikTok privacy level"
+        if not post.tt_music_usage_confirmed:
+            return "confirm TikTok music usage"
+    return ""
+
+
 def enqueue_publish(post_id: int) -> None:
     """Queue deliveries and run publish in a background thread."""
 
@@ -60,24 +88,40 @@ def ensure_deliveries(post: SocialPost) -> list[SocialDelivery]:
     return out
 
 
+def _image_urls(post: SocialPost) -> list[str]:
+    urls: list[str] = []
+    for img in post.ordered_images():
+        if not img.image:
+            continue
+        url = absolute_media_url(img.image)
+        if url.startswith("https://"):
+            urls.append(url)
+    return urls
+
+
 def publish_post(post_id: int) -> SocialPost:
     close_old_connections()
     post = (
         SocialPost.objects.select_related("product")
-        .prefetch_related("deliveries")
+        .prefetch_related("deliveries", "images")
         .filter(pk=post_id)
         .first()
     )
     if not post:
         raise ValueError(f"SocialPost {post_id} not found")
-    if not post.video:
+
+    err = validate_post_for_publish(post)
+    if err:
         post.status = SocialPost.Status.FAILED
-        post.last_error = "No video file"
+        post.last_error = err
         post.save(update_fields=["status", "last_error", "updated"])
         return post
 
-    video_url = absolute_media_url(post.video)
+    kind = post.media_kind or SocialPost.MediaKind.VIDEO
+    video_url = absolute_media_url(post.video) if post.video else ""
     cover_url = absolute_media_url(post.cover) if post.cover else ""
+    image_urls = _image_urls(post) if kind == SocialPost.MediaKind.PHOTOS else []
+
     deliveries = ensure_deliveries(post)
     post.status = SocialPost.Status.PUBLISHING
     post.last_error = ""
@@ -92,7 +136,14 @@ def publish_post(post_id: int) -> SocialPost:
         try:
             delivery.status = SocialDelivery.Status.UPLOADING
             delivery.save(update_fields=["status", "updated"])
-            _publish_one(post, delivery, video_url=video_url, cover_url=cover_url)
+            _publish_one(
+                post,
+                delivery,
+                kind=kind,
+                video_url=video_url,
+                cover_url=cover_url,
+                image_urls=image_urls,
+            )
             if delivery.status in (
                 SocialDelivery.Status.PUBLISHED,
                 SocialDelivery.Status.PUBLISHED_PRIVATE,
@@ -129,11 +180,14 @@ def _publish_one(
     post: SocialPost,
     delivery: SocialDelivery,
     *,
+    kind: str,
     video_url: str,
     cover_url: str,
+    image_urls: list[str],
 ) -> None:
     platform = delivery.platform
     caption = build_caption(post, platform)
+    is_photos = kind == SocialPost.MediaKind.PHOTOS
 
     if platform == SocialDelivery.Platform.INSTAGRAM:
         if not meta.meta_configured(need_ig=True):
@@ -142,9 +196,14 @@ def _publish_one(
                 error="Meta IG not configured (META_PAGE_ACCESS_TOKEN / META_IG_USER_ID)",
             )
             return
-        result = meta.publish_instagram_reel(
-            video_url=video_url, caption=caption, cover_url=cover_url
-        )
+        if is_photos:
+            result = meta.publish_instagram_photos(
+                image_urls=image_urls, caption=caption
+            )
+        else:
+            result = meta.publish_instagram_reel(
+                video_url=video_url, caption=caption, cover_url=cover_url
+            )
         delivery.mark(
             SocialDelivery.Status.PUBLISHED,
             external_id=result.get("external_id", ""),
@@ -159,10 +218,15 @@ def _publish_one(
                 error="Meta FB not configured (META_PAGE_ACCESS_TOKEN / META_PAGE_ID)",
             )
             return
-        title = post.product.title if post.product_id else "mr.Carpet"
-        result = meta.publish_facebook_page_video(
-            video_url=video_url, caption=caption, title=title
-        )
+        if is_photos:
+            result = meta.publish_facebook_page_photos(
+                image_urls=image_urls, caption=caption
+            )
+        else:
+            title = post.product.title if post.product_id else "mr.Carpet"
+            result = meta.publish_facebook_page_video(
+                video_url=video_url, caption=caption, title=title
+            )
         delivery.mark(
             SocialDelivery.Status.PUBLISHED,
             external_id=result.get("external_id", ""),
@@ -177,16 +241,26 @@ def _publish_one(
                 error="TikTok not configured (TIKTOK_ACCESS_TOKEN / TIKTOK_OPEN_ID)",
             )
             return
-        result = tiktok.publish_video(
-            video_url=video_url,
-            caption=caption,
-            privacy_level=post.tt_privacy_level,
-            allow_comment=post.tt_allow_comment,
-            allow_duet=post.tt_allow_duet,
-            allow_stitch=post.tt_allow_stitch,
-            commercial_disclosure=post.tt_commercial_disclosure,
-            music_usage_confirmed=post.tt_music_usage_confirmed,
-        )
+        if is_photos:
+            result = tiktok.publish_photos(
+                image_urls=image_urls,
+                caption=caption,
+                privacy_level=post.tt_privacy_level,
+                allow_comment=post.tt_allow_comment,
+                commercial_disclosure=post.tt_commercial_disclosure,
+                music_usage_confirmed=post.tt_music_usage_confirmed,
+            )
+        else:
+            result = tiktok.publish_video(
+                video_url=video_url,
+                caption=caption,
+                privacy_level=post.tt_privacy_level,
+                allow_comment=post.tt_allow_comment,
+                allow_duet=post.tt_allow_duet,
+                allow_stitch=post.tt_allow_stitch,
+                commercial_disclosure=post.tt_commercial_disclosure,
+                music_usage_confirmed=post.tt_music_usage_confirmed,
+            )
         privacy = result.get("privacy") or post.tt_privacy_level
         status = (
             SocialDelivery.Status.PUBLISHED_PRIVATE

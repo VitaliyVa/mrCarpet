@@ -14,6 +14,7 @@ from social.models import SocialSettings
 logger = logging.getLogger(__name__)
 
 INIT_URL = "https://open.tiktokapis.com/v2/post/publish/video/init/"
+PHOTO_INIT_URL = "https://open.tiktokapis.com/v2/post/publish/content/init/"
 STATUS_URL = "https://open.tiktokapis.com/v2/post/publish/status/fetch/"
 CREATOR_INFO_URL = "https://open.tiktokapis.com/v2/post/publish/creator_info/query/"
 HTTP_TIMEOUT = 60
@@ -169,6 +170,82 @@ def publish_video(
         raise TikTokPublishError(f"No publish_id: {data}")
 
     status_payload = _poll_status(publish_id)
+    return _result_from_status(status_payload, publish_id=publish_id, privacy=privacy)
+
+
+def publish_photos(
+    *,
+    image_urls: list[str],
+    caption: str,
+    privacy_level: str,
+    allow_comment: bool = True,
+    commercial_disclosure: bool = False,
+    music_usage_confirmed: bool = False,
+    cover_index: int = 0,
+) -> dict[str, str]:
+    """TikTok photo / slideshow via Content Posting PHOTO + PULL_FROM_URL."""
+    if not tiktok_configured():
+        raise TikTokConfigError("TikTok not configured")
+    urls = [u for u in image_urls if (u or "").startswith("https://")]
+    if not urls:
+        raise TikTokPublishError("Need at least one public HTTPS image_url")
+    if len(urls) > 35:
+        raise TikTokPublishError("TikTok photo post supports max 35 images")
+    if not music_usage_confirmed:
+        raise TikTokPublishError("TikTok requires music usage confirmation before publish")
+
+    privacy = _normalize_privacy(privacy_level)
+    if commercial_disclosure and not audit_passed():
+        raise TikTokPublishError(
+            "Commercial disclosure requires public posts; wait for TikTok audit"
+        )
+
+    cover = max(0, min(cover_index, len(urls) - 1))
+    title = (caption or "")[:90]
+    description = (caption or "")[:4000]
+    payload: dict[str, Any] = {
+        "media_type": "PHOTO",
+        "post_mode": "DIRECT_POST",
+        "post_info": {
+            "title": title,
+            "description": description,
+            "privacy_level": privacy,
+            "disable_comment": not allow_comment,
+            "auto_add_music": True,
+        },
+        "source_info": {
+            "source": "PULL_FROM_URL",
+            "photo_images": urls,
+            "photo_cover_index": cover,
+        },
+    }
+    if commercial_disclosure:
+        payload["post_info"]["brand_content_toggle"] = True
+        payload["post_info"]["brand_organic_toggle"] = True
+
+    resp = requests.post(
+        PHOTO_INIT_URL, headers=_headers(), json=payload, timeout=HTTP_TIMEOUT
+    )
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise TikTokPublishError(f"photo init invalid JSON: {resp.text[:300]}") from exc
+
+    err = data.get("error") or {}
+    if resp.status_code >= 400 or str(err.get("code", "ok")).lower() not in ("ok", ""):
+        raise TikTokPublishError(f"TikTok photo init failed: {data}")
+
+    publish_id = str((data.get("data") or {}).get("publish_id") or "")
+    if not publish_id:
+        raise TikTokPublishError(f"No publish_id: {data}")
+
+    status_payload = _poll_status(publish_id)
+    return _result_from_status(status_payload, publish_id=publish_id, privacy=privacy)
+
+
+def _result_from_status(
+    status_payload: dict[str, Any], *, publish_id: str, privacy: str
+) -> dict[str, str]:
     external_ids = status_payload.get("publicaly_available_post_id") or status_payload.get(
         "publicly_available_post_id"
     )
@@ -179,12 +256,11 @@ def publish_video(
     elif isinstance(external_ids, str):
         post_id = external_ids
 
-    result = {
+    return {
         "external_id": post_id or publish_id,
         "external_url": "",
         "privacy": privacy,
     }
-    return result
 
 
 def _poll_status(publish_id: str) -> dict[str, Any]:
