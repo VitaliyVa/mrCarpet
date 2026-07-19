@@ -92,9 +92,10 @@ jobs:
         docker compose -f docker-compose.prod.yml up -d web
 
         echo "Waiting until gunicorn answers inside web..."
+        # Host header обов'язковий: ALLOWED_HOSTS строгий, голий 127.0.0.1 дав би 400
         for i in $(seq 1 30); do
           if docker compose -f docker-compose.prod.yml exec -T web \
-            python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=2)" \
+            python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/', headers={'Host': 'mrcarpet24.com'}), timeout=2)" \
             >/dev/null 2>&1; then
             echo "web ready (attempt $i)"
             break

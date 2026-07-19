@@ -40,6 +40,10 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [
     h.strip() for h in config('ALLOWED_HOSTS', default='*').split(',') if h.strip()
 ]
+# Внутрішні healthcheck (deploy health-wait, docker exec) ходять без домену
+for _h in ('127.0.0.1', 'localhost'):
+    if _h not in ALLOWED_HOSTS and '*' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_h)
 
 # SEO / indexing. Local/dev default False; prod sets SEO_INDEXING_ENABLED=true
 # via docker-compose.prod.yml → robots Allow + index,follow on public pages.
