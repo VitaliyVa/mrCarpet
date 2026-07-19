@@ -1,0 +1,38 @@
+{# Inline GA4 ecommerce from ga4_cart json (same pattern as PDP view_item). #}
+{% if analytics_enabled and ga4_cart and ga4_cart.items %}
+<script>
+(function () {
+  var eventName = "{{ ga4_event_name|escapejs }}";
+  if (!eventName) return;
+  var key = "ga4_" + eventName;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch (e) {}
+  var payload = {
+    currency: "{{ ga4_cart.currency|default:'UAH'|escapejs }}",
+    value: {{ ga4_cart.value|default:0 }},
+    items: [
+      {% for it in ga4_cart.items %}
+      {
+        item_id: "{{ it.item_id|escapejs }}",
+        item_name: "{{ it.item_name|escapejs }}",
+        item_brand: "{{ it.item_brand|default:'mr.Carpet'|escapejs }}",
+        item_category: "{{ it.item_category|default:''|escapejs }}",
+        item_variant: "{{ it.item_variant|default:''|escapejs }}",
+        price: {{ it.price|default:0 }},
+        quantity: {{ it.quantity|default:1 }}
+        {% if it.index != None %}, index: {{ it.index }}{% endif %}
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  };
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ ecommerce: null });
+  window.dataLayer.push({ event: eventName, ecommerce: payload });
+  if (typeof gtag === "function") {
+    gtag("event", eventName, payload);
+  }
+})();
+</script>
+{% endif %}

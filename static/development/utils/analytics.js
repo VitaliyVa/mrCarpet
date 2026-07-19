@@ -29,9 +29,7 @@ export function trackEvent(name, params = {}) {
   if (!name) return;
   const safe = { ...params };
   ensureDataLayer().push({ event: name, ...safe });
-  if (typeof window.gtag === "function") {
-    window.gtag("event", name, safe);
-  }
+  callGtag("event", name, safe);
 }
 
 export function trackEcommerce(name, ecommerce = {}) {
@@ -44,14 +42,33 @@ export function trackEcommerce(name, ecommerce = {}) {
     const v = Number(payload.value);
     payload.value = Number.isFinite(v) ? v : 0;
   }
+  // Ensure items is a real array for GA4 validation.
+  if (payload.items && !Array.isArray(payload.items)) {
+    payload.items = [];
+  }
   const dl = ensureDataLayer();
   // Clear previous ecommerce object (GTM pattern).
   dl.push({ ecommerce: null });
   dl.push({ event: name, ecommerce: payload });
-  // gtag expects flat event params (not nested under ecommerce).
-  if (typeof window.gtag === "function") {
-    window.gtag("event", name, payload);
-  }
+  // gtag expects flat event params (items/value/currency at top level).
+  callGtag("event", name, payload);
+}
+
+/** gtag stub from head may exist; real library loads async — queue until ready. */
+function callGtag(command, name, params) {
+  const run = () => {
+    if (typeof window.gtag === "function") {
+      window.gtag(command, name, params);
+      return true;
+    }
+    return false;
+  };
+  if (run()) return;
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts += 1;
+    if (run() || attempts >= 40) clearInterval(timer);
+  }, 250);
 }
 
 export function itemFromProductEl(el, overrides = {}) {
@@ -127,16 +144,42 @@ function trackPurchaseFromPage() {
   trackEcommerce("purchase", purchase);
 }
 
+function markGa4Once(key) {
+  if (!key) return false;
+  try {
+    if (sessionStorage.getItem(key)) return false;
+    sessionStorage.setItem(key, "1");
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 function trackViewCartOrCheckout() {
+  // Prefer inline template event (ga4_cart_event.html); this is a fallback.
   const cart = readJsonScript("ga4-cart-data");
   if (!cart?.items?.length) return;
 
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const path = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
   if (path === "/cart") {
+    if (!markGa4Once("ga4_view_cart")) return;
     trackEcommerce("view_cart", cart);
   } else if (path === "/checkout") {
+    if (!markGa4Once("ga4_begin_checkout")) return;
     trackEcommerce("begin_checkout", cart);
   }
+}
+
+function bindBeginCheckoutCta() {
+  // Fire when leaving cart toward checkout (pageview alone can be missed).
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest('a[href*="/checkout"]');
+    if (!link) return;
+    const cart = readJsonScript("ga4-cart-data");
+    if (!cart?.items?.length) return;
+    if (!markGa4Once("ga4_begin_checkout")) return;
+    trackEcommerce("begin_checkout", cart);
+  });
 }
 
 function trackViewItemList() {
@@ -283,13 +326,23 @@ export function bindGlobalAnalyticsHooks() {
   if (window.__mrAnalyticsHooksBound) return;
   window.__mrAnalyticsHooksBound = true;
 
-  trackPurchaseFromPage();
-  trackViewCartOrCheckout();
-  trackViewItemList();
+  const runPageHooks = () => {
+    trackPurchaseFromPage();
+    trackViewCartOrCheckout();
+    trackViewItemList();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runPageHooks);
+  } else {
+    runPageHooks();
+  }
+
   bindSelectItem();
   bindContactClicks();
   bindCtaClicks();
   bindCheckoutExtras();
+  bindBeginCheckoutCta();
 }
 
 const api = {

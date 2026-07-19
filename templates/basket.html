@@ -181,4 +181,7 @@
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/basket/index.js?v={{ static_v }}"></script>
 <script src="/static/development/pages/promocode.js?v={{ static_v }}"></script>
+{% with ga4_event_name="view_cart" %}
+{% include "includes/ga4_cart_event.html" %}
+{% endwith %}
 {% endblock scripts %}

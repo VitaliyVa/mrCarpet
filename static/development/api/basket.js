@@ -25,18 +25,22 @@ export const addToBasket = async (product, onSucces, analyticsMeta) => {
       (product?.analyticsItem
         ? product.analyticsItem
         : {
-            item_id: String(product.product || ""),
+            item_id: String(product.product || product.product_id || ""),
             item_brand: "mr.Carpet",
             quantity: product.quantity || 1,
             price: 0,
           });
-    if (item?.item_id) {
+    const itemId = String(item?.item_id || product?.product || "").trim();
+    if (itemId) {
       const qty = item.quantity || product.quantity || 1;
+      const safeItem = { ...item, item_id: itemId, quantity: qty };
       trackEcommerce("add_to_cart", {
         currency: CURRENCY,
-        value: itemsValue([{ ...item, quantity: qty }]),
-        items: [{ ...item, quantity: qty }],
+        value: itemsValue([safeItem]),
+        items: [safeItem],
       });
+    } else if (typeof console !== "undefined" && console.warn) {
+      console.warn("[ga4] add_to_cart skipped: empty item_id", product);
     }
 
     showSuccess(data?.message || "Товар додано в кошик");

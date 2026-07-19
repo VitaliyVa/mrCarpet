@@ -522,4 +522,7 @@
     {% endif %}
 </script>
 <script src="/static/source/pages/basket/index.js?v={{ static_v }}"></script>
+{% with ga4_event_name="begin_checkout" %}
+{% include "includes/ga4_cart_event.html" %}
+{% endwith %}
 {% endblock scripts %}

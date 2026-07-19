@@ -51,7 +51,7 @@ GA4_SERVICE_ACCOUNT_JSON = config("GA4_SERVICE_ACCOUNT_JSON", default="")
 GOOGLE_APPLICATION_CREDENTIALS = config("GOOGLE_APPLICATION_CREDENTIALS", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
-STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719e")
+STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719g")
 
 # Behind nginx TLS termination (see config/mrcarpet.docker X-Forwarded-Proto).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

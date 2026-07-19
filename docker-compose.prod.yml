@@ -102,6 +102,30 @@ services:
     networks:
       - mrcarpet_network
 
+  ga4-weekly:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    user: "0:0"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID}
+      - GA4_API_SECRET=${GA4_API_SECRET}
+      - GA4_PROPERTY_ID=${GA4_PROPERTY_ID}
+      - GA4_SERVICE_ACCOUNT_JSON=${GA4_SERVICE_ACCOUNT_JSON}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - TZ=Europe/Kyiv
+    command: python manage.py ga4_weekly_scheduler
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
 volumes:
   static_volume:
   media_volume:
