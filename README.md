@@ -157,13 +157,36 @@ Create a `.env` file or set environment variables:
 ```env
 DEBUG=False
 ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+# LiqPay sandbox відв'язаний від DEBUG. false = бойові платежі (потрібні бойові ключі!)
+LIQPAY_SANDBOX=true
+SECRET_KEY=your_django_secret_key
 NOVA_POSHTA_API_KEY=your_key
+UKR_POSHTA_BEARER=your_ukrposhta_bearer_token
 EMAIL_HOST_USER=your_email@gmail.com
 EMAIL_HOST_PASSWORD=your_password
 LIQPAY_PUBLIC_KEY=your_public_key
 LIQPAY_PRIVATE_KEY=your_private_key
 REPLICATE_API_TOKEN=your_replicate_token
+# Тимчасові CSRF origins для локальних webhook-тестів (ngrok тощо):
+# CSRF_EXTRA_TRUSTED_ORIGINS=https://xxxx.ngrok-free.app
 ```
+
+## Frontend Build (Webpack)
+
+Прод роздає закомічені бандли зі `static/source/pages/` — **білд на деплої не запускається**.
+Джерела фронтенду живуть у `static/development/`. Після будь-якої зміни JS/SCSS:
+
+```bash
+cd static
+npm run build   # збирає development/ -> source/pages/
+# закомітити і source/pages/, і development/
+```
+
+CI-workflow `verify-static.yml` перевіряє, що закомічений бандл відповідає збірці
+з сорсів, і червоніє при розсинхроні (наприклад, якщо правили компільовані файли
+руками або забули перезібрати). Потрібен Node 16 локально? Ні — будь-який Node,
+але на Node 17+ потрібен `NODE_OPTIONS=--openssl-legacy-provider` (webpack 4 + OpenSSL 3).
+Не редагуйте `static/source/pages/**` вручну.
 
 ## Common Commands
 

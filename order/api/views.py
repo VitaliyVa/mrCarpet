@@ -20,11 +20,6 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
-        try:
-            request.data._mutable = True
-        except Exception:
-            pass
-
         data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
         cart = get_cart(request)
 

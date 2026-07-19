@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import redirect
 
 from ..liqpay_payment import LiqPay
@@ -9,6 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from ..utils import get_liqpay_response, create_payment
 
+logger = logging.getLogger(__name__)
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -17,18 +21,6 @@ def pay_callback(request):
     Callback endpoint для отримання результатів оплати від LiqPay
     Webhook URL: /api/pay-callback/
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    # Логуємо вхідний запит (використовуємо print для гарантованого виводу)
-    print("=" * 50)
-    print("=== WEBHOOK ОТРИМАНО ВІД LIQPAY ===")
-    print(f"Method: {request.method}")
-    print(f"POST data: {dict(request.POST)}")
-    print(f"Remote address: {request.META.get('REMOTE_ADDR')}")
-    print(f"User-Agent: {request.META.get('HTTP_USER_AGENT', 'N/A')}")
-    print("=" * 50)
-    
     logger.info("=== WEBHOOK ОТРИМАНО ===")
     logger.info(f"Method: {request.method}")
     logger.info(f"POST data: {request.POST}")

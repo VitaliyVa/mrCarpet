@@ -1,9 +1,14 @@
+import logging
+from decimal import Decimal
+
 from django.db import models
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from s_content.models import AbstractCreatedUpdated
 from users.models import CustomUser
 from .price import cart_total_price
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 class Cart(AbstractCreatedUpdated):
@@ -51,9 +56,6 @@ class Cart(AbstractCreatedUpdated):
         return self.cart_products.all().aggregate(q=models.Sum("quantity"))["q"] or 0
 
     def apply_quantity(self):
-        from django.db import connection
-        from django.db.models import Sum, F
-        connection.force_debug_cursor = True
         with transaction.atomic():
             out_of_stock_products = []
             
@@ -79,7 +81,10 @@ class Cart(AbstractCreatedUpdated):
                     else:
                         product_attr.max_len = new_max_len
                     product_attr.save()
-                    print(f"Custom product (id={product_attr_id}): decreased max_len by {total_length_to_subtract}m, new max_len: {product_attr.max_len}")
+                    logger.debug(
+                        "apply_quantity: custom attr id=%s max_len -%sm, new max_len=%s",
+                        product_attr_id, total_length_to_subtract, product_attr.max_len,
+                    )
             
             # Обробляємо звичайні товари та пропускаємо кастомні (вони вже оброблені вище)
             for cart_product in self.cart_products.all():
@@ -93,13 +98,12 @@ class Cart(AbstractCreatedUpdated):
                 else:
                     out_of_stock_products.append(cart_product.product_attr)
             if out_of_stock_products:
-                print(out_of_stock_products)
+                logger.info("apply_quantity: out of stock: %s", out_of_stock_products)
                 error_message = [
                     f'Доступна кількість товару {product_attr.product.title}: {product_attr.quantity}'
                     for product_attr in out_of_stock_products
                 ]
                 raise ValidationError("\n".join(error_message))
-            print(len(connection.queries))
             self.save()
 
 

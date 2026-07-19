@@ -1,13 +1,19 @@
+import logging
+
 import xmltodict
 import json
 import requests
 
+from django.conf import settings
+
 from ukr_poshta.models import City, UkrOffice
+
+logger = logging.getLogger(__name__)
 
 # Example response string
 url = "https://www.ukrposhta.ua/address-classifier-ws/get_city_by_region_id_and_district_id_and_city_ua"
 headers = {
-    "Authorization": "Bearer 62f57bb7-db3d-3d62-ba7c-37ce30bf8bd6"
+    "Authorization": f"Bearer {settings.UKR_POSHTA_BEARER}"
 }
 
 
@@ -32,7 +38,7 @@ def import_cities():
             "city": obj["CITY_UA"]
         }
         result.append(City(**data))
-    print(result)
+    logger.info("Ukrposhta import_cities: %d cities parsed", len(result))
     City.objects.bulk_create(result)
 
 
@@ -48,7 +54,6 @@ def get_offices():
         # print(entries)
         for obj in entries:
             related_city = City.objects.filter(city_id=obj["CITY_ID"])
-            print(related_city)
             if related_city.exists():
                 data = {
                     "related_city": related_city.first(),
@@ -84,7 +89,6 @@ def get_office(city_id):
     try:
         city = City.objects.get(city_id=city_id)
         result = []
-        print(city)
         offices_url = f"https://www.ukrposhta.ua/address-classifier-ws/get_postoffices_by_postcode_cityid_cityvpzid?city_id={city_id}"
         r = requests.get(url=offices_url, headers=headers)
         xml_data = r.text
@@ -117,9 +121,9 @@ def get_office(city_id):
                 "type": entries["TYPE_LONG"]
             }
             result.append(data)
-        # print(result)
         return result
-    except:
+    except Exception:
+        logger.exception("Ukrposhta get_office failed for city_id=%s", city_id)
         return None
 
 

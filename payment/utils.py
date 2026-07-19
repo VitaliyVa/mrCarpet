@@ -12,6 +12,8 @@ from order.models import Order
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 def get_liqpay_keys():
     """Admin LiqPaySettings first, then env fallback (як Nova Poshta)."""
@@ -58,9 +60,7 @@ def get_liqpay_context(request):
     
     # Отримуємо URL для callback (використовуємо request для отримання домену)
     from django.urls import reverse
-    import logging
-    logger = logging.getLogger(__name__)
-    
+
     # Формуємо абсолютний URL для webhook
     # URL має бути: /api/pay-callback/ (оскільки payment.api.urls підключено через path('api/', ...))
     # ВАЖЛИВО: LiqPay вимагає HTTPS для webhook URL
@@ -74,14 +74,10 @@ def get_liqpay_context(request):
         # Переконаємося, що використовується HTTPS (LiqPay вимагає HTTPS для webhook)
         if server_url.startswith('http://'):
             server_url = server_url.replace('http://', 'https://', 1)
-            logger.warning(f"Змінено протокол на HTTPS для webhook URL")
-            print(f"[PAYMENT] УВАГА: Змінено протокол на HTTPS для webhook URL")
-        
+            logger.warning("Змінено протокол на HTTPS для webhook URL")
+
         logger.info(f"Webhook URL для LiqPay: {server_url}")
         logger.info(f"Callback path: {callback_path}")
-        print(f"[PAYMENT] Webhook URL для LiqPay: {server_url}")
-        print(f"[PAYMENT] Callback path: {callback_path}")
-        print(f"[PAYMENT] Повний URL буде відправлено в LiqPay: {server_url}")
     except Exception as e:
         logger.error(f"Помилка при формуванні webhook URL: {str(e)}")
         # Fallback - використовуємо прямий шлях з HTTPS
@@ -89,7 +85,6 @@ def get_liqpay_context(request):
         if server_url.startswith('http://'):
             server_url = server_url.replace('http://', 'https://', 1)
         logger.warning(f"Використовуємо fallback URL: {server_url}")
-        print(f"[PAYMENT] Fallback webhook URL: {server_url}")
     
     # Формуємо result_url (також має бути HTTPS)
     result_url = request.build_absolute_uri('/success/')
@@ -103,35 +98,20 @@ def get_liqpay_context(request):
         'description': description,
         'order_id': str(order.id),
         'version': '3',
-        'sandbox': 1 if settings.DEBUG else 0,  # sandbox mode тільки в режимі розробки
+        'sandbox': 1 if settings.LIQPAY_SANDBOX else 0,  # керується LIQPAY_SANDBOX, не DEBUG
         'server_url': server_url,
         'result_url': result_url,  # URL після успішної оплати (також має бути HTTPS)
     }
     
     # Логуємо параметри для діагностики
     logger.info(f"Параметри платежу LiqPay: {params}")
-    print("=" * 50)
-    print("[PAYMENT] Параметри платежу LiqPay:")
-    print(f"  action: {params['action']}")
-    print(f"  amount: {params['amount']}")
-    print(f"  currency: {params['currency']}")
-    print(f"  description: {params['description']}")
-    print(f"  order_id: {params['order_id']}")
-    print(f"  version: {params['version']}")
-    print(f"  sandbox: {params['sandbox']}")
-    print(f"  server_url: {params['server_url']}")
-    print(f"  result_url: {params['result_url']}")
-    print(f"  Public Key: {public_key[:10]}..." if public_key else "  Public Key: НЕ ВСТАНОВЛЕНО")
-    print("=" * 50)
-    
+
     signature = liqpay.cnb_signature(params)
     data = liqpay.cnb_data(params)
-    
+
     logger.info(f"Signature: {signature[:20]}...")
     logger.info(f"Data length: {len(data)}")
-    print(f"[PAYMENT] Signature (first 20 chars): {signature[:20]}...")
-    print(f"[PAYMENT] Data length: {len(data)}")
-    
+
     return signature, data
 
 def get_liqpay_response(request):
@@ -154,21 +134,15 @@ def get_liqpay_response(request):
         raise ValueError("Відсутні дані від LiqPay")
     
     # Логуємо для діагностики
-    import logging
-    logger = logging.getLogger(__name__)
     logger.info(f"Отримано signature: {signature}")
     logger.info(f"Отримано data (first 50 chars): {data[:50]}...")
-    print(f"[PAYMENT] Отримано signature: {signature}")
-    print(f"[PAYMENT] Отримано data (first 50 chars): {data[:50]}...")
-    
+
     # Декодуємо дані
     try:
         response = liqpay.decode_data_from_str(data, signature)
         logger.info(f"Декодована відповідь: {response}")
-        print(f"[PAYMENT] Декодована відповідь: {response}")
     except Exception as e:
         logger.error(f"Помилка декодування: {str(e)}")
-        print(f"[PAYMENT] Помилка декодування: {str(e)}")
         raise ValueError(f"Помилка декодування даних від LiqPay: {str(e)}")
     
     return response

@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -11,6 +13,8 @@ from order.models import Order
 from project.email_branding import wrap_plain_email
 from project.smtp_utils import send_smtp_mail
 from .models import CustomUser
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -108,12 +112,8 @@ def password_reset_confirm(request, uidb64, token):
     """
     Сторінка для встановлення нового паролю після переходу за посиланням з email.
     """
-    print("=" * 50)
-    print("[PASSWORD RESET CONFIRM] Запит отримано")
-    print(f"[PASSWORD RESET CONFIRM] Method: {request.method}")
-    print(f"[PASSWORD RESET CONFIRM] UID (base64): {uidb64}")
-    print(f"[PASSWORD RESET CONFIRM] Token: {token[:20]}...")
-    
+    logger.debug("Password reset confirm: method=%s uid=%s", request.method, uidb64)
+
     if request.method == 'POST':
         password = request.POST.get('password', '').strip()
         password2 = request.POST.get('password2', '').strip()
@@ -144,23 +144,22 @@ def password_reset_confirm(request, uidb64, token):
         
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            print(f"[PASSWORD RESET CONFIRM] UID декодовано: {uid}")
             user = CustomUser.objects.get(pk=uid)
-            print(f"[PASSWORD RESET CONFIRM] Користувач знайдено: {user.email} (ID: {user.id})")
         except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist) as e:
-            print(f"[PASSWORD RESET CONFIRM] ❌ Помилка декодування або користувач не знайдено: {type(e).__name__}: {str(e)}")
+            logger.warning(
+                "Password reset confirm: bad uid or user missing (%s: %s)",
+                type(e).__name__, e,
+            )
             messages.error(request, 'Невірне посилання для скидання паролю')
             return render(request, 'password_reset_confirm.html', {
                 'valid': False
             })
         
         # Перевіряємо токен
-        print("[PASSWORD RESET CONFIRM] Перевірка токену...")
         token_valid = default_token_generator.check_token(user, token)
-        print(f"[PASSWORD RESET CONFIRM] Токен валідний: {token_valid}")
-        
+
         if not token_valid:
-            print("[PASSWORD RESET CONFIRM] ❌ Токен недійсний або застарів")
+            logger.warning("Password reset confirm: invalid/expired token for user id=%s", user.pk)
             messages.error(
                 request, 
                 'Токен недійсний або застарів. Запросіть нове посилання для скидання паролю.'
@@ -170,11 +169,11 @@ def password_reset_confirm(request, uidb64, token):
             })
         
         # Встановлюємо новий пароль
-        print("[PASSWORD RESET CONFIRM] Встановлення нового паролю...")
         user.set_password(password)
         user.save()
-        print("[PASSWORD RESET CONFIRM] ✅ Пароль успішно змінено!")
-        
+        logger.info("Password reset confirm: password changed for user id=%s", user.pk)
+
+
         messages.success(
             request, 
             'Пароль успішно змінено! Тепер ви можете увійти з новим паролем.'
@@ -182,36 +181,31 @@ def password_reset_confirm(request, uidb64, token):
         return redirect('index')
     
     # GET запит - показуємо форму
-    print("[PASSWORD RESET CONFIRM] GET запит - показуємо форму")
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        print(f"[PASSWORD RESET CONFIRM] UID декодовано: {uid}")
         user = CustomUser.objects.get(pk=uid)
-        print(f"[PASSWORD RESET CONFIRM] Користувач знайдено: {user.email} (ID: {user.id})")
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist) as e:
-        print(f"[PASSWORD RESET CONFIRM] ❌ Помилка декодування або користувач не знайдено: {type(e).__name__}: {str(e)}")
+        logger.warning(
+            "Password reset confirm: bad uid or user missing (%s: %s)",
+            type(e).__name__, e,
+        )
         return render(request, 'password_reset_confirm.html', {
             'valid': False,
             'error': 'Посилання недійсне або застаріло.'
         })
     
     # Перевіряємо токен
-    print("[PASSWORD RESET CONFIRM] Перевірка токену...")
     token_valid = default_token_generator.check_token(user, token)
-    print(f"[PASSWORD RESET CONFIRM] Токен валідний: {token_valid}")
-    
+
     if token_valid:
-        print("[PASSWORD RESET CONFIRM] ✅ Токен валідний, показуємо форму")
         return render(request, 'password_reset_confirm.html', {
             'uidb64': uidb64,
             'token': token,
             'valid': True
         })
     else:
-        print("[PASSWORD RESET CONFIRM] ❌ Токен недійсний")
+        logger.warning("Password reset confirm: invalid/expired token for user id=%s", user.pk)
         return render(request, 'password_reset_confirm.html', {
             'valid': False,
             'error': 'Посилання недійсне або застаріло. Запросіть нове посилання для скидання паролю.'
         })
-    
-    print("=" * 50)

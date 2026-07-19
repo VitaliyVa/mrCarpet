@@ -66,7 +66,6 @@ class LiqPay(object):
 
     def api(self, url, params=None):
         params = self._prepare_params(params)
-        print(params)
         params_validator = (
                     ("version", lambda x: x is not None),
                     ("action", lambda x: x is not None),

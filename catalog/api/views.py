@@ -33,7 +33,6 @@ class FavouriteProductPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if obj.favourite.user != request.user:
             return False
-        print(obj.favourite)
         return True
 
 
@@ -63,7 +62,6 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = FavouriteProductsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
         favorite_product = FavouriteProducts.objects.filter(
             **serializer.validated_data
         ).first()
@@ -107,15 +105,21 @@ class ProductReviewViewSet(ModelViewSet):
     permission_classes = [IsAdminEdit]
 
     def create(self, request, *args, **kwargs):
+        # Мутуємо копію, а не request.data; далі — той самий флоу, що CreateModelMixin
+        data = request.data.copy()
         try:
-            product = ProductAttribute.objects.get(id=request.data["product"]).product.id
-            request.data["product"] = str(product)
+            product = ProductAttribute.objects.get(id=data["product"]).product.id
+            data["product"] = str(product)
         except Exception as e:
             return Response(
                 {"message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class FavouriteProductViewSet(ModelViewSet):
@@ -129,20 +133,18 @@ class FavouriteProductViewSet(ModelViewSet):
         return FavouriteProducts.objects.filter(favourite=favourite)
 
     def create(self, request, *args, **kwargs):
+        # Мутуємо копію, а не request.data (QueryDict immutable для form-даних)
+        data = request.data.copy()
+        data["favourite"] = get_favourite(request).id
         try:
-            request.data._mutable = True
-        except:
-            "it is not a drf request"
-        request.data["favourite"] = get_favourite(request).id
-        try:
-            product = ProductAttribute.objects.get(id=int(request.data["product"])).product.id
-            request.data["product"] = str(product)
-        except:
+            product = ProductAttribute.objects.get(id=int(data["product"])).product.id
+            data["product"] = str(product)
+        except Exception:
             return Response(
                 {"message": "Помилка"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         try:
             fav_product = FavouriteProducts.objects.get(**serializer.validated_data)
@@ -159,7 +161,6 @@ class FavouriteProductViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        print("ok")
 
         return Response(
             FavouriteSerializer(get_favourite(request)).data,

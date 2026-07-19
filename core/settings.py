@@ -24,12 +24,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rzqw(#2172p@li9y6n#)sjq)21tt+fdxacur1_!+(0%l_&v)9+'
+# Default = legacy committed key so existing sessions survive until SECRET_KEY
+# lands in prod .env. After that, remove the default (rotating invalidates
+# sessions + password-reset links).
+SECRET_KEY = config(
+    'SECRET_KEY',
+    default='django-insecure-rzqw(#2172p@li9y6n#)sjq)21tt+fdxacur1_!+(0%l_&v)9+',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Прод compose передає DEBUG=False; локально — DEBUG=True у .env.
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+# Прод compose передає ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+ALLOWED_HOSTS = [
+    h.strip() for h in config('ALLOWED_HOSTS', default='*').split(',') if h.strip()
+]
 
 # SEO / indexing. Local/dev default False; prod sets SEO_INDEXING_ENABLED=true
 # via docker-compose.prod.yml → robots Allow + index,follow on public pages.
@@ -57,10 +67,7 @@ STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719h")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
-# CSRF налаштування для webhook від LiqPay через ngrok
-# Додайте ваш ngrok URL сюди
 CSRF_TRUSTED_ORIGINS = [
-    "https://21f997f18ee0.ngrok-free.app",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://178.128.196.94",
@@ -70,10 +77,13 @@ CSRF_TRUSTED_ORIGINS = [
     "http://www.mrcarpet24.com",
 ]
 
-# Для додавання нових ngrok URL через змінну оточення (опціонально):
-# Додайте в .env: CSRF_TRUSTED_ORIGINS=https://your-ngrok-url.ngrok-free.app,http://localhost:8000
-# І розкоментуйте наступний рядок:
-# CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',') if config('CSRF_TRUSTED_ORIGINS', default='') else CSRF_TRUSTED_ORIGINS
+# Тимчасові origins (ngrok і т.п.) — через .env, не в git:
+# CSRF_EXTRA_TRUSTED_ORIGINS=https://xxxx.ngrok-free.app,https://other.example
+CSRF_TRUSTED_ORIGINS += [
+    o.strip()
+    for o in config("CSRF_EXTRA_TRUSTED_ORIGINS", default="").split(",")
+    if o.strip()
+]
 
 
 # Application definition
@@ -239,6 +249,15 @@ REST_FRAMEWORK = {
 
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
 LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
+# Sandbox відв'язаний від DEBUG: в адмінці зараз тестові ключі.
+# Перехід на бойові платежі = LIQPAY_SANDBOX=false у прод .env + бойові ключі в адмінці.
+LIQPAY_SANDBOX = config("LIQPAY_SANDBOX", default=True, cast=bool)
+
+# Ukrposhta address-classifier. Default = legacy committed token so lookups
+# keep working until UKR_POSHTA_BEARER lands in prod .env; then drop default.
+UKR_POSHTA_BEARER = config(
+    "UKR_POSHTA_BEARER", default="62f57bb7-db3d-3d62-ba7c-37ce30bf8bd6"
+)
 
 REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
 

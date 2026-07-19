@@ -1,0 +1,51 @@
+name: Verify Static Bundle
+
+# Гард проти розсинхрону static/development (сорси) і static/source/pages
+# (закомічений webpack-білд, який прод роздає напряму — білда на деплої немає).
+# Якщо цей чек червоний: cd static && npm run build && закомітити source/pages.
+# Деплой-workflow незалежний — цей чек його не блокує.
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'static/development/**'
+      - 'static/source/**'
+      - 'static/webpack.config.js'
+      - 'static/package.json'
+  pull_request:
+    paths:
+      - 'static/development/**'
+      - 'static/source/**'
+      - 'static/webpack.config.js'
+      - 'static/package.json'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 16: webpack 4 несумісний з OpenSSL 3 (md4) на Node >=17
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '16'
+
+      # node_modules закомічені в репо — install не потрібен.
+      # Викликаємо webpack.js напряму, щоб не залежати від exec-бітів у .bin
+      - name: Build webpack bundle
+        working-directory: static
+        run: NODE_ENV=production node node_modules/webpack/bin/webpack.js --mode production --output-path /tmp/wpout
+
+      - name: Compare build with committed source/pages
+        working-directory: static
+        run: |
+          status=0
+          while IFS= read -r f; do
+            rel="${f#/tmp/wpout/}"
+            if ! cmp -s "$f" "source/pages/$rel"; then
+              echo "::error::static/source/pages/$rel відрізняється від збірки з static/development — запустіть 'npm run build' у static/ і закомітьте результат"
+              status=1
+            fi
+          done < <(find /tmp/wpout -type f)
+          exit $status
