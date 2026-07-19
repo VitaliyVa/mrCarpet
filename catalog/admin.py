@@ -193,6 +193,7 @@ class ProductAdmin(admin.ModelAdmin):
         'duplicate_product_action',
         'generate_ar_texture_action',
         'generate_seo_action',
+        'post_to_telegram_products_channel',
     ]
     readonly_fields = ['ar_status', 'ar_error', 'ar_updated_at', 'ar_texture_preview']
     fieldsets = (
@@ -846,6 +847,29 @@ class ProductAdmin(admin.ModelAdmin):
             request,
             'SEO синхронно (Celery недоступний): ' + ', '.join(parts) + '.',
             level=level,
+        )
+
+    @admin.action(description='Опублікувати в Telegram products channel')
+    def post_to_telegram_products_channel(self, request, queryset):
+        from social.services.telegram_products import post_product_to_channel
+
+        ok = 0
+        fail = 0
+        for product in queryset:
+            result = post_product_to_channel(product, force=True)
+            if result.get("ok"):
+                ok += 1
+            else:
+                fail += 1
+                self.message_user(
+                    request,
+                    f'{product}: {result.get("error")}',
+                    level='error',
+                )
+        self.message_user(
+            request,
+            f'TG channel: ok={ok}, fail={fail}',
+            level='success' if ok else 'warning',
         )
 
     @admin.action(description='Згенерувати AR-текстуру для вибраних')

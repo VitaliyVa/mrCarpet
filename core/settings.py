@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     'nova_poshta',
     'ukr_poshta',
     'payment',
+    'social.apps.SocialConfig',
     'rest_framework',
     'django_filters',
     'drf_yasg',
@@ -245,6 +246,20 @@ REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
 SITE_URL = config("SITE_URL", default="https://mrcarpet24.com").rstrip("/")
 # Real mailbox for replies / footer (From for sending can stay orders@ via Brevo)
 SUPPORT_EMAIL = config("SUPPORT_EMAIL", default="mr.carpet.shop@gmail.com")
+
+# Social publishing (Meta Graph + TikTok). Secrets only in env — see social/README.md
+META_PAGE_ACCESS_TOKEN = config("META_PAGE_ACCESS_TOKEN", default="")
+META_PAGE_ID = config("META_PAGE_ID", default="")
+META_IG_USER_ID = config("META_IG_USER_ID", default="")
+META_GRAPH_VERSION = config("META_GRAPH_VERSION", default="v21.0")
+TIKTOK_CLIENT_KEY = config("TIKTOK_CLIENT_KEY", default="")
+TIKTOK_CLIENT_SECRET = config("TIKTOK_CLIENT_SECRET", default="")
+TIKTOK_ACCESS_TOKEN = config("TIKTOK_ACCESS_TOKEN", default="")
+TIKTOK_OPEN_ID = config("TIKTOK_OPEN_ID", default="")
+TIKTOK_AUDIT_PASSED = config("TIKTOK_AUDIT_PASSED", default="false")
+SOCIAL_AI_I2V_MODEL = config(
+    "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
+)
 
 # CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://localhost:6379/0")
 # CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://localhost:6379/0")

@@ -96,6 +96,16 @@ services:
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
       - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - META_PAGE_ACCESS_TOKEN=${META_PAGE_ACCESS_TOKEN}
+      - META_PAGE_ID=${META_PAGE_ID}
+      - META_IG_USER_ID=${META_IG_USER_ID}
+      - META_GRAPH_VERSION=${META_GRAPH_VERSION:-v21.0}
+      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
+      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
+      - TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
+      - TIKTOK_OPEN_ID=${TIKTOK_OPEN_ID}
+      - TIKTOK_AUDIT_PASSED=${TIKTOK_AUDIT_PASSED:-false}
+      - SOCIAL_AI_I2V_MODEL=${SOCIAL_AI_I2V_MODEL:-wan-video/wan-2.2-i2v-fast}
     # SQLite: 1 worker. Кілька workers → "database is locked". Для scale — Postgres.
     command: sh -c "chmod -R 755 /app/static_root && python manage.py migrate --noinput && python manage.py collectstatic --noinput && chmod -R 755 /app/static_root && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300"
     restart: unless-stopped

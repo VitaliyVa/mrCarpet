@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+  {% if publish_url %}
+  <li><a href="{{ publish_url }}" class="historylink">Publish now</a></li>
+  {% endif %}
+  {% if ai_draft_url %}
+  <li><a href="{{ ai_draft_url }}" class="historylink">AI draft (Wan)</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
