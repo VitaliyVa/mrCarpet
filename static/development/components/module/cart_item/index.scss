@@ -18,18 +18,30 @@
         transform: translateX(-50%) translateY(2px) scale(0.95);
       }
     }
+  }
 
-    .cart_item_img {
-      // головне фото лишається в потоці (без position:absolute) → висота стабільна;
-      // плавно зникає (opacity) і фліпається (scaleX)
+  // Flip only when hover image exists (desktop). Avoid blank card if no hover asset.
+  &:has(.image-on-hover):hover {
+    .cart_item_img:not(.image-on-hover) {
       opacity: 0;
       transform: scaleX(-1);
+    }
 
-      &.image-on-hover {
-        // абсолютний оверлей плавно проявляється і фліпається в норму
-        opacity: 1;
-        transform: scaleX(1);
-      }
+    .cart_item_img.image-on-hover {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  // Touch / small screens: no hover swap (and no download via JS)
+  @media (hover: none), (max-width: 768px) {
+    &:hover .cart_item_img {
+      opacity: 1;
+      transform: none;
+    }
+
+    .cart_item_img.image-on-hover {
+      display: none !important;
     }
   }
 

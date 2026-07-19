@@ -6,15 +6,24 @@
 <div class="cart_item-top">
   <a href="{{ product.get_absolute_url }}">
     <div class="cart_item_img">
-        <img src="{{ product.image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
+        <img
+          src="{{ product.image.url }}"
+          alt="{{ product.title }}"
+          width="365"
+          height="420"
+          sizes="(max-width: 600px) 45vw, 365px"
+          loading="lazy"
+          decoding="async"
+        />
     </div>
-    <div class="cart_item_img image-on-hover">
-      {% if product.hover_image %}
-      <img src="{{ product.hover_image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
-      {% else %}
-      <img src="{{ product.image.url }}" alt="{{ product.title }}" width="365" height="420" loading="lazy" decoding="async" />
-      {% endif %}
-    </div>
+    {# Hover image loaded only on desktop (see cart_item/index.js) — saves mobile bandwidth #}
+    {% if product.hover_image %}
+    <div
+      class="cart_item_img image-on-hover"
+      data-hover-src="{{ product.hover_image.url }}"
+      aria-hidden="true"
+    ></div>
+    {% endif %}
     </a>
 
     <div class="cart_item_oos{% if default_attr and not default_attr.in_stock %} is-visible{% endif %}" aria-hidden="true">
