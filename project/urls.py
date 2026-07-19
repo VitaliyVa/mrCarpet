@@ -23,4 +23,9 @@ urlpatterns = [
     path('success/', views.success, name='success'),
     path('reset-password/', views.reset_password, name='reset_password'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
+    path(
+        'google67459f697e641b7f.html',
+        views.google_site_verification_file,
+        name='google_site_verification_file',
+    ),
 ]

@@ -150,3 +150,11 @@ def robots_txt(request):
         build_robots_txt(sitemap_url=sitemap_url),
         content_type="text/plain; charset=utf-8",
     )
+
+
+def google_site_verification_file(request):
+    """Google Search Console HTML-file ownership verification."""
+    return HttpResponse(
+        "google-site-verification: google67459f697e641b7f.html" + chr(10),
+        content_type="text/html; charset=utf-8",
+    )
