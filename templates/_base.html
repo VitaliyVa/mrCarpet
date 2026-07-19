@@ -61,7 +61,9 @@
     {% include 'includes/analytics_body.html' %}
     {% block header %}{% include 'includes/header.html' %}{% endblock header %}
 
+    <main id="main-content">
     {% block content %}{% endblock content %}
+    </main>
 
     {% include 'includes/footer.html' %}
     {% include 'includes/newsletter_subscribe_modal.html' %}

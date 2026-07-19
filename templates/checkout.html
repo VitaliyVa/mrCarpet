@@ -383,6 +383,12 @@
                         <h3 class="basket__payment-title font-size-26 bold">
                             Обрати спосіб оплати
                         </h3>
+                        {# TEMP: LiqPay у тестовому режимі — прибрати після go-live оплати #}
+                        <div class="basket__payment-notice" role="status">
+                            <strong>Онлайн-оплата тимчасово в тестовому режимі.</strong>
+                            Будь ласка, обирайте оплату готівкою при доставці.
+                            Онлайн-оплату карткою зараз не використовуйте.
+                        </div>
                         <div class="basket__payment-items">
                             <div
                                     class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block active"
@@ -408,7 +414,8 @@
                             </div>
 
                             <div
-                                    class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block"
+                                    class="basket__checkbox-item basket__payment-item checkbox-radio accordion accordion_content__block basket__payment-item--disabled"
+                                    aria-disabled="true"
                             >
                                 <div class="basket__checkbox-item-head accordion__title">
                                     <input
@@ -416,6 +423,7 @@
                                             class="checkbox__input"
                                             name="payment"
                                             type="radio"
+                                            disabled
                                     />
                                     <div class="basket__checkbox-item-icon">
                                         <img
@@ -425,6 +433,7 @@
                                     </div>
                                     <h4 class="basket__checkbox-item-title">
                                         Онлайн оплата картою
+                                        <span class="basket__payment-item-badge">тимчасово недоступна</span>
                                     </h4>
                                 </div>
                             </div>

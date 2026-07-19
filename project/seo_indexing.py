@@ -10,12 +10,14 @@ SITE_CANONICAL_ORIGIN = "https://mrcarpet24.com"
 ROBOTS_PROD_DISALLOW = (
     "/admin/",
     "/api/",
+    "/cart/",
     "/basket/",
     "/checkout/",
     "/payment/",
     "/profile/",
     "/success/",
     "/favorite/",
+    "/favourites/",
     "/password_reset/",
 )
 

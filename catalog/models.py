@@ -1,10 +1,12 @@
+from pathlib import Path
+import decimal
+
 from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum, Case, When, IntegerField
 from django.urls import reverse
-import decimal
 
 from django.utils import timezone
 
@@ -269,6 +271,30 @@ class ProductCategory(AbstractMetaTags, AbstractTitleSlug):
 
     def get_absolute_url(self):
         return reverse("categorie", kwargs={"slug": self.slug})
+
+    def save(self, *args, **kwargs):
+        """Downscale category tiles to WebP (~280px) on upload."""
+        from django.core.files.base import ContentFile
+
+        from catalog.image_optimize import optimize_category_image
+
+        if self.image:
+            try:
+                self.image.open("rb")
+                data = self.image.read()
+                self.image.close()
+                # Skip tiny already-optimized assets
+                if data and len(data) > 40_000:
+                    optimized = optimize_category_image(data)
+                    stem = Path(self.image.name).stem if self.image.name else "category"
+                    self.image.save(
+                        f"{stem}.webp",
+                        ContentFile(optimized),
+                        save=False,
+                    )
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
 
 
 class Size(models.Model):

@@ -31,9 +31,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-# SEO / indexing (Phase 8). Keep False until explicit go-live decision.
-# Flip: SEO_INDEXING_ENABLED=true in env → prod robots + index,follow on public pages.
-# Private pages (basket/checkout/…) always force noindex in templates.
+# SEO / indexing. Local/dev default False; prod sets SEO_INDEXING_ENABLED=true
+# via docker-compose.prod.yml → robots Allow + index,follow on public pages.
+# Private pages (cart/checkout/…) always force noindex in templates.
 SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
 
 # Analytics / measurement (Phase 9). Empty = scripts not injected.

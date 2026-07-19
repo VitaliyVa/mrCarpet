@@ -433,6 +433,23 @@
       color: #453f3a;
     }
 
+    &-notice {
+      margin: 16px 0 20px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      background: #f7efe6;
+      border: 1px solid #d4b896;
+      color: #453f3a;
+      font-size: 15px;
+      line-height: 1.45;
+
+      strong {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 700;
+      }
+    }
+
     &-item {
       .basket__checkbox-item-head {
         column-gap: 16.5%;
@@ -441,6 +458,24 @@
       .basket__checkbox-item-icon {
         width: 16px;
         height: 16px;
+      }
+
+      &--disabled {
+        opacity: 0.55;
+        pointer-events: none;
+
+        .basket__checkbox-item-title {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: baseline;
+          gap: 8px;
+        }
+      }
+
+      &-badge {
+        font-size: 13px;
+        font-weight: 500;
+        color: #8a5535;
       }
     }
   }

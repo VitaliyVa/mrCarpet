@@ -1,39 +1,42 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.db.models import F, Count, Case, When, Value, IntegerField, Sum
+from django.db.models import Prefetch
 
-from catalog.models import ProductCategory, Product, ProductAttribute, ProductSale
+from catalog.models import Product, ProductAttribute, ProductSale
 from blog.models import Article
 from cart.utils import get_cart
 from project.seo_jsonld import dumps_jsonld, faq_graph, get_faq_items
 
 # Create your views here.
 def index(request):
-    # categories = ProductCategory.objects.all()
-    products = Product.objects.all()
-    # products = (
-    #     Product.objects.annotate(
-    #         total_quantity=Sum("product_attr__quantity"),
-    #         has_attribute_with_quantity_gt_zero=Case(
-    #             When(total_quantity__gt=0, then=1),
-    #             When(total_quantity=0, then=2),
-    #             output_field=IntegerField(),
-    #         )
-    #     )
-    #     .filter(has_attribute_with_quantity_gt_zero__gt=0)
-    #     .order_by("has_attribute_with_quantity_gt_zero", "-created")
-    # )
-    print(products)
-    # on_sale = ProductAttribute.objects.exclude(discount=None).filter(product__in=products).values_list('product')
-    # sale_products = Product.objects.filter(id__in=on_sale)
-    try:
-        main_sale_date = ProductSale.objects.get(main_sale=True).date_end
-        sale_products = ProductSale.objects.first().products.all()
-    except:
+    product_attrs = Prefetch(
+        "product_attr",
+        queryset=ProductAttribute.objects.select_related("size").order_by("sort_order", "id"),
+    )
+    # Product.objects manager already filters/orders by stock + created
+    products = Product.objects.prefetch_related(product_attrs)[:24]
+    main_sale = (
+        ProductSale.objects.filter(main_sale=True)
+        .prefetch_related(Prefetch("products", queryset=Product.objects.prefetch_related(product_attrs)))
+        .first()
+    )
+    if main_sale:
+        main_sale_date = main_sale.date_end
+        sale_products = main_sale.products.all()[:24]
+    else:
         main_sale_date = None
         sale_products = []
-    posts = Article.objects.all()[::-1]
-    return render(request, 'index.html', context={'products': products, 'posts': posts, 'sale_products': sale_products, 'main_sale_date': main_sale_date})
+    posts = list(Article.objects.order_by("-id")[:12])
+    return render(
+        request,
+        "index.html",
+        context={
+            "products": products,
+            "posts": posts,
+            "sale_products": sale_products,
+            "main_sale_date": main_sale_date,
+        },
+    )
 
 
 def about(request):

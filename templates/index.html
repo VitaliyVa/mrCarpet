@@ -15,7 +15,21 @@
 {% endblock styles %}{% block content %}
 <section class="first_section">
   <div class="cover_img">
-    <img src="/static/utils/assets/index/cover.png" alt="" width="1920" height="900" fetchpriority="high" decoding="async" />
+    <picture>
+      <source
+        type="image/webp"
+        srcset="/static/utils/assets/index/cover-1200.webp 1200w, /static/utils/assets/index/cover-1920.webp 1920w"
+        sizes="100vw"
+      />
+      <img
+        src="/static/utils/assets/index/cover-1920.webp"
+        alt="Килими від mr.Carpet"
+        width="1920"
+        height="640"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
     <div class="cover__block">
       <h1 class="cover_title small color_white">Килими від mr.Carpet</h1>
       <p class="cover_subtitle small color_white">

@@ -1,4 +1,5 @@
 # Canonical robots: Django view /robots.txt (project.views.robots_txt)
-# Controlled by SEO_INDEXING_ENABLED (default false = Disallow: /)
+# Controlled by SEO_INDEXING_ENABLED (prod docker-compose sets true).
+# This static file is NOT served in production — kept as offline fallback.
 User-agent: *
 Disallow: /

@@ -18,7 +18,8 @@
     color: #453f3a;
 
     &_sub {
-      color: #89817c;
+      /* darkened for WCAG AA contrast on cream (#fffcf2) */
+      color: #5c5652;
     }
   }
 
@@ -27,7 +28,8 @@
   }
 
   &_gold {
-    color: #a46c46;
+    /* darkened for WCAG AA contrast on cream backgrounds */
+    color: #8a5535;
   }
 }
 
@@ -68,7 +70,7 @@
 
   span {
     margin-left: 20px;
-    color: #89817c;
+    color: #5c5652;
   }
 
   @media (max-width: 1024px) {

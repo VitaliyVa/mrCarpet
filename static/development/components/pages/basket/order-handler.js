@@ -39,9 +39,11 @@ function collectOrderData() {
 
   const deliveryType = deliveryMethod.id; // nova-post, urk-post, justin, courier
 
-  // Перевіряємо спосіб оплати
-  const paymentMethod = document.querySelector('input[name="payment"]:checked');
-  
+  // Card radio is disabled while LiqPay is test-only — fall back to cash
+  const paymentMethod =
+    document.querySelector('input[name="payment"]:checked:not(:disabled)') ||
+    document.getElementById("cash");
+
   if (!paymentMethod) {
     showError("Будь ласка, оберіть спосіб оплати");
     return null;

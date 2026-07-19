@@ -84,6 +84,7 @@ services:
     environment:
       - DEBUG=False
       - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - SEO_INDEXING_ENABLED=true
       - NOVA_POSHTA_API_KEY=${NOVA_POSHTA_API_KEY}
       - DB_ENGINE=django.db.backends.sqlite3
       - DB_NAME=/app/db.sqlite3

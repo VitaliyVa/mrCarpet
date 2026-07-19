@@ -22,3 +22,8 @@ def optimize_product_image(data: bytes, max_width: int = 500, quality: int = 90)
     buf = io.BytesIO()
     img.save(buf, format="WEBP", quality=quality, method=6)
     return buf.getvalue()
+
+
+def optimize_category_image(data: bytes, max_width: int = 280, quality: int = 82) -> bytes:
+    """Homepage category tiles are ~110–280px; keep file small."""
+    return optimize_product_image(data, max_width=max_width, quality=quality)

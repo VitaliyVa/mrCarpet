@@ -26,7 +26,9 @@ class SeoIndexingSwitchTests(SimpleTestCase):
         ]
         self.assertIn("Allow: /", lines)
         self.assertIn("Disallow: /admin/", lines)
+        self.assertIn("Disallow: /cart/", lines)
         self.assertIn("Disallow: /basket/", lines)
+        self.assertIn("Disallow: /favourites/", lines)
         self.assertIn("Disallow: /checkout/", lines)
         self.assertIn("Disallow: /success/", lines)
         self.assertIn("Sitemap: https://mrcarpet24.com/sitemap.xml", lines)
