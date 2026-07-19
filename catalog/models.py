@@ -273,7 +273,7 @@ class ProductCategory(AbstractMetaTags, AbstractTitleSlug):
         return reverse("categorie", kwargs={"slug": self.slug})
 
     def save(self, *args, **kwargs):
-        """Downscale category tiles to WebP (~280px) on upload."""
+        """Downscale category tiles to WebP (~560px @ q90) on upload."""
         from django.core.files.base import ContentFile
 
         from catalog.image_optimize import optimize_category_image
@@ -283,8 +283,8 @@ class ProductCategory(AbstractMetaTags, AbstractTitleSlug):
                 self.image.open("rb")
                 data = self.image.read()
                 self.image.close()
-                # Skip tiny already-optimized assets
-                if data and len(data) > 40_000:
+                # Skip already-small assets; re-encode heavy uploads
+                if data and len(data) > 80_000:
                     optimized = optimize_category_image(data)
                     stem = Path(self.image.name).stem if self.image.name else "category"
                     self.image.save(

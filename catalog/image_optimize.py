@@ -24,6 +24,6 @@ def optimize_product_image(data: bytes, max_width: int = 500, quality: int = 90)
     return buf.getvalue()
 
 
-def optimize_category_image(data: bytes, max_width: int = 280, quality: int = 82) -> bytes:
-    """Homepage category tiles are ~110–280px; keep file small."""
+def optimize_category_image(data: bytes, max_width: int = 560, quality: int = 90) -> bytes:
+    """Homepage tiles ~110–280 CSS px; 2x width + q90 keeps sharpness."""
     return optimize_product_image(data, max_width=max_width, quality=quality)
