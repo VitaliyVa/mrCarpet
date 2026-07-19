@@ -24,13 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Default = legacy committed key so existing sessions survive until SECRET_KEY
-# lands in prod .env. After that, remove the default (rotating invalidates
-# sessions + password-reset links).
-SECRET_KEY = config(
-    'SECRET_KEY',
-    default='django-insecure-rzqw(#2172p@li9y6n#)sjq)21tt+fdxacur1_!+(0%l_&v)9+',
-)
+# Обов'язковий, без default: значення тільки з .env (прод і локальний вже мають)
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Прод compose передає DEBUG=False; локально — DEBUG=True у .env.
@@ -257,11 +252,8 @@ LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
 # Перехід на бойові платежі = LIQPAY_SANDBOX=false у прод .env + бойові ключі в адмінці.
 LIQPAY_SANDBOX = config("LIQPAY_SANDBOX", default=True, cast=bool)
 
-# Ukrposhta address-classifier. Default = legacy committed token so lookups
-# keep working until UKR_POSHTA_BEARER lands in prod .env; then drop default.
-UKR_POSHTA_BEARER = config(
-    "UKR_POSHTA_BEARER", default="62f57bb7-db3d-3d62-ba7c-37ce30bf8bd6"
-)
+# Ukrposhta address-classifier (прод/локальний .env; без токена пошук відділень УП не працює)
+UKR_POSHTA_BEARER = config("UKR_POSHTA_BEARER", default="")
 
 REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
 
