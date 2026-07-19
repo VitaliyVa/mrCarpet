@@ -32,7 +32,7 @@ Config (**Social settings**):
 ### Meta (Instagram + Facebook)
 1. Facebook Page «mr.Carpet» + Instagram Professional, прив’язка до Page
 2. developers.facebook.com → App (Business) → Instagram Graph API + Facebook Login for Business
-3. Long-lived Page access token з правами:
+3. Long-lived / **never-expire Page access token** з правами:
    `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`,
    `instagram_basic`, `instagram_content_publish` (або актуальні aliases)
 4. У `.env` (НЕ в git):
@@ -43,6 +43,8 @@ Config (**Social settings**):
    META_GRAPH_VERSION=v21.0
    ```
 5. `python manage.py social_setup_check`
+
+**Handoff / System User never-expire гайд + поточний стан:** [`META_PHASE0_HANDOFF.md`](./META_PHASE0_HANDOFF.md)
 
 ### TikTok
 1. developers.tiktok.com → Content Posting API
