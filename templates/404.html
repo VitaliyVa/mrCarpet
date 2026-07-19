@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+{# Standalone: без extends, щоб сторінка помилки не залежала від context processors #}
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>404 — Сторінку не знайдено | mr.Carpet</title>
+    <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="/static/development/main.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Futura PT Book", "Segoe UI", Arial, sans-serif;
+            background: #fffcf2;
+            color: #453f3a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .error-card { max-width: 560px; text-align: center; }
+        .error-card__logo { width: 160px; max-width: 60%; height: auto; margin-bottom: 40px; }
+        .error-card__code {
+            font-family: "Futura PT Bold", "Segoe UI", Arial, sans-serif;
+            font-size: 96px;
+            line-height: 1;
+            color: #a46c46;
+            margin-bottom: 16px;
+        }
+        .error-card__title {
+            font-family: "Futura PT Medium", "Segoe UI", Arial, sans-serif;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .error-card__text { font-size: 17px; color: #89817c; margin-bottom: 32px; }
+        .error-card__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .error-card__btn {
+            display: inline-block;
+            padding: 14px 28px;
+            border-radius: 4px;
+            font-family: "Futura PT Medium", "Segoe UI", Arial, sans-serif;
+            font-size: 16px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .error-card__btn:hover { opacity: 0.85; }
+        .error-card__btn--primary { background: #a46c46; color: #fffcf2; }
+        .error-card__btn--secondary { border: 1px solid #a46c46; color: #a46c46; }
+        @media (max-width: 480px) {
+            .error-card__code { font-size: 72px; }
+            .error-card__title { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <img class="error-card__logo" src="/static/utils/assets/brand/mr-carpet-logo.png" alt="mr.Carpet" />
+        <div class="error-card__code">404</div>
+        <h1 class="error-card__title">Сторінку не знайдено</h1>
+        <p class="error-card__text">
+            Можливо, товар закінчився, посилання застаріло або в адресі є помилка.
+            Але килими нікуди не поділись — обирайте!
+        </p>
+        <div class="error-card__actions">
+            <a class="error-card__btn error-card__btn--primary" href="/">На головну</a>
+            <a class="error-card__btn error-card__btn--secondary" href="/catalog/">До каталогу</a>
+        </div>
+    </div>
+</body>
+</html>
