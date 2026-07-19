@@ -27,9 +27,9 @@ PLACEHOLDER_IMAGE = "products/default.png"
 
 
 def product_caption_text(product) -> str:
-    """Plain-text caption: назва + розміри/ціни в наявності.
-
-    Лінк на товар НЕ додаємо — його додає build_caption при publish.
+    """Plain-text caption, той самий зміст, що в TG-пості:
+    назва + всі розміри з цінами (out-of-stock з поміткою «немає»),
+    fallback — рядок ціни. Лінк додає build_caption при publish.
     """
     title = (product.title or "Товар").strip()
     lines = [title]
@@ -37,10 +37,16 @@ def product_caption_text(product) -> str:
     if sizes:
         lines.append("")
         lines.extend(sizes)
+    else:
+        price_line = _price_line(product)
+        if price_line:
+            lines.append("")
+            lines.append(price_line)
     return "\n".join(lines)[:2000]
 
 
 def _sizes_lines(product) -> list[str]:
+    """Дзеркало telegram_products._sizes_block, але plain text."""
     out: list[str] = []
     try:
         attrs = list(
@@ -51,8 +57,6 @@ def _sizes_lines(product) -> list[str]:
     except Exception:
         attrs = []
     for attr in attrs:
-        if not getattr(attr, "in_stock", True):
-            continue
         try:
             size_title = (attr.size.title if attr.size_id else "") or ""
         except Exception:
@@ -63,10 +67,24 @@ def _sizes_lines(product) -> list[str]:
         except Exception:
             price = attr.price
         price_s = f"{price} грн" if price is not None else "—"
-        out.append(f"• {size_title} — {price_s}")
+        stock = "" if getattr(attr, "in_stock", True) else " · немає"
+        out.append(f"• {size_title} — {price_s}{stock}")
     if out:
         out.insert(0, "Розміри:")
     return out
+
+
+def _price_line(product) -> str:
+    """Дзеркало telegram_products._price_line."""
+    try:
+        attr = product.get_default_size_attr()
+        if attr is None:
+            return ""
+        if getattr(attr, "custom_attribute", False):
+            return f"від {attr.custom_price} грн/м²"
+        return f"{attr.get_total_price()} грн"
+    except Exception:
+        return ""
 
 
 def _product_image_names(product) -> list[str]:

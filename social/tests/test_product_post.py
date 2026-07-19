@@ -29,6 +29,7 @@ def _mock_product_with_sizes():
     out_attr.size_id = 2
     out_attr.size = MagicMock()
     out_attr.size.title = "120×180"
+    out_attr.get_total_price.return_value = 1500
     out_attr.in_stock = False
 
     qs = MagicMock()
@@ -41,21 +42,35 @@ def _mock_product_with_sizes():
 
 
 class ProductCaptionTests(SimpleTestCase):
-    def test_caption_title_and_in_stock_sizes(self):
+    def test_caption_title_and_sizes_mirror_tg(self):
         product = _mock_product_with_sizes()
         caption = product_caption_text(product)
         self.assertIn("Килим тест", caption)
         self.assertIn("Розміри:", caption)
         self.assertIn("80×150 — 1000 грн", caption)
-        # out-of-stock розмір не потрапляє в маркетинговий пост
-        self.assertNotIn("120×180", caption)
+        # як у TG: out-of-stock розмір показується з поміткою
+        self.assertIn("немає", caption)
+        self.assertIn("120×180", caption)
 
-    def test_caption_without_sizes(self):
+    def test_caption_price_fallback_without_sizes(self):
         product = MagicMock()
         product.title = "Килим без розмірів"
         product.get_size_attrs.side_effect = Exception("no attrs")
+        default_attr = MagicMock()
+        default_attr.custom_attribute = False
+        default_attr.get_total_price.return_value = 2500
+        product.get_default_size_attr.return_value = default_attr
         caption = product_caption_text(product)
-        self.assertEqual(caption, "Килим без розмірів")
+        self.assertIn("Килим без розмірів", caption)
+        self.assertIn("2500 грн", caption)
+
+    def test_caption_bare_title_when_nothing_else(self):
+        product = MagicMock()
+        product.title = "Килим голий"
+        product.get_size_attrs.side_effect = Exception("no attrs")
+        product.get_default_size_attr.return_value = None
+        caption = product_caption_text(product)
+        self.assertEqual(caption, "Килим голий")
 
 
 class ProductImageNamesTests(SimpleTestCase):

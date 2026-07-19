@@ -305,8 +305,8 @@ class SocialSettingsAdmin(admin.ModelAdmin):
                 "description": (
                     "Авто-пост нових товарів у IG/FB (photos-пост). "
                     "Потребує META_* у прод .env (social_setup_check). "
-                    "Ручний варіант: Catalog → Products → actions "
-                    "«Створити IG/FB пост» / «Опублікувати в IG/FB зараз»."
+                    "Ручний варіант: Catalog → Products → action "
+                    "«Опублікувати в TG + Instagram + Facebook»."
                 ),
             },
         ),
