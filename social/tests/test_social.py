@@ -370,6 +370,21 @@ class StaffCommentNotifyTests(SimpleTestCase):
         }
         self.assertIsNone(inbound_from_telegram_discussion(msg))
 
+    def test_ignore_comment_as_channel(self):
+        msg = {
+            "message_id": 11,
+            "date": 1700000000,
+            "text": "ого 😀",
+            "from": {"id": 42, "first_name": "Vitaliy", "is_bot": False},
+            "sender_chat": {
+                "id": -1003311077002,
+                "username": "mrcarpet24",
+                "type": "channel",
+            },
+            "chat": {"id": -1004168344587},
+        }
+        self.assertIsNone(inbound_from_telegram_discussion(msg))
+
     def test_parse_human_reply(self):
         msg = {
             "message_id": 10,

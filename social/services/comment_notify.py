@@ -172,16 +172,20 @@ def format_staff_comment_html(comment: InboundComment) -> str:
 def inbound_from_telegram_discussion(msg: dict) -> InboundComment | None:
     """
     Parse products discussion message into InboundComment.
-    Returns None for channel auto-forwards, bots, empty text.
+    Skips channel auto-forwards into discussion and bot messages.
     """
     if not msg:
         return None
+
+    # Pure channel→discussion mirrors (product posts), not human comments
     if msg.get("is_automatic_forward"):
         return None
+
+    from_user = msg.get("from") or {}
     sender_chat = msg.get("sender_chat") or {}
+    # Comments posted as the channel itself → ignore (staff noise)
     if (sender_chat.get("type") or "") == "channel":
         return None
-    from_user = msg.get("from") or {}
     if from_user.get("is_bot"):
         return None
 
@@ -189,7 +193,10 @@ def inbound_from_telegram_discussion(msg: dict) -> InboundComment | None:
     if not text or text.startswith("/"):
         return None
 
-    post_title, post_url = _telegram_parent_post(msg.get("reply_to_message") or {})
+    parent = msg.get("reply_to_message") or {}
+    ext = msg.get("external_reply") or {}
+    post_title, post_url = _telegram_parent_post(parent, ext)
+
     author_name = " ".join(
         p
         for p in (from_user.get("first_name") or "", from_user.get("last_name") or "")
@@ -207,46 +214,69 @@ def inbound_from_telegram_discussion(msg: dict) -> InboundComment | None:
             created_at = timezone.now()
 
     chat = msg.get("chat") or {}
-    comment_url = ""
-    # Private supergroup deep link is awkward without username; skip if unknown
-
     return InboundComment(
         platform=PLATFORM_TELEGRAM,
         text=text,
-        author_name=author_name,
+        author_name=author_name or "Користувач",
         author_username=username,
         author_id=str(from_user.get("id") or ""),
         post_title=post_title,
         post_url=post_url,
-        comment_url=comment_url,
+        comment_url="",
         created_at=created_at,
         raw_chat_id=str(chat.get("id") or ""),
     )
 
 
 def notify_telegram_discussion_message(msg: dict) -> bool:
-    """Build + enqueue staff notify. True if a notify was queued."""
+    """Parse + send staff notify (sync — gunicorn kills daemon threads after response)."""
     comment = inbound_from_telegram_discussion(msg)
     if not comment:
+        logger.info(
+            "staff comment skip: unparsed discussion msg keys=%s auto_fwd=%s "
+            "sender_chat=%s from_bot=%s has_text=%s",
+            sorted(msg.keys()) if msg else [],
+            bool(msg.get("is_automatic_forward")),
+            (msg.get("sender_chat") or {}).get("type"),
+            (msg.get("from") or {}).get("is_bot"),
+            bool((msg.get("text") or msg.get("caption") or "").strip()),
+        )
         return False
     if not staff_comments_configured():
+        logger.warning("staff comment skip: not configured")
         return False
-    enqueue_staff_comment_notify(comment)
+    result = notify_staff_comment(comment)
+    if not result.get("ok"):
+        logger.error("staff comment notify failed: %s", result.get("error"))
+        return False
     return True
 
 
-def _telegram_parent_post(reply: dict) -> tuple[str, str]:
-    if not reply:
-        return "", ""
+def _telegram_parent_post(reply: dict, external_reply: dict | None = None) -> tuple[str, str]:
+    ext = external_reply or {}
     title = (reply.get("caption") or reply.get("text") or "").strip()
-    # First line only for title preview
+    if not title:
+        # external_reply may only carry origin, not full caption
+        title = ""
     if title:
         title = title.splitlines()[0][:180]
 
     post_url = ""
-    fwd_chat = reply.get("forward_from_chat") or reply.get("sender_chat") or {}
+    fwd_chat = (
+        reply.get("forward_from_chat")
+        or reply.get("sender_chat")
+        or (ext.get("origin") or {}).get("chat")
+        or {}
+    )
+    # MessageOriginChannel shape: origin.type == "channel", origin.chat, origin.message_id
+    origin = ext.get("origin") or {}
+    if (origin.get("type") or "") == "channel":
+        fwd_chat = origin.get("chat") or fwd_chat
+        fwd_mid = origin.get("message_id")
+    else:
+        fwd_mid = reply.get("forward_from_message_id") or reply.get("message_id")
+
     username = (fwd_chat.get("username") or "").strip()
-    fwd_mid = reply.get("forward_from_message_id") or reply.get("message_id")
     if username and fwd_mid:
         post_url = f"https://t.me/{username}/{fwd_mid}"
     return title, post_url
