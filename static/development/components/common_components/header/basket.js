@@ -1,4 +1,5 @@
 import { addToBasket } from "../../../api/basket";
+import { itemFromProductEl } from "../../../utils/analytics";
 import { syncStockUI } from "../../module/stock_availability";
 
 document.addEventListener("click", async ({ target }) => {
@@ -23,11 +24,16 @@ document.addEventListener("click", async ({ target }) => {
   }
 
   const productId = product?.dataset?.productId;
+  const analyticsItem = itemFromProductEl(product, { quantity: 1 });
 
-  await addToBasket({
-    product: productId,
-    quantity: 1,
-  });
+  await addToBasket(
+    {
+      product: productId,
+      quantity: 1,
+    },
+    null,
+    analyticsItem
+  );
 });
 
 // після динамічних оновлень

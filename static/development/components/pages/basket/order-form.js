@@ -287,7 +287,8 @@ export async function submitOrder() {
     if (response.status === 200 || response.status === 201 || response.data?.success) {
       // Очищаємо промокод з localStorage
       localStorage.removeItem("applied_promocode");
-      
+      // purchase: лише на /success/ (session + order status gate) — без double-fire
+
       // Визначаємо куди перенаправляти на основі payment_type або redirect_url
       let redirectUrl = null;
       

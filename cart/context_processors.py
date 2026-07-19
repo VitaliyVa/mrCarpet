@@ -1,4 +1,5 @@
 from project.free_shipping import free_shipping_for_total, get_shop_settings
+from project.ga4_ecommerce import cart_ecommerce_payload
 
 from .utils import get_cart
 
@@ -38,8 +39,17 @@ def context(request):
         fs = free_shipping_for_total(cart.get_total_price())
     except Exception:
         fs = _fallback_free_shipping()
+    # Only build GA payload when cart has lines (bool(qs) → EXISTS).
+    ga4_cart = None
+    if cart_products:
+        try:
+            ga4_cart = cart_ecommerce_payload(cart)
+        except Exception:
+            ga4_cart = None
+
     return {
         "cart": cart,
         "cart_products": cart_products,
         "free_shipping": fs,
+        "ga4_cart": ga4_cart,
     }

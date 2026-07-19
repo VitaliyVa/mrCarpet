@@ -1,6 +1,7 @@
 import { instance } from "./instance";
 import { showLoader, hideLoader } from "../components/module/form_action";
 import { showSuccess, showError } from "../utils/notifications";
+import { trackEvent } from "../utils/analytics";
 
 export const subscribeToNewsletter = async (email) => {
   try {
@@ -11,6 +12,10 @@ export const subscribeToNewsletter = async (email) => {
     });
 
     hideLoader();
+    trackEvent("generate_lead", {
+      lead_type: "newsletter",
+      method: "subscribe",
+    });
     return data;
   } catch ({ response }) {
     hideLoader();
@@ -18,6 +23,10 @@ export const subscribeToNewsletter = async (email) => {
     const payload = response?.data || {};
     // Уже підписаний — все одно віддаємо промокод у модалку
     if (payload.welcome_promocode) {
+      trackEvent("generate_lead", {
+        lead_type: "newsletter",
+        method: "already_subscribed",
+      });
       return {
         ...payload,
         already_subscribed: true,

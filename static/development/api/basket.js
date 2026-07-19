@@ -1,9 +1,15 @@
 import { instance } from "./instance";
-import { showLoader } from "../components/module/form_action";
 import { showError, showSuccess } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
 import { updateBasket } from "../components/pages/basket/utils/updateBasket";
-export const addToBasket = async (product, onSucces) => {
+import {
+  trackEcommerce,
+  itemFromProductEl,
+  itemsValue,
+  CURRENCY,
+} from "../utils/analytics";
+
+export const addToBasket = async (product, onSucces, analyticsMeta) => {
   try {
     const { data } = await instance.post("/cart-products/", product);
 
@@ -13,22 +19,41 @@ export const addToBasket = async (product, onSucces) => {
 
     updateCountBadge(".header_bottom_panel_cart", data?.quantity);
     updateBasket(data);
-    
-    // Показуємо успішне повідомлення
+
+    const item =
+      analyticsMeta ||
+      (product?.analyticsItem
+        ? product.analyticsItem
+        : {
+            item_id: String(product.product || ""),
+            item_brand: "mr.Carpet",
+            quantity: product.quantity || 1,
+            price: 0,
+          });
+    if (item?.item_id) {
+      const qty = item.quantity || product.quantity || 1;
+      trackEcommerce("add_to_cart", {
+        currency: CURRENCY,
+        value: itemsValue([{ ...item, quantity: qty }]),
+        items: [{ ...item, quantity: qty }],
+      });
+    }
+
     showSuccess(data?.message || "Товар додано в кошик");
 
     return data;
   } catch (error) {
-    // Обробка помилок від axios
-    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при додаванні в кошик";
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Помилка при додаванні в кошик";
     showError(errorMessage);
-    
-    // Повертаємо null при помилці для обробки на рівні компонента
+
     return null;
   }
 };
 
-export const removeFromBasket = async (productId, onSucces) => {
+export const removeFromBasket = async (productId, onSucces, analyticsMeta) => {
   try {
     const { data } = await instance.delete(`/cart-products/${productId}/`);
 
@@ -39,12 +64,22 @@ export const removeFromBasket = async (productId, onSucces) => {
     updateCountBadge(".header_bottom_panel_cart", data?.quantity);
     updateBasket(data);
 
+    if (analyticsMeta?.item_id) {
+      trackEcommerce("remove_from_cart", {
+        currency: CURRENCY,
+        value: itemsValue([analyticsMeta]),
+        items: [analyticsMeta],
+      });
+    }
+
     return data;
   } catch (error) {
-    // Обробка помилок від axios
-    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при видаленні з кошика";
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Помилка при видаленні з кошика";
     showError(errorMessage);
-    
+
     return null;
   }
 };
@@ -62,26 +97,14 @@ export const updateBasketItem = async ({ id, ...product }, onSucces) => {
 
     return data;
   } catch (error) {
-    // Обробка помилок від axios
-    const errorMessage = error?.response?.data?.message || error?.message || "Помилка при оновленні кошика";
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Помилка при оновленні кошика";
     showError(errorMessage);
-    
+
     return null;
   }
 };
 
-// export const addPromocode = async (code) => {
-//   try {
-//     showLoader();
-//     const { data } = await instance.post(`/add-promocode/`);
-
-//     // updateCountBadge(".header_bottom_panel_cart", data?.quantity);
-//     // updateBasket(data);
-
-//     console.log(data);
-
-//     return data;
-//   } catch ({ response }) {
-//     bad_modal(response?.data?.message);
-//   }
-// };
+export { itemFromProductEl };

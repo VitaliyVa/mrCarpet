@@ -1,5 +1,6 @@
 import "./index.scss";
 import { syncStockUI } from "../../module/stock_availability";
+import { trackEvent } from "../../../utils/analytics";
 
 document.addEventListener("click", ({ target }) => {
   const sizeLabel = target.closest(".size-label");
@@ -11,6 +12,7 @@ document.addEventListener("click", ({ target }) => {
     if (product) {
       const newLabelProduct = product.querySelector(".cart_item_new ");
       const sizesBlock = product.querySelector(".sizes-block");
+      if (!sizesBlock) return;
       const allSizeLabels = sizesBlock.querySelectorAll(".size-label");
       const { item, novelty } = sizeLabel.dataset;
 
@@ -60,6 +62,15 @@ document.addEventListener("click", ({ target }) => {
         bagBtn.dataset.action = inStock ? "cart" : "inquire";
         bagBtn.title = inStock ? "Додати до кошика" : "Дізнатись про наявність";
       }
+
+      trackEvent("size_select", {
+        item_id: String(
+          product.dataset.catalogProductId || product.dataset.productId || ""
+        ),
+        item_name: product.dataset.productTitle || "",
+        size_label: sizeLabel.textContent?.trim() || String(item || ""),
+        product_attr_id: String(item || ""),
+      });
     }
   }
 });

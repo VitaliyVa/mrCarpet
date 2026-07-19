@@ -376,6 +376,15 @@ function restoreCheckboxState() {
 function applyFilters() {
     const form = document.getElementById('filters-form');
     if (form) {
+        try {
+            const params = new URLSearchParams(new FormData(form));
+            if (window.mrAnalytics && typeof window.mrAnalytics.trackEvent === 'function') {
+                window.mrAnalytics.trackEvent('filter_apply', {
+                    filter_params: params.toString().slice(0, 200),
+                    item_list_id: window.location.pathname,
+                });
+            }
+        } catch (e) {}
         form.submit();
     }
     // Оновлюємо видимість кнопки після застосування

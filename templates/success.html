@@ -31,4 +31,18 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/success/index.js"></script>
+{% if analytics_purchase_retry %}
+<script>
+(function () {
+  // LiqPay callback race: one delayed reload, then give up.
+  try {
+    if (sessionStorage.getItem("ga4_purchase_page_retry")) return;
+    sessionStorage.setItem("ga4_purchase_page_retry", "1");
+  } catch (e) {}
+  window.setTimeout(function () {
+    window.location.reload();
+  }, 2000);
+})();
+</script>
+{% endif %}
 {% endblock scripts %}

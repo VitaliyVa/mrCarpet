@@ -69,6 +69,41 @@ python scripts/ga4/admin.py info
 | Conversion events, custom dimensions (частина) | Деякі wizard-и / зв’язки з Ads |
 | Data streams / property metadata | Дизайн звітів snapshot |
 
+## Ecommerce events (сайт)
+
+Після деплою в Realtime / DebugView мають з’являтись:
+
+| Event | Коли |
+|-------|------|
+| `view_item` | PDP |
+| `view_item_list` / `select_item` | каталог / клік по картці |
+| `add_to_cart` / `remove_from_cart` | кошик |
+| `view_cart` / `begin_checkout` | `/cart/` / `/checkout/` |
+| `add_shipping_info` / `add_payment_info` | чекаут |
+| `purchase` | success (cash одразу; liqpay після оплати) |
+| `add_to_wishlist` | обране |
+| `search` / `filter_apply` / `size_select` | UX |
+| `generate_lead` | контакт / newsletter / наявність |
+| `click_phone` / `click_email` / `cta_click` | кліки |
+
+`item_id` = **Product.pk** (каталог), не ProductAttribute.
+
+### Конверсії (Admin API)
+
+```bash
+python scripts/ga4/admin.py mark-conversion purchase
+python scripts/ga4/admin.py mark-conversion generate_lead
+python scripts/ga4/admin.py mark-conversion add_to_cart
+python scripts/ga4/admin.py mark-conversion begin_checkout
+python scripts/ga4/admin.py conversions
+```
+
+### UTM + Search Console
+
+- Кампанії: `utm_source` / `utm_medium` / `utm_campaign` на лендинг.
+- GSC ↔ GA4: Admin → Product links → Search Console (раз у UI).
+- Canonical на сайті бажано `https://` (окремий фікс).
+
 ## Безпека
 
 - Ніколи не коміть `ops/ga4/*.json` / `.env`

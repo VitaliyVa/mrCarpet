@@ -7,6 +7,7 @@ import {
   plus,
 } from "../../module/shop_scripts/basket_action";
 import { initPromocode, restorePromocode } from "./promocode";
+import { itemFromProductEl, parseMoney } from "../../../utils/analytics";
 
 console.log("Basket index.js loaded"); // Логування
 
@@ -35,8 +36,17 @@ document.addEventListener("click", ({ target }) => {
     };
 
     if (deleteButton) {
-      removeFromBasket(productId, () =>
-        delete_item(deleteButton, ".basket_item")
+      const qty = Number(product.dataset.quantity) || 1;
+      const lineTotal = parseMoney(product.dataset.price);
+      const analyticsItem = itemFromProductEl(product, {
+        quantity: qty,
+        price: qty ? lineTotal / qty : lineTotal,
+        item_variant: product.dataset.itemVariant || "",
+      });
+      removeFromBasket(
+        productId,
+        () => delete_item(deleteButton, ".basket_item"),
+        analyticsItem
       );
     }
 

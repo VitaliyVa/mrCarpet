@@ -3,6 +3,7 @@ import "./search";
 import "./contacts";
 import "./basket";
 import "./favorites";
+import "../../../utils/analytics";
 
 import "./index.scss";
 import "./authorization.scss";

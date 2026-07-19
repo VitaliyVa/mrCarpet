@@ -2,3 +2,5 @@
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ gtm_container_id|urlencode }}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% endif %}
+{% if ga4_cart %}{{ ga4_cart|json_script:"ga4-cart-data" }}{% endif %}
+{% if analytics_purchase %}{{ analytics_purchase|json_script:"ga4-purchase-data" }}{% endif %}

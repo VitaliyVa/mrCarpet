@@ -1,5 +1,6 @@
 import { addToBasket } from "../../../api/basket";
 import { addToFavorite, removeFromFavorite } from "../../../api/favorites";
+import { itemFromProductEl } from "../../../utils/analytics";
 import { minus, plus } from "../../module/shop_scripts/basket_action";
 import { instance } from "../../../api/instance";
 import Choices from "choices.js";
@@ -233,7 +234,10 @@ document.addEventListener("click", async ({ target }) => {
       }
     }
 
-    const basketProduct = await addToBasket(basketData);
+    const analyticsItem = itemFromProductEl(product, {
+      quantity: basketData.quantity,
+    });
+    const basketProduct = await addToBasket(basketData, null, analyticsItem);
 
     console.log(basketProduct);
   }
@@ -241,14 +245,20 @@ document.addEventListener("click", async ({ target }) => {
   // add to favourite
   if (addToFavoriteButton) {
     const isAdded = addToFavoriteButton.classList.contains("active");
+    // API expects ProductAttribute.id; analytics uses catalog Product.pk
+    const analyticsItem = itemFromProductEl(product, { quantity: 1 });
 
     if (!isAdded) {
-      await addToFavorite(productId, () =>
-        addToFavoriteButton.classList.add("active")
+      await addToFavorite(
+        productId,
+        () => addToFavoriteButton.classList.add("active"),
+        analyticsItem
       );
     } else {
-      await removeFromFavorite(productId, () =>
-        addToFavoriteButton.classList.remove("active")
+      await removeFromFavorite(
+        productId,
+        () => addToFavoriteButton.classList.remove("active"),
+        analyticsItem
       );
     }
   }

@@ -1,55 +1,104 @@
 import { getProductsBySearchQuery } from "../../../api/search";
+import { trackEvent } from "../../../utils/analytics";
 
 const searchInput = document.querySelector(".header__search input");
 const searchBody = document.querySelector(".header__search-body");
-const searchBodyResults = searchBody.querySelector(".header__search-items");
+const searchBodyResults = searchBody?.querySelector(".header__search-items");
 
-const renderSearchItem = ({ id, title, image, href }) => `                
-<div class="header__search-product" data-product-id="${id}">
-<div class="header__search-product-left">
-  <div class="header__search-product-img">
-    <a href="${href}">
-      <img src="${image}" alt="${title}" />
-    </a>
+let searchTimer = null;
+let lastTrackedQuery = "";
+
+/** Escape text for safe use inside HTML attribute/text contexts. */
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** Only allow http(s) or site-relative URLs in search result links/images. */
+function safeUrl(value, { allowRelative = true } = {}) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return allowRelative ? "#" : "";
+  if (allowRelative && raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw;
+  }
+  try {
+    const u = new URL(raw, window.location.origin);
+    if (u.protocol === "http:" || u.protocol === "https:") {
+      return u.href;
+    }
+  } catch {
+    /* ignore */
+  }
+  return allowRelative ? "#" : "";
+}
+
+function renderSearchItem({ id, title, image, href }) {
+  const safeId = escapeHtml(id);
+  const safeTitle = escapeHtml(title);
+  const safeHref = escapeHtml(safeUrl(href));
+  const safeImage = escapeHtml(safeUrl(image));
+
+  return `
+<div class="header__search-product" data-product-id="${safeId}" data-catalog-product-id="${safeId}" data-product-title="${safeTitle}">
+  <div class="header__search-product-left">
+    <div class="header__search-product-img">
+      <a href="${safeHref}">
+        <img src="${safeImage}" alt="${safeTitle}" />
+      </a>
+    </div>
+    <div class="header__search-product-info">
+      <a href="${safeHref}">
+        <h4 class="header__search-product-title">${safeTitle}</h4>
+      </a>
+    </div>
   </div>
-  <div class="header__search-product-info">
-    <a href="${href}">
-      <h4 class="header__search-product-title">
-       ${title}
-      </h4>
-    </a>
-  </div>
-</div>
 </div>`;
+}
 
 const renderSearchResults = (searchResults) => {
-  const renderedSearchResults = searchResults?.map((item) =>
-    renderSearchItem(item)
-  );
+  if (!searchBodyResults) return;
 
-  if (renderedSearchResults?.length) {
-    searchBodyResults.innerHTML = renderedSearchResults.join("");
-  } else {
-    searchBodyResults.innerHTML =
-      "<p class='header__search-text'>Товарів не знайдено 🥲</p>";
+  if (!Array.isArray(searchResults) || !searchResults.length) {
+    searchBodyResults.textContent = "";
+    const empty = document.createElement("p");
+    empty.className = "header__search-text";
+    empty.textContent = "Товарів не знайдено 🥲";
+    searchBodyResults.appendChild(empty);
+    return;
   }
+
+  // Titles/URLs escaped above; still avoid joining untrusted raw HTML.
+  searchBodyResults.innerHTML = searchResults.map(renderSearchItem).join("");
 };
 
 const onSearch = async () => {
   let findedProducts = [];
+  const query = (searchInput?.value || "").trim();
 
-  if (searchInput.value.length) {
-    findedProducts = await getProductsBySearchQuery(searchInput.value);
+  if (query.length) {
+    findedProducts = (await getProductsBySearchQuery(query)) || [];
   }
 
   renderSearchResults(findedProducts);
+
+  if (query.length >= 2 && query !== lastTrackedQuery) {
+    lastTrackedQuery = query;
+    trackEvent("search", {
+      search_term: query.slice(0, 100),
+      results_count: findedProducts.length,
+    });
+  }
 };
 
 if (searchInput) {
-  searchInput.addEventListener("input", async () => {
-    searchBody.classList.add("active");
-
-    onSearch();
+  searchInput.addEventListener("input", () => {
+    searchBody?.classList.add("active");
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(onSearch, 500);
   });
 }
 

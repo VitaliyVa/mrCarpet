@@ -188,6 +188,14 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       closeModal();
+      if (window.mrAnalytics?.trackEvent) {
+        window.mrAnalytics.trackEvent("generate_lead", {
+          lead_type: "stock_inquiry",
+          item_id: String(productId || productAttrId || ""),
+          item_name: productTitle || "",
+          size_label: sizeLabel || "",
+        });
+      }
       showSuccess("Запит надіслано. Ми скоро з вами зв’яжемось.");
     } catch (err) {
       closeModal();

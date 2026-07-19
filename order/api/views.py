@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from cart.utils import get_cart
 from catalog.promocode import PromoCodeError, apply_promocode_to_order
 from project.free_shipping import free_shipping_for_total
+from project.ga4_ecommerce import purchase_payload
 from project.telegram_utils import enqueue_order_telegram
 from ..models import Order
 from ..email_utils import enqueue_order_confirmation_email
@@ -146,9 +147,24 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             elif payment_type == Order.PAYMENT_LIQPAY:
                 enqueue_order_telegram(order.pk, event="awaiting_payment")
 
+            analytics_purchase = None
+            try:
+                analytics_purchase = purchase_payload(order, cart)
+                if hasattr(request, "session"):
+                    request.session["ga4_purchase"] = analytics_purchase
+            except Exception:
+                analytics_purchase = None
+
+            # Purchase payload stays in session only — /success/ gates by order status.
+            # Do not echo ecommerce JSON in the API response (avoids early client fire).
+
             if payment_type == Order.PAYMENT_LIQPAY:
                 return Response(
-                    {"success": True, "redirect_url": "/payment/"},
+                    {
+                        "success": True,
+                        "redirect_url": "/payment/",
+                        "order_number": order_number,
+                    },
                     status=status.HTTP_201_CREATED,
                 )
 
