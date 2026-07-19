@@ -129,6 +129,12 @@ class Order(AbstractCreatedUpdated):
         blank=True,
         help_text="Який поріг діяв, коли замовлення отримало безкоштовну доставку.",
     )
+    ga4_mp_sent = models.BooleanField(
+        verbose_name="GA4 MP purchase надіслано",
+        default=False,
+        editable=False,
+        help_text="Measurement Protocol purchase already sent (dedupe).",
+    )
 
     class Meta:
         verbose_name = "Замовлення"

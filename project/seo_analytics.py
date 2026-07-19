@@ -30,4 +30,14 @@ def analytics_context() -> dict:
         "analytics_enabled": analytics_enabled(),
         # Cache-bust for /static/source/pages/* (nginx immutable otherwise).
         "static_v": (getattr(settings, "STATIC_ASSET_VERSION", "") or "1").strip(),
+        # Filled in request-aware processor when user is authenticated.
+        "ga4_user_id": "",
     }
+
+
+def analytics_user_id(user) -> str:
+    """Stable GA4 user_id for logged-in users (never email)."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return ""
+    pk = getattr(user, "pk", None)
+    return f"u{pk}" if pk else ""

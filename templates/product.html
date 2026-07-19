@@ -8,11 +8,11 @@
 {% if product.meta_keys %}<meta name="keywords" content="{{ product.meta_keys }}" />{% endif %}
 {% endblock meta %}
 {# Кольорові варіанти = окремі URL зі self-canonical (не зливаємо на «основний» колір) #}
-{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock canonical %}
+{% block canonical %}https://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock canonical %}
 {% block og_type %}product{% endblock og_type %}
 {% block og_title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if product.meta_description %}{{ product.meta_description }}{% elif product.description %}{{ product.description|striptags|truncatechars:160 }}{% else %}Купити {{ product.title }} з доставкою по Україні.{% endif %}{% endblock og_description %}
-{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock og_url %}
+{% block og_url %}https://{{ request.get_host }}{{ product.get_absolute_url }}{% endblock og_url %}
 {% block og_image %}{% if product.image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.image.url }}" />{% endif %}{% endblock og_image %}
 {% block twitter_title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock twitter_title %}
 {% block twitter_description %}{% if product.meta_description %}{{ product.meta_description }}{% elif product.description %}{{ product.description|striptags|truncatechars:160 }}{% else %}Купити {{ product.title }} з доставкою по Україні.{% endif %}{% endblock twitter_description %}

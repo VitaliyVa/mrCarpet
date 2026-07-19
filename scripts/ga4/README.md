@@ -55,6 +55,7 @@ pip install -r requirements-ga4.txt
 ```bash
 python scripts/ga4/smoke.py
 python scripts/ga4/report.py --days 7
+python scripts/ga4/report.py --ecommerce --days 7
 python scripts/ga4/report.py --realtime
 python scripts/ga4/admin.py info
 ```
@@ -100,12 +101,40 @@ python scripts/ga4/admin.py conversions
 
 ### UTM + Search Console
 
-- Кампанії: `utm_source` / `utm_medium` / `utm_campaign` на лендинг.
-- GSC ↔ GA4: Admin → Product links → Search Console (раз у UI).
-- Canonical на сайті бажано `https://` (окремий фікс).
+- Кампанії: завжди `utm_source` / `utm_medium` / `utm_campaign` (+ опційно `utm_content` / `utm_term`).
+- Приклад: `https://mrcarpet24.com/?utm_source=instagram&utm_medium=social&utm_campaign=spring`.
+- Перевірка: Realtime → Traffic source, або `report.py --ecommerce` (source/medium).
+- **GSC ↔ GA4** (раз у UI): Admin → Product links → Search Console → Link.
+- Після лінку з’являться organic search queries у GA; індексація лишається в GSC.
+- Canonical / `og:url` на сайті = `https://` через `SITE_URL` + `SECURE_PROXY_SSL_HEADER`.
+
+### Measurement Protocol (server purchase)
+
+Django шле `purchase` з бекенду (cash create + LiqPay paid), щоб не губити revenue без success page.
+
+1. GA4 → Admin → Data streams → Web → Measurement Protocol API secrets → Create.
+2. На **проді** в `.env` (не в git):
+
+```bash
+GA4_MEASUREMENT_ID=G-XXXXXXXX
+GA4_API_SECRET=xxxxxxxx
+```
+
+`docker-compose.prod.yml` прокидає `GA4_API_SECRET` у web. Локально secret може лежати в `ops/ga4/.env` для debug-скриптів — **не комітити**.
+
+Дедеп: поле `Order.ga4_mp_sent`. Браузерний `purchase` на `/success/` лишається (session gate).
+
+### Static cache (без ManifestStaticFilesStorage)
+
+Шаблони хардкодять `/static/source/pages/...` → Manifest ламає URL. Стратегія:
+
+1. `STATIC_ASSET_VERSION` + `?v={{ static_v }}` на page CSS/JS.
+2. nginx: `/static/source/pages/` → `Cache-Control: public, must-revalidate` (не `immutable`).
+3. Інший `/static/` → `immutable` 30d (хешовані/рідко змінні ассети).
+4. Після фронт-деплою bump `STATIC_ASSET_VERSION` (або env на проді).
 
 ## Безпека
 
-- Ніколи не коміть `ops/ga4/*.json` / `.env`
-- Не кидай JSON в чат — лише шлях на диску
+- Ніколи не коміть `ops/ga4/*.json` / `.env` / `GA4_API_SECRET`
+- Не кидай JSON/secret в чат — лише шлях на диску
 - Для відклику: видали ключ у GCP + прибери юзера SA з GA4

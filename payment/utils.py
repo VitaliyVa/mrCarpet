@@ -212,9 +212,12 @@ def create_payment(request, response):
 
     if status in ("success", "sandbox"):
         from order.email_utils import enqueue_order_confirmation_email
+        from project.ga4_mp import enqueue_order_purchase_mp
         from project.telegram_utils import enqueue_order_telegram
 
         enqueue_order_confirmation_email(order.pk)
         enqueue_order_telegram(order.pk, event="paid")
+        # Revenue source of truth for card payments (browser may miss success).
+        enqueue_order_purchase_mp(order.pk)
 
     return payment

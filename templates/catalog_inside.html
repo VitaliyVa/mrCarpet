@@ -8,10 +8,10 @@
 />
 {% if categorie and categorie.meta_keys %}<meta name="keywords" content="{{ categorie.meta_keys }}" />{% endif %}
 {% endblock meta %}
-{% block canonical %}{% if categorie %}{{ request.scheme }}://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
+{% block canonical %}{% if categorie %}https://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}https://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
 {% block og_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet. Доставка по Україні.{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
-{% block og_url %}{% if categorie %}{{ request.scheme }}://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock og_url %}
+{% block og_url %}{% if categorie %}https://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}https://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock og_url %}
 {% block twitter_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
 {% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet.{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
 {% block structured_data %}

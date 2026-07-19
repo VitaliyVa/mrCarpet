@@ -3,8 +3,8 @@
  * No-op when tags absent. Hooks bind once per page.
  */
 
-const CURRENCY = "UAH";
-const BRAND = "mr.Carpet";
+export const CURRENCY = "UAH";
+export const BRAND = "mr.Carpet";
 
 function ensureDataLayer() {
   window.dataLayer = window.dataLayer || [];
@@ -230,6 +230,25 @@ function bindCheckoutExtras() {
 
   let shippingSent = false;
   let paymentSent = false;
+  const cart = () => readJsonScript("ga4-cart-data") || {};
+
+  function firePaymentInfo(input) {
+    if (paymentSent || !input) return;
+    paymentSent = true;
+    const c = cart();
+    trackEcommerce("add_payment_info", {
+      currency: c.currency || CURRENCY,
+      value: c.value || 0,
+      payment_type: input.id || input.value || "cash",
+      items: c.items || [],
+    });
+  }
+
+  // Default cash (or any pre-checked method) — do not wait for change.
+  const preselected =
+    document.querySelector('input[name="payment"]:checked:not(:disabled)') ||
+    document.getElementById("cash");
+  firePaymentInfo(preselected);
 
   document.addEventListener("click", (e) => {
     if (
@@ -241,27 +260,22 @@ function bindCheckoutExtras() {
       return;
     }
     shippingSent = true;
-    const cart = readJsonScript("ga4-cart-data") || {};
+    const c = cart();
     trackEcommerce("add_shipping_info", {
-      currency: cart.currency || CURRENCY,
-      value: cart.value || 0,
+      currency: c.currency || CURRENCY,
+      value: c.value || 0,
       shipping_tier: "nova_poshta",
-      items: cart.items || [],
+      items: c.items || [],
     });
   });
 
   document.addEventListener("change", (e) => {
     const input = e.target;
     if (!(input instanceof HTMLInputElement)) return;
-    if (input.name !== "payment" || paymentSent) return;
-    paymentSent = true;
-    const cart = readJsonScript("ga4-cart-data") || {};
-    trackEcommerce("add_payment_info", {
-      currency: cart.currency || CURRENCY,
-      value: cart.value || 0,
-      payment_type: input.id || input.value || "cash",
-      items: cart.items || [],
-    });
+    if (input.name !== "payment") return;
+    // User switched method after default — fire again with new payment_type.
+    paymentSent = false;
+    firePaymentInfo(input);
   });
 }
 

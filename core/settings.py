@@ -41,9 +41,15 @@ SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
 # Prefer GTM_CONTAINER_ID=GTM-XXXXXXX if you manage tags in GTM (then skip raw GA4 id).
 GA4_MEASUREMENT_ID = config("GA4_MEASUREMENT_ID", default="")
 GTM_CONTAINER_ID = config("GTM_CONTAINER_ID", default="")
+# Measurement Protocol API secret (server-only). Create in GA4 → Data stream → MP secrets.
+GA4_API_SECRET = config("GA4_API_SECRET", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
-STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719d")
+STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20260719e")
+
+# Behind nginx TLS termination (see config/mrcarpet.docker X-Forwarded-Proto).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 # CSRF налаштування для webhook від LiqPay через ngrok
 # Додайте ваш ngrok URL сюди

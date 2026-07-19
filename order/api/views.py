@@ -155,6 +155,19 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             except Exception:
                 analytics_purchase = None
 
+            # Server-side purchase (Measurement Protocol). Cash now; LiqPay on paid callback.
+            if payment_type == Order.PAYMENT_CASH:
+                try:
+                    from project.ga4_mp import (
+                        client_id_from_ga_cookie,
+                        enqueue_order_purchase_mp,
+                    )
+
+                    cid = client_id_from_ga_cookie(request.COOKIES.get("_ga"))
+                    enqueue_order_purchase_mp(order.pk, client_id=cid)
+                except Exception:
+                    pass
+
             # Purchase payload stays in session only — /success/ gates by order status.
             # Do not echo ecommerce JSON in the API response (avoids early client fire).
 
