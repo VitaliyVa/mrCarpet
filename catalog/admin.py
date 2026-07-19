@@ -849,7 +849,7 @@ class ProductAdmin(admin.ModelAdmin):
             level=level,
         )
 
-    @admin.action(description='Опублікувати в TG + Instagram + Facebook')
+    @admin.action(description='Опублікувати в соцмережі (TG + Viber + IG + FB)')
     def publish_to_all_socials(self, request, queryset):
         from social.models import SocialPost
         from social.services.product_post import build_product_social_post
@@ -858,8 +858,13 @@ class ProductAdmin(admin.ModelAdmin):
             validate_post_for_publish,
         )
         from social.services.telegram_products import post_product_to_channel
+        from social.services.viber_products import (
+            post_product_to_viber,
+            viber_posting_enabled,
+        )
 
-        tg_ok = tg_fail = meta_ok = meta_fail = 0
+        tg_ok = tg_fail = vb_ok = vb_fail = meta_ok = meta_fail = 0
+        viber_on = viber_posting_enabled()
         for product in queryset:
             # Telegram products channel
             result = post_product_to_channel(product, force=True)
@@ -872,6 +877,19 @@ class ProductAdmin(admin.ModelAdmin):
                     f'{product} → TG: {result.get("error")}',
                     level='error',
                 )
+
+            # Viber channel — тільки якщо увімкнений майстер-рубильник
+            if viber_on:
+                vb_result = post_product_to_viber(product)
+                if vb_result.get('ok'):
+                    vb_ok += 1
+                else:
+                    vb_fail += 1
+                    self.message_user(
+                        request,
+                        f'{product} → Viber: {vb_result.get("error")}',
+                        level='error',
+                    )
 
             # Instagram + Facebook
             try:
@@ -893,11 +911,17 @@ class ProductAdmin(admin.ModelAdmin):
             enqueue_publish(post.pk)
             meta_ok += 1
 
+        viber_part = (
+            f'Viber: ok={vb_ok}, fail={vb_fail}'
+            if viber_on
+            else 'Viber: вимкнено (Social settings)'
+        )
         self.message_user(
             request,
-            f'TG: ok={tg_ok}, fail={tg_fail} · IG/FB: у черзі {meta_ok}, '
-            f'помилок {meta_fail}. Статус IG/FB — у Social → Social posts.',
-            level='success' if (tg_ok or meta_ok) else 'warning',
+            f'TG: ok={tg_ok}, fail={tg_fail} · {viber_part} · '
+            f'IG/FB: у черзі {meta_ok}, помилок {meta_fail}. '
+            f'Статус IG/FB — у Social → Social posts.',
+            level='success' if (tg_ok or vb_ok or meta_ok) else 'warning',
         )
 
     @admin.action(description='Згенерувати AR-текстуру для вибраних')

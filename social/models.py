@@ -39,6 +39,20 @@ class SocialSettings(models.Model):
             "(photos-пост з головного фото + галереї)."
         ),
     )
+    viber_posting_enabled = models.BooleanField(
+        default=False,
+        help_text=(
+            "Майстер-рубильник Viber-каналу. Вимкнено = у Viber не постить "
+            "НІЩО (ні авто, ні ручна дія в адмінці)."
+        ),
+    )
+    auto_post_new_products_viber = models.BooleanField(
+        default=False,
+        help_text=(
+            "Автоматично слати нові товари у Viber-канал "
+            "(діє лише разом з увімкненим майстер-рубильником)."
+        ),
+    )
     products_channel_id = models.CharField(
         max_length=64,
         blank=True,

@@ -51,3 +51,21 @@ def maybe_post_new_product_to_socials(sender, instance, created, **kwargs):
         import logging
 
         logging.getLogger(__name__).exception("Meta product signal failed")
+
+    # Viber channel (подвійний гейт: майстер-рубильник + авто-toggle)
+    try:
+        if (
+            social.viber_posting_enabled
+            and social.auto_post_new_products_viber
+        ):
+            from social.services.viber_products import (
+                enqueue_product_viber_post,
+                viber_configured,
+            )
+
+            if viber_configured():
+                enqueue_product_viber_post(instance.pk)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("Viber product signal failed")

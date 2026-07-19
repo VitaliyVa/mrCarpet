@@ -311,6 +311,20 @@ class SocialSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Viber products channel",
+            {
+                "fields": (
+                    "viber_posting_enabled",
+                    "auto_post_new_products_viber",
+                ),
+                "description": (
+                    "Канал «Меблі і Килими (Ланівці)», токен у .env "
+                    "(VIBER_AUTH_TOKEN). Поки майстер-рубильник вимкнений — "
+                    "у Viber не постить ніщо: ні авто, ні ручна дія."
+                ),
+            },
+        ),
+        (
             "Telegram products channel",
             {
                 "fields": (

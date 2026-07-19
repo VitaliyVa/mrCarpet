@@ -255,6 +255,9 @@ LIQPAY_SANDBOX = config("LIQPAY_SANDBOX", default=True, cast=bool)
 # Ukrposhta address-classifier (прод/локальний .env; без токена пошук відділень УП не працює)
 UKR_POSHTA_BEARER = config("UKR_POSHTA_BEARER", default="")
 
+# Viber Channels Post API (токен каналу; постинг вмикається у Social settings)
+VIBER_AUTH_TOKEN = config("VIBER_AUTH_TOKEN", default="")
+
 REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
 
 # Absolute site URL for Telegram product links etc.
