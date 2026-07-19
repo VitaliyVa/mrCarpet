@@ -9,7 +9,19 @@ from social.services.publish import (
     publish_post,
     validate_post_for_publish,
 )
-from social.services.telegram_products import handle_discussion_comment, _build_reply
+from social.services.telegram_products import (
+    handle_discussion_comment,
+    _build_reply,
+    _product_caption_html,
+    _product_photo_urls,
+    post_product_to_channel,
+)
+from social.services.comment_notify import (
+    InboundComment,
+    PLATFORM_TELEGRAM,
+    format_staff_comment_html,
+    inbound_from_telegram_discussion,
+)
 from social.services.tg_isolation import isolation_issues, is_products_discussion_chat
 from social.services.tiktok import _normalize_privacy, TikTokPublishError, publish_photos
 from social.services import meta
@@ -172,6 +184,97 @@ class TelegramProductsHandlerTests(TestCase):
         self.assertTrue(mock_post.called)
 
 
+class TelegramProductPostTests(SimpleTestCase):
+    @override_settings(SITE_URL="https://mrcarpet24.com")
+    def test_caption_includes_sizes(self):
+        size = MagicMock()
+        size.title = "80×150"
+        attr = MagicMock()
+        attr.size_id = 1
+        attr.size = size
+        attr.get_total_price.return_value = 1000
+        attr.in_stock = True
+        attr.price = 1000
+
+        qs = MagicMock()
+        qs.select_related.return_value.order_by.return_value = [attr]
+
+        custom_qs = MagicMock()
+        custom_qs.first.return_value = None
+
+        product = MagicMock()
+        product.title = "Килим тест"
+        product.slug = "kilim-test"
+        product.get_absolute_url.return_value = "/catalog/product/kilim-test/"
+        product.get_size_attrs.return_value = qs
+        product.product_attr.filter.return_value = custom_qs
+
+        caption = _product_caption_html(product)
+        self.assertIn("Килим тест", caption)
+        self.assertIn("Розміри:", caption)
+        self.assertIn("80×150", caption)
+        self.assertIn("1000 грн", caption)
+        self.assertIn("Дивитись на сайті", caption)
+
+    @override_settings(SITE_URL="https://mrcarpet24.com")
+    def test_photo_urls_main_plus_gallery(self):
+        product = MagicMock()
+        product.image = MagicMock(name="main")
+        img1 = MagicMock()
+        img1.image = MagicMock(name="g1")
+        img2 = MagicMock()
+        img2.image = MagicMock(name="g2")
+        product.images.order_by.return_value = [img1, img2]
+
+        with patch(
+            "social.services.media_urls.absolute_media_url",
+            side_effect=lambda f: f"https://mrcarpet24.com/media/{id(f)}.jpg",
+        ):
+            urls = _product_photo_urls(product)
+        self.assertEqual(len(urls), 3)
+
+
+class TelegramProductPostDbTests(TestCase):
+    @override_settings(SITE_URL="https://mrcarpet24.com")
+    @patch("social.services.telegram_products.requests.post")
+    @patch("social.services.telegram_products._bot_token", return_value="1:ABC")
+    @patch(
+        "social.services.telegram_products._product_photo_urls",
+        return_value=[
+            "https://mrcarpet24.com/a.jpg",
+            "https://mrcarpet24.com/b.jpg",
+        ],
+    )
+    def test_send_media_group_for_multiple_photos(
+        self, _urls, _token, mock_post
+    ):
+        mock_post.return_value = MagicMock(
+            content=b'{"ok":true,"result":[]}',
+            json=lambda: {"ok": True, "result": []},
+        )
+        SocialSettings.load()
+        SocialSettings.objects.filter(pk=1).update(
+            products_channel_id="-1003311077002"
+        )
+        product = MagicMock()
+        product.title = "X"
+        product.get_absolute_url.return_value = "/catalog/product/x/"
+        qs = MagicMock()
+        qs.select_related.return_value.order_by.return_value = []
+        product.get_size_attrs.return_value = qs
+        product.product_attr.filter.return_value.first.return_value = None
+        product.get_default_size_attr.return_value = None
+
+        result = post_product_to_channel(product)
+        self.assertTrue(result["ok"])
+        url = mock_post.call_args[0][0]
+        self.assertIn("sendMediaGroup", url)
+        media = mock_post.call_args.kwargs["json"]["media"]
+        self.assertEqual(len(media), 2)
+        self.assertIn("caption", media[0])
+        self.assertNotIn("caption", media[1])
+
+
 class MetaPublishMockTests(TestCase):
     @override_settings(
         META_PAGE_ACCESS_TOKEN="tok",
@@ -242,6 +345,60 @@ class MetaPublishMockTests(TestCase):
         self.assertEqual(mock_graph.call_count, 3)
 
 
+class StaffCommentNotifyTests(SimpleTestCase):
+    def test_format_includes_platform(self):
+        body = format_staff_comment_html(
+            InboundComment(
+                platform=PLATFORM_TELEGRAM,
+                text="яка ціна?",
+                author_name="Іра",
+                author_username="ira",
+                post_title="Килим бежевий",
+                post_url="https://t.me/mrcarpet24/5",
+            )
+        )
+        self.assertIn("Telegram", body)
+        self.assertIn("Килим бежевий", body)
+        self.assertIn("яка ціна?", body)
+        self.assertIn("@ira", body)
+
+    def test_ignore_channel_autoforward(self):
+        msg = {
+            "is_automatic_forward": True,
+            "caption": "Килим 1000 грн",
+            "from": {"id": 1, "first_name": "X"},
+        }
+        self.assertIsNone(inbound_from_telegram_discussion(msg))
+
+    def test_parse_human_reply(self):
+        msg = {
+            "message_id": 10,
+            "date": 1700000000,
+            "text": "чи є доставка в Київ?",
+            "from": {
+                "id": 99,
+                "first_name": "Оля",
+                "username": "olya",
+                "is_bot": False,
+            },
+            "chat": {"id": -1004168344587},
+            "reply_to_message": {
+                "caption": "Килим тест\n1000 грн",
+                "forward_from_chat": {
+                    "username": "mrcarpet24",
+                    "type": "channel",
+                },
+                "forward_from_message_id": 5,
+            },
+        }
+        c = inbound_from_telegram_discussion(msg)
+        self.assertIsNotNone(c)
+        self.assertEqual(c.platform, PLATFORM_TELEGRAM)
+        self.assertIn("Київ", c.text)
+        self.assertEqual(c.post_url, "https://t.me/mrcarpet24/5")
+        self.assertIn("Килим тест", c.post_title)
+
+
 class TgIsolationTests(TestCase):
     def test_overlap_detected(self):
         issues = isolation_issues(
@@ -252,6 +409,25 @@ class TgIsolationTests(TestCase):
             channel_id="-1003", discussion_id="-1003", family_id="-1001"
         )
         self.assertTrue(any("discussion" in i for i in issues2))
+        issues3 = isolation_issues(
+            channel_id="-1001",
+            discussion_id="-1002",
+            staff_comments_id="",
+            staff_comments_thread_id="910",
+            family_id="-1009",
+            orders_thread="910",
+        )
+        self.assertTrue(any("thread" in i for i in issues3))
+        # Same family chat + different topic = OK
+        ok = isolation_issues(
+            channel_id="-1001",
+            discussion_id="-1002",
+            staff_comments_id="",
+            staff_comments_thread_id="999",
+            family_id="-1009",
+            orders_thread="910",
+        )
+        self.assertEqual(ok, [])
 
     def test_discussion_gate(self):
         SocialSettings.load()

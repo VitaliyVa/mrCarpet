@@ -45,8 +45,33 @@ class SocialSettings(models.Model):
         help_text="Linked discussion group id для коментарів.",
     )
     products_bot_replies = models.BooleanField(
+        default=False,
+        help_text=(
+            "Застарілий FAQ-автоответчик у discussion (краще вимкнено). "
+            "Коментарі дублюються в staff comments chat незалежно від цього."
+        ),
+    )
+    staff_comments_enabled = models.BooleanField(
         default=True,
-        help_text="Бот відповідає на whitelist-питання в discussion group.",
+        help_text="Дублювати коментарі (TG discussion; пізніше IG/FB) у staff topic/чат.",
+    )
+    staff_comments_chat_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=(
+            "Куди слати алерти. Порожньо = сімейна група (TelegramSettings.chat_id). "
+            "Для forum-топіка зазвичай лишай порожнім."
+        ),
+    )
+    staff_comments_thread_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text=(
+            "Forum topic id у сімейній групі (напр. «mr.Carpet comments»). "
+            "Обов’язково ≠ orders message_thread_id."
+        ),
     )
     updated_at = models.DateTimeField(auto_now=True)
 

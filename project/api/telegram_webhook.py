@@ -33,22 +33,25 @@ def telegram_webhook(request):
     except (UnicodeDecodeError, json.JSONDecodeError):
         return HttpResponse(status=400)
 
-    # Products discussion FAQ — handle even when staff AI is off.
+    # Products discussion: staff comment mirror + optional FAQ.
     # Never forward discussion-group updates to the family AI/HITL agent.
     try:
+        from social.services.comment_notify import notify_telegram_discussion_message
         from social.services.tg_isolation import is_products_discussion_chat
         from social.services.telegram_products import handle_discussion_comment
 
         msg = update.get("message") or update.get("edited_message") or {}
         chat = msg.get("chat") or {}
         if is_products_discussion_chat(chat.get("id")):
+            notified = notify_telegram_discussion_message(msg)
             handled = handle_discussion_comment(update)
-            return JsonResponse(
-                {
-                    "ok": True,
-                    "handled": "products_faq" if handled else "products_discussion_skip",
-                }
-            )
+            if handled:
+                tag = "products_faq"
+            elif notified:
+                tag = "products_comment_mirrored"
+            else:
+                tag = "products_discussion_skip"
+            return JsonResponse({"ok": True, "handled": tag})
         if handle_discussion_comment(update):
             return JsonResponse({"ok": True, "handled": "products_faq"})
     except Exception:

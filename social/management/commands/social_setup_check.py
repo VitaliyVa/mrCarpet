@@ -27,13 +27,30 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"  auto_post: {social.auto_post_new_products_tg}")
         self.stdout.write(f"  bot_replies: {social.products_bot_replies}")
+        self.stdout.write(
+            f"  staff_comments_enabled: {social.staff_comments_enabled}"
+        )
+        self.stdout.write(
+            f"  staff_comments_chat_id: {social.staff_comments_chat_id or '— (family)'}"
+        )
+        self.stdout.write(
+            f"  staff_comments_thread_id: "
+            f"{getattr(social, 'staff_comments_thread_id', '') or '—'}"
+        )
 
         self.stdout.write("=== Telegram chat isolation ===")
         iso = isolation_status()
         self.stdout.write(f"  family_chat_id: {iso['family_chat_id'] or '—'}")
+        self.stdout.write(f"  orders_thread_id: {iso.get('orders_thread_id') or '—'}")
         self.stdout.write(f"  products_channel_id: {iso['products_channel_id'] or '—'}")
         self.stdout.write(
             f"  products_discussion_chat_id: {iso['products_discussion_chat_id'] or '—'}"
+        )
+        self.stdout.write(
+            f"  staff_comments_chat_id: {iso['staff_comments_chat_id'] or '— (family)'}"
+        )
+        self.stdout.write(
+            f"  staff_comments_thread_id: {iso.get('staff_comments_thread_id') or '—'}"
         )
         if iso["ok"]:
             self.stdout.write(self.style.SUCCESS("  isolation: OK"))

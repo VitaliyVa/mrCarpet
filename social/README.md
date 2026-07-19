@@ -10,6 +10,23 @@
 
 UX: чернетка → кнопка **Publish** (не auto на Save).
 
+## Коментарі → staff inbox
+
+Публічні коментарі дзеркаляться в окрему групу **mr.Carpet comments** (не orders).
+
+| Джерело | Статус |
+|---|---|
+| Telegram discussion під постом каналу | ✅ зараз |
+| Instagram comments | пізніше (той самий `InboundComment` → `notify_staff_comment`) |
+| Facebook comments | пізніше |
+
+Формат алерту: платформа · пост · автор · час · текст.
+
+Config (**Social settings**):
+- `staff_comments_enabled`
+- `staff_comments_chat_id` — порожньо = сімейна група
+- `staff_comments_thread_id` — forum topic «mr.Carpet comments» (≠ orders topic)
+
 ## Phase 0 — акаунти під API (до першого публічного посту)
 
 ### Meta (Instagram + Facebook)
@@ -41,20 +58,22 @@ UX: чернетка → кнопка **Publish** (не auto на Save).
    ```
 5. До audit Direct Post = `SELF_ONLY`. Публічний go-live — після audit.
 
-### Telegram products channel (ізоляція від сімейної групи)
+### Telegram chats (ізоляція)
 
-Один бот (`TelegramSettings.bot_token`), **три різні numeric chat id**:
+Один бот (`TelegramSettings.bot_token`). Сімейна супергрупа з Topics:
 
-| Chat | Config | Роль |
+| Chat / topic | Config | Роль |
 |---|---|---|
-| Сімейна / замовлення | Admin → **Telegram settings** → `chat_id` | ордери, AI, HITL |
-| Канал `@mrcarpet24` | Admin → **Social settings** → `products_channel_id` | лише пости товарів |
-| Discussion (linked) | Admin → **Social settings** → `products_discussion_chat_id` | лише FAQ whitelist |
+| Сімейна група | **Telegram settings** → `chat_id` | контейнер |
+| Topic orders | **Telegram settings** → `message_thread_id` | ордери, AI, HITL |
+| Topic comments | **Social settings** → `staff_comments_thread_id` (+ chat порожньо) | дзеркало коментарів TG/IG/FB |
+| Канал `@mrcarpet24` | **Social settings** → `products_channel_id` | пости товарів |
+| Discussion (linked) | **Social settings** → `products_discussion_chat_id` | публічні коментарі під постами |
 
-1. Створи канал + Discussion (linked group)
-2. Додай бота адміном каналу і групи обговорення
-3. Заповни IDs у **Social settings** (не Telegram settings)
-4. Переконайся: family ≠ channel ≠ discussion (`social_setup_check` покаже isolation)
-5. Увімкни «Автопост нових товарів» за потреби
+1. Канал + Discussion; бот адмін
+2. У сімейній групі: topic **mr.Carpet comments** (`createForumTopic` / вручну); бот з `can_manage_topics`
+3. `staff_comments_thread_id` ≠ orders `message_thread_id`
+4. `social_setup_check` → isolation OK
+5. Автопост товарів за потреби; FAQ `products_bot_replies` краще вимкнено
 
-Webhook: updates з discussion **ніколи** не йдуть в AI агента сімейної групи.
+Webhook: discussion **ніколи** → AI; людські коментарі → topic comments. AI лишається лише в orders topic.

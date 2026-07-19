@@ -32,6 +32,9 @@ class SocialSettingsForm(forms.ModelForm):
         issues = isolation_issues(
             channel_id=cleaned.get("products_channel_id") or "",
             discussion_id=cleaned.get("products_discussion_chat_id") or "",
+            staff_comments_id=cleaned.get("staff_comments_chat_id") or "",
+            staff_comments_thread_id=cleaned.get("staff_comments_thread_id")
+            or "",
         )
         if issues:
             raise forms.ValidationError(issues)
@@ -306,8 +309,24 @@ class SocialSettingsAdmin(admin.ModelAdmin):
                 ),
                 "description": (
                     "IDs тут (Social settings), не в Telegram settings. "
-                    "family chat_id ≠ channel ≠ discussion — інакше бот "
-                    "змішає ордери/AI з публічними постами. Див. social/README.md."
+                    "family orders ≠ staff comments ≠ channel ≠ discussion. "
+                    "Див. social/README.md."
+                ),
+            },
+        ),
+        (
+            "Staff comments inbox",
+            {
+                "fields": (
+                    "staff_comments_enabled",
+                    "staff_comments_chat_id",
+                    "staff_comments_thread_id",
+                ),
+                "description": (
+                    "Дубль коментарів (TG discussion → пізніше IG/FB) у forum-топік "
+                    "сімейної групи «mr.Carpet comments». "
+                    "chat_id порожньо = TelegramSettings.chat_id; "
+                    "thread_id ≠ orders topic. Бот: can_manage_topics."
                 ),
             },
         ),
