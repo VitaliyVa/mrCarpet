@@ -27,64 +27,14 @@ PLACEHOLDER_IMAGE = "products/default.png"
 
 
 def product_caption_text(product) -> str:
-    """Plain-text caption, той самий зміст, що в TG-пості:
-    назва + всі розміри з цінами (out-of-stock з поміткою «немає»),
-    fallback — рядок ціни. Лінк додає build_caption при publish.
+    """Plain-caption для IG/FB (SocialPost.caption): повний контент
+    без лінка — його додає build_caption при publish (utm-версію).
     """
-    title = (product.title or "Товар").strip()
-    lines = [title]
-    sizes = _sizes_lines(product)
-    if sizes:
-        lines.append("")
-        lines.extend(sizes)
-    else:
-        price_line = _price_line(product)
-        if price_line:
-            lines.append("")
-            lines.append(price_line)
-    return "\n".join(lines)[:2000]
+    from social.services.post_content import build_product_content, render_plain
 
-
-def _sizes_lines(product) -> list[str]:
-    """Дзеркало telegram_products._sizes_block, але plain text."""
-    out: list[str] = []
-    try:
-        attrs = list(
-            product.get_size_attrs()
-            .select_related("size")
-            .order_by("sort_order", "id")
-        )
-    except Exception:
-        attrs = []
-    for attr in attrs:
-        try:
-            size_title = (attr.size.title if attr.size_id else "") or ""
-        except Exception:
-            size_title = ""
-        size_title = size_title.strip() or "розмір"
-        try:
-            price = attr.get_total_price()
-        except Exception:
-            price = attr.price
-        price_s = f"{price} грн" if price is not None else "—"
-        stock = "" if getattr(attr, "in_stock", True) else " · немає"
-        out.append(f"• {size_title} — {price_s}{stock}")
-    if out:
-        out.insert(0, "Розміри:")
-    return out
-
-
-def _price_line(product) -> str:
-    """Дзеркало telegram_products._price_line."""
-    try:
-        attr = product.get_default_size_attr()
-        if attr is None:
-            return ""
-        if getattr(attr, "custom_attribute", False):
-            return f"від {attr.custom_price} грн/м²"
-        return f"{attr.get_total_price()} грн"
-    except Exception:
-        return ""
+    return render_plain(
+        build_product_content(product), max_len=2000, with_url=False
+    )
 
 
 def _product_image_names(product) -> list[str]:

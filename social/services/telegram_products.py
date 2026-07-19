@@ -139,68 +139,15 @@ def _product_photo_urls(product) -> list[str]:
 
 
 def _product_caption_html(product) -> str:
-    title = html.escape(product.title or "Товар")
-    url = product_absolute_url(product)
-    footer = (
-        f'<a href="{html.escape(url)}"></a>'
-        f'🔗 <a href="{html.escape(url)}">Дивитись на сайті</a>'
+    """HTML-caption каналу; контент — спільний post_content для всіх мереж."""
+    from social.services.post_content import (
+        build_product_content,
+        render_telegram_html,
     )
-    sizes_block = _sizes_block(product)
-    if sizes_block:
-        body = sizes_block
-    else:
-        price_line = _price_line(product)
-        body = html.escape(price_line) if price_line else ""
 
-    # Fit title + body + footer into Telegram caption limit
-    head = f"<b>{title}</b>"
-    budget = _TG_CAPTION_MAX - len(head) - len(footer) - 2
-    if body and len(body) > budget:
-        if budget < 40:
-            body = ""
-        else:
-            cut = body[: max(0, budget - 1)]
-            body = cut.rsplit("\n", 1)[0] + "…"
-    parts = [head]
-    if body:
-        parts.append(body)
-    parts.append(footer)
-    return "\n".join(parts)
-
-
-def _sizes_block(product) -> str:
-    """List fixed sizes + optional custom (м²) for channel caption."""
-    lines: list[str] = []
-    try:
-        attrs = list(
-            product.get_size_attrs()
-            .select_related("size")
-            .order_by("sort_order", "id")
-        )
-    except Exception:
-        attrs = []
-
-    for attr in attrs:
-        size_title = ""
-        try:
-            size_title = (attr.size.title if attr.size_id else "") or ""
-        except Exception:
-            size_title = ""
-        size_title = size_title.strip() or "розмір"
-        try:
-            price = attr.get_total_price()
-        except Exception:
-            price = attr.price
-        if price is None:
-            price_s = "—"
-        else:
-            price_s = f"{price} грн"
-        stock = "" if getattr(attr, "in_stock", True) else " · немає"
-        lines.append(f"• {html.escape(size_title)} — {html.escape(str(price_s))}{stock}")
-
-    if not lines:
-        return ""
-    return "Розміри:\n" + "\n".join(lines)
+    return render_telegram_html(
+        build_product_content(product), max_len=_TG_CAPTION_MAX
+    )
 
 
 def enqueue_product_channel_post(product_id: int) -> None:
@@ -307,13 +254,3 @@ def _build_reply(text: str) -> str:
     return ""
 
 
-def _price_line(product) -> str:
-    try:
-        attr = product.get_default_size_attr()
-        if attr is None:
-            return ""
-        if getattr(attr, "custom_attribute", False):
-            return f"від {attr.custom_price} грн/м²"
-        return f"{attr.get_total_price()} грн"
-    except Exception:
-        return ""

@@ -183,7 +183,16 @@ if _db_engine.endswith('sqlite3'):
         if connection.vendor != 'sqlite':
             return
         cursor = connection.cursor()
-        cursor.execute('PRAGMA journal_mode=WAL;')
+        # WAL неможливий на Windows Docker bind mount (mmap для -shm файлів
+        # не працює) — тоді лишаємось на журналі за замовчуванням, це лише dev
+        try:
+            cursor.execute('PRAGMA journal_mode=WAL;')
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                'SQLite WAL unavailable, keeping default journal mode'
+            )
         cursor.execute('PRAGMA busy_timeout=30000;')
         cursor.execute('PRAGMA synchronous=NORMAL;')
 
@@ -267,6 +276,10 @@ SUPPORT_EMAIL = config("SUPPORT_EMAIL", default="mr.carpet.shop@gmail.com")
 
 # Social publishing (Meta Graph + TikTok). Secrets only in env — see social/README.md
 META_PAGE_ACCESS_TOKEN = config("META_PAGE_ACCESS_TOKEN", default="")
+# Webhooks (дзеркало IG/FB коментів у staff topic)
+META_WEBHOOK_VERIFY_TOKEN = config("META_WEBHOOK_VERIFY_TOKEN", default="")
+# App Secret: без нього підпис X-Hub-Signature-256 не перевіряється (лог-warning)
+META_APP_SECRET = config("META_APP_SECRET", default="")
 META_PAGE_ID = config("META_PAGE_ID", default="")
 META_IG_USER_ID = config("META_IG_USER_ID", default="")
 META_GRAPH_VERSION = config("META_GRAPH_VERSION", default="v21.0")

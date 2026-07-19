@@ -208,13 +208,17 @@ class TelegramProductPostTests(SimpleTestCase):
         product.get_absolute_url.return_value = "/catalog/product/kilim-test/"
         product.get_size_attrs.return_value = qs
         product.product_attr.filter.return_value = custom_qs
+        product.product_specs.select_related.side_effect = Exception("no specs")
+        product.active_color_id = None
+        product.get_default_size_attr.return_value = None
 
         caption = _product_caption_html(product)
-        self.assertIn("Килим тест", caption)
-        self.assertIn("Розміри:", caption)
+        self.assertIn("<b>Килим тест</b>", caption)
+        self.assertIn("🏷 Розміри та ціни:", caption)
         self.assertIn("80×150", caption)
         self.assertIn("1000 грн", caption)
-        self.assertIn("Дивитись на сайті", caption)
+        self.assertIn("Детальніше та замовлення", caption)
+        self.assertIn('<a href="', caption)
 
     @override_settings(SITE_URL="https://mrcarpet24.com")
     def test_photo_urls_main_plus_gallery(self):

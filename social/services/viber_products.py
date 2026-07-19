@@ -67,15 +67,12 @@ def _superadmin_id(token: str) -> str:
 
 
 def _caption(product) -> str:
-    """Той самий зміст, що TG/IG: назва + розміри/ціни + лінк."""
-    from project.telegram_utils import product_absolute_url
-    from social.services.product_post import product_caption_text
+    """Той самий зміст, що TG/IG, вкладений у ліміт picture-повідомлення."""
+    from social.services.post_content import build_product_content, render_plain
 
-    text = product_caption_text(product)
-    url = product_absolute_url(product)
-    if url and url not in text:
-        text = f"{text}\n\n{url}"
-    return text
+    return render_plain(
+        build_product_content(product), max_len=_PICTURE_TEXT_MAX, with_url=True
+    )
 
 
 def post_product_to_viber(product) -> dict:

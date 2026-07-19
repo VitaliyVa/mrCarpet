@@ -6,6 +6,7 @@ from django.test import SimpleTestCase, TestCase
 
 from catalog.models import Product
 from social.models import SocialPost, SocialSettings
+from social.services.post_content import FRIENDLY_OUTRO
 from social.services.product_post import (
     AUTO_CAMPAIGN,
     _product_image_names,
@@ -13,6 +14,18 @@ from social.services.product_post import (
     has_auto_post,
     product_caption_text,
 )
+
+
+def _bare_mock_product(title):
+    """Product-мок без кастому/характеристик/кольору — чистий фон."""
+    product = MagicMock()
+    product.title = title
+    product.get_absolute_url.return_value = "/catalog/product/test/"
+    product.product_attr.filter.return_value.first.return_value = None
+    product.product_specs.select_related.side_effect = Exception("no specs")
+    product.active_color_id = None
+    product.get_default_size_attr.return_value = None
+    return product
 
 
 def _mock_product_with_sizes():
@@ -35,8 +48,7 @@ def _mock_product_with_sizes():
     qs = MagicMock()
     qs.select_related.return_value.order_by.return_value = [attr, out_attr]
 
-    product = MagicMock()
-    product.title = "Килим тест"
+    product = _bare_mock_product("Килим тест")
     product.get_size_attrs.return_value = qs
     return product
 
@@ -45,16 +57,39 @@ class ProductCaptionTests(SimpleTestCase):
     def test_caption_title_and_sizes_mirror_tg(self):
         product = _mock_product_with_sizes()
         caption = product_caption_text(product)
-        self.assertIn("Килим тест", caption)
-        self.assertIn("Розміри:", caption)
+        self.assertIn("✨ Килим тест", caption)
+        self.assertIn("🏷 Розміри та ціни:", caption)
         self.assertIn("80×150 — 1000 грн", caption)
-        # як у TG: out-of-stock розмір показується з поміткою
+        # out-of-stock розмір показується з поміткою
         self.assertIn("немає", caption)
         self.assertIn("120×180", caption)
+        # дружній фінал
+        self.assertIn("💬", caption)
+        # url для IG/FB не включається (його додає build_caption)
+        self.assertNotIn("http", caption)
+
+    def test_caption_specs(self):
+        product = _mock_product_with_sizes()
+        spec = MagicMock()
+        spec.specification.title = "Матеріал"
+        spec.spec_value.title = "Поліпропілен"
+        product.product_specs.select_related.side_effect = None
+        product.product_specs.select_related.return_value.order_by.return_value = [spec]
+        caption = product_caption_text(product)
+        self.assertIn("🧵 Характеристики:", caption)
+        self.assertIn("• Матеріал: Поліпропілен", caption)
+
+    def test_caption_never_shows_color(self):
+        # колір не показуємо ніколи (вимога користувача)
+        product = _mock_product_with_sizes()
+        product.active_color_id = 1
+        product.active_color.title = "Синій"
+        caption = product_caption_text(product)
+        self.assertNotIn("🎨", caption)
+        self.assertNotIn("Синій", caption)
 
     def test_caption_price_fallback_without_sizes(self):
-        product = MagicMock()
-        product.title = "Килим без розмірів"
+        product = _bare_mock_product("Килим без розмірів")
         product.get_size_attrs.side_effect = Exception("no attrs")
         default_attr = MagicMock()
         default_attr.custom_attribute = False
@@ -62,15 +97,23 @@ class ProductCaptionTests(SimpleTestCase):
         product.get_default_size_attr.return_value = default_attr
         caption = product_caption_text(product)
         self.assertIn("Килим без розмірів", caption)
-        self.assertIn("2500 грн", caption)
+        self.assertIn("🏷 Ціна: 2500 грн", caption)
+
+    def test_caption_custom_size_line(self):
+        product = _bare_mock_product("Килим на замовлення")
+        product.get_size_attrs.side_effect = Exception("no attrs")
+        custom = MagicMock()
+        custom.custom_price = 500
+        product.product_attr.filter.return_value.first.return_value = custom
+        caption = product_caption_text(product)
+        self.assertIn("📏 Індивідуальний розмір — від 500 грн/м²", caption)
 
     def test_caption_bare_title_when_nothing_else(self):
-        product = MagicMock()
-        product.title = "Килим голий"
+        product = _bare_mock_product("Килим голий")
         product.get_size_attrs.side_effect = Exception("no attrs")
-        product.get_default_size_attr.return_value = None
         caption = product_caption_text(product)
-        self.assertEqual(caption, "Килим голий")
+        self.assertIn("✨ Килим голий", caption)
+        self.assertIn(FRIENDLY_OUTRO, caption)
 
 
 class ProductImageNamesTests(SimpleTestCase):
