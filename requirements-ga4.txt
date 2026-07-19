@@ -1,0 +1,3 @@
+# Optional GA4 access for Cursor/ops (REST + JWT — works on Python 3.14)
+# Uses PyJWT already in requirements.txt; needs crypto backend:
+PyJWT[crypto]>=2.8.0

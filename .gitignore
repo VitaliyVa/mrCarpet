@@ -34,3 +34,8 @@ backups/
 docs/
 /ops/
 ops/
+
+# GA4 service account (never commit)
+credentials/
+**/service-account*.json
+ops/ga4/*.json
