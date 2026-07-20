@@ -72,11 +72,14 @@ class Command(BaseCommand):
         info = self._post("get_account_info", {}, token)
         if info.get("status") == 0:
             self.stdout.write(f"  channel: {info.get('name')}")
-            self.stdout.write(f"  webhook registered: {bool(info.get('webhook'))}")
-            if info.get("webhook"):
-                self.stdout.write(f"  current webhook: {info.get('webhook')}")
             for member in info.get("members", []):
                 if member.get("role") == "superadmin":
                     self.stdout.write(f"  superadmin: {member.get('name')}")
+            # get_account_info каналів не повертає поле webhook — стан
+            # webhook видно лише за результатом set_webhook / постингу
+            self.stdout.write(
+                "  (стан webhook Viber не віддає; ознака робочого — "
+                "успішний пост без status:10 webhookNotSet)"
+            )
         else:
             self.stdout.write(self.style.ERROR(f"  account info failed: {info}"))
