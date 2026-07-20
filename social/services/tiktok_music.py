@@ -97,6 +97,15 @@ def generate_library(count: int = 8, *, overwrite: bool = False) -> list[str]:
         logger.info("TikTok music library already has %s tracks", len(existing))
         return existing
 
+    # Clear first: default_storage.save() renames rather than replaces, so
+    # regenerating over an existing library would leave both copies behind and
+    # skew the rotation towards whichever prompts got duplicated.
+    for path in existing:
+        try:
+            default_storage.delete(path)
+        except Exception:
+            logger.exception("could not delete %s", path)
+
     client = replicate.Client(api_token=token)
     created: list[str] = []
     for index in range(count):

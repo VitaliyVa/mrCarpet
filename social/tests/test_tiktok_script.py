@@ -202,3 +202,29 @@ class MusicLibraryTests(TestCase):
 
         with patch.object(tiktok_music, "library_paths", return_value=[]):
             self.assertEqual(tiktok_music.pick_track(1), "")
+
+    def test_overwrite_clears_the_old_library_first(self):
+        """
+        default_storage.save() renames on collision instead of replacing, so a
+        regeneration without an explicit delete leaves both copies behind and
+        skews the rotation towards whichever prompts got duplicated.
+        """
+        from unittest.mock import patch
+
+        from social.services import tiktok_music
+
+        old = [f"{tiktok_music.MUSIC_DIR}/track-{i:02d}.wav" for i in (1, 2)]
+        storage = tiktok_music.default_storage
+
+        with (
+            patch.object(tiktok_music, "library_paths", return_value=old),
+            patch.object(storage, "delete") as delete,
+            patch.object(storage, "save", side_effect=lambda name, _c: name),
+            patch.object(tiktok_music.requests, "get") as get,
+            patch("replicate.Client") as client,
+        ):
+            client.return_value.run.return_value = "https://example.test/t.wav"
+            get.return_value.content = b"wav-bytes"
+            tiktok_music.generate_library(count=1, overwrite=True)
+
+        self.assertEqual(delete.call_count, len(old))
