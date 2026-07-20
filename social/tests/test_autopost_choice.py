@@ -20,6 +20,25 @@ class AutopostFormFieldTests(TestCase):
         form = ProductAdminForm(instance=product)
         self.assertNotIn("post_to_socials", form.fields)
 
+    def test_fieldsets_render_checkbox_only_on_add(self):
+        """ProductAdmin має явні fieldsets — поле треба додати і туди."""
+        from django.contrib import admin as dj_admin
+
+        from catalog.admin import ProductAdmin
+
+        model_admin = ProductAdmin(Product, dj_admin.site)
+        request = None
+
+        def has_field(fieldsets):
+            return any(
+                "post_to_socials" in (section[1].get("fields") or ())
+                for section in fieldsets
+            )
+
+        self.assertTrue(has_field(model_admin.get_fieldsets(request, None)))
+        product = Product.objects.create(title="Килим для редагування форми")
+        self.assertFalse(has_field(model_admin.get_fieldsets(request, product)))
+
 
 class AutopostSignalChoiceTests(TestCase):
     def setUp(self):

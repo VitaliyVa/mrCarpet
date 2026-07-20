@@ -1016,6 +1016,23 @@ class ProductAdmin(admin.ModelAdmin):
     get_ar_status_display_col.short_description = 'AR'
     get_ar_status_display_col.admin_order_field = 'ar_status'
 
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj is not None:
+            return fieldsets
+        # Форма створення: галочка автопосту (у ProductAdminForm вона є лише
+        # тут, тож у fieldsets її треба додати теж динамічно)
+        return tuple(fieldsets) + (
+            ('Соцмережі', {
+                'fields': ('post_to_socials',),
+                'description': (
+                    'Новий товар автоматично піде в Telegram, Instagram/Facebook '
+                    'і Viber (ті, що увімкнені в Social settings). '
+                    'Зніміть галочку, щоб додати товар тихо.'
+                ),
+            }),
+        )
+
     def save_model(self, request, obj, form, change):
         prev_texture = None
         if change and obj.pk:
