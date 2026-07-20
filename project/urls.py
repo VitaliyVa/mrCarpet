@@ -28,4 +28,9 @@ urlpatterns = [
         views.google_site_verification_file,
         name='google_site_verification_file',
     ),
+    path(
+        'tiktokxfkAe8tZDvfpCs644EJmGm1b51LUG1xX.txt',
+        views.tiktok_site_verification_file,
+        name='tiktok_site_verification_file',
+    ),
 ]

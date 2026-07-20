@@ -203,3 +203,17 @@ def google_site_verification_file(request):
         "google-site-verification: google67459f697e641b7f.html" + chr(10),
         content_type="text/html; charset=utf-8",
     )
+
+
+def tiktok_site_verification_file(request):
+    """
+    TikTok for Developers URL-prefix ownership verification (signature file).
+
+    Required for the Content Posting API pull_by_url transfer and for the
+    Terms/Privacy URLs on the app profile. Served from the site root.
+    """
+    return HttpResponse(
+        "tiktok-developers-site-verification="
+        "xfkAe8tZDvfpCs644EJmGm1b51LUG1xX" + chr(10),
+        content_type="text/plain; charset=utf-8",
+    )
