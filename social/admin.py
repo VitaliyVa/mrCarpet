@@ -434,7 +434,16 @@ class TikTokTokenAdmin(admin.ModelAdmin):
 
 @admin.register(TikTokDailyPick)
 class TikTokDailyPickAdmin(admin.ModelAdmin):
-    """Rotation history — read-only apart from retrying a failed pick."""
+    """
+    Rotation history, plus the two manual steps of the daily pipeline.
+
+    The scheduler does this unattended, but having both steps reachable from
+    the admin gives an operator a way to re-run a failed night without SSH —
+    and makes the integration demonstrable in a screen recording, which the
+    TikTok app review asks for.
+    """
+
+    actions = ("action_generate", "action_publish")
 
     list_display = (
         "picked_at",
@@ -461,6 +470,52 @@ class TikTokDailyPickAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    @admin.action(description="1. Згенерувати відео для TikTok")
+    def action_generate(self, request, queryset):
+        from social.services.tiktok_publish import build_final_video
+
+        for pick in queryset:
+            if pick.product_id is None:
+                self.message_user(
+                    request, f"Пік #{pick.pk}: товар видалено", messages.WARNING
+                )
+                continue
+            try:
+                path = build_final_video(pick)
+            except Exception as exc:
+                self.message_user(
+                    request, f"Пік #{pick.pk}: {exc}", messages.ERROR
+                )
+            else:
+                self.message_user(
+                    request,
+                    f"Пік #{pick.pk} ({pick.product}): відео готове — {path}",
+                    messages.SUCCESS,
+                )
+
+    @admin.action(description="2. Опублікувати в TikTok")
+    def action_publish(self, request, queryset):
+        from social.services.tiktok_publish import publish_pick
+
+        for pick in queryset:
+            try:
+                # force: an operator clicking the button has already decided,
+                # so the enabled toggle and the already-published guard stand
+                # aside. Regeneration stays off — retrying must not re-buy the
+                # video.
+                result = publish_pick(pick, force=True)
+            except Exception as exc:
+                self.message_user(
+                    request, f"Пік #{pick.pk}: {exc}", messages.ERROR
+                )
+            else:
+                self.message_user(
+                    request,
+                    f"Пік #{pick.pk} ({pick.product}): опубліковано, "
+                    f"приватність {result.get('privacy', '?')}",
+                    messages.SUCCESS,
+                )
 
     def changelist_view(self, request, extra_context=None):
         from social.services.tiktok_rotation import rotation_status
