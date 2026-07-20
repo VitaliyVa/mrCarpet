@@ -150,6 +150,50 @@
             console.error("[LiqPay] Помилка ініціалізації:", error);
             showError("Помилка ініціалізації платежу: " + error.message);
         }
+
+        // Страховка від зависання віджета: якщо покупець закрив вікно 3D Secure
+        // вручну, LiqPay не присилає liqpay.callback і сторінка висить на «Apply».
+        // Тому питаємо власний бекенд — webhook там уже відпрацював.
+        (function pollOwnStatus() {
+            var POLL_MS = 4000;
+            var MAX_MS = 15 * 60 * 1000;
+            var startedAt = Date.now();
+            var redirecting = false;
+            var timer = null;
+
+            function stop() {
+                if (timer) clearInterval(timer);
+                timer = null;
+            }
+
+            function check() {
+                if (redirecting) return;
+                if (Date.now() - startedAt > MAX_MS) {
+                    stop();
+                    return;
+                }
+                fetch("/api/payment-status/", {
+                    credentials: "same-origin",
+                    headers: { "Accept": "application/json" }
+                })
+                    .then(function (res) { return res.ok ? res.json() : null; })
+                    .then(function (data) {
+                        if (!data || !data.paid || redirecting) return;
+                        redirecting = true;
+                        stop();
+                        console.log("[LiqPay] Оплата підтверджена бекендом — перехід на /success/");
+                        window.location.href = "/success/";
+                    })
+                    .catch(function () { /* мережа моргнула — спробуємо на наступному тику */ });
+            }
+
+            timer = setInterval(check, POLL_MS);
+            // Повернувся на вкладку після 3DS — перевіряємо негайно
+            document.addEventListener("visibilitychange", function () {
+                if (!document.hidden) check();
+            });
+            window.addEventListener("focus", check);
+        })();
     };
 </script>
 <script src="//static.liqpay.ua/libjs/checkout.js" async></script>

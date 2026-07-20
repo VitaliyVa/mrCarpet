@@ -12,8 +12,15 @@ COLOR_MODES = frozenset({'auto', 'preserve_exact', 'monochrome'})
 
 ROOM_TYPES = frozenset({
     'auto', 'living_room', 'bedroom', 'kids_room',
-    'dining_room', 'hallway', 'office',
+    'dining_room', 'hallway', 'office', 'bathroom',
 })
+
+# Ванна кімната — це комплект з двох килимків (контурний під унітаз +
+# прямокутний під двері), тому вимагає другого референсного фото.
+ROOM_TYPE_BATHROOM = 'bathroom'
+# Типові розміри ванних наборів, якщо менеджер не вказав явно
+DEFAULT_BATH_CONTOUR_SIZE = '0.5 × 0.6'
+DEFAULT_BATH_MAT_SIZE = '0.6 × 0.9'
 CAMERA_DISTANCES = frozenset({'close', 'medium', 'wide'})
 VIEW_ANGLES = frozenset({'eye_level', 'high_angle', 'top_down_partial'})
 FLOOR_STYLES = frozenset({'auto', 'wood', 'light_wood', 'tile', 'concrete'})
@@ -83,6 +90,13 @@ class ScenePromptOptions:
     width_m: str = ''
     length_m: str = ''
     extra_prompt: str = ''
+    # Ванний комплект: другий килимок (прямокутний, під двері/раковину)
+    second_rug: bool = False
+    second_size_label: str = ''
+
+    @property
+    def is_bathroom_set(self) -> bool:
+        return self.room_type == ROOM_TYPE_BATHROOM and self.second_rug
 
     def normalized(self) -> 'ScenePromptOptions':
         extra = (self.extra_prompt or '').strip()[:MAX_EXTRA_PROMPT_CHARS]
@@ -91,9 +105,13 @@ class ScenePromptOptions:
         distance = _normalize(self.camera_distance, CAMERA_DISTANCES, 'medium')
         if width_m and length_m:
             distance = auto_camera_distance(width_m, length_m)
+        room_type = _normalize(self.room_type, ROOM_TYPES)
+        # Ванна: килимки маленькі, потрібен ширший кадр щоб влізли обидва
+        if room_type == ROOM_TYPE_BATHROOM:
+            distance = 'wide'
         return ScenePromptOptions(
             rug_shape=_normalize(self.rug_shape, RUG_SHAPES),
-            room_type=_normalize(self.room_type, ROOM_TYPES),
+            room_type=room_type,
             camera_distance=distance,
             view_angle=_normalize(
                 self.view_angle, VIEW_ANGLES, SCENE_DEFAULT_VIEW_ANGLE
@@ -106,16 +124,21 @@ class ScenePromptOptions:
             width_m=width_m,
             length_m=length_m,
             extra_prompt=extra,
+            second_rug=bool(self.second_rug) and room_type == ROOM_TYPE_BATHROOM,
+            second_size_label=(self.second_size_label or '').strip(),
         )
 
     def with_size(self, size_info: 'SceneSizeInfo') -> 'ScenePromptOptions':
         n = self.normalized()
         width_m = str(size_info.width_m)
         length_m = str(size_info.length_m)
+        distance = auto_camera_distance(width_m, length_m)
+        if n.room_type == ROOM_TYPE_BATHROOM:
+            distance = 'wide'
         return ScenePromptOptions(
             rug_shape=n.rug_shape,
             room_type=n.room_type,
-            camera_distance=auto_camera_distance(width_m, length_m),
+            camera_distance=distance,
             view_angle=SCENE_DEFAULT_VIEW_ANGLE,
             floor_style=n.floor_style,
             color_mode=SCENE_DEFAULT_COLOR_MODE,
@@ -123,6 +146,8 @@ class ScenePromptOptions:
             width_m=width_m,
             length_m=length_m,
             extra_prompt=n.extra_prompt,
+            second_rug=n.second_rug,
+            second_size_label=n.second_size_label,
         )
 
     def as_meta(self) -> dict:
@@ -141,6 +166,9 @@ class ScenePromptOptions:
             meta['length_m'] = n.length_m
         if n.extra_prompt:
             meta['extra_prompt'] = n.extra_prompt
+        if n.second_rug:
+            meta['second_rug'] = True
+            meta['second_size_label'] = n.second_size_label or DEFAULT_BATH_MAT_SIZE
         return meta
 
 
@@ -164,5 +192,8 @@ class GenerationOptions:
                 view_angle=SCENE_DEFAULT_VIEW_ANGLE,
                 color_mode=SCENE_DEFAULT_COLOR_MODE,
                 extra_prompt=(post.get('extra_prompt') or '').strip(),
+                second_rug=str(post.get('second_rug') or '').lower()
+                in ('1', 'true', 'on', 'yes'),
+                second_size_label=(post.get('second_size_label') or '').strip(),
             ).normalized(),
         )

@@ -33,9 +33,30 @@ class ProductAdminForm(forms.ModelForm):
     hides products with no quantity).
     """
 
+    # Не модельне поле: разове рішення для конкретного створення.
+    # Показуємо ЛИШЕ на формі створення — при редагуванні постинг
+    # неможливий у принципі (сигнал реагує тільки на created=True).
+    post_to_socials = forms.BooleanField(
+        label="Опублікувати в соцмережах",
+        required=False,
+        initial=True,
+        help_text=(
+            "Після збереження новий товар автоматично піде в Telegram, "
+            "Instagram/Facebook і Viber (ті, що увімкнені в Social settings). "
+            "Зніміть галочку, щоб додати товар тихо. "
+            "Під час редагування товару пост не повторюється."
+        ),
+    )
+
     class Meta:
         model = Product
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Редагування наявного товару — галочка не потрібна
+        if self.instance and self.instance.pk:
+            self.fields.pop("post_to_socials", None)
 
     def clean_title(self):
         title = (self.cleaned_data.get("title") or "").strip()

@@ -36,6 +36,7 @@
                 { value: 'dining_room', label: 'Їдальня' },
                 { value: 'hallway', label: 'Коридор / передпокій' },
                 { value: 'office', label: 'Кабінет' },
+                { value: 'bathroom', label: 'Ванна (комплект з 2 килимків)' },
             ],
         },
         floor_style: {
@@ -208,7 +209,28 @@
         if (extraText) {
             result.extra_prompt = extraText.slice(0, EXTRA_PROMPT_MAX);
         }
+        if (result.room_type === 'bathroom') {
+            result.second_rug = '1';
+            var sizeEl = block.querySelector('.replicate-second-size');
+            var sizeText = sizeEl ? String(sizeEl.value || '').trim() : '';
+            if (sizeText) result.second_size_label = sizeText.slice(0, 40);
+        }
         return result;
+    }
+
+    function isBathroom(block) {
+        var selected = block.querySelector('input[name="scene_room_type"]:checked');
+        return !!selected && selected.value === 'bathroom';
+    }
+
+    function syncBathroomUi(block) {
+        var extra = block.querySelector('.replicate-bath-extra');
+        if (extra) extra.hidden = !isBathroom(block);
+    }
+
+    function getSecondFile(block) {
+        var input = block.querySelector('.replicate-source-input-2');
+        return input && input.files && input.files.length ? input.files[0] : null;
     }
 
     function setSceneControlsDisabled(block, disabled) {
@@ -365,10 +387,11 @@
             '</div>';
     }
 
-    function runSceneGeneration(file, options, productId, sizeLabel) {
+    function runSceneGeneration(file, options, productId, sizeLabel, secondFile) {
         var formData = new FormData();
         formData.append('source_image', file);
         formData.append('phase', 'scene');
+        if (secondFile) formData.append('source_image_2', secondFile);
         if (productId) formData.append('product_id', productId);
         if (sizeLabel) formData.append('size_label', sizeLabel);
         Object.keys(options).forEach(function (key) {
@@ -409,6 +432,21 @@
             '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input" />' +
             '<button type="button" class="replicate-generate-btn">Згенерувати сцену</button>' +
             '</div>' +
+            '<div class="replicate-bath-extra" hidden style="margin:10px 0;padding:10px 12px;' +
+            'background:#f7efe6;border:1px solid #d4b896;border-radius:6px">' +
+            '<div style="margin-bottom:6px"><b>Ванна кімната — комплект з 2 килимків</b></div>' +
+            '<div style="font-size:12px;color:#5c5652;margin-bottom:8px">' +
+            'Перше фото (вище) — килим <b>з вирізом під унітаз</b>. ' +
+            'Друге фото (нижче) — <b>прямокутний килимок</b> під двері/раковину. ' +
+            'Обидва потраплять в один кадр.' +
+            '</div>' +
+            '<label style="display:block;margin-bottom:6px">Друге фото (прямокутний килимок)<br>' +
+            '<input type="file" accept="image/jpeg,image/png,image/webp" class="replicate-source-input-2" />' +
+            '</label>' +
+            '<label style="display:block">Розмір другого килимка, м (напр. 0.6 × 0.9)<br>' +
+            '<input type="text" class="replicate-second-size" placeholder="0.6 × 0.9" style="width:160px" />' +
+            '</label>' +
+            '</div>' +
             '<div class="replicate-progress" hidden>' +
             '<div class="replicate-spinner"></div>' +
             '<div class="replicate-progress-text"></div>' +
@@ -446,6 +484,27 @@
             return;
         }
 
+        var secondFile = null;
+        if (isBathroom(block)) {
+            secondFile = getSecondFile(block);
+            if (!secondFile) {
+                setStatus(
+                    block,
+                    'Для ванної потрібне друге фото — прямокутний килимок під двері',
+                    true
+                );
+                return;
+            }
+            if (ALLOWED.indexOf(secondFile.type) === -1) {
+                setStatus(block, 'Друге фото: дозволені лише JPEG, PNG або WebP', true);
+                return;
+            }
+            if (secondFile.size > MAX_SIZE) {
+                setStatus(block, 'Друге фото: максимум 15 МБ', true);
+                return;
+            }
+        }
+
         btn.disabled = true;
         fileInput.disabled = true;
         setSceneControlsDisabled(block, true);
@@ -470,7 +529,7 @@
             true
         );
 
-        runSceneGeneration(file, options, productId, sizeLabel)
+        runSceneGeneration(file, options, productId, sizeLabel, secondFile)
             .then(function (data) {
                 appendLogs(block, data.logs);
                 var payload = data.image;
@@ -538,6 +597,12 @@
         btn.addEventListener('click', function () {
             onGenerate(block, fileInput, btn);
         });
+        // Блок другого фото з'являється лише для «Ванна»
+        block.addEventListener('change', function (ev) {
+            var t = ev.target;
+            if (t && t.name === 'scene_room_type') syncBathroomUi(block);
+        });
+        syncBathroomUi(block);
         bindSizeWatchers(block);
         updateSizeGate(block);
         fetchServerSize(block);

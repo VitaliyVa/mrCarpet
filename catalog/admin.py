@@ -393,15 +393,33 @@ class ProductAdmin(admin.ModelAdmin):
         if error:
             return JsonResponse({'success': False, 'error': error}, status=400)
 
+        # Ванний комплект: друге фото (прямокутний килимок під двері)
+        uploaded_second = request.FILES.get('source_image_2')
+        if uploaded_second:
+            error = self._validate_source_image(uploaded_second)
+            if error:
+                return JsonResponse(
+                    {'success': False, 'error': f'Друге фото: {error}'}, status=400
+                )
+
         temp_dir = Path(settings.MEDIA_ROOT) / 'temp' / 'replicate' / str(uuid.uuid4())
         temp_dir.mkdir(parents=True, exist_ok=True)
         source_path = temp_dir / self._safe_filename(uploaded.name)
+        second_path = None
         service = None
 
         try:
             with open(source_path, 'wb') as dest:
                 for chunk in uploaded.chunks():
                     dest.write(chunk)
+
+            if uploaded_second:
+                second_path = temp_dir / (
+                    '2_' + self._safe_filename(uploaded_second.name)
+                )
+                with open(second_path, 'wb') as dest:
+                    for chunk in uploaded_second.chunks():
+                        dest.write(chunk)
 
             service = ReplicateProductImageService()
             gen_options = GenerationOptions.from_request_post(request.POST)
@@ -419,7 +437,12 @@ class ProductAdmin(admin.ModelAdmin):
                     )
                 gen_options.scene = gen_options.scene.with_size(size_info)
 
-            image_bytes, meta = service.generate_phase(source_path, phase, gen_options)
+            image_bytes, meta = service.generate_phase(
+                source_path,
+                phase,
+                gen_options,
+                second_source_path=second_path,
+            )
 
             payload = {
                 'success': True,
@@ -999,6 +1022,14 @@ class ProductAdmin(admin.ModelAdmin):
             prev = Product.admin_objects.filter(pk=obj.pk).only('ar_texture').first()
             if prev and prev.ar_texture:
                 prev_texture = prev.ar_texture.name
+        # Рішення менеджера читає signals.py. Виставляємо ДО save(), бо
+        # post_save спрацьовує всередині super().save_model().
+        # При редагуванні поля у формі немає — і сигнал усе одно мовчить
+        # (created=False), тож повторного посту бути не може.
+        if not change:
+            obj._social_autopost_choice = bool(
+                form.cleaned_data.get('post_to_socials', True)
+            )
         super().save_model(request, obj, form, change)
         new_name = obj.ar_texture.name if obj.ar_texture else None
         if new_name and new_name != prev_texture:

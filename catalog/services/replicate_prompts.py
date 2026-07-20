@@ -8,11 +8,13 @@ touching Django admin / HTTP layers.
 from __future__ import annotations
 
 from catalog.services.replicate_prompt_options import (
+    DEFAULT_BATH_CONTOUR_SIZE,
+    DEFAULT_BATH_MAT_SIZE,
     CatalogPromptOptions,
     ScenePromptOptions,
 )
 
-PROMPT_VERSION = 'v5-scene-scale-auto'
+PROMPT_VERSION = 'v6-bathroom-set'
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +93,11 @@ _ROOM_TYPE_BLOCKS = {
     ),
     'office': (
         'Setting: a home office / study with a desk or bookshelf as scale anchors.'
+    ),
+    'bathroom': (
+        'Setting: a clean, modern residential bathroom. Visible in frame: a toilet, '
+        'part of a sink or vanity unit, tiled floor and tiled walls, soft daylight. '
+        'Tasteful and minimal — a few neutral accessories (towel, plant) are fine.'
     ),
 }
 
@@ -201,6 +208,53 @@ def _scene_scale_block(options: ScenePromptOptions) -> str:
     )
 
 
+def _bathroom_set_block(options: ScenePromptOptions) -> str:
+    """Промпт для комплекту з двох килимків у ванній.
+
+    Модель отримує ДВА референси: [0] контурний з вирізом під унітаз,
+    [1] прямокутний під двері. Найбільші ризики, які треба явно заборонити:
+    змішування візерунків між килимками, «заростання» вирізу, дублювання
+    одного килимка двічі, wall-to-wall покриття.
+    """
+    contour_size = options.size_label or DEFAULT_BATH_CONTOUR_SIZE
+    mat_size = options.second_size_label or DEFAULT_BATH_MAT_SIZE
+    return (
+        'BATHROOM SET — TWO SEPARATE RUGS, BOTH MUST BE FULLY VISIBLE IN ONE FRAME:\n'
+        '- There are exactly TWO reference images, and they are DIFFERENT products. '
+        'Render exactly two rugs on the floor — no more, no less.\n'
+        f'- RUG A = the FIRST reference image: a contour bath mat with a U-shaped '
+        f'cutout on one side. Its real size is about {contour_size} m. '
+        'Place it on the floor directly in front of the toilet so that the U-shaped '
+        'cutout wraps snugly around the base/pedestal of the toilet. '
+        'The cutout MUST stay open and clearly visible — never fill it in, '
+        'never turn RUG A into a plain rectangle or oval.\n'
+        f'- RUG B = the SECOND reference image: a small rectangular bath mat. '
+        f'Its real size is about {mat_size} m. '
+        'Place it flat on the floor near the bathroom door or in front of the sink, '
+        'clearly separated from RUG A — the two mats must NOT touch or overlap.\n'
+        '- PATTERN IDENTITY (critical): RUG A keeps the exact pattern, colors and '
+        'texture of the FIRST reference; RUG B keeps the exact pattern, colors and '
+        'texture of the SECOND reference. Do NOT swap, mirror, blend or average the '
+        'two designs. If the references differ in color, that difference must remain.\n'
+        '- SCALE: both mats are small bathroom textiles, not area rugs. Together they '
+        'must cover only a modest part of the tiled floor; plenty of bare tile stays '
+        'visible between and around them. Forbidden: wall-to-wall carpeting, '
+        'mats scaled up to room size.\n'
+        '- FORBIDDEN: a third rug, a duplicate of the same mat, a rug on the wall or '
+        'inside the bathtub/shower, people, feet, text, watermarks, logos.'
+    )
+
+
+def _bathroom_camera_block() -> str:
+    return (
+        'CAMERA (bathroom set): wide-angle view taken from the bathroom doorway, '
+        'standing eye-level with a slight downward tilt, so that the toilet, the sink '
+        'area and the floor between them are all in frame at once. '
+        'Both mats must be seen in full, unobstructed and not cropped by the frame edge. '
+        'No extreme close-up, no pure top-down floor plan.'
+    )
+
+
 def build_catalog_prompt(options: CatalogPromptOptions | None = None) -> str:
     options = (options or CatalogPromptOptions()).normalized()
     parts = [
@@ -247,6 +301,28 @@ def build_hover_prompt(options: CatalogPromptOptions | None = None) -> str:
 
 def build_scene_prompt(options: ScenePromptOptions | None = None) -> str:
     options = (options or ScenePromptOptions()).normalized()
+
+    if options.is_bathroom_set:
+        parts = [
+            (
+                'Place the EXACT rugs from the two reference images into a photorealistic '
+                'residential bathroom. Keep each rug pattern, colors and silhouette exactly '
+                'as in its own reference. Photorealistic, natural daylight, believable '
+                'materials, no people, no text, no watermark, no logo.'
+            ),
+            _ROOM_TYPE_BLOCKS['bathroom'],
+            _bathroom_set_block(options),
+            _bathroom_camera_block(),
+            _FLOOR_STYLE_BLOCKS.get(options.floor_style, 'Floor: light ceramic tiles.'),
+            _COLOR_MODE_BLOCKS['preserve_exact'],
+        ]
+        if options.extra_prompt:
+            parts.append(
+                f'ADDITIONAL MANAGER NOTES (follow if compatible with the rules above): '
+                f'{options.extra_prompt}'
+            )
+        return '\n\n'.join(p for p in parts if p)
+
     parts = [
         (
             'Place the EXACT rug from the reference image into a photorealistic residential interior. '

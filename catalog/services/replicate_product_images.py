@@ -96,6 +96,7 @@ class ReplicateProductImageService:
         source_path: Path,
         phase: str,
         options: GenerationOptions | None = None,
+        second_source_path: Path | None = None,
     ) -> tuple[bytes, dict]:
         if phase not in PHASE_CONFIG:
             raise ReplicateGenerationError(f"Невідома фаза: {phase}")
@@ -106,6 +107,13 @@ class ReplicateProductImageService:
             raise ReplicateGenerationError(
                 "Для генерації інтер'єру потрібен реальний розмір товару "
                 "(Варіації → Розмір)."
+            )
+        # Ванний комплект: другий референс обов'язковий, інакше модель
+        # намалює один килимок і промпт про два стане брехнею
+        if phase == PHASE_SCENE and opts.scene.is_bathroom_set and not second_source_path:
+            raise ReplicateGenerationError(
+                "Для ванної кімнати потрібні два фото: килим з вирізом "
+                "під унітаз і прямокутний килимок."
             )
         prompt = config["build_prompt"](opts)
         aspect_ratio = config["aspect_ratio"]
@@ -121,11 +129,21 @@ class ReplicateProductImageService:
         started = time.monotonic()
         source_bytes = source_path.read_bytes()
         source_name = source_path.name or "source.jpg"
+        second_bytes = None
+        second_name = ""
+        if second_source_path is not None:
+            second_bytes = second_source_path.read_bytes()
+            second_name = second_source_path.name or "source2.jpg"
 
         if phase == PHASE_SCENE:
             self.job_log.info(
                 f"{phase_label}: розмір для масштабу — {opts.scene.size_label} "
                 f"({opts.scene.width_m}×{opts.scene.length_m} м)"
+            )
+        if second_bytes is not None:
+            self.job_log.info(
+                f"{phase_label}: комплект для ванної — два референси "
+                f"(контурний + прямокутний)"
             )
         self.job_log.info(f"{phase_label}: відправлено на Replicate…")
 
@@ -135,6 +153,8 @@ class ReplicateProductImageService:
             prompt,
             phase_label,
             aspect_ratio,
+            second_bytes=second_bytes,
+            second_name=second_name,
         )
         if phase in (PHASE_CATALOG, PHASE_HOVER):
             self.job_log.info(f"{phase_label}: підгонка кольору під джерело…")
@@ -173,15 +193,23 @@ class ReplicateProductImageService:
         prompt: str,
         phase_label: str,
         aspect_ratio: str,
+        second_bytes: bytes | None = None,
+        second_name: str = "",
     ) -> bytes:
         file_obj = io.BytesIO(source_bytes)
         file_obj.name = source_name
+        # Порядок важливий: промпт посилається на «FIRST/SECOND reference»
+        input_images = [file_obj]
+        if second_bytes is not None:
+            second_obj = io.BytesIO(second_bytes)
+            second_obj.name = second_name or "source2.jpg"
+            input_images.append(second_obj)
 
         prediction = self.client.predictions.create(
             model=self.MODEL,
             input={
                 "prompt": prompt,
-                "input_images": [file_obj],
+                "input_images": input_images,
                 "aspect_ratio": aspect_ratio,
                 "quality": "low",
                 "output_format": "webp",

@@ -21,6 +21,10 @@ def payment_view(request):
     
     try:
         signature, data = get_liqpay_context(request)
+        # Запам'ятовуємо, який саме заказ оплачується: після успішного
+        # webhook cart.ordered=True, і get_cart() почне віддавати вже НОВИЙ
+        # порожній кошик — статус оплати за ним не знайти.
+        request.session["pending_payment_order_id"] = cart.order.id
         context = {
             "signature": signature,
             "data": data,
