@@ -56,4 +56,15 @@ class Command(BaseCommand):
                 self.stdout.write(str(result))
             except Exception as exc:
                 self.stderr.write(f"weekly report failed: {exc}")
+
+            # Тижневе прибирання покинутих анонімних кошиків.
+            # Окремий сервіс під це не заводимо — цей демон і так прокидається.
+            try:
+                from cart.management.commands.cleanup_carts import cleanup_carts
+
+                stats = cleanup_carts()
+                self.stdout.write(f"carts cleanup: {stats}")
+            except Exception as exc:
+                self.stderr.write(f"carts cleanup failed: {exc}")
+
             time.sleep(90)

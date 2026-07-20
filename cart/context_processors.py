@@ -1,7 +1,7 @@
 from project.free_shipping import free_shipping_for_total, get_shop_settings
 from project.ga4_ecommerce import cart_ecommerce_payload
 
-from .utils import get_cart
+from .utils import get_cart_readonly
 
 
 def _fallback_free_shipping():
@@ -33,7 +33,8 @@ def _fallback_free_shipping():
 
 
 def context(request):
-    cart = get_cart(request)
+    # Тільки читаємо: рендер сторінки не має створювати кошик у БД
+    cart = get_cart_readonly(request)
     cart_products = cart.cart_products.all()
     try:
         fs = free_shipping_for_total(cart.get_total_price())

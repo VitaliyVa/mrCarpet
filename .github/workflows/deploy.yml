@@ -142,8 +142,17 @@ jobs:
           exit 1
         fi
 
+        echo "Verifying background services are up..."
+        # ga4-weekly — довгоживучий планувальник тижневого звіту.
+        # Якщо його немає (напр. деплой раніше впав до кроку "up -d"),
+        # піднімаємо явно, інакше звіт у понеділок не піде.
+        docker compose -f docker-compose.prod.yml up -d ga4-weekly
+        docker compose -f docker-compose.prod.yml ps
+
         echo "Cleaning up Docker..."
-        docker system prune -f
+        # ВАЖЛИВО: тільки образи. `docker system prune` видаляє ще й зупинені
+        # контейнери — так одного разу зник ga4-weekly і тижневий звіт не прийшов.
+        docker image prune -f
 
         echo "Deployment completed successfully!"
         EOF
