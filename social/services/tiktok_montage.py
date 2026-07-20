@@ -319,7 +319,9 @@ def build_montage(clip_path: str, script: dict, out_path: str, *, music_path: st
         # 1. Opening still: the question, then the countdown over the top of it.
         hook = tmp / "hook.mp4"
         question = _caption(
-            script["hook"], y_frac=SAFE_TOP, size=56, font=font, wrap=26,
+            # 30 keeps every hook variant to two lines: at 26 the trailing
+            # unit ("м?") was left orphaned on a third line.
+            script["hook"], y_frac=SAFE_TOP, size=52, font=font, wrap=30,
             appear_at=0.2,
         )
         digits = ",".join(
