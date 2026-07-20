@@ -2,6 +2,7 @@ from django.urls import path
 
 from .meta_webhook import meta_webhook
 from .telegram_webhook import telegram_webhook
+from .viber_webhook import viber_webhook
 from .views import (
     ContactRequestCreateView,
     StockInquiryCreateView,
@@ -17,4 +18,5 @@ urlpatterns = [
     path("check-promocode/", check_promocode, name="check_promocode"),
     path("telegram/webhook/", telegram_webhook, name="telegram-webhook"),
     path("meta/webhook/", meta_webhook, name="meta-webhook"),
+    path("viber/webhook/", viber_webhook, name="viber-webhook"),
 ]
