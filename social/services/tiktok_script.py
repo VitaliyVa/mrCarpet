@@ -105,3 +105,48 @@ def build_script(pick) -> dict:
         "size": size,
         "price_value": int(attr.price),
     }
+
+
+# Links in a TikTok caption are not clickable, so the caption points at the bio
+# instead of carrying a URL. Hashtags do the discovery work.
+BASE_HASHTAGS = ("килими", "килим", "інтерєр", "декор", "дім", "українськийбізнес")
+
+CATEGORY_HASHTAGS = {
+    "Українські": "українськікилими",
+    "Турецькі": "турецькікилими",
+    "Під двері": "килимокпіддвері",
+    "В кухню": "килимнакухню",
+    "В дитячу": "килимвдитячу",
+}
+
+CAPTION_LIMIT = 2200
+
+
+def build_caption(pick, script: dict | None = None) -> str:
+    """
+    Caption for the post itself, distinct from the copy burned into the video.
+
+    The video asks the question and shows the answer; the caption names the
+    product, repeats the price so it survives a muted rewatch, and sends people
+    to the bio link — TikTok captions cannot carry a clickable URL.
+    """
+    product = pick.product
+    script = script or build_script(pick)
+
+    tags = list(BASE_HASHTAGS)
+    for category in product.categories.all():
+        tag = CATEGORY_HASHTAGS.get((category.title or "").strip())
+        if tag and tag not in tags:
+            tags.append(tag)
+
+    lines = [
+        product.title.strip(),
+        f"{script['price']} · {script['size']}",
+        "",
+        CTA,
+        "🛒 Каталог — лінк у профілі",
+        "",
+        " ".join(f"#{tag}" for tag in tags),
+    ]
+    caption = "\n".join(lines).strip()
+    return caption[:CAPTION_LIMIT]

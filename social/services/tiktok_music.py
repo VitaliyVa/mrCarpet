@@ -99,8 +99,12 @@ def generate_library(count: int = 8, *, overwrite: bool = False) -> list[str]:
 
     client = replicate.Client(api_token=token)
     created: list[str] = []
-    for index in range(min(count, len(PROMPTS))):
-        prompt = PROMPTS[index]
+    for index in range(count):
+        # Cycle the prompts and vary the seed, so the library can grow past the
+        # number of prompts: same mood, a different melody each time. More
+        # tracks means fewer repeats per cycle, and TikTok pays attention to
+        # accounts that post the same audio every day.
+        prompt = PROMPTS[index % len(PROMPTS)]
         logger.info("musicgen %s/%s: %s", index + 1, count, prompt[:50])
         started = time.monotonic()
         output = client.run(

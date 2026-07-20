@@ -119,6 +119,23 @@ def query_creator_info() -> dict[str, Any]:
     return data.get("data") or data
 
 
+def creator_privacy_options() -> list[str]:
+    """
+    Privacy levels this account actually supports.
+
+    Not every option in ALLOWED_PRIVACY is available everywhere — our own
+    account offers no FOLLOWER_OF_CREATOR — and posting an unsupported level is
+    rejected by TikTok, so the live list wins over the constant.
+    """
+    try:
+        info = query_creator_info()
+    except Exception:
+        logger.warning("creator_info unavailable — falling back to SELF_ONLY")
+        return ["SELF_ONLY"]
+    options = info.get("privacy_level_options") or []
+    return [str(o) for o in options] or ["SELF_ONLY"]
+
+
 def _normalize_privacy(requested: str) -> str:
     level = (requested or "").strip()
     if level not in ALLOWED_PRIVACY:
@@ -143,6 +160,7 @@ def publish_video(
     allow_stitch: bool = False,
     commercial_disclosure: bool = False,
     music_usage_confirmed: bool = False,
+    made_with_ai: bool = False,
 ) -> dict[str, str]:
     if not tiktok_configured():
         raise TikTokConfigError("TikTok not configured")
@@ -165,7 +183,7 @@ def publish_video(
             "disable_comment": not allow_comment,
             "disable_duet": not allow_duet,
             "disable_stitch": not allow_stitch,
-            "video_made_with_ai": False,
+            "video_made_with_ai": bool(made_with_ai),
         },
         "source_info": {
             "source": "PULL_FROM_URL",

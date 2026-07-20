@@ -20,8 +20,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--count",
             type=int,
-            default=len(PROMPTS),
-            help=f"How many tracks to generate (max {len(PROMPTS)}).",
+            default=20,
+            help=(
+                f"How many tracks to generate. Above {len(PROMPTS)} the prompts "
+                "repeat with a different seed, giving a new melody per track."
+            ),
         )
         parser.add_argument(
             "--overwrite",
