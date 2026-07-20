@@ -39,6 +39,14 @@ class Command(BaseCommand):
             help="Ignore the enabled toggle and any existing pick for today.",
         )
         parser.add_argument(
+            "--regenerate",
+            action="store_true",
+            help=(
+                "Pay for a new video instead of reusing the one already "
+                "rendered. Retrying a failed publish does NOT need this."
+            ),
+        )
+        parser.add_argument(
             "--pick",
             type=int,
             default=0,
@@ -68,7 +76,7 @@ class Command(BaseCommand):
                     return
             self.stdout.write(f"pick #{pick.pk}: {pick.product}")
             try:
-                path = build_final_video(pick, force=options["force"])
+                path = build_final_video(pick, regenerate=options["regenerate"])
             except Exception as exc:
                 self.stderr.write(self.style.ERROR(f"generation failed: {exc}"))
                 return
@@ -81,7 +89,9 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.ERROR("nothing prepared for today"))
                 return
             try:
-                result = publish_pick(pick, force=options["force"])
+                result = publish_pick(
+                    pick, force=options["force"], regenerate=options["regenerate"]
+                )
             except Exception as exc:
                 self.stderr.write(self.style.ERROR(f"publish failed: {exc}"))
                 return

@@ -173,3 +173,61 @@ class PublishTests(TestCase):
         self.assertIn(
             self.pick.product_id, remaining_products().values_list("pk", flat=True)
         )
+
+
+class RetryCostTests(TestCase):
+    """
+    A publish that TikTok rejected must be retryable for free.
+
+    Conflating "force" with "regenerate" once paid for four videos where one
+    was needed: every retry re-rendered the clip.
+    """
+
+    def setUp(self):
+        _enable()
+        self.pick = _pick()
+        self.pick.video_path = default_storage.save(
+            "social/tiktok/video/clip-retry.mp4", ContentFile(b"clip")
+        )
+        self.pick.save()
+
+    def tearDown(self):
+        if self.pick.video_path and default_storage.exists(self.pick.video_path):
+            default_storage.delete(self.pick.video_path)
+
+    def test_existing_clip_is_reused(self):
+        from social.services.tiktok_publish import build_final_video
+
+        with patch.object(tiktok_publish, "generate_video_for_pick") as generate, \
+             patch.object(tiktok_publish, "ffmpeg_available", return_value=True), \
+             patch.object(tiktok_publish, "build_montage"), \
+             patch.object(tiktok_publish, "build_script", return_value={}), \
+             patch.object(tiktok_publish, "pick_track", return_value=""), \
+             patch("pathlib.Path.exists", return_value=True):
+            build_final_video(self.pick)
+        generate.assert_not_called()
+
+    def test_regenerate_buys_a_new_clip(self):
+        from social.services.tiktok_publish import build_final_video
+
+        with patch.object(tiktok_publish, "generate_video_for_pick") as generate, \
+             patch.object(tiktok_publish, "ffmpeg_available", return_value=True), \
+             patch.object(tiktok_publish, "build_montage"), \
+             patch.object(tiktok_publish, "build_script", return_value={}), \
+             patch.object(tiktok_publish, "pick_track", return_value=""), \
+             patch("pathlib.Path.exists", return_value=True):
+            build_final_video(self.pick, regenerate=True)
+        generate.assert_called_once()
+
+    def test_force_publish_does_not_regenerate(self):
+        """--force bypasses the guards; it must not reach for the wallet."""
+        with patch.object(tiktok_publish, "build_final_video") as build, \
+             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
+                          return_value=["SELF_ONLY"]), \
+             patch.object(tiktok_publish.tiktok, "audit_passed", return_value=False), \
+             patch.object(tiktok_publish.tiktok, "publish_video",
+                          return_value={"external_id": "x", "privacy": "SELF_ONLY"}), \
+             patch.object(tiktok_publish, "_notify"):
+            build.return_value = "social/tiktok/final/x.mp4"
+            publish_pick(self.pick, force=True)
+        self.assertFalse(build.call_args.kwargs["regenerate"])

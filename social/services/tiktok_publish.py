@@ -58,18 +58,19 @@ def _delete(path: str) -> None:
         logger.exception("could not delete %s", path)
 
 
-def build_final_video(pick: TikTokDailyPick, *, force: bool = False) -> str:
+def build_final_video(pick: TikTokDailyPick, *, regenerate: bool = False) -> str:
     """
     Produce the montage for a pick and return its storage path.
 
-    The raw clip is generated first (or reused if the pick already has one), so
-    a re-run after a publishing failure does not pay for the video twice.
+    The raw clip is reused whenever the pick already has one: a publish that
+    failed on TikTok's side must not pay for a second video. Only `regenerate`
+    buys a new clip — retrying a failed post does not.
     """
     if not ffmpeg_available():
         raise TikTokPipelineError("ffmpeg is not installed in this environment")
 
-    if not pick.video_path or force:
-        generate_video_for_pick(pick, force=force)
+    if not pick.video_path or regenerate:
+        generate_video_for_pick(pick, force=regenerate)
         pick.refresh_from_db()
 
     clip = Path(settings.MEDIA_ROOT) / pick.video_path
@@ -89,9 +90,16 @@ def build_final_video(pick: TikTokDailyPick, *, force: bool = False) -> str:
     return relative
 
 
-def publish_pick(pick: TikTokDailyPick, *, force: bool = False) -> dict:
+def publish_pick(
+    pick: TikTokDailyPick, *, force: bool = False, regenerate: bool = False
+) -> dict:
     """
     Publish a pick to TikTok and clean up once TikTok confirms.
+
+    `force` bypasses the enabled toggle and the already-published guard;
+    `regenerate` is separate and buys a new video. Keeping them apart matters:
+    retrying a post that TikTok rejected should cost nothing, and conflating
+    the two once paid for four videos where one was needed.
 
     Returns the TikTok result dict. Raises on any failure, having recorded the
     error on the pick and alerted the staff chat.
@@ -109,7 +117,7 @@ def publish_pick(pick: TikTokDailyPick, *, force: bool = False) -> dict:
     try:
         script = build_script(pick)
         caption = build_caption(pick, script)
-        montage_path = build_final_video(pick, force=force)
+        montage_path = build_final_video(pick, regenerate=regenerate)
 
         video_url = f"{site_base()}{settings.MEDIA_URL}{montage_path}"
         if not video_url.startswith("https://"):

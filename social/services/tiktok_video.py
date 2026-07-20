@@ -271,6 +271,16 @@ def generate_video_for_pick(pick, *, prompt: str = "", force: bool = False) -> s
 
     from django.core.files.storage import default_storage
 
+    # Drop the previous clip first: storage renames on collision rather than
+    # replacing, so regenerating would strand the old file forever — cleanup
+    # only knows about the path currently on the pick.
+    if pick.video_path:
+        try:
+            if default_storage.exists(pick.video_path):
+                default_storage.delete(pick.video_path)
+        except Exception:
+            logger.exception("could not delete previous clip %s", pick.video_path)
+
     path = default_storage.save(
         f"social/tiktok/video/pick-{pick.pk}-{name}", ContentFile(blob.content)
     )
