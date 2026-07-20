@@ -9,7 +9,7 @@ from catalog.models import Product, ProductAttribute, ProductImage, Size
 from social.models import TikTokDailyPick
 from social.services import tiktok_montage as montage
 from social.services.tiktok_script import (
-    CTAS,
+    CTA,
     HOOKS,
     build_script,
     first_priced_attribute,
@@ -77,11 +77,11 @@ class ScriptTests(TestCase):
         self.assertIn("1.2 × 2.0 м", script["hook"])
         self.assertEqual(script["price"], "2 300 ₴")
 
-    def test_variants_come_from_the_configured_pools(self):
+    def test_hook_rotates_but_the_closing_line_does_not(self):
         product = _product()
         pick = TikTokDailyPick.objects.create(product=product)
         script = build_script(pick)
-        self.assertTrue(any(script["cta"] == c for c in CTAS))
+        self.assertEqual(script["cta"], CTA)
         self.assertEqual(len(HOOKS), 5)
 
     def test_script_is_deterministic_for_a_pick(self):

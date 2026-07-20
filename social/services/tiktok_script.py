@@ -27,13 +27,9 @@ HOOKS = (
     "Скільки, по-вашому, коштує цей килим {size} у гривнях?",
 )
 
-CTAS = (
-    "Пишіть свої здогадки в коментарях 👇",
-    "Хто вгадав — пишіть у коментарях 👇",
-    "Ваші варіанти пишіть у коментарях 👇",
-    "Напишіть у коментарях, чи вгадали 👇",
-    "Хто назвав більше — пишіть у коментарях 👇",
-)
+# The closing line never rotates: it is the channel's signature, and a
+# constant ask reads as a habit rather than a script being shuffled.
+CTA = "Вгадали? Пишіть у коментарях 👇"
 
 COUNTDOWN = ("3", "2", "1")
 
@@ -105,7 +101,7 @@ def build_script(pick) -> dict:
         "hook": rng.choice(HOOKS).format(size=size),
         "countdown": COUNTDOWN,
         "price": format_price(attr.price),
-        "cta": rng.choice(CTAS),
+        "cta": CTA,
         "size": size,
         "price_value": int(attr.price),
     }
