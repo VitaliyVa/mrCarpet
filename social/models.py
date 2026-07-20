@@ -192,6 +192,71 @@ class TikTokToken(models.Model):
         return (self.refresh_expires_at - timezone.now()).days
 
 
+class TikTokDailyPick(AbstractCreatedUpdated):
+    """
+    One product per day for the TikTok auto-poster, without repeats.
+
+    Only PUBLISHED picks retire a product from the current cycle: a video that
+    was generated but never made it to TikTok would otherwise silently drop the
+    product until the whole catalogue has been through, and a failure would
+    punish the product rather than the run. When every eligible product has
+    been published the cycle number advances and the pool starts over.
+    """
+
+    class Status(models.TextChoices):
+        GENERATED = "generated", "Відео згенеровано"
+        PUBLISHED = "published", "Опубліковано"
+        FAILED = "failed", "Помилка"
+
+    product = models.ForeignKey(
+        "catalog.Product",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tiktok_picks",
+        help_text="Порожньо = товар видалили після піку (історія лишається).",
+    )
+    cycle_number = models.PositiveIntegerField(default=1)
+    picked_at = models.DateTimeField(default=timezone.now)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.GENERATED,
+    )
+    social_post = models.ForeignKey(
+        "social.SocialPost",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tiktok_picks",
+    )
+    video_path = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Згенерований MP4; чиститься після PUBLISH_COMPLETE.",
+    )
+    error = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ("-picked_at", "-id")
+        verbose_name = "TikTok daily pick"
+        verbose_name_plural = "TikTok daily picks"
+        indexes = [
+            models.Index(fields=["cycle_number", "status"]),
+            models.Index(fields=["-picked_at"]),
+        ]
+
+    def __str__(self) -> str:
+        title = self.product.title if self.product_id else "(видалений товар)"
+        return f"TikTokDailyPick #{self.pk}: {title} [{self.status}] cycle={self.cycle_number}"
+
+    @property
+    def is_spent(self) -> bool:
+        """Only a published pick retires the product for this cycle."""
+        return self.status == self.Status.PUBLISHED
+
+
 class SocialPost(AbstractCreatedUpdated):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"

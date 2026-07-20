@@ -12,6 +12,7 @@ from social.models import (
     SocialPost,
     SocialPostImage,
     SocialSettings,
+    TikTokDailyPick,
     TikTokToken,
 )
 from social.services.publish import (
@@ -429,3 +430,50 @@ class TikTokTokenAdmin(admin.ModelAdmin):
                 messages.SUCCESS,
             )
         return HttpResponseRedirect(reverse("admin:social_tiktoktoken_changelist"))
+
+
+@admin.register(TikTokDailyPick)
+class TikTokDailyPickAdmin(admin.ModelAdmin):
+    """Rotation history — read-only apart from retrying a failed pick."""
+
+    list_display = (
+        "picked_at",
+        "cycle_number",
+        "product",
+        "status",
+        "social_post",
+    )
+    list_filter = ("status", "cycle_number")
+    search_fields = ("product__title",)
+    date_hierarchy = "picked_at"
+    readonly_fields = (
+        "product",
+        "cycle_number",
+        "picked_at",
+        "status",
+        "social_post",
+        "video_path",
+        "error",
+        "created",
+        "updated",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        from social.services.tiktok_rotation import rotation_status
+
+        try:
+            status = rotation_status()
+            self.message_user(
+                request,
+                f"Цикл {status['cycle']}: опубліковано "
+                f"{status['published_this_cycle']} з {status['pool_size']}, "
+                f"лишилось {status['remaining']}.",
+                messages.INFO,
+            )
+        except Exception:
+            pass
+        return super().changelist_view(request, extra_context=extra_context)
