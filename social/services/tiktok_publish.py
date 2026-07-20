@@ -23,7 +23,11 @@ from django.core.files.storage import default_storage
 from social.models import SocialSettings, TikTokDailyPick
 from social.services import tiktok, tiktok_budget
 from social.services.media_urls import site_base
-from social.services.tiktok_montage import build_montage, ffmpeg_available
+from social.services.tiktok_montage import (
+    COUNT_START,
+    build_montage,
+    ffmpeg_available,
+)
 from social.services.tiktok_music import absolute_track_path, pick_track
 from social.services.tiktok_rotation import mark_failed, mark_published
 from social.services.tiktok_script import build_caption, build_script
@@ -32,6 +36,11 @@ from social.services.tiktok_video import generate_video_for_pick
 logger = logging.getLogger(__name__)
 
 MONTAGE_DIR = "social/tiktok/final"
+
+# Cover frame: after the question has faded in, before the first countdown
+# digit lands. Frame zero would be the bare still, which reads as an empty
+# thumbnail in the feed.
+COVER_TIMESTAMP_MS = int((COUNT_START - 0.1) * 1000)
 
 
 class TikTokPipelineError(RuntimeError):
@@ -142,6 +151,7 @@ def publish_pick(
             # declarations are honest and required.
             music_usage_confirmed=True,
             made_with_ai=True,
+            cover_timestamp_ms=COVER_TIMESTAMP_MS,
         )
     except Exception as exc:
         mark_failed(pick, str(exc))

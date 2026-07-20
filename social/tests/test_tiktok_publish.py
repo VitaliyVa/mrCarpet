@@ -275,3 +275,41 @@ class SchedulerTests(TestCase):
     def test_exactly_on_the_hour_does_not_refire(self):
         """A slot already reached must not be scheduled again for now."""
         self.assertEqual(self._next(4, 0), (18, "publish"))
+
+
+class CoverAndLabelTests(TestCase):
+    """The thumbnail and the AI label are what the feed shows before a tap."""
+
+    def setUp(self):
+        _enable()
+        self.pick = _pick()
+        self.pick.video_path = default_storage.save(
+            "social/tiktok/video/clip-cover.mp4", ContentFile(b"clip")
+        )
+        self.pick.save()
+
+    def tearDown(self):
+        if self.pick.video_path and default_storage.exists(self.pick.video_path):
+            default_storage.delete(self.pick.video_path)
+
+    def _publish(self):
+        with patch.object(tiktok_publish, "build_final_video",
+                          return_value="social/tiktok/final/x.mp4"), \
+             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
+                          return_value=["SELF_ONLY"]), \
+             patch.object(tiktok_publish.tiktok, "audit_passed", return_value=False), \
+             patch.object(tiktok_publish.tiktok, "publish_video",
+                          return_value={"external_id": "x", "privacy": "SELF_ONLY"}) as pub, \
+             patch.object(tiktok_publish, "_notify"):
+            publish_pick(self.pick)
+        return pub
+
+    def test_cover_lands_after_the_question_and_before_the_countdown(self):
+        from social.services import tiktok_montage as montage
+
+        ms = self._publish().call_args.kwargs["cover_timestamp_ms"]
+        self.assertGreater(ms / 1000, 0.55)  # question has faded in
+        self.assertLess(ms / 1000, montage.COUNT_START)  # no digit yet
+
+    def test_ai_label_is_requested(self):
+        self.assertTrue(self._publish().call_args.kwargs["made_with_ai"])

@@ -161,6 +161,7 @@ def publish_video(
     commercial_disclosure: bool = False,
     music_usage_confirmed: bool = False,
     made_with_ai: bool = False,
+    cover_timestamp_ms: int | None = None,
 ) -> dict[str, str]:
     if not tiktok_configured():
         raise TikTokConfigError("TikTok not configured")
@@ -183,6 +184,10 @@ def publish_video(
             "disable_comment": not allow_comment,
             "disable_duet": not allow_duet,
             "disable_stitch": not allow_stitch,
+            # Both spellings: is_aigc is the documented name, while
+            # video_made_with_ai is what older builds accept. TikTok ignores
+            # the one it does not know, and the label matters more than tidiness.
+            "is_aigc": bool(made_with_ai),
             "video_made_with_ai": bool(made_with_ai),
         },
         "source_info": {
@@ -190,6 +195,10 @@ def publish_video(
             "video_url": video_url,
         },
     }
+    if cover_timestamp_ms is not None:
+        # Without this TikTok takes frame zero, which for our montage is the
+        # still before the question has faded in — a blank-looking cover.
+        payload["post_info"]["video_cover_timestamp_ms"] = int(cover_timestamp_ms)
     if commercial_disclosure:
         payload["post_info"]["brand_content_toggle"] = True
         payload["post_info"]["brand_organic_toggle"] = True
