@@ -166,6 +166,13 @@ class AuthorizeUrlTests(TestCase):
         self.assertIn("state=st4te", url)
         self.assertIn("video.publish", url)
 
+    def test_only_used_scopes_are_requested(self):
+        """Unused scopes are a documented audit rejection reason."""
+        self.assertEqual(
+            set(tiktok_auth.SCOPES), {"user.info.basic", "video.publish"}
+        )
+        self.assertNotIn("video.upload", tiktok_auth.build_authorize_url("s"))
+
     def test_sandbox_detected_from_key_prefix(self):
         self.assertTrue(tiktok_auth.is_sandbox())
         with override_settings(TIKTOK_CLIENT_KEY="awx123"):

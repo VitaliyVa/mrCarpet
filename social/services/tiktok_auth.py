@@ -33,7 +33,10 @@ TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 REVOKE_URL = "https://open.tiktokapis.com/v2/oauth/revoke/"
 HTTP_TIMEOUT = 30
 
-SCOPES = ("user.info.basic", "video.publish", "video.upload")
+# Exactly what the pipeline uses, and no more: requesting a scope the demo
+# video cannot show it exercising is one of the commonest audit rejections.
+# Direct Post goes through video.publish; the draft-upload path is never called.
+SCOPES = ("user.info.basic", "video.publish")
 
 
 class TikTokAuthError(RuntimeError):
