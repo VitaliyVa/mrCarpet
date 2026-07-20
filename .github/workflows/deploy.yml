@@ -35,6 +35,26 @@ jobs:
         mkdir -p backups
         TS=$(date +%Y%m%d_%H%M%S)
 
+        # --- Housekeeping ПЕРЕД деплоєм ---------------------------------
+        # Свідомо на початку, а не в кінці: якщо деплой упаде на healthcheck,
+        # прибирання все одно відбудеться. Саме через "очищення в кінці"
+        # одного разу набігло 44 ГБ build cache і диск заповнився на 76%.
+        echo "Housekeeping: rotating DB backups (keep 10 newest + oldest anchor)..."
+        # subshell: жоден збій усередині не змінить робочу директорію деплою
+        (
+          cd backups || exit 0
+          OLDEST=$(ls -1t db.sqlite3.* 2>/dev/null | tail -1)
+          ls -1t db.sqlite3.* 2>/dev/null | tail -n +11 \
+            | grep -v "^${OLDEST}$" | xargs -r rm -f
+        ) || true
+        # /tmp-копії БД належать root (їх пише alpine-контейнер) — чистимо ним же
+        docker run --rm -v /tmp:/hosttmp alpine:latest sh -c \
+          'cd /hosttmp && ls -1t mrcarpet_db_live_*.sqlite3 2>/dev/null | tail -n +4 | xargs -r rm -f' \
+          || true
+        echo "Housekeeping: pruning docker build cache older than 48h..."
+        docker builder prune -f --filter until=48h || true
+        df -h / | tail -1
+
         # IMPORTANT: SQLite lives inside the git worktree (bind mount).
         # Never let git pull overwrite db.sqlite3 / WAL / SHM.
 
@@ -91,6 +111,13 @@ jobs:
         echo "Starting web first..."
         docker compose -f docker-compose.prod.yml up -d web
 
+        # Фонові сервіси піднімаємо ДО healthcheck: якщо перевірка нижче
+        # впаде і скрипт вийде з exit 1, планувальник тижневого звіту
+        # (ga4-weekly) все одно лишиться живим. Саме через зворотний
+        # порядок він одного разу зник і звіт у понеділок не прийшов.
+        echo "Starting background services (independent of healthcheck)..."
+        docker compose -f docker-compose.prod.yml up -d ga4-weekly
+
         echo "Waiting until gunicorn answers inside web..."
         # Host header обов'язковий: ALLOWED_HOSTS строгий, голий 127.0.0.1 дав би 400
         for i in $(seq 1 30); do
@@ -142,17 +169,15 @@ jobs:
           exit 1
         fi
 
-        echo "Verifying background services are up..."
-        # ga4-weekly — довгоживучий планувальник тижневого звіту.
-        # Якщо його немає (напр. деплой раніше впав до кроку "up -d"),
-        # піднімаємо явно, інакше звіт у понеділок не піде.
-        docker compose -f docker-compose.prod.yml up -d ga4-weekly
+        echo "Final state:"
         docker compose -f docker-compose.prod.yml ps
 
-        echo "Cleaning up Docker..."
+        echo "Cleaning up Docker images..."
         # ВАЖЛИВО: тільки образи. `docker system prune` видаляє ще й зупинені
         # контейнери — так одного разу зник ga4-weekly і тижневий звіт не прийшов.
+        # Build cache чиститься на початку деплою (див. Housekeeping).
         docker image prune -f
+        df -h / | tail -1
 
         echo "Deployment completed successfully!"
         EOF

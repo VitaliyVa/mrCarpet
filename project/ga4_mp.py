@@ -131,19 +131,33 @@ def send_mp_purchase(
 
 
 def send_order_purchase_mp(order, request=None, *, force: bool = False) -> bool:
-    """Build payload from order.cart and send once (dedupe via ga4_mp_sent)."""
+    """Build payload from order.cart and send once (dedupe via ga4_mp_sent).
+
+    Кожна відмова логується: без цього неможливо зрозуміти, чому покупка
+    не доїхала до GA4 (а мовчазний `return False` виглядає як «все ок»).
+    """
+    oid = getattr(order, "pk", None)
     if not mp_configured():
+        logger.warning("[ga4-mp] skip order=%s: GA4_MEASUREMENT_ID/API_SECRET не задані", oid)
         return False
     if getattr(order, "ga4_mp_sent", False) and not force:
+        logger.info("[ga4-mp] skip order=%s: вже відправлено раніше", oid)
         return False
 
     from project.ga4_ecommerce import order_allows_purchase_event, purchase_payload
 
     if not order_allows_purchase_event(order) and not force:
+        logger.warning(
+            "[ga4-mp] skip order=%s: статус '%s' не дає права на purchase "
+            "(потрібен new/paid/shipped/completed)",
+            oid,
+            getattr(order, "status", None),
+        )
         return False
 
     cart = getattr(order, "cart", None)
     if cart is None:
+        logger.warning("[ga4-mp] skip order=%s: до замовлення не привʼязаний кошик", oid)
         return False
 
     try:
