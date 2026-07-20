@@ -65,11 +65,17 @@ class TikTokPipelineError(RuntimeError):
 
 
 def _notify(text: str) -> None:
-    """Report to the staff chat; never let a notification failure abort a run."""
+    """
+    Report to the video-networks topic; a notification failure never aborts a run.
+
+    Routed away from the product-comment stream on purpose: these are daily
+    operational reports, and mixing them into the topic used for answering
+    customers buries the comments that actually need a reply.
+    """
     try:
         from social.services.comment_notify import notify_staff_text
 
-        notify_staff_text(text)
+        notify_staff_text(text, video=True)
     except Exception:
         logger.exception("video report could not be delivered")
 

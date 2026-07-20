@@ -184,13 +184,18 @@ caption(pick, script), publish(pick, script, video_url, local_path) -> dict
 
 **Готовність:** щоденний TikTok працює рівно як раніше.
 
-### Ф2 · Telegram відео-топік
+### Ф2 · Telegram відео-топік ✅ (код готовий, чекає на thread_id)
 
-- поле `video_comments_thread_id` + вибір топіка за джерелом
-- звіти пайплайну з Ф1 переїжджають туди
+- ✅ поле `video_comments_thread_id` (міграція `0014`) + видиме в адмінці
+- ✅ `notify_staff_text(..., video=True)` і `notify_staff_comment(..., video=True)`
+- ✅ звіти щоденного ролика переїхали туди
+- ✅ **ізоляція**: `video_comments_thread_id` не може дорівнювати
+  `orders message_thread_id` — інакше звіти потрапили б в AI обробки замовлень
+- ✅ порожній `video_comments_thread_id` = фолбек у звичайний топік коментарів,
+  щоб звіт не зник у тиші
 
-Іде раніше за нові площадки: звіти вже існують і мають одразу падати
-в правильне місце.
+⏳ **Лишилось від тебе:** створити топік і дати мені його `thread_id` (крок №3
+у розділі 9).
 
 ### Ф3 · Instagram Reels + Facebook
 

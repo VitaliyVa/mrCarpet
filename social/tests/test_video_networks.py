@@ -244,6 +244,80 @@ class RetryTests(TestCase):
         self.assertEqual(self.pick.deliveries.count(), 2)
 
 
+class VideoTopicTests(TestCase):
+    """
+    Video reports live in their own Telegram topic.
+
+    They arrive daily and get answered on a slower rhythm than customer
+    comments, so mixing the two buries the messages that need a reply.
+    """
+
+    def setUp(self):
+        from project.models import TelegramSettings
+
+        tg = TelegramSettings.load()
+        tg.bot_token = "test-token"
+        tg.chat_id = "-100500"
+        tg.message_thread_id = "7"
+        tg.save()
+
+        social = SocialSettings.load()
+        social.staff_comments_chat_id = "-100500"
+        social.staff_comments_thread_id = "11"
+        social.save()
+
+    def _thread_used(self):
+        from social.services import comment_notify
+
+        with patch.object(comment_notify.requests, "post") as post:
+            post.return_value.content = b"{}"
+            post.return_value.json.return_value = {"ok": True, "result": {}}
+            comment_notify.notify_staff_text("звіт", video=True)
+        return post.call_args.kwargs["json"].get("message_thread_id")
+
+    def test_report_goes_to_the_video_topic(self):
+        social = SocialSettings.load()
+        social.video_comments_thread_id = "42"
+        social.save()
+        self.assertEqual(self._thread_used(), 42)
+
+    def test_unset_video_topic_falls_back_to_the_comments_topic(self):
+        """A missing thread id must not send the daily report into silence."""
+        self.assertEqual(self._thread_used(), 11)
+
+    def test_video_topic_may_not_be_the_orders_topic(self):
+        """The orders AI must never ingest daily video reports."""
+        from social.services.tg_isolation import isolation_issues
+
+        issues = isolation_issues(
+            staff_comments_id="-100500",
+            staff_comments_thread_id="11",
+            video_comments_thread_id="7",
+            family_id="-100500",
+            orders_thread="7",
+        )
+        self.assertTrue(any("video_comments_thread_id" in i for i in issues))
+
+    def test_distinct_video_topic_is_accepted(self):
+        from social.services.tg_isolation import isolation_issues
+
+        issues = isolation_issues(
+            staff_comments_id="-100500",
+            staff_comments_thread_id="11",
+            video_comments_thread_id="42",
+            family_id="-100500",
+            orders_thread="7",
+        )
+        self.assertEqual(issues, [])
+
+    def test_pipeline_reports_are_routed_to_the_video_topic(self):
+        from social.services import comment_notify
+
+        with patch.object(comment_notify, "notify_staff_text") as notify:
+            tiktok_publish._notify("привіт")
+        self.assertTrue(notify.call_args.kwargs["video"])
+
+
 class CleanupTests(TestCase):
     """
     Files are removed on age, not on the first network's confirmation.

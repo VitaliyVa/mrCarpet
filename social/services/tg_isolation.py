@@ -33,6 +33,7 @@ def isolation_issues(
     discussion_id: str = "",
     staff_comments_id: str = "",
     staff_comments_thread_id: str = "",
+    video_comments_thread_id: str = "",
     family_id: str | None = None,
     orders_thread: str | None = None,
 ) -> list[str]:
@@ -41,6 +42,7 @@ def isolation_issues(
     discussion = _norm(discussion_id)
     staff_chat = _norm(staff_comments_id)
     staff_thread = _norm(staff_comments_thread_id)
+    video_thread = _norm(video_comments_thread_id)
     family = _norm(family_id) if family_id is not None else family_chat_id()
     orders_th = _norm(orders_thread) if orders_thread is not None else orders_thread_id()
 
@@ -76,6 +78,13 @@ def isolation_issues(
         issues.append(
             "staff_comments_thread_id required when using family chat "
             "(forum topic «mr.Carpet comments»)"
+        )
+
+    # The video topic shares the same chat as the comments topic, so the only
+    # thing keeping daily reports out of the orders AI is the thread id.
+    if video_thread and orders_th and video_thread == orders_th:
+        issues.append(
+            "video_comments_thread_id must not equal orders message_thread_id"
         )
 
     return issues
@@ -116,6 +125,7 @@ def isolation_status() -> dict[str, Any]:
     discussion = _norm(social.products_discussion_chat_id)
     staff = _norm(social.staff_comments_chat_id)
     staff_thread = _norm(getattr(social, "staff_comments_thread_id", "") or "")
+    video_thread = _norm(getattr(social, "video_comments_thread_id", "") or "")
     family = family_chat_id()
     orders_th = orders_thread_id()
     issues = isolation_issues(
@@ -123,6 +133,7 @@ def isolation_status() -> dict[str, Any]:
         discussion_id=discussion,
         staff_comments_id=staff,
         staff_comments_thread_id=staff_thread,
+        video_comments_thread_id=video_thread,
         family_id=family,
         orders_thread=orders_th,
     )
@@ -133,6 +144,7 @@ def isolation_status() -> dict[str, Any]:
         "products_discussion_chat_id": discussion or None,
         "staff_comments_chat_id": staff or None,
         "staff_comments_thread_id": staff_thread or None,
+        "video_comments_thread_id": video_thread or None,
         "ok": not issues,
         "issues": issues,
     }

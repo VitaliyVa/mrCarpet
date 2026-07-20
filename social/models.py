@@ -132,6 +132,17 @@ class SocialSettings(models.Model):
             "Для forum-топіка зазвичай лишай порожнім."
         ),
     )
+    video_comments_thread_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        verbose_name="Video topic (thread_id)",
+        help_text=(
+            "Окремий forum-топік для відео-мереж (TikTok/Reels/Threads/Shorts): "
+            "звіти щоденного ролика і коментарі під ним. Порожньо = все падає "
+            "у звичайний топік коментарів."
+        ),
+    )
     staff_comments_thread_id = models.CharField(
         max_length=32,
         blank=True,

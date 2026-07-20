@@ -43,6 +43,8 @@ class SocialSettingsForm(forms.ModelForm):
             staff_comments_id=cleaned.get("staff_comments_chat_id") or "",
             staff_comments_thread_id=cleaned.get("staff_comments_thread_id")
             or "",
+            video_comments_thread_id=cleaned.get("video_comments_thread_id")
+            or "",
         )
         if issues:
             raise forms.ValidationError(issues)
@@ -406,12 +408,15 @@ class SocialSettingsAdmin(admin.ModelAdmin):
                     "staff_comments_enabled",
                     "staff_comments_chat_id",
                     "staff_comments_thread_id",
+                    "video_comments_thread_id",
                 ),
                 "description": (
                     "Дубль коментарів (TG discussion → пізніше IG/FB) у forum-топік "
                     "сімейної групи «mr.Carpet comments». "
                     "chat_id порожньо = TelegramSettings.chat_id; "
-                    "thread_id ≠ orders topic. Бот: can_manage_topics."
+                    "thread_id ≠ orders topic. Бот: can_manage_topics. "
+                    "Video topic — окремий топік для відео-мереж; порожньо = "
+                    "все падає сюди ж."
                 ),
             },
         ),

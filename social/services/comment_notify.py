@@ -56,11 +56,22 @@ class InboundComment:
     raw_message_id: str = ""
 
 
-def _staff_target() -> tuple[str, str]:
-    """(chat_id, thread_id) — thread optional; chat falls back to family orders chat."""
+def _staff_target(*, video: bool = False) -> tuple[str, str]:
+    """
+    (chat_id, thread_id) — thread optional; chat falls back to family orders chat.
+
+    `video=True` routes to the video-networks topic. Video comments arrive far
+    less often and get answered on a different rhythm, so they live apart from
+    the product-comment stream rather than burying it.
+
+    An unset video topic falls back to the regular one: a missing thread id
+    must not send the daily report into silence.
+    """
     social = SocialSettings.load()
     chat = (social.staff_comments_chat_id or "").strip()
     thread = (getattr(social, "staff_comments_thread_id", "") or "").strip()
+    if video:
+        thread = (getattr(social, "video_comments_thread_id", "") or "").strip() or thread
     if not chat:
         try:
             chat = (TelegramSettings.load().chat_id or "").strip()
@@ -85,10 +96,10 @@ def staff_comments_configured() -> bool:
     return True
 
 
-def notify_staff_text(text: str) -> dict[str, Any]:
+def notify_staff_text(text: str, *, video: bool = False) -> dict[str, Any]:
     """Send a plain operational alert to the staff chat/topic (no comment record)."""
     token = _bot_token()
-    chat_id, thread_id = _staff_target()
+    chat_id, thread_id = _staff_target(video=video)
     if not (token and chat_id):
         return {"ok": False, "error": "staff chat not configured"}
 
@@ -119,7 +130,7 @@ def notify_staff_text(text: str) -> dict[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
-def notify_staff_comment(comment: InboundComment) -> dict[str, Any]:
+def notify_staff_comment(comment: InboundComment, *, video: bool = False) -> dict[str, Any]:
     """Send formatted alert to staff comments chat/topic. Safe from any adapter."""
     if not staff_comments_configured():
         return {"ok": False, "error": "staff comments chat/topic not configured"}
@@ -127,7 +138,7 @@ def notify_staff_comment(comment: InboundComment) -> dict[str, Any]:
     if not text:
         return {"ok": False, "error": "empty comment"}
 
-    chat_id, thread_id = _staff_target()
+    chat_id, thread_id = _staff_target(video=video)
     token = _bot_token()
     body = format_staff_comment_html(comment)
     payload: dict[str, Any] = {
