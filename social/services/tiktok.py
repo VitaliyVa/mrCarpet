@@ -40,11 +40,32 @@ class TikTokPublishError(RuntimeError):
 
 
 def _access_token() -> str:
+    """
+    Stored OAuth token, refreshed on demand; env var kept as a legacy fallback.
+
+    Every request in this module goes through _headers(), so refreshing here
+    covers publish_video, publish_photos, creator info and status polling.
+    """
+    from social.services.tiktok_auth import get_valid_access_token
+
+    try:
+        token = get_valid_access_token()
+    except Exception:
+        logger.exception("TikTok token refresh failed")
+        token = ""
+    if token:
+        return token
     return (getattr(settings, "TIKTOK_ACCESS_TOKEN", "") or "").strip()
 
 
 def _open_id() -> str:
-    return (getattr(settings, "TIKTOK_OPEN_ID", "") or "").strip()
+    from social.models import TikTokToken
+
+    try:
+        stored = (TikTokToken.load().open_id or "").strip()
+    except Exception:
+        stored = ""
+    return stored or (getattr(settings, "TIKTOK_OPEN_ID", "") or "").strip()
 
 
 def tiktok_configured() -> bool:
@@ -287,9 +308,17 @@ def _poll_status(publish_id: str) -> dict[str, Any]:
 
 
 def setup_status() -> dict[str, Any]:
-    return {
+    from social.services.tiktok_auth import oauth_configured, token_status
+
+    status = {
         "configured": tiktok_configured(),
         "audit_passed": audit_passed(),
         "open_id_set": bool(_open_id()),
         "client_key_set": bool((getattr(settings, "TIKTOK_CLIENT_KEY", "") or "").strip()),
+        "oauth_configured": oauth_configured(),
     }
+    try:
+        status["token"] = token_status()
+    except Exception as exc:  # diagnostics must never raise
+        status["token"] = {"error": str(exc)}
+    return status

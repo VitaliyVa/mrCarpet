@@ -288,6 +288,10 @@ TIKTOK_CLIENT_SECRET = config("TIKTOK_CLIENT_SECRET", default="")
 TIKTOK_ACCESS_TOKEN = config("TIKTOK_ACCESS_TOKEN", default="")
 TIKTOK_OPEN_ID = config("TIKTOK_OPEN_ID", default="")
 TIKTOK_AUDIT_PASSED = config("TIKTOK_AUDIT_PASSED", default="false")
+# Must match a Redirect URI registered in the TikTok developer portal.
+TIKTOK_REDIRECT_URI = config(
+    "TIKTOK_REDIRECT_URI", default="https://mrcarpet24.com/api/tiktok/callback/"
+)
 SOCIAL_AI_I2V_MODEL = config(
     "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
 )

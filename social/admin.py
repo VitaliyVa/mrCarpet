@@ -7,7 +7,13 @@ from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
 
-from social.models import SocialDelivery, SocialPost, SocialPostImage, SocialSettings
+from social.models import (
+    SocialDelivery,
+    SocialPost,
+    SocialPostImage,
+    SocialSettings,
+    TikTokToken,
+)
 from social.services.publish import (
     enqueue_publish,
     ensure_deliveries,
@@ -357,3 +363,69 @@ class SocialSettingsAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(TikTokToken)
+class TikTokTokenAdmin(admin.ModelAdmin):
+    """Read-only view of the OAuth state plus a button to (re)authorize."""
+
+    change_list_template = "admin/social/tiktoktoken/change_list.html"
+
+    readonly_fields = (
+        "open_id",
+        "scope",
+        "client_key",
+        "expires_at",
+        "refresh_expires_at",
+        "last_refreshed_at",
+        "refresh_fail_count",
+        "last_error",
+        "updated_at",
+    )
+    fields = readonly_fields
+    list_display = ("__str__", "environment", "expires_at", "reauth_due")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.display(description="Середовище")
+    def environment(self, obj: TikTokToken) -> str:
+        if not obj.client_key:
+            return "—"
+        return "Sandbox" if obj.client_key.startswith("sb") else "Production"
+
+    @admin.display(description="Переавторизація до")
+    def reauth_due(self, obj: TikTokToken) -> str:
+        days = obj.days_until_reauth
+        if days is None:
+            return "—"
+        return f"{obj.refresh_expires_at:%Y-%m-%d} ({days} дн.)"
+
+    def get_urls(self):
+        return [
+            path(
+                "refresh-now/",
+                self.admin_site.admin_view(self.refresh_now),
+                name="social_tiktoktoken_refresh",
+            ),
+            *super().get_urls(),
+        ]
+
+    def refresh_now(self, request):
+        from social.services.tiktok_auth import TikTokAuthError
+        from social.services.tiktok_auth import refresh_token as do_refresh
+
+        try:
+            token = do_refresh()
+        except TikTokAuthError as exc:
+            self.message_user(request, f"Рефреш не вдався: {exc}", messages.ERROR)
+        else:
+            self.message_user(
+                request,
+                f"Токен оновлено, діє до {token.expires_at:%Y-%m-%d %H:%M}.",
+                messages.SUCCESS,
+            )
+        return HttpResponseRedirect(reverse("admin:social_tiktoktoken_changelist"))

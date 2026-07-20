@@ -113,6 +113,85 @@ class SocialSettings(models.Model):
         return obj
 
 
+class TikTokToken(models.Model):
+    """
+    Singleton OAuth token store for the TikTok Content Posting API.
+
+    TikTok has no never-expiring token: access_token lives 24h and
+    refresh_token 365 days from the *initial* grant (not rolling). So the
+    access token is refreshed in the background and the OAuth flow has to be
+    repeated by a human roughly once a year — see refresh_expires_at.
+
+    client_key is stored alongside the tokens because sandbox and production
+    credentials are separate: a token minted for one client_key returns 401
+    for the other, and that failure is otherwise indistinguishable from an
+    expired token.
+    """
+
+    REFRESH_MARGIN_SECONDS = 600
+    REAUTH_WARNING_DAYS = 30
+
+    access_token = models.TextField(blank=True, default="")
+    refresh_token = models.TextField(blank=True, default="")
+    open_id = models.CharField(max_length=128, blank=True, default="")
+    scope = models.CharField(max_length=255, blank=True, default="")
+    client_key = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text="client_key the tokens were issued for (sandbox keys start with 'sb').",
+    )
+    expires_at = models.DateTimeField(null=True, blank=True)
+    refresh_expires_at = models.DateTimeField(null=True, blank=True)
+    last_refreshed_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default="")
+    refresh_fail_count = models.PositiveIntegerField(default=0)
+    reauth_warned_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "TikTok token"
+        verbose_name_plural = "TikTok token"
+
+    def __str__(self) -> str:
+        if not self.access_token:
+            return "TikTok token (not authorized)"
+        return f"TikTok token open_id={self.open_id or '?'}"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls) -> "TikTokToken":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def is_authorized(self) -> bool:
+        return bool(self.access_token and self.refresh_token)
+
+    @property
+    def needs_refresh(self) -> bool:
+        """True when the access token is missing or within the safety margin."""
+        if not self.access_token or self.expires_at is None:
+            return True
+        margin = timezone.timedelta(seconds=self.REFRESH_MARGIN_SECONDS)
+        return self.expires_at - timezone.now() <= margin
+
+    @property
+    def refresh_expired(self) -> bool:
+        if self.refresh_expires_at is None:
+            return False
+        return timezone.now() >= self.refresh_expires_at
+
+    @property
+    def days_until_reauth(self) -> int | None:
+        if self.refresh_expires_at is None:
+            return None
+        return (self.refresh_expires_at - timezone.now()).days
+
+
 class SocialPost(AbstractCreatedUpdated):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"

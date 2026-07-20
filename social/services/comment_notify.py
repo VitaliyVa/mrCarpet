@@ -85,6 +85,40 @@ def staff_comments_configured() -> bool:
     return True
 
 
+def notify_staff_text(text: str) -> dict[str, Any]:
+    """Send a plain operational alert to the staff chat/topic (no comment record)."""
+    token = _bot_token()
+    chat_id, thread_id = _staff_target()
+    if not (token and chat_id):
+        return {"ok": False, "error": "staff chat not configured"}
+
+    payload: dict[str, Any] = {
+        "chat_id": chat_id,
+        "text": (text or "")[:4096],
+        "disable_web_page_preview": True,
+    }
+    if thread_id:
+        try:
+            payload["message_thread_id"] = int(thread_id)
+        except ValueError:
+            payload["message_thread_id"] = thread_id
+
+    try:
+        resp = requests.post(
+            f"{TELEGRAM_API}/bot{token}/sendMessage",
+            json=payload,
+            timeout=TIMEOUT,
+        )
+        data = resp.json() if resp.content else {}
+        if not data.get("ok"):
+            logger.error("staff text notify failed: %s", data)
+            return {"ok": False, "error": str(data)[:500]}
+        return {"ok": True, "result": data.get("result") or {}}
+    except Exception as exc:
+        logger.exception("staff text notify failed")
+        return {"ok": False, "error": str(exc)}
+
+
 def notify_staff_comment(comment: InboundComment) -> dict[str, Any]:
     """Send formatted alert to staff comments chat/topic. Safe from any adapter."""
     if not staff_comments_configured():
