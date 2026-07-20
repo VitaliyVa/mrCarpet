@@ -1,11 +1,11 @@
 """
 Assemble the final TikTok video from one generated clip.
 
-Structure (~14.5s, inside the 11-18s window that performs best):
+Structure (~13.5s, inside the 11-18s window that performs best):
 
-    0.0-5.0s   opening still: the price question, then a 3-2-1 countdown
-    5.0-11.0s  the generated clip; the price lands 1.5s in, after a beat
-    11.0-14.5s the clip's tail played backwards, with the comment prompt
+    0.0-4.0s   opening still: the price question, then a 3-2-1 countdown
+    4.0-10.0s  the generated clip; the price lands 1.5s in, after a beat
+    10.0-13.5s the clip's tail played backwards, with the comment prompt
 
 Only the clip costs money; everything here is CPU. Paying a video model for a
 longer render would buy exactly what ffmpeg does for free.
@@ -33,8 +33,8 @@ OUT_W, OUT_H = 1080, 1920
 FPS = 30
 
 COUNT_START = 0.8
-COUNT_STEP = 1.33          # three digits span 4s, a beat slower than a metronome
-HOOK_SECONDS = 5.0         # countdown ends at 4.79, then a breath before the cut
+COUNT_STEP = 1.0           # three digits span 3s
+HOOK_SECONDS = 4.0         # countdown ends at 3.8, then a breath before the cut
 PRICE_DELAY = 1.5          # hold the clip before answering, so the guess lands
 REVERSE_SECONDS = 3.5
 
