@@ -85,23 +85,27 @@ class ViberPostTests(TestCase):
             "https://mrcarpet24.com/media/c.jpg",
         ],
     )
-    def test_extra_photos_sent_separately(self, _urls, mock_post):
+    def test_extra_photos_sent_before_main(self, _urls, mock_post):
         mock_post.side_effect = [
             self._account_resp(),  # get_account_info
-            self._ok_resp(),  # головне фото з описом
-            self._ok_resp(),  # друге фото
-            self._ok_resp(),  # третє фото
+            self._ok_resp(),  # друге фото (без тексту)
+            self._ok_resp(),  # третє фото (без тексту)
+            self._ok_resp(),  # головне фото з описом — останнє
         ]
         result = post_product_to_viber(self._product())
         self.assertTrue(result["ok"])
         self.assertEqual(result["extra_photos"], 2)
 
-        # головне фото несе текст, додаткові — ні
-        main_payload = mock_post.call_args_list[1][1]["json"]
+        # спершу додаткові фото без тексту
+        first_extra = mock_post.call_args_list[1][1]["json"]
+        self.assertEqual(first_extra["text"], "")
+        self.assertEqual(first_extra["media"], "https://mrcarpet24.com/media/b.jpg")
+        second_extra = mock_post.call_args_list[2][1]["json"]
+        self.assertEqual(second_extra["media"], "https://mrcarpet24.com/media/c.jpg")
+        # останнім — головне фото з описом
+        main_payload = mock_post.call_args_list[3][1]["json"]
         self.assertIn("Viber килим", main_payload["text"])
-        extra_payload = mock_post.call_args_list[2][1]["json"]
-        self.assertEqual(extra_payload["text"], "")
-        self.assertEqual(extra_payload["media"], "https://mrcarpet24.com/media/b.jpg")
+        self.assertEqual(main_payload["media"], "https://mrcarpet24.com/media/a.jpg")
 
     @patch("social.services.viber_products.requests.post")
     @patch(
@@ -114,8 +118,8 @@ class ViberPostTests(TestCase):
     def test_extra_photo_failure_does_not_fail_post(self, _urls, mock_post):
         mock_post.side_effect = [
             self._account_resp(),
-            self._ok_resp(),
-            self._ok_resp({"status": 12, "status_message": "rate limit"}),
+            self._ok_resp({"status": 12, "status_message": "rate limit"}),  # доп. фото
+            self._ok_resp(),  # головне фото з описом усе одно йде
         ]
         result = post_product_to_viber(self._product())
         self.assertTrue(result["ok"])

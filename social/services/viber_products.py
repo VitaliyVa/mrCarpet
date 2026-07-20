@@ -94,30 +94,9 @@ def post_product_to_viber(product) -> dict:
         text = _caption(product)
         photos = _product_photo_urls(product)
         sender = _superadmin_id(token)
-        if photos:
-            payload = {
-                "from": sender,
-                "type": "picture",
-                "text": text[:_PICTURE_TEXT_MAX],
-                "media": photos[0],
-            }
-        else:
-            payload = {
-                "from": sender,
-                "type": "text",
-                "text": text[:_TEXT_MAX],
-            }
-        resp = requests.post(
-            f"{VIBER_API}/post",
-            json=payload,
-            headers={"X-Viber-Auth-Token": token},
-            timeout=TIMEOUT,
-        )
-        data = resp.json() if resp.content else {}
-        if data.get("status") != 0:
-            return {"ok": False, "error": str(data)[:500]}
 
-        # Решта фото — окремими повідомленнями без тексту (медіа-групи немає).
+        # Спершу додаткові фото без тексту, головне фото з описом — останнім,
+        # щоб опис лишався внизу стрічки (медіа-групи у Viber немає).
         # Фейл додаткового фото не робить весь пост невдалим.
         extra_sent = 0
         for url in photos[1 : 1 + _MAX_EXTRA_PHOTOS]:
@@ -140,6 +119,29 @@ def post_product_to_viber(product) -> dict:
                     logger.warning("Viber extra photo failed: %s", extra_data)
             except Exception:
                 logger.exception("Viber extra photo failed")
+
+        if photos:
+            payload = {
+                "from": sender,
+                "type": "picture",
+                "text": text[:_PICTURE_TEXT_MAX],
+                "media": photos[0],
+            }
+        else:
+            payload = {
+                "from": sender,
+                "type": "text",
+                "text": text[:_TEXT_MAX],
+            }
+        resp = requests.post(
+            f"{VIBER_API}/post",
+            json=payload,
+            headers={"X-Viber-Auth-Token": token},
+            timeout=TIMEOUT,
+        )
+        data = resp.json() if resp.content else {}
+        if data.get("status") != 0:
+            return {"ok": False, "error": str(data)[:500]}
         return {"ok": True, "result": data, "extra_photos": extra_sent}
     except Exception as exc:
         logger.exception("Viber product post failed")
