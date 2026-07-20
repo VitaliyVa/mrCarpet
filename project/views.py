@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.db.models import Prefetch
 
 from catalog.models import Product, ProductAttribute, ProductSale
@@ -205,15 +205,31 @@ def google_site_verification_file(request):
     )
 
 
-def tiktok_site_verification_file(request):
+# TikTok verifies domain ownership per environment: production and every
+# sandbox each issue their own signature file, and pull_from_url is rejected
+# with url_ownership_unverified unless the environment doing the pull has its
+# own token served. Adding an environment means adding a line here.
+TIKTOK_SITE_VERIFICATION_TOKENS = {
+    "tiktokxfkAe8tZDvfpCs644EJmGm1b51LUG1xX.txt": (
+        "xfkAe8tZDvfpCs644EJmGm1b51LUG1xX"
+    ),  # production
+    "tiktokih1eb1o8sZH5SELDIV4hmBPQTvLHQ6af.txt": (
+        "ih1eb1o8sZH5SELDIV4hmBPQTvLHQ6af"
+    ),  # sandbox mrcarpet-dev
+}
+
+
+def tiktok_site_verification_file(request, filename):
     """
     TikTok for Developers URL-prefix ownership verification (signature file).
 
-    Required for the Content Posting API pull_by_url transfer and for the
+    Required for the Content Posting API pull_from_url transfer and for the
     Terms/Privacy URLs on the app profile. Served from the site root.
     """
+    token = TIKTOK_SITE_VERIFICATION_TOKENS.get(filename)
+    if not token:
+        raise Http404("unknown TikTok verification file")
     return HttpResponse(
-        "tiktok-developers-site-verification="
-        "xfkAe8tZDvfpCs644EJmGm1b51LUG1xX" + chr(10),
+        f"tiktok-developers-site-verification={token}" + chr(10),
         content_type="text/plain; charset=utf-8",
     )

@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
@@ -28,8 +28,8 @@ urlpatterns = [
         views.google_site_verification_file,
         name='google_site_verification_file',
     ),
-    path(
-        'tiktokxfkAe8tZDvfpCs644EJmGm1b51LUG1xX.txt',
+    re_path(
+        r'^(?P<filename>tiktok[A-Za-z0-9]+\.txt)$',
         views.tiktok_site_verification_file,
         name='tiktok_site_verification_file',
     ),
