@@ -237,12 +237,30 @@ Sandbox **не клонує** Production навіть із галочкою — 
 Тобто Phase 1-5 можна писати і ганяти проти реального API **без audit**.
 Прод-креденшели знадобляться лише на Phase 6.
 
-### Найближчі кроки коду (Phase 0 хвіст)
+### Phase 0 — ЗАВЕРШЕНА (2026-07-20)
 
-1. `/api/tiktok/callback/` — роут уже вписаний у TikTok, у коді його НЕМА
-2. Модель `TikTokToken` + авто-рефреш у `_access_token()` (перезаписувати
-   і refresh_token теж!) + алерт за 30 днів до `refresh_expires_at`
-3. Одноразовий OAuth-скрипт/адмін-дія, щоб отримати перший токен
+Код: `TikTokToken` (міграція 0009) + `social/services/tiktok_auth.py` +
+staff-only в'юхи `/api/tiktok/authorize/` та `/api/tiktok/callback/` +
+розділ «TikTok token» в адмінці з кнопками авторизації/рефрешу.
+`_access_token()` у `tiktok.py` тепер бере токен з БД і рефрешить за 10 хв
+до протухання — решта модуля не змінювалась, бо все йде через `_headers()`.
+
+**Перевірено на проді проти живого API (sandbox):**
+- `creator_info` → `mrcarpet24` / `mr.carpet`
+- примусовий рефреш → новий `expires_at`, помилок нема
+- `creator_info` після рефрешу → ОК
+- `open_id=-000_N8C_7uVP2JhQzZnwo8POyTYwnoGCoUw`, scope усі три,
+  переавторизація потрібна через 364 дні
+
+**`privacy_level_options` цього акаунта**: `PUBLIC_TO_EVERYONE`,
+`MUTUAL_FOLLOW_FRIENDS`, `SELF_ONLY`. **`FOLLOWER_OF_CREATOR` НЕ підтримується** —
+`ALLOWED_PRIVACY` у `tiktok.py` дозволяє його, TikTok відхилить. Врахувати
+в Phase 4: брати список з `creator_info`, а не хардкодити.
+
+**Граблі прод-деплою**: змінні з `docker-compose.prod.yml` → `environment:`
+(там усі `TIKTOK_*`) потребують `up -d web` для перестворення контейнера.
+`restart` лишає старий env, а decouple читає `os.environ` раніше за `.env` →
+порожня compose-змінна перебиває правильне значення з файлу.
 
 ### Досліджено окремо (2026-07-20)
 
