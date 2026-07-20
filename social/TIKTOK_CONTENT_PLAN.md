@@ -182,6 +182,44 @@ TikTok `access_token` живе **24 години**, `refresh_token` — 365 дн
 - **Перемикання акаунта на Business — до OAuth**, бо scope і доступність
   Content Posting API залежать від типу акаунта.
 
+### Developer app — фактичний стан (2026-07-20)
+
+Developer-акаунт: `mr.carpet.shop@gmail.com` (створений 2026-07-20, окремий
+від TikTok-акаунта). TikTok-акаунт бренду: username **`mrcarpet24`**,
+Name `mr.carpet` (нік дублює чужий існуючий `@mr.carpet` — не плутати).
+
+App **mrCarpet**, ID `7664562732305516551`, статус **Draft**:
+
+| Поле | Значення |
+|---|---|
+| Ownership | Individual (Transfer App → Organization можливий, незворотний) |
+| App type | Other (змінити не можна) |
+| Category | Shopping |
+| Platforms | Web |
+| Web/Desktop URL | `https://mrcarpet24.com/` (зі слешем — має збігатись з префіксом!) |
+| Redirect URI | `https://mrcarpet24.com/api/tiktok/callback/` |
+| Terms of Service | `https://mrcarpet24.com/terms/` |
+| Privacy Policy | `https://mrcarpet24.com/policy/` |
+| Products | Login Kit + Content Posting API |
+| Direct Post | увімкнено |
+| Scopes | `user.info.basic`, `video.publish`, `video.upload` |
+| Іконка | лого 1024×1024 на `#fffcf2` |
+
+**Верифікація домену: ЗРОБЛЕНО.** Метод — URL prefix / signature file
+(не DNS). Префікс `https://mrcarpet24.com/` → статус Verified. Файл
+віддається роутом `tiktok_site_verification_file` у `project/urls.py`
+(вміст `tiktok-developers-site-verification=xfkAe8tZDvfpCs644EJmGm1b51LUG1xX`).
+Цей самий префікс покриває і `pull_by_url` — окрема верифікація доменів у
+блоці Content Posting API веде в той самий реєстр і вже зелена.
+
+**Граблі**: `Web/Desktop URL` без кінцевого слеша не матчиться з
+верифікованим префіксом і дає помилку «URL is not verified».
+
+**Блокер збереження**: форма не зберігається, доки не залито демо-відео
+(«Upload at least one demo video»). Тобто конфіг вище доведеться ввести
+повторно, якщо вкладку закрито. Демо-відео знімається в **Sandbox** —
+TikTok прямо вимагає sandbox для ще не схвалених app.
+
 ### Досліджено окремо (2026-07-20)
 
 Вічного токена в TikTok не існує (перевірено по офіційних доках): 
