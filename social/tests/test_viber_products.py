@@ -45,17 +45,21 @@ class ViberPostTests(TestCase):
         product.save(update_fields=["image"])
         return product
 
+    def _ok_resp(self, payload=None):
+        resp = MagicMock()
+        resp.content = b"x"
+        resp.json.return_value = payload or {"status": 0, "status_message": "ok"}
+        return resp
+
+    def _account_resp(self):
+        return self._ok_resp(
+            {"status": 0, "members": [{"id": "SA==", "role": "superadmin"}]}
+        )
+
     @patch("social.services.viber_products.requests.post")
     def test_picture_post_payload(self, mock_post):
-        account_resp = MagicMock()
-        account_resp.content = b"x"
-        account_resp.json.return_value = {
-            "status": 0,
-            "members": [{"id": "SA==", "role": "superadmin"}],
-        }
-        post_resp = MagicMock()
-        post_resp.content = b"x"
-        post_resp.json.return_value = {"status": 0, "status_message": "ok"}
+        account_resp = self._account_resp()
+        post_resp = self._ok_resp()
         mock_post.side_effect = [account_resp, post_resp]
 
         result = post_product_to_viber(self._product())
@@ -73,16 +77,54 @@ class ViberPostTests(TestCase):
         )
 
     @patch("social.services.viber_products.requests.post")
+    @patch(
+        "social.services.telegram_products._product_photo_urls",
+        return_value=[
+            "https://mrcarpet24.com/media/a.jpg",
+            "https://mrcarpet24.com/media/b.jpg",
+            "https://mrcarpet24.com/media/c.jpg",
+        ],
+    )
+    def test_extra_photos_sent_separately(self, _urls, mock_post):
+        mock_post.side_effect = [
+            self._account_resp(),  # get_account_info
+            self._ok_resp(),  # головне фото з описом
+            self._ok_resp(),  # друге фото
+            self._ok_resp(),  # третє фото
+        ]
+        result = post_product_to_viber(self._product())
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["extra_photos"], 2)
+
+        # головне фото несе текст, додаткові — ні
+        main_payload = mock_post.call_args_list[1][1]["json"]
+        self.assertIn("Viber килим", main_payload["text"])
+        extra_payload = mock_post.call_args_list[2][1]["json"]
+        self.assertEqual(extra_payload["text"], "")
+        self.assertEqual(extra_payload["media"], "https://mrcarpet24.com/media/b.jpg")
+
+    @patch("social.services.viber_products.requests.post")
+    @patch(
+        "social.services.telegram_products._product_photo_urls",
+        return_value=[
+            "https://mrcarpet24.com/media/a.jpg",
+            "https://mrcarpet24.com/media/b.jpg",
+        ],
+    )
+    def test_extra_photo_failure_does_not_fail_post(self, _urls, mock_post):
+        mock_post.side_effect = [
+            self._account_resp(),
+            self._ok_resp(),
+            self._ok_resp({"status": 12, "status_message": "rate limit"}),
+        ]
+        result = post_product_to_viber(self._product())
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["extra_photos"], 0)
+
+    @patch("social.services.viber_products.requests.post")
     def test_api_error_reported(self, mock_post):
-        account_resp = MagicMock()
-        account_resp.content = b"x"
-        account_resp.json.return_value = {
-            "status": 0,
-            "members": [{"id": "SA==", "role": "superadmin"}],
-        }
-        fail_resp = MagicMock()
-        fail_resp.content = b"x"
-        fail_resp.json.return_value = {"status": 2, "status_message": "invalidAuthToken"}
+        account_resp = self._account_resp()
+        fail_resp = self._ok_resp({"status": 2, "status_message": "invalidAuthToken"})
         mock_post.side_effect = [account_resp, fail_resp]
 
         result = post_product_to_viber(self._product())

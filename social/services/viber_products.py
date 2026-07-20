@@ -21,6 +21,9 @@ VIBER_API = "https://chatapi.viber.com/pa"
 TIMEOUT = 20
 _PICTURE_TEXT_MAX = 768
 _TEXT_MAX = 7000
+# Viber не має медіа-групи: перше фото йде з описом, решта — окремими
+# повідомленнями. Ліміт, щоб не захаращувати стрічку каналу.
+_MAX_EXTRA_PHOTOS = 3
 
 
 def _token() -> str:
@@ -113,7 +116,31 @@ def post_product_to_viber(product) -> dict:
         data = resp.json() if resp.content else {}
         if data.get("status") != 0:
             return {"ok": False, "error": str(data)[:500]}
-        return {"ok": True, "result": data}
+
+        # Решта фото — окремими повідомленнями без тексту (медіа-групи немає).
+        # Фейл додаткового фото не робить весь пост невдалим.
+        extra_sent = 0
+        for url in photos[1 : 1 + _MAX_EXTRA_PHOTOS]:
+            try:
+                extra = requests.post(
+                    f"{VIBER_API}/post",
+                    json={
+                        "from": sender,
+                        "type": "picture",
+                        "text": "",
+                        "media": url,
+                    },
+                    headers={"X-Viber-Auth-Token": token},
+                    timeout=TIMEOUT,
+                )
+                extra_data = extra.json() if extra.content else {}
+                if extra_data.get("status") == 0:
+                    extra_sent += 1
+                else:
+                    logger.warning("Viber extra photo failed: %s", extra_data)
+            except Exception:
+                logger.exception("Viber extra photo failed")
+        return {"ok": True, "result": data, "extra_photos": extra_sent}
     except Exception as exc:
         logger.exception("Viber product post failed")
         return {"ok": False, "error": str(exc)}
