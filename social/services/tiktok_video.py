@@ -38,13 +38,20 @@ POLL_INTERVAL_SEC = 3
 
 VERTICAL_SIZE = "1152x2048"  # 9:16, the largest gpt-image-2 offers below 4K
 
+# Strictly an extension, never a recomposition. The source scenes are already
+# generated at the product's real physical scale, so moving, rescaling or
+# re-framing the rug would misrepresent its size — a small mat must keep looking
+# like a small mat.
 REFRAME_PROMPT = (
-    "Reframe this interior photo to a vertical 9:16 composition for social media. "
-    "Keep the rug EXACTLY as it is: identical pattern, colours, shape, position and "
-    "perspective — do not redraw, restyle or replace the rug. "
-    "Extend the existing room naturally upwards (wall, ceiling) and downwards (more "
-    "of the same wooden floor), matching the existing lighting, wall colour and floor. "
-    "Photorealistic interior photography. No people, no text, no logos, no watermark."
+    "Extend this interior photo vertically to a 9:16 composition. "
+    "PRESERVE THE ORIGINAL IMAGE EXACTLY: keep every existing object — the rug, "
+    "furniture, walls, floor — with identical pattern, colours, size, position, "
+    "scale and perspective. Do not zoom, crop, re-centre, enlarge or emphasise "
+    "anything. The original content must stay untouched in the middle of the frame. "
+    "Only generate the missing area above and below it, continuing the same room, "
+    "the same flooring, the same wall surfaces and the same lighting. "
+    "Photorealistic interior photography, sharp and clean. "
+    "No people, no text, no logos, no watermark, no new furniture."
 )
 
 # Barely-there motion: enough to feel alive, little enough that the woven

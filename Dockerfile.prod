@@ -1,7 +1,11 @@
 FROM python:3.11-slim
 
+# ffmpeg assembles the TikTok montage (hook card, countdown, price reveal);
+# fonts-dejavu-core supplies the Cyrillic glyphs drawtext needs for Ukrainian.
 RUN apt-get update && apt-get install -y \
     gcc \
+    ffmpeg \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
