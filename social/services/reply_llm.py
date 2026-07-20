@@ -64,10 +64,12 @@ def generate_reply(
     parts.append("Напиши фінальну відповідь клієнту:")
     user_prompt = "\n".join(parts)
 
+    from project.replicate_utils import poll_prediction
+
     client = replicate.Client(api_token=token)
     try:
-        output = client.run(
-            TEXT_MODEL,
+        prediction = client.predictions.create(
+            model=TEXT_MODEL,
             input={
                 "system_prompt": SYSTEM_PROMPT,
                 "prompt": user_prompt,
@@ -75,13 +77,20 @@ def generate_reply(
                 "max_completion_tokens": 300,
             },
         )
+        # Жорсткий таймаут: викликаємось синхронно з webhook
+        prediction = poll_prediction(
+            prediction, timeout_sec=LLM_TIMEOUT_SEC, error_cls=ReplyLlmError
+        )
+    except ReplyLlmError:
+        raise
     except Exception as exc:
         raise ReplyLlmError(f"LLM call failed: {exc}") from exc
 
+    output = prediction.output
     if isinstance(output, list):
         text = "".join(str(chunk) for chunk in output)
     else:
-        text = str(output)
+        text = str(output or "")
     text = text.strip().strip('"').strip()
     if not text:
         raise ReplyLlmError("LLM returned empty reply")

@@ -106,6 +106,12 @@ def maybe_handle_staff_reply(msg: dict) -> bool:
     else:
         record.raw_operator_text = text
 
+    # Дедуп ретраїв Telegram: цей reply вже обробляли
+    operator_mid = str(msg.get("message_id") or "")
+    if operator_mid and record.last_operator_message_id == operator_mid:
+        return True
+    record.last_operator_message_id = operator_mid
+
     record.drafted_by_tg_user = str((msg.get("from") or {}).get("id") or "")
     thread_id = msg.get("message_thread_id")
 
@@ -201,7 +207,21 @@ def handle_reply_callback(callback: dict) -> bool:
             answer_callback_query(cq_id, f"LLM помилка: {exc}"[:190], show_alert=True)
         return True
 
-    # crok — надіслати в соцмережу
+    # crok — надіслати в соцмережу.
+    # Атомарний claim: подвійний ✅ (два оператори/даблклік) не має
+    # відправити клієнту дві відповіді.
+    claimed = SocialCommentReply.objects.filter(
+        pk=record.pk,
+        status__in=(
+            SocialCommentReply.Status.AWAITING,
+            SocialCommentReply.Status.FAILED,
+        ),
+    ).update(status=SocialCommentReply.Status.SENDING)
+    if not claimed:
+        answer_callback_query(cq_id, "Вже обробляється")
+        return True
+    record.refresh_from_db()
+
     result = _send_platform_reply(record)
     if result.get("ok"):
         record.status = SocialCommentReply.Status.SENT

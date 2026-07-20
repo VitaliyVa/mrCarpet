@@ -318,6 +318,7 @@ class SocialCommentReply(AbstractCreatedUpdated):
     class Status(models.TextChoices):
         MIRRORED = "mirrored", "Mirrored to staff"
         AWAITING = "awaiting_confirm", "Awaiting confirm"
+        SENDING = "sending", "Sending"
         SENT = "sent", "Sent"
         CANCELLED = "cancelled", "Cancelled"
         FAILED = "failed", "Failed"
@@ -340,6 +341,10 @@ class SocialCommentReply(AbstractCreatedUpdated):
     draft_text = models.TextField(blank=True)
     draft_message_id = models.CharField(max_length=64, blank=True, default="")
     drafted_by_tg_user = models.CharField(max_length=64, blank=True, default="")
+    # Дедуп ретраїв Telegram: останнє оброблене повідомлення оператора
+    last_operator_message_id = models.CharField(
+        max_length=64, blank=True, default=""
+    )
 
     status = models.CharField(
         max_length=32,

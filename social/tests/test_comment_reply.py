@@ -78,6 +78,16 @@ class StaffReplyMatcherTests(TestCase):
             mock_llm.call_args[1]["extra_instruction"],
         )
 
+    @patch("social.services.comment_reply.send_message", return_value={"ok": True, "result": {"message_id": 601}})
+    @patch("social.services.comment_reply.generate_reply", return_value="Відповідь")
+    def test_telegram_retry_deduped(self, mock_llm, _send):
+        _record()
+        msg = _reply_msg()
+        self.assertTrue(maybe_handle_staff_reply(msg))
+        # той самий update повторно (ретрай Telegram) — LLM не смикається
+        self.assertTrue(maybe_handle_staff_reply(msg))
+        mock_llm.assert_called_once()
+
     def test_unrelated_reply_ignored(self):
         _record()
         handled = maybe_handle_staff_reply(_reply_msg(reply_to="999"))
@@ -116,6 +126,32 @@ class CallbackTests(TestCase):
         self.assertEqual(record.status, SocialCommentReply.Status.SENT)
         self.assertEqual(record.sent_external_id, "999")
         mock_fb.assert_called_once_with("111_222", "Доброго дня! На жаль, немає.")
+
+    @patch("social.services.comment_reply.edit_message_text")
+    @patch("social.services.comment_reply.answer_callback_query")
+    @patch("social.services.comment_reply._fb_reply", return_value={"ok": True, "external_id": "999"})
+    def test_double_confirm_sends_once(self, mock_fb, mock_cq, _edit):
+        record = _record(
+            status=SocialCommentReply.Status.AWAITING, draft_text="Текст"
+        )
+        handle_reply_callback(self._callback("crok", record.pk))
+        # другий клік по вже відправленому — платформа НЕ викликається вдруге
+        handle_reply_callback(self._callback("crok", record.pk))
+        mock_fb.assert_called_once()
+
+    @patch("social.services.comment_reply.edit_message_text")
+    @patch("social.services.comment_reply.answer_callback_query")
+    @patch("social.services.comment_reply._fb_reply", return_value={"ok": False, "error": "boom"})
+    def test_failed_send_allows_retry(self, mock_fb, _cq, _edit):
+        record = _record(
+            status=SocialCommentReply.Status.AWAITING, draft_text="Текст"
+        )
+        handle_reply_callback(self._callback("crok", record.pk))
+        record.refresh_from_db()
+        self.assertEqual(record.status, SocialCommentReply.Status.FAILED)
+        # ретрай після фейла дозволений (claim приймає FAILED)
+        handle_reply_callback(self._callback("crok", record.pk))
+        self.assertEqual(mock_fb.call_count, 2)
 
     @patch("social.services.comment_reply.edit_message_text")
     @patch("social.services.comment_reply.answer_callback_query")
