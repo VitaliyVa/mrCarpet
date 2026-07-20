@@ -126,10 +126,16 @@ def build_caption(pick, script: dict | None = None) -> str:
     """
     Caption for the post itself, distinct from the copy burned into the video.
 
-    The video asks the question and shows the answer; the caption names the
-    product, repeats the price so it survives a muted rewatch, and sends people
-    to the bio link — TikTok captions cannot carry a clickable URL.
+    Deliberately mirrors the other networks' product post rather than leading
+    with the price: TikTok shows the opening lines under the video before it is
+    watched, so a price on line two answers the question the video just asked.
+    The full size list still appears further down, where it informs rather than
+    spoils.
+
+    No URL: TikTok captions are not clickable, so buyers are sent to the bio.
     """
+    from social.services.post_content import build_product_content, render_plain
+
     product = pick.product
     script = script or build_script(pick)
 
@@ -139,14 +145,14 @@ def build_caption(pick, script: dict | None = None) -> str:
         if tag and tag not in tags:
             tags.append(tag)
 
-    lines = [
-        product.title.strip(),
-        f"{script['price']} · {script['size']}",
-        "",
-        CTA,
-        "🛒 Каталог — лінк у профілі",
-        "",
-        " ".join(f"#{tag}" for tag in tags),
-    ]
-    caption = "\n".join(lines).strip()
-    return caption[:CAPTION_LIMIT]
+    hashtags = " ".join(f"#{tag}" for tag in tags)
+    tail = "\n".join([CTA, "🛒 Каталог — лінк у профілі", "", hashtags])
+
+    content = build_product_content(product)
+    body = render_plain(
+        content,
+        max_len=max(CAPTION_LIMIT - len(tail) - 2, 200),
+        with_url=False,
+        allow_friendly_outro=False,
+    )
+    return f"{body}\n\n{tail}"[:CAPTION_LIMIT]

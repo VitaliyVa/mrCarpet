@@ -147,6 +147,7 @@ def _rows(
     friendly: bool,
     with_url: bool,
     include_ar: bool = True,
+    allow_friendly_outro: bool = True,
 ) -> list[tuple[str, str]]:
     """Рядки поста як пари (plain, telegram_html)."""
     esc = html_mod.escape
@@ -198,7 +199,9 @@ def _rows(
             )
         )
 
-    if friendly:
+    # `friendly` is the trim stage; allow_friendly_outro lets a caller keep the
+    # AR teaser while supplying its own closing line (TikTok has one already).
+    if friendly and allow_friendly_outro:
         rows.append(("", ""))
         rows.append((FRIENDLY_OUTRO, FRIENDLY_OUTRO))
 
@@ -211,6 +214,7 @@ def render_plain(
     max_len: int,
     with_url: bool = True,
     include_ar: bool = True,
+    allow_friendly_outro: bool = True,
 ) -> str:
     for specs_limit, sizes_limit, friendly in _TRIM_STAGES:
         rows = _rows(
@@ -220,6 +224,7 @@ def render_plain(
             friendly=friendly,
             with_url=with_url,
             include_ar=include_ar,
+            allow_friendly_outro=allow_friendly_outro,
         )
         text = "\n".join(plain for plain, _ in rows)
         if len(text) <= max_len:

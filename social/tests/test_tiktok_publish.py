@@ -129,11 +129,28 @@ class PublishTests(TestCase):
         self.assertTrue(url.startswith("https://"))
         self.assertIn(self.montage, url)
 
-    def test_caption_carries_price_and_hashtags(self):
+    def test_caption_does_not_spoil_the_price_up_front(self):
+        """
+        TikTok shows the opening lines under the video before it is watched, so
+        a price near the top answers the question the video just asked.
+        """
         publish = self._publish()
         caption = publish.call_args.kwargs["caption"]
-        self.assertIn("2 300 ₴", caption)
+        head = " ".join(caption.splitlines()[:2])
+        self.assertNotIn("2300", head)
+        self.assertNotIn("грн", head)
+
+    def test_caption_still_lists_sizes_and_hashtags(self):
+        publish = self._publish()
+        caption = publish.call_args.kwargs["caption"]
+        self.assertIn("Розміри та ціни", caption)
+        self.assertIn("2300 грн", caption)
         self.assertIn("#килими", caption)
+
+    def test_caption_carries_no_clickable_url(self):
+        """TikTok captions are not clickable; buyers go through the bio."""
+        publish = self._publish()
+        self.assertNotIn("https://", publish.call_args.kwargs["caption"])
 
     def test_files_are_removed_only_after_tiktok_confirms(self):
         montage = self.montage
