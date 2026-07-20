@@ -59,7 +59,7 @@ REFRAME_PROMPT = (
 VIDEO_PROMPT = (
     "Very slow, subtle camera push-in in a cozy sunlit living room. "
     "The rug stays still and sharp, its woven pattern unchanged throughout. "
-    "Soft daylight shifts gently. Calm ambient background music. "
+    "Soft daylight shifts gently. "
     "No people, no text, no logos, no watermark, no fast movement."
 )
 
@@ -236,7 +236,7 @@ def generate_video_for_pick(pick, *, prompt: str = "", force: bool = False) -> s
                 "resolution": resolution,
                 "fps": 24,
                 "draft": draft,
-                "save_audio": True,
+                "save_audio": False,
                 "prompt_upsampling": False,
             },
         )
