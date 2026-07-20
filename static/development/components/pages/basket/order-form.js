@@ -225,9 +225,8 @@ export async function submitOrder() {
   const phoneInput = document.getElementById("nova-post-phone");
   const cityInput = document.getElementById("nova-post-city-input");
 
-  // Card radio is disabled while LiqPay is test-only — fall back to cash
   const paymentMethod =
-    document.querySelector('input[name="payment"]:checked:not(:disabled)') ||
+    document.querySelector('input[name="payment"]:checked') ||
     document.getElementById("cash");
 
   if (!paymentMethod) {
