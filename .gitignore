@@ -39,3 +39,6 @@ ops/
 credentials/
 **/service-account*.json
 ops/ga4/*.json
+
+# Playwright MCP artifacts (снапшоти/скріншоти браузера)
+.playwright-mcp/
