@@ -108,6 +108,34 @@ class ProductCaptionTests(SimpleTestCase):
         caption = product_caption_text(product)
         self.assertIn("📏 Індивідуальний розмір — від 500 грн/м²", caption)
 
+    def test_caption_ar_teaser_when_ready(self):
+        product = _mock_product_with_sizes()
+        product.ar_status = "ready"
+        product.ar_texture = "textures/x.png"
+        caption = product_caption_text(product)
+        self.assertIn("Приміряйте цей килим у себе вдома", caption)
+
+    def test_caption_no_ar_teaser_when_not_ready(self):
+        product = _mock_product_with_sizes()
+        product.ar_status = "none"
+        product.ar_texture = None
+        caption = product_caption_text(product)
+        self.assertNotIn("Приміряйте", caption)
+
+    def test_viber_caption_skips_ar_teaser(self):
+        from social.services.post_content import build_product_content, render_plain
+
+        product = _mock_product_with_sizes()
+        product.ar_status = "ready"
+        product.ar_texture = "textures/x.png"
+        text = render_plain(
+            build_product_content(product),
+            max_len=768,
+            with_url=True,
+            include_ar=False,
+        )
+        self.assertNotIn("Приміряйте", text)
+
     def test_caption_bare_title_when_nothing_else(self):
         product = _bare_mock_product("Килим голий")
         product.get_size_attrs.side_effect = Exception("no attrs")

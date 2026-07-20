@@ -830,21 +830,26 @@
 
       <div class="product-ar-modal__aside">
         <div class="product-ar-modal__header">
-          <p class="product-ar-modal__eyebrow">3D / AR</p>
+          <p class="product-ar-modal__eyebrow">Об'ємний перегляд</p>
           <h2 id="product-ar-modal-title" class="product-ar-modal__title">{{ product.title }}</h2>
-          <p class="product-ar-modal__hint">Оберіть розмір і обертайте сцену.</p>
+          <p class="product-ar-modal__hint">Обертайте килим пальцем або мишкою. Нижче можна змінити розмір.</p>
         </div>
 
         <div class="product-ar-modal__sizes-label">Розмір</div>
         <div class="product-ar-modal__sizes" id="product-ar-modal-sizes"></div>
 
         <button type="button" class="product-ar-modal__ar-btn" id="product-ar-launch">
-          Подивитись в AR
+          📱 Приміряти килим у своїй кімнаті
         </button>
+        <p class="product-ar-modal__hint">
+          Відкриється камера телефона: наведіть її на підлогу — і килим
+          з'явиться у вашій кімнаті в реальному розмірі. Пересувайте його
+          пальцем, щоб знайти найкраще місце.
+        </p>
 
         <div class="product-ar-modal__qr" id="product-ar-qr" hidden>
-          <img id="product-ar-qr-img" alt="QR-код для AR" width="120" height="120" />
-          <p>Відскануйте код телефоном</p>
+          <img id="product-ar-qr-img" alt="QR-код для примірки в кімнаті" width="120" height="120" />
+          <p>Наведіть камеру телефона на цей код — і приміряйте килим у своїй кімнаті</p>
         </div>
 
         <p class="product-ar-modal__status" id="product-ar-status"></p>

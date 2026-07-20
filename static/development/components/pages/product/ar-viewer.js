@@ -641,7 +641,7 @@ function ensureModelViewer() {
       }
       if (status === "failed") {
         setStatus(
-          "Не вдалося відкрити AR. Перевірте підтримку пристрою або скористайтесь QR-кодом.",
+          "Не вдалося відкрити камеру. Спробуйте з телефона через QR-код.",
           true
         );
         showQr(currentSizeLabel);
@@ -667,7 +667,10 @@ async function launchAr() {
       await mv.activateAR();
     } catch (err) {
       setPreviewFloorHidden(false);
-      setStatus("Не вдалося відкрити AR на цьому пристрої.", true);
+      setStatus(
+        "На цьому пристрої примірка недоступна. Відскануйте QR-код телефоном.",
+        true
+      );
       showQr(currentSizeLabel);
     }
     return;

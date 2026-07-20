@@ -71,7 +71,10 @@ def _caption(product) -> str:
     from social.services.post_content import build_product_content, render_plain
 
     return render_plain(
-        build_product_content(product), max_len=_PICTURE_TEXT_MAX, with_url=True
+        build_product_content(product),
+        max_len=_PICTURE_TEXT_MAX,
+        with_url=True,
+        include_ar=False,
     )
 
 

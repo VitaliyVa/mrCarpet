@@ -52,6 +52,7 @@ class ProductPostContent:
     custom_size_line: str = ""
     price_line: str = ""
     spec_lines: list[str] = field(default_factory=list)
+    ar_available: bool = False
 
 
 def build_product_content(product) -> ProductPostContent:
@@ -120,7 +121,22 @@ def build_product_content(product) -> ProductPostContent:
     except Exception:
         pass
 
+    # 3D/AR-примірка готова → заохочення в пості (TG/IG/FB; Viber скіпає)
+    try:
+        content.ar_available = (
+            getattr(product, "ar_status", "") == "ready"
+            and bool(getattr(product, "ar_texture", None))
+        )
+    except Exception:
+        pass
+
     return content
+
+
+AR_TEASER = (
+    "📲 Приміряйте цей килим у себе вдома: на сторінці товару "
+    "натисніть «Дивитись у 3D»"
+)
 
 
 def _rows(
@@ -130,6 +146,7 @@ def _rows(
     sizes_limit,
     friendly: bool,
     with_url: bool,
+    include_ar: bool = True,
 ) -> list[tuple[str, str]]:
     """Рядки поста як пари (plain, telegram_html)."""
     esc = html_mod.escape
@@ -167,6 +184,11 @@ def _rows(
         for line in spec_lines:
             rows.append((f"• {line}", f"• {esc(line)}"))
 
+    # AR-тизер — маркетинговий бонус, трімається разом з friendly-блоком
+    if include_ar and friendly and content.ar_available:
+        rows.append(("", ""))
+        rows.append((AR_TEASER, AR_TEASER))
+
     if with_url and content.url:
         rows.append(("", ""))
         rows.append(
@@ -184,7 +206,11 @@ def _rows(
 
 
 def render_plain(
-    content: ProductPostContent, *, max_len: int, with_url: bool = True
+    content: ProductPostContent,
+    *,
+    max_len: int,
+    with_url: bool = True,
+    include_ar: bool = True,
 ) -> str:
     for specs_limit, sizes_limit, friendly in _TRIM_STAGES:
         rows = _rows(
@@ -193,6 +219,7 @@ def render_plain(
             sizes_limit=sizes_limit,
             friendly=friendly,
             with_url=with_url,
+            include_ar=include_ar,
         )
         text = "\n".join(plain for plain, _ in rows)
         if len(text) <= max_len:
