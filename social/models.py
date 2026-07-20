@@ -28,6 +28,48 @@ class SocialSettings(models.Model):
         default="wan-video/wan-2.2-i2v-fast",
         blank=True,
     )
+    tiktok_auto_enabled = models.BooleanField(
+        default=False,
+        help_text="Майстер-рубильник щоденної авто-генерації відео для TikTok.",
+    )
+    tiktok_video_model = models.CharField(
+        max_length=128,
+        default="prunaai/p-video",
+        blank=True,
+        help_text="Модель i2v. Пропорції беруться з вхідного фото, не з параметра.",
+    )
+    tiktok_video_seconds = models.PositiveSmallIntegerField(
+        default=6,
+        help_text="Тривалість відео. Ціна лінійна: $0.02/с на 720p.",
+    )
+    tiktok_video_resolution = models.CharField(
+        max_length=8,
+        default="720p",
+        blank=True,
+        help_text="720p ($0.02/с) або 1080p ($0.04/с — пробиває стелю $5/міс).",
+    )
+    tiktok_video_draft = models.BooleanField(
+        default=False,
+        help_text=(
+            "Draft-режим: у 4 рази дешевше, але візерунок килима «пливе». "
+            "Тільки для тестів, не для бойових постів."
+        ),
+    )
+    tiktok_monthly_budget_usd = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        default=5,
+        help_text=(
+            "Жорстка стеля витрат на генерацію за календарний місяць. "
+            "Рахуються ВСІ прогони, включно з невдалими."
+        ),
+    )
+    tiktok_vertical_image_model = models.CharField(
+        max_length=128,
+        default="openai/gpt-image-2",
+        blank=True,
+        help_text="Модель, що перекадровує 4:3 фото в 9:16 (та сама, що для фото товарів).",
+    )
     auto_post_new_products_tg = models.BooleanField(
         default=False,
         help_text="Автоматично слати нові товари в TG products channel.",
@@ -190,6 +232,76 @@ class TikTokToken(models.Model):
         if self.refresh_expires_at is None:
             return None
         return (self.refresh_expires_at - timezone.now()).days
+
+
+class TikTokVerticalImage(AbstractCreatedUpdated):
+    """
+    9:16 version of a product's interior photo, generated once and reused.
+
+    p-video takes its output aspect ratio from the input image and ignores the
+    aspect_ratio argument, so a vertical source is the only way to get vertical
+    video. Our interior shots are 4:3, so the room is extended with the same
+    image model the product pages already use.
+    """
+
+    product = models.OneToOneField(
+        "catalog.Product",
+        on_delete=models.CASCADE,
+        related_name="tiktok_vertical_image",
+    )
+    source_image = models.ForeignKey(
+        "catalog.ProductImage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="Вихідне is_ai фото, з якого зроблено вертикаль.",
+    )
+    image = models.ImageField(upload_to="social/tiktok/vertical")
+    model_name = models.CharField(max_length=128, blank=True, default="")
+
+    class Meta:
+        verbose_name = "TikTok vertical image"
+        verbose_name_plural = "TikTok vertical images"
+
+    def __str__(self) -> str:
+        return f"9:16 for {self.product.title[:50]}"
+
+
+class TikTokGenerationSpend(AbstractCreatedUpdated):
+    """
+    Ledger of every paid generation call, successful or not.
+
+    Failed attempts still cost money, so the monthly guard counts them too —
+    otherwise a few retries could quietly blow through the ceiling.
+    """
+
+    class Kind(models.TextChoices):
+        IMAGE = "image", "Вертикальне фото 9:16"
+        VIDEO = "video", "Відео"
+
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    model_name = models.CharField(max_length=128, blank=True, default="")
+    cost_usd = models.DecimalField(max_digits=8, decimal_places=4, default=0)
+    succeeded = models.BooleanField(default=False)
+    pick = models.ForeignKey(
+        "social.TikTokDailyPick",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spends",
+    )
+    note = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        ordering = ("-created",)
+        verbose_name = "TikTok generation spend"
+        verbose_name_plural = "TikTok generation spend"
+        indexes = [models.Index(fields=["-created"])]
+
+    def __str__(self) -> str:
+        state = "ok" if self.succeeded else "FAILED"
+        return f"{self.kind} ${self.cost_usd} [{state}]"
 
 
 class TikTokDailyPick(AbstractCreatedUpdated):
