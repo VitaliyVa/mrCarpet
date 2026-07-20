@@ -1,11 +1,11 @@
 """
 Assemble the final TikTok video from one generated clip.
 
-Structure (~13s, inside the 11-18s window that performs best):
+Structure (~14.5s, inside the 11-18s window that performs best):
 
-    0.0-3.6s   opening still: the price question, then a 3-2-1 countdown
-    3.6-9.6s   the generated clip, price revealed
-    9.6-13.1s  the clip's tail played backwards, with the comment prompt
+    0.0-5.0s   opening still: the price question, then a 3-2-1 countdown
+    5.0-11.0s  the generated clip; the price lands 1.5s in, after a beat
+    11.0-14.5s the clip's tail played backwards, with the comment prompt
 
 Only the clip costs money; everything here is CPU. Paying a video model for a
 longer render would buy exactly what ffmpeg does for free.
@@ -32,9 +32,10 @@ logger = logging.getLogger(__name__)
 OUT_W, OUT_H = 1080, 1920
 FPS = 30
 
-HOOK_SECONDS = 3.6
-COUNT_START = 0.6
-COUNT_STEP = 1.0
+COUNT_START = 0.8
+COUNT_STEP = 1.33          # three digits span 4s, a beat slower than a metronome
+HOOK_SECONDS = 5.0         # countdown ends at 4.79, then a breath before the cut
+PRICE_DELAY = 1.5          # hold the clip before answering, so the guess lands
 REVERSE_SECONDS = 3.5
 
 FADE = 0.35
@@ -44,7 +45,7 @@ LINE_STEP = 1.70  # multiples of font size; below this the plates overlap
 SAFE_TOP = 0.16
 SAFE_BOTTOM = 0.72
 
-MUSIC_GAIN = "0.35"
+MUSIC_GAIN = "0.62"
 TICK_GAIN = "0.95"  # must sit clearly above the music bed
 TICK_FREQS = (880, 880, 1320)  # the rising third reads as a resolution
 
@@ -349,11 +350,11 @@ def build_montage(clip_path: str, script: dict, out_path: str, *, music_path: st
         body = tmp / "body.mp4"
         price = _caption(
             script["price"], y_frac=SAFE_BOTTOM, size=112, font=font,
-            appear_at=0.4,
+            appear_at=PRICE_DELAY,
         )
         size_line = _caption(
             script["size"], y_frac=SAFE_BOTTOM + 0.085, size=46, font=font,
-            appear_at=0.62,
+            appear_at=PRICE_DELAY + 0.22,
         )
         _run(
             ["ffmpeg", "-v", "error", "-y", "-i", str(clip),

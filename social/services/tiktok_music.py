@@ -33,16 +33,17 @@ MODEL = (
 )
 TRACK_SECONDS = 16  # a little longer than the montage, so it never runs dry
 
-# Calm, unobtrusive beds — the video sells a rug, the music must not compete.
+# Upbeat but not shouty: the bed should carry momentum through a 14 second
+# clip without fighting the countdown ticks or the price reveal.
 PROMPTS = (
-    "calm warm lo-fi instrumental, soft piano, gentle vinyl texture, cozy home mood",
-    "soft acoustic guitar loop, warm and relaxed, minimal percussion, homely",
-    "gentle ambient pad, warm analog synth, gentle and unobtrusive, gentle motion",
-    "light chill instrumental, muted rhodes piano, slow tempo, calm interior mood",
-    "soft minimal beat, warm bass, brushed drums, relaxed and modern, no vocals",
-    "cozy acoustic instrumental, felt piano, subtle strings, warm and quiet",
-    "smooth ambient lo-fi, mellow keys, soft texture, unhurried and comfortable",
-    "warm downtempo instrumental, soft pads, gentle pulse, calm and inviting",
+    "upbeat modern pop instrumental, bright plucks, light claps, positive energy",
+    "feel-good house groove, warm bass, catchy synth hook, steady four-on-the-floor",
+    "energetic lo-fi hip hop beat, punchy drums, warm keys, confident and modern",
+    "bright indie pop instrumental, rhythmic guitar, handclaps, sunny and upbeat",
+    "modern commercial background track, driving beat, uplifting synth, catchy",
+    "funky nu-disco instrumental, groovy bass line, crisp drums, danceable",
+    "cheerful electronic pop, bouncy arpeggio, tight percussion, energetic mood",
+    "confident trap-pop instrumental, crisp hats, warm melody, stylish and modern",
 )
 
 
