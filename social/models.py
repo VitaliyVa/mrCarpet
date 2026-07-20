@@ -13,7 +13,12 @@ class SocialSettings(models.Model):
 
     tiktok_audit_passed = models.BooleanField(
         default=False,
-        help_text="Увімкни після успішного TikTok Content Posting API audit.",
+        help_text=(
+            "⚠️ ЗНІМАЄ ЗАХИСТ. Поки вимкнено — усі пости йдуть SELF_ONLY "
+            "(видно лише власнику). Увімкнення дозволяє ПУБЛІЧНІ пости й "
+            "має сенс ЛИШЕ після реального схвалення TikTok audit. "
+            "Це НЕ вмикач автопостингу — для нього є «Авто-генерація TikTok» нижче."
+        ),
     )
     ai_i2v_enabled = models.BooleanField(
         default=True,
