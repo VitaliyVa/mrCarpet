@@ -33,10 +33,11 @@ TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
 REVOKE_URL = "https://open.tiktokapis.com/v2/oauth/revoke/"
 HTTP_TIMEOUT = 30
 
-# Exactly what the pipeline uses, and no more: requesting a scope the demo
-# video cannot show it exercising is one of the commonest audit rejections.
-# Direct Post goes through video.publish; the draft-upload path is never called.
-SCOPES = ("user.info.basic", "video.publish")
+# video.upload is not optional: TikTok ships it with the Content Posting API
+# product and offers no way to deselect it while Direct Post is on. Requesting
+# fewer scopes than the app declares would only create a mismatch, so we ask
+# for all three and the review notes explain that only Direct Post is used.
+SCOPES = ("user.info.basic", "video.publish", "video.upload")
 
 
 class TikTokAuthError(RuntimeError):

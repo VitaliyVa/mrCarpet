@@ -166,12 +166,15 @@ class AuthorizeUrlTests(TestCase):
         self.assertIn("state=st4te", url)
         self.assertIn("video.publish", url)
 
-    def test_only_used_scopes_are_requested(self):
-        """Unused scopes are a documented audit rejection reason."""
+    def test_requested_scopes_match_what_the_app_declares(self):
+        """
+        video.upload cannot be deselected from the Content Posting API product,
+        so asking for less than the portal declares would only mismatch.
+        """
         self.assertEqual(
-            set(tiktok_auth.SCOPES), {"user.info.basic", "video.publish"}
+            set(tiktok_auth.SCOPES),
+            {"user.info.basic", "video.publish", "video.upload"},
         )
-        self.assertNotIn("video.upload", tiktok_auth.build_authorize_url("s"))
 
     def test_sandbox_detected_from_key_prefix(self):
         self.assertTrue(tiktok_auth.is_sandbox())
