@@ -51,6 +51,9 @@ class InboundComment:
     comment_url: str = ""
     created_at: datetime | None = None
     raw_chat_id: str = ""
+    # Для HITL-відповіді: IG/FB comment id у Graph; TG — message_id у discussion
+    external_id: str = ""
+    raw_message_id: str = ""
 
 
 def _staff_target() -> tuple[str, str]:
@@ -115,10 +118,34 @@ def notify_staff_comment(comment: InboundComment) -> dict[str, Any]:
         if not data.get("ok"):
             logger.error("staff comment notify failed: %s", data)
             return {"ok": False, "error": str(data)[:500]}
-        return {"ok": True, "result": data.get("result")}
+        result = data.get("result") or {}
+        _store_reply_record(comment, chat_id, result.get("message_id"))
+        return {"ok": True, "result": result}
     except Exception as exc:
         logger.exception("staff comment notify failed")
         return {"ok": False, "error": str(exc)}
+
+
+def _store_reply_record(comment: InboundComment, alert_chat_id, alert_message_id) -> None:
+    """Персистимо алерт, щоб reply оператора можна було зматчити з коментом."""
+    if not alert_message_id:
+        return
+    try:
+        from social.models import SocialCommentReply
+
+        SocialCommentReply.objects.create(
+            platform=comment.platform,
+            external_comment_id=comment.external_id or "",
+            tg_chat_id=comment.raw_chat_id if comment.platform == PLATFORM_TELEGRAM else "",
+            tg_message_id=comment.raw_message_id if comment.platform == PLATFORM_TELEGRAM else "",
+            comment_text=(comment.text or "")[:2000],
+            author_name=(comment.author_name or "")[:250],
+            post_url=comment.post_url or "",
+            alert_chat_id=str(alert_chat_id),
+            alert_message_id=str(alert_message_id),
+        )
+    except Exception:
+        logger.exception("store reply record failed")
 
 
 def enqueue_staff_comment_notify(comment: InboundComment) -> None:
@@ -225,6 +252,7 @@ def inbound_from_telegram_discussion(msg: dict) -> InboundComment | None:
         comment_url="",
         created_at=created_at,
         raw_chat_id=str(chat.get("id") or ""),
+        raw_message_id=str(msg.get("message_id") or ""),
     )
 
 

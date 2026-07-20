@@ -308,6 +308,57 @@ class SocialDelivery(AbstractCreatedUpdated):
         )
 
 
+class SocialCommentReply(AbstractCreatedUpdated):
+    """HITL-відповідь на комент із соцмережі через сімейний чат.
+
+    Життєвий цикл: mirrored (алерт у staff topic) → awaiting_confirm
+    (оператор reply-нув, LLM згенерував чернетку) → sent / cancelled / failed.
+    """
+
+    class Status(models.TextChoices):
+        MIRRORED = "mirrored", "Mirrored to staff"
+        AWAITING = "awaiting_confirm", "Awaiting confirm"
+        SENT = "sent", "Sent"
+        CANCELLED = "cancelled", "Cancelled"
+        FAILED = "failed", "Failed"
+
+    platform = models.CharField(max_length=16, db_index=True)
+    # IG/FB: id коментаря в Graph; TG: пусто (використовуються tg_* поля)
+    external_comment_id = models.CharField(max_length=128, blank=True, default="")
+    tg_chat_id = models.CharField(max_length=64, blank=True, default="")
+    tg_message_id = models.CharField(max_length=64, blank=True, default="")
+
+    comment_text = models.TextField(blank=True)
+    author_name = models.CharField(max_length=256, blank=True, default="")
+    post_url = models.URLField(blank=True, default="")
+
+    # Де лежить копія в сімейній групі (ключ матчингу reply оператора)
+    alert_chat_id = models.CharField(max_length=64, db_index=True)
+    alert_message_id = models.CharField(max_length=64, db_index=True)
+
+    raw_operator_text = models.TextField(blank=True)
+    draft_text = models.TextField(blank=True)
+    draft_message_id = models.CharField(max_length=64, blank=True, default="")
+    drafted_by_tg_user = models.CharField(max_length=64, blank=True, default="")
+
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.MIRRORED,
+        db_index=True,
+    )
+    sent_external_id = models.CharField(max_length=128, blank=True, default="")
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-created",)
+        verbose_name = "Social comment reply"
+        verbose_name_plural = "Social comment replies"
+
+    def __str__(self) -> str:
+        return f"{self.platform} reply #{self.pk} [{self.status}]"
+
+
 class SocialAiGenerationLog(models.Model):
     """Daily budget tracking for Wan I2V."""
 

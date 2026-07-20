@@ -105,6 +105,7 @@ def inbound_from_facebook_change(value: dict) -> InboundComment | None:
             f"https://www.facebook.com/{comment_id}" if comment_id else ""
         ),
         created_at=created_at,
+        external_id=comment_id,
     )
 
 
@@ -130,6 +131,7 @@ def inbound_from_instagram_change(value: dict) -> InboundComment | None:
         author_username=(from_obj.get("username") or "").strip(),
         author_id=str(from_obj.get("id") or ""),
         post_url=post_url,
+        external_id=str(value.get("id") or ""),
     )
 
 

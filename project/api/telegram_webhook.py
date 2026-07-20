@@ -33,6 +33,24 @@ def telegram_webhook(request):
     except (UnicodeDecodeError, json.JSONDecodeError):
         return HttpResponse(status=400)
 
+    # HITL-відповіді на коменти: наші callback-кнопки (crok:/crre:/crno:)
+    # і reply оператора на алерт/чернетку — перехоплюємо ДО AI-агента.
+    try:
+        from social.services.comment_reply import (
+            handle_reply_callback,
+            maybe_handle_staff_reply,
+        )
+
+        cq = update.get("callback_query")
+        if cq and handle_reply_callback(cq):
+            return JsonResponse({"ok": True, "handled": "comment_reply_callback"})
+
+        staff_msg = update.get("message") or {}
+        if staff_msg and maybe_handle_staff_reply(staff_msg):
+            return JsonResponse({"ok": True, "handled": "comment_reply_draft"})
+    except Exception:
+        logger.exception("comment reply handler failed")
+
     # Products discussion: staff comment mirror + optional FAQ.
     # Never forward discussion-group updates to the family AI/HITL agent.
     try:
