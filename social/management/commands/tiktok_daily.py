@@ -10,7 +10,11 @@ from django.core.management.base import BaseCommand
 
 from social.models import TikTokDailyPick
 from social.services.tiktok_budget import budget_status
-from social.services.tiktok_publish import build_final_video, publish_pick
+from social.services.tiktok_publish import (
+    build_final_video,
+    cleanup_old_media,
+    publish_pick,
+)
 from social.services.tiktok_rotation import (
     NoEligibleProducts,
     pick_product_for_today,
@@ -52,12 +56,25 @@ class Command(BaseCommand):
             default=0,
             help="Operate on a specific pick id instead of today's.",
         )
+        parser.add_argument(
+            "--cleanup",
+            action="store_true",
+            help=(
+                "Delete montages and clips older than a day. Runs by itself "
+                "at 04:00; this flag is for clearing space by hand."
+            ),
+        )
 
     def handle(self, *args, **options):
+        if options["cleanup"]:
+            removed = cleanup_old_media()
+            self.stdout.write(self.style.SUCCESS(f"cleaned {removed} old files"))
+
         if not options["generate"] and not options["publish"]:
-            self.stderr.write(
-                self.style.ERROR("choose --generate and/or --publish")
-            )
+            if not options["cleanup"]:
+                self.stderr.write(
+                    self.style.ERROR("choose --generate and/or --publish")
+                )
             return
 
         pick = None

@@ -37,10 +37,17 @@ def current_cycle() -> int:
 
 
 def published_product_ids(cycle: int) -> set[int]:
+    """
+    Products already spent this cycle.
+
+    PARTIAL counts as spent: the video reached at least one audience, so
+    letting the product back into the pool would republish it where it has
+    already run. See TikTokDailyPick.SPENT_STATUSES.
+    """
     return set(
         TikTokDailyPick.objects.filter(
             cycle_number=cycle,
-            status=TikTokDailyPick.Status.PUBLISHED,
+            status__in=TikTokDailyPick.SPENT_STATUSES,
             product__isnull=False,
         ).values_list("product_id", flat=True)
     )
@@ -62,6 +69,7 @@ def todays_pick(now=None) -> TikTokDailyPick | None:
             status__in=(
                 TikTokDailyPick.Status.GENERATED,
                 TikTokDailyPick.Status.PUBLISHED,
+                TikTokDailyPick.Status.PARTIAL,
             ),
         )
         .order_by("-picked_at")
@@ -132,12 +140,26 @@ def pick_product_for_today(*, now=None, force: bool = False) -> TikTokDailyPick:
 
 
 def mark_published(pick: TikTokDailyPick, *, social_post=None) -> TikTokDailyPick:
-    """Retire the product for this cycle."""
+    """Retire the product for this cycle: every target network took the video."""
     pick.status = TikTokDailyPick.Status.PUBLISHED
     pick.error = ""
     if social_post is not None:
         pick.social_post = social_post
     pick.save(update_fields=["status", "error", "social_post", "updated"])
+    return pick
+
+
+def mark_partial(pick: TikTokDailyPick, error: str) -> TikTokDailyPick:
+    """
+    Some networks took the video, some did not.
+
+    Still retires the product — see published_product_ids. The error text
+    keeps the failing networks visible in the admin without pretending the
+    whole run failed.
+    """
+    pick.status = TikTokDailyPick.Status.PARTIAL
+    pick.error = (error or "")[:2000]
+    pick.save(update_fields=["status", "error", "updated"])
     return pick
 
 

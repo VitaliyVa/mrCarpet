@@ -14,6 +14,7 @@ from social.models import (
     SocialSettings,
     TikTokDailyPick,
     TikTokToken,
+    VideoDelivery,
 )
 from social.services.publish import (
     enqueue_publish,
@@ -70,6 +71,27 @@ class SocialDeliveryInline(admin.TabularInline):
         "updated",
     )
     can_delete = False
+
+
+class VideoDeliveryInline(admin.TabularInline):
+    """Per-network outcome of one daily video, shown on the pick itself."""
+
+    model = VideoDelivery
+    extra = 0
+    readonly_fields = (
+        "platform",
+        "status",
+        "external_id",
+        "external_url",
+        "attempts",
+        "error",
+        "published_at",
+    )
+    fields = readonly_fields
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SocialPost)
@@ -298,8 +320,38 @@ class SocialSettingsAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (
-            "TikTok",
-            {"fields": ("tiktok_audit_passed",)},
+            "Відео-мережі: щоденний ролик",
+            {
+                "fields": (
+                    "tiktok_auto_enabled",
+                    "tiktok_audit_passed",
+                ),
+                "description": (
+                    "Один ролик на день розходиться по всіх увімкнених мережах. "
+                    "Генерація о 04:00, публікація о 18:00 (Київ). "
+                    "Мережа без токена не ламає прогін — вона позначається "
+                    "«пропущено», решта постить далі."
+                ),
+            },
+        ),
+        (
+            "Відео: генерація і бюджет",
+            {
+                "fields": (
+                    "tiktok_video_model",
+                    "tiktok_vertical_image_model",
+                    "tiktok_video_seconds",
+                    "tiktok_video_resolution",
+                    "tiktok_video_draft",
+                    "tiktok_monthly_budget_usd",
+                ),
+                "classes": ("collapse",),
+                "description": (
+                    "Вартість не залежить від кількості мереж: відео одне, "
+                    "генерація одна. Стеля бюджету зупиняє генерацію, "
+                    "не публікацію."
+                ),
+            },
         ),
         (
             "AI I2V (Wan)",
@@ -364,6 +416,29 @@ class SocialSettingsAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(VideoDelivery)
+class VideoDeliveryAdmin(admin.ModelAdmin):
+    """Cross-pick view: which network is quietly failing every night."""
+
+    list_display = (
+        "pick",
+        "platform",
+        "status",
+        "attempts",
+        "published_at",
+        "external_id",
+    )
+    list_filter = ("platform", "status")
+    search_fields = ("external_id", "pick__product__title")
+    date_hierarchy = "published_at"
+    readonly_fields = tuple(
+        f.name for f in VideoDelivery._meta.fields if f.name != "id"
+    )
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(TikTokToken)
@@ -444,12 +519,14 @@ class TikTokDailyPickAdmin(admin.ModelAdmin):
     """
 
     actions = ("action_generate", "action_publish")
+    inlines = (VideoDeliveryInline,)
 
     list_display = (
         "picked_at",
         "cycle_number",
         "product",
         "status",
+        "networks",
         "social_post",
     )
     list_filter = ("status", "cycle_number")
@@ -462,11 +539,30 @@ class TikTokDailyPickAdmin(admin.ModelAdmin):
         "status",
         "social_post",
         "video_path",
+        "montage_path",
         "error",
         "created",
         "updated",
     )
     fields = readonly_fields
+
+    @admin.display(description="Мережі")
+    def networks(self, obj):
+        """Which networks took the video — the per-pick summary at a glance."""
+        rows = obj.deliveries.all()
+        if not rows:
+            return "—"
+        marks = {
+            "published": "✅",
+            "published_private": "🔒",
+            "failed": "❌",
+            "skipped": "–",
+            "publishing": "⏳",
+            "pending": "…",
+        }
+        return " ".join(
+            f"{marks.get(r.status, '?')}{r.get_platform_display()}" for r in rows
+        )
 
     def has_add_permission(self, request):
         return False
@@ -510,11 +606,20 @@ class TikTokDailyPickAdmin(admin.ModelAdmin):
                     request, f"Пік #{pick.pk}: {exc}", messages.ERROR
                 )
             else:
+                if result.get("already_published"):
+                    self.message_user(
+                        request,
+                        f"Пік #{pick.pk}: вже опубліковано всюди",
+                        messages.INFO,
+                    )
+                    continue
+                published = ", ".join(result.get("published") or []) or "—"
+                failed = result.get("failed") or []
                 self.message_user(
                     request,
-                    f"Пік #{pick.pk} ({pick.product}): опубліковано, "
-                    f"приватність {result.get('privacy', '?')}",
-                    messages.SUCCESS,
+                    f"Пік #{pick.pk} ({pick.product}): {published}"
+                    + (f" · не вийшло: {'; '.join(failed)}" if failed else ""),
+                    messages.WARNING if failed else messages.SUCCESS,
                 )
 
     def changelist_view(self, request, extra_context=None):

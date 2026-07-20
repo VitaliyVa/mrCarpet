@@ -39,12 +39,16 @@ def next_run(now: datetime | None = None) -> tuple[datetime, str]:
 
 
 def _generate():
-    from social.services.tiktok_publish import build_final_video
+    from social.services.tiktok_publish import build_final_video, cleanup_old_media
     from social.services.tiktok_rotation import pick_product_for_today
+
+    # 04:00 is the maintenance slot: yesterday's networks have long finished
+    # fetching, so their files can go before we render a new one.
+    removed = cleanup_old_media()
 
     pick = pick_product_for_today()
     path = build_final_video(pick)
-    return f"pick #{pick.pk} ({pick.product}) -> {path}"
+    return f"pick #{pick.pk} ({pick.product}) -> {path} (cleaned {removed} old files)"
 
 
 def _publish():

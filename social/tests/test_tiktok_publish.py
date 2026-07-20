@@ -90,12 +90,13 @@ class PublishTests(TestCase):
         )
         defaults.update(overrides)
         with patch.object(tiktok_publish, "build_final_video", return_value=defaults["build"]), \
-             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
-                          return_value=defaults["options"]), \
-             patch.object(tiktok_publish.tiktok, "audit_passed",
-                          return_value=defaults["audited"]), \
-             patch.object(tiktok_publish.tiktok, "publish_video",
-                          return_value=defaults["result"]) as publish, \
+             patch("social.services.tiktok.creator_privacy_options",
+                   return_value=defaults["options"]), \
+             patch("social.services.tiktok.audit_passed",
+                   return_value=defaults["audited"]), \
+             patch("social.services.tiktok.tiktok_configured", return_value=True), \
+             patch("social.services.tiktok.publish_video",
+                   return_value=defaults["result"]) as publish, \
              patch.object(tiktok_publish, "_notify"):
             publish_pick(self.pick)
         return publish
@@ -152,24 +153,30 @@ class PublishTests(TestCase):
         publish = self._publish()
         self.assertNotIn("https://", publish.call_args.kwargs["caption"])
 
-    def test_files_are_removed_only_after_tiktok_confirms(self):
+    def test_files_survive_the_publish_for_the_other_networks(self):
+        """
+        Meta and Threads fetch the montage asynchronously and YouTube reads it
+        off disk, so "the first network confirmed" is not a safe moment to
+        delete anything. Cleanup is a separate age-based pass.
+        """
         montage = self.montage
         clip = self.pick.video_path
         self._publish()
-        self.assertFalse(default_storage.exists(montage))
-        self.assertFalse(default_storage.exists(clip))
+        self.assertTrue(default_storage.exists(montage))
+        self.assertTrue(default_storage.exists(clip))
         self.pick.refresh_from_db()
         self.assertEqual(self.pick.status, TikTokDailyPick.Status.PUBLISHED)
-        self.assertEqual(self.pick.video_path, "")
+        self.assertEqual(self.pick.video_path, clip)
 
     def test_failure_keeps_the_files_and_marks_the_pick(self):
         """A 04:00 failure must leave something to diagnose in the morning."""
         with patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
-             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
-                          return_value=["SELF_ONLY"]), \
-             patch.object(tiktok_publish.tiktok, "audit_passed", return_value=False), \
-             patch.object(tiktok_publish.tiktok, "publish_video",
-                          side_effect=RuntimeError("TikTok said no")), \
+             patch("social.services.tiktok.creator_privacy_options",
+                   return_value=["SELF_ONLY"]), \
+             patch("social.services.tiktok.audit_passed", return_value=False), \
+             patch("social.services.tiktok.tiktok_configured", return_value=True), \
+             patch("social.services.tiktok.publish_video",
+                   side_effect=RuntimeError("TikTok said no")), \
              patch.object(tiktok_publish, "_notify") as notify:
             with self.assertRaises(RuntimeError):
                 publish_pick(self.pick)
@@ -239,11 +246,12 @@ class RetryCostTests(TestCase):
     def test_force_publish_does_not_regenerate(self):
         """--force bypasses the guards; it must not reach for the wallet."""
         with patch.object(tiktok_publish, "build_final_video") as build, \
-             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
-                          return_value=["SELF_ONLY"]), \
-             patch.object(tiktok_publish.tiktok, "audit_passed", return_value=False), \
-             patch.object(tiktok_publish.tiktok, "publish_video",
-                          return_value={"external_id": "x", "privacy": "SELF_ONLY"}), \
+             patch("social.services.tiktok.creator_privacy_options",
+                   return_value=["SELF_ONLY"]), \
+             patch("social.services.tiktok.audit_passed", return_value=False), \
+             patch("social.services.tiktok.tiktok_configured", return_value=True), \
+             patch("social.services.tiktok.publish_video",
+                   return_value={"external_id": "x", "privacy": "SELF_ONLY"}), \
              patch.object(tiktok_publish, "_notify"):
             build.return_value = "social/tiktok/final/x.mp4"
             publish_pick(self.pick, force=True)
@@ -295,11 +303,12 @@ class CoverAndLabelTests(TestCase):
     def _publish(self):
         with patch.object(tiktok_publish, "build_final_video",
                           return_value="social/tiktok/final/x.mp4"), \
-             patch.object(tiktok_publish.tiktok, "creator_privacy_options",
-                          return_value=["SELF_ONLY"]), \
-             patch.object(tiktok_publish.tiktok, "audit_passed", return_value=False), \
-             patch.object(tiktok_publish.tiktok, "publish_video",
-                          return_value={"external_id": "x", "privacy": "SELF_ONLY"}) as pub, \
+             patch("social.services.tiktok.creator_privacy_options",
+                   return_value=["SELF_ONLY"]), \
+             patch("social.services.tiktok.audit_passed", return_value=False), \
+             patch("social.services.tiktok.tiktok_configured", return_value=True), \
+             patch("social.services.tiktok.publish_video",
+                   return_value={"external_id": "x", "privacy": "SELF_ONLY"}) as pub, \
              patch.object(tiktok_publish, "_notify"):
             publish_pick(self.pick)
         return pub

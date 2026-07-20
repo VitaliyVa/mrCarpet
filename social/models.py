@@ -323,6 +323,7 @@ class TikTokDailyPick(AbstractCreatedUpdated):
     class Status(models.TextChoices):
         GENERATED = "generated", "Відео згенеровано"
         PUBLISHED = "published", "Опубліковано"
+        PARTIAL = "partial", "Опубліковано частково"
         FAILED = "failed", "Помилка"
 
     product = models.ForeignKey(
@@ -351,7 +352,13 @@ class TikTokDailyPick(AbstractCreatedUpdated):
         max_length=500,
         blank=True,
         default="",
-        help_text="Згенерований MP4; чиститься після PUBLISH_COMPLETE.",
+        help_text="Сирий кліп з моделі; чиститься проходом по віку.",
+    )
+    montage_path = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Готовий монтаж, який тягнуть площадки; чиститься проходом по віку.",
     )
     error = models.TextField(blank=True, default="")
 
@@ -368,10 +375,126 @@ class TikTokDailyPick(AbstractCreatedUpdated):
         title = self.product.title if self.product_id else "(видалений товар)"
         return f"TikTokDailyPick #{self.pk}: {title} [{self.status}] cycle={self.cycle_number}"
 
+    #: Statuses that retire the product for this cycle.
+    #
+    #: PARTIAL counts. A pick that reached TikTok but failed on Threads has
+    #: still been seen by an audience, so returning the product to the pool
+    #: would republish it where it already ran. Success is "at least one
+    #: network", deliberately not "every network" — do not "fix" this to all().
+    SPENT_STATUSES = ("published", "partial")
+
     @property
     def is_spent(self) -> bool:
-        """Only a published pick retires the product for this cycle."""
-        return self.status == self.Status.PUBLISHED
+        return self.status in self.SPENT_STATUSES
+
+
+class VideoDelivery(AbstractCreatedUpdated):
+    """
+    One daily video, one row per network it was sent to.
+
+    Kept apart from SocialDelivery on purpose: that model belongs to
+    SocialPost — the *manual* posts composed in the admin — and hanging a
+    daily pick off it would mean making post_id nullable, breaking the
+    invariant that a delivery always belongs to a post. The two pipelines
+    have different lifecycles and different sets of networks, so ~40 lines
+    of duplication is cheaper than a premature shared abstraction.
+
+    The unique constraint on (pick, platform) is what makes a retry safe:
+    a run that published to TikTok and failed on Threads can be repeated
+    without posting to TikTok twice.
+    """
+
+    class Platform(models.TextChoices):
+        TIKTOK = "tiktok", "TikTok"
+        INSTAGRAM = "instagram", "Instagram Reels"
+        FACEBOOK = "facebook", "Facebook"
+        THREADS = "threads", "Threads"
+        YOUTUBE = "youtube", "YouTube Shorts"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Очікує"
+        PUBLISHING = "publishing", "Публікується"
+        PUBLISHED = "published", "Опубліковано"
+        # Posted, but only the owner can see it: TikTok before its audit and
+        # YouTube before the compliance audit both force this.
+        PUBLISHED_PRIVATE = "published_private", "Опубліковано приватно"
+        FAILED = "failed", "Помилка"
+        # Network switched off or not configured. Deliberately not FAILED:
+        # otherwise the daily report cries about YouTube we never enabled.
+        SKIPPED = "skipped", "Пропущено"
+
+    TERMINAL_STATUSES = ("published", "published_private", "failed", "skipped")
+    SUCCESS_STATUSES = ("published", "published_private")
+
+    pick = models.ForeignKey(
+        "social.TikTokDailyPick",
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    platform = models.CharField(max_length=16, choices=Platform.choices)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    # Indexed because every inbound comment is matched against it to decide
+    # which Telegram topic the alert belongs in.
+    external_id = models.CharField(max_length=190, blank=True, default="", db_index=True)
+    external_url = models.URLField(blank=True, default="")
+    error = models.TextField(blank=True, default="")
+    attempts = models.PositiveSmallIntegerField(default=0)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("pick_id", "platform")
+        verbose_name = "Video delivery"
+        verbose_name_plural = "Video deliveries"
+        unique_together = (("pick", "platform"),)
+        indexes = [models.Index(fields=["status", "platform"])]
+
+    def __str__(self) -> str:
+        return f"{self.get_platform_display()} · pick #{self.pick_id} [{self.status}]"
+
+    @property
+    def is_success(self) -> bool:
+        return self.status in self.SUCCESS_STATUSES
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in self.TERMINAL_STATUSES
+
+    def mark(
+        self,
+        status: str,
+        *,
+        error: str = "",
+        external_id: str = "",
+        external_url: str = "",
+    ) -> "VideoDelivery":
+        self.status = status
+        self.error = (error or "")[:2000]
+        if external_id:
+            self.external_id = external_id[:190]
+        if external_url:
+            self.external_url = external_url
+        # Counted on the way in, not on the way out: a call that times out
+        # after the network accepted the post must still show as an attempt.
+        if status == self.Status.PUBLISHING:
+            self.attempts += 1
+        if status in self.SUCCESS_STATUSES and self.published_at is None:
+            self.published_at = timezone.now()
+        self.save(
+            update_fields=[
+                "status",
+                "error",
+                "external_id",
+                "external_url",
+                "attempts",
+                "published_at",
+                "updated",
+            ]
+        )
+        return self
 
 
 class SocialPost(AbstractCreatedUpdated):

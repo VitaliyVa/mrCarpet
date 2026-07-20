@@ -1,0 +1,164 @@
+"""
+The networks a daily video is sent to.
+
+One montage goes out to several places. Each of them wants the same file but
+a different caption, a different privacy vocabulary, and — for YouTube — the
+bytes rather than a URL. This module hides all of that behind one contract so
+the pipeline can loop over networks instead of naming them.
+
+Adding a network means writing an adapter and appending it to REGISTRY. The
+pipeline does not change.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any, Protocol
+
+from social.models import SocialSettings, VideoDelivery
+
+logger = logging.getLogger(__name__)
+
+
+class PublishResult(dict):
+    """
+    What an adapter returns.
+
+    Keys: external_id, external_url, private (bool — posted but owner-only).
+    A plain dict subclass rather than a dataclass so adapters can pass the
+    network's own response through unchanged for debugging.
+    """
+
+
+class NetworkAdapter(Protocol):
+    key: str
+    label: str
+    #: True when the network uploads bytes instead of fetching a URL, which
+    #: means the montage must still exist on disk at publish time.
+    needs_local_file: bool
+
+    def is_configured(self) -> bool:
+        """Credentials present. Missing ones mean SKIPPED, never FAILED."""
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        """Operator switched this network on."""
+
+    def caption(self, pick, script: dict) -> str: ...
+
+    def publish(
+        self,
+        *,
+        pick,
+        script: dict,
+        caption: str,
+        video_url: str,
+        local_path: str,
+    ) -> PublishResult: ...
+
+
+class TikTokAdapter:
+    key = VideoDelivery.Platform.TIKTOK
+    label = "TikTok"
+    needs_local_file = False
+
+    def is_configured(self) -> bool:
+        from social.services import tiktok
+
+        return tiktok.tiktok_configured()
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        return bool(social.tiktok_auto_enabled)
+
+    def caption(self, pick, script: dict) -> str:
+        from social.services.tiktok_script import build_caption
+
+        return build_caption(pick, script)
+
+    def publish(
+        self,
+        *,
+        pick,
+        script: dict,
+        caption: str,
+        video_url: str,
+        local_path: str,
+    ) -> PublishResult:
+        from social.services import tiktok
+        from social.services.tiktok_publish import COVER_TIMESTAMP_MS
+
+        # Unaudited apps may only post SELF_ONLY, and the account's own list is
+        # narrower than the API's constant, so ask rather than assume.
+        options = tiktok.creator_privacy_options()
+        privacy = (
+            "SELF_ONLY"
+            if not tiktok.audit_passed()
+            else ("PUBLIC_TO_EVERYONE" if "PUBLIC_TO_EVERYONE" in options else options[0])
+        )
+
+        result = tiktok.publish_video(
+            video_url=video_url,
+            caption=caption,
+            privacy_level=privacy,
+            allow_comment=True,
+            # The music is ours and the visuals are generated, so both
+            # declarations are honest and required.
+            music_usage_confirmed=True,
+            made_with_ai=True,
+            cover_timestamp_ms=COVER_TIMESTAMP_MS,
+        )
+        return PublishResult(
+            external_id=result.get("external_id", ""),
+            external_url=result.get("external_url", ""),
+            private=privacy == "SELF_ONLY",
+        )
+
+
+#: Order matters — it is the order posts go out in, and the order they are
+#: reported in. TikTok stays first: it is the network the format was built for.
+REGISTRY: list[NetworkAdapter] = [
+    TikTokAdapter(),
+]
+
+
+def all_adapters() -> list[NetworkAdapter]:
+    return list(REGISTRY)
+
+
+def adapter_for(key: str) -> NetworkAdapter | None:
+    for adapter in REGISTRY:
+        if adapter.key == key:
+            return adapter
+    return None
+
+
+def needs_local_file(adapters: list[NetworkAdapter] | None = None) -> bool:
+    """True when any target network uploads bytes rather than fetching a URL."""
+    return any(a.needs_local_file for a in (adapters if adapters is not None else REGISTRY))
+
+
+def plan_targets(social: SocialSettings | None = None) -> list[tuple[NetworkAdapter, str]]:
+    """
+    Decide what each network's delivery status should start as.
+
+    Returns (adapter, initial_status). SKIPPED is not a failure: a network the
+    operator never switched on must not show up as a red line in the daily
+    report every single day.
+    """
+    social = social or SocialSettings.load()
+    targets: list[tuple[NetworkAdapter, str]] = []
+    for adapter in REGISTRY:
+        if not adapter.is_enabled(social):
+            targets.append((adapter, VideoDelivery.Status.SKIPPED))
+        elif not adapter.is_configured():
+            targets.append((adapter, VideoDelivery.Status.SKIPPED))
+        else:
+            targets.append((adapter, VideoDelivery.Status.PENDING))
+    return targets
+
+
+def skip_reason(adapter: NetworkAdapter, social: SocialSettings) -> str:
+    if not adapter.is_enabled(social):
+        return "вимкнено в налаштуваннях"
+    if not adapter.is_configured():
+        return "не налаштовано (немає токена)"
+    return ""
