@@ -106,7 +106,7 @@ jobs:
         fi
 
         echo "Rebuilding containers..."
-        docker compose -f docker-compose.prod.yml build web
+        docker compose -f docker-compose.prod.yml build web tiktok-daily
 
         echo "Starting web first..."
         docker compose -f docker-compose.prod.yml up -d web
@@ -117,6 +117,11 @@ jobs:
         # порядок він одного разу зник і звіт у понеділок не прийшов.
         echo "Starting background services (independent of healthcheck)..."
         docker compose -f docker-compose.prod.yml up -d ga4-weekly
+        # Both daemons take their Python code from the bind mount, so a plain
+        # restart picks up new code; only Dockerfile changes need the rebuild
+        # above. Naming them explicitly means a brand-new service starts on the
+        # deploy that introduces it, instead of waiting to be noticed.
+        docker compose -f docker-compose.prod.yml up -d tiktok-daily
 
         echo "Waiting until gunicorn answers inside web..."
         # Host header обов'язковий: ALLOWED_HOSTS строгий, голий 127.0.0.1 дав би 400
