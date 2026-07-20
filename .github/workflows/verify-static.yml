@@ -30,8 +30,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: static/package-lock.json
 
-      # node_modules закомічені в репо — install не потрібен.
+      # node_modules у .gitignore — ставимо з lock-файлу
+      - name: Install deps
+        working-directory: static
+        run: npm ci --no-audit --no-fund
+
       # Викликаємо webpack.js напряму, щоб не залежати від exec-бітів у .bin
       - name: Build webpack bundle
         working-directory: static
