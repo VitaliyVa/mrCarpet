@@ -231,3 +231,30 @@ class RetryCostTests(TestCase):
             build.return_value = "social/tiktok/final/x.mp4"
             publish_pick(self.pick, force=True)
         self.assertFalse(build.call_args.kwargs["regenerate"])
+
+
+class SchedulerTests(TestCase):
+    """The daemon must pick the right next slot across a day boundary."""
+
+    def _next(self, hour, minute=0):
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from social.management.commands.tiktok_scheduler import next_run
+
+        now = datetime(2026, 7, 20, hour, minute, tzinfo=ZoneInfo("Europe/Kyiv"))
+        moment, action = next_run(now)
+        return moment.hour, action
+
+    def test_before_dawn_goes_to_generate(self):
+        self.assertEqual(self._next(2), (4, "generate"))
+
+    def test_after_generation_goes_to_publish(self):
+        self.assertEqual(self._next(9), (18, "publish"))
+
+    def test_after_publishing_wraps_to_tomorrow(self):
+        self.assertEqual(self._next(20), (4, "generate"))
+
+    def test_exactly_on_the_hour_does_not_refire(self):
+        """A slot already reached must not be scheduled again for now."""
+        self.assertEqual(self._next(4, 0), (18, "publish"))

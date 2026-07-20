@@ -136,6 +136,36 @@ services:
     networks:
       - mrcarpet_network
 
+  tiktok-daily:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    user: "0:0"
+    volumes:
+      - .:/app
+      # media_volume is mandatory: the montage must land where nginx serves
+      # /media from, or TikTok's pull_from_url fetches a 404.
+      - media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - TIKTOK_CLIENT_KEY=${TIKTOK_CLIENT_KEY}
+      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET}
+      - TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
+      - TIKTOK_OPEN_ID=${TIKTOK_OPEN_ID}
+      - TIKTOK_AUDIT_PASSED=${TIKTOK_AUDIT_PASSED:-false}
+      # The Telegram bot token lives in the database, not the env, and
+      # SECRET_KEY is read by decouple from the mounted /app/.env — listing
+      # either here would inject an empty value that wins over the file.
+      - TZ=Europe/Kyiv
+    command: python manage.py tiktok_scheduler
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
 volumes:
   static_volume:
   media_volume:
