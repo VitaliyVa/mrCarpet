@@ -76,6 +76,14 @@ def _generate():
     # fetching, so their files can go before we render a new one.
     removed = cleanup_old_media()
 
+    # Checked before the day's work, not after: a dead token found now leaves
+    # the whole day to fix it, rather than surfacing at 18:00 when the post
+    # has already failed.
+    try:
+        _check_tokens()
+    except Exception as exc:
+        logger.warning("token health check failed: %s", exc)
+
     pick = pick_product_for_today()
     path = build_final_video(pick)
     return f"pick #{pick.pk} ({pick.product}) -> {path} (cleaned {removed} old files)"
@@ -90,6 +98,13 @@ def _publish():
         return "nothing prepared for today"
     result = publish_pick(pick)
     return f"pick #{pick.pk}: {result}"
+
+
+def _check_tokens():
+    from social.services.token_health import format_report, run_and_report
+
+    report = run_and_report()
+    return format_report(report).splitlines()[0]
 
 
 def _poll_comments():

@@ -115,8 +115,29 @@ def publish_instagram_reel(*, video_url: str, caption: str, cover_url: str = "")
     media_id = str(published.get("id") or container_id)
     return {
         "external_id": media_id,
-        "external_url": f"https://www.instagram.com/reel/{media_id}/",
+        "external_url": _instagram_permalink(media_id),
     }
+
+
+def _instagram_permalink(media_id: str) -> str:
+    """
+    Ask Instagram for the public URL instead of building one.
+
+    The public path uses a shortcode (…/reel/DbDTARpjSQJ/), which has nothing
+    to do with the numeric media id the API returns. Assembling the URL from
+    the id produces a link that looks right and 404s.
+
+    Best-effort: a missing permalink is a broken link in a report, not a
+    reason to treat a successful publish as failed.
+    """
+    try:
+        data = _graph("GET", media_id, params={"fields": "permalink"})
+        permalink = (data.get("permalink") or "").strip()
+        if permalink:
+            return permalink
+    except Exception:
+        logger.info("IG permalink lookup failed for %s", media_id)
+    return ""
 
 
 def publish_facebook_page_video(*, video_url: str, caption: str, title: str = "") -> dict[str, str]:

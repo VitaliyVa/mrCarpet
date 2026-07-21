@@ -293,13 +293,62 @@ class MetaPublishMockTests(TestCase):
             {"id": "c1"},
             {"status_code": "FINISHED"},
             {"id": "m1"},
+            {"permalink": "https://www.instagram.com/reel/DbDTARpjSQJ/"},
         ]
         result = meta.publish_instagram_reel(
             video_url="https://mrcarpet24.com/media/x.mp4",
             caption="hi",
         )
         self.assertEqual(result["external_id"], "m1")
-        self.assertEqual(mock_graph.call_count, 3)
+        self.assertEqual(mock_graph.call_count, 4)
+
+    @override_settings(
+        META_PAGE_ACCESS_TOKEN="tok",
+        META_IG_USER_ID="ig1",
+        META_PAGE_ID="page1",
+        SITE_URL="https://mrcarpet24.com",
+    )
+    @patch("social.services.meta._graph")
+    def test_ig_reel_url_is_the_permalink_not_the_media_id(self, mock_graph):
+        """
+        The public path uses a shortcode that has nothing to do with the
+        numeric media id — building the URL from the id yields a link that
+        looks right and 404s.
+        """
+        mock_graph.side_effect = [
+            {"id": "c1"},
+            {"status_code": "FINISHED"},
+            {"id": "18079853576304385"},
+            {"permalink": "https://www.instagram.com/reel/DbDTARpjSQJ/"},
+        ]
+        result = meta.publish_instagram_reel(
+            video_url="https://mrcarpet24.com/media/x.mp4", caption="hi"
+        )
+        self.assertEqual(
+            result["external_url"], "https://www.instagram.com/reel/DbDTARpjSQJ/"
+        )
+        self.assertNotIn("18079853576304385", result["external_url"])
+
+    @override_settings(
+        META_PAGE_ACCESS_TOKEN="tok",
+        META_IG_USER_ID="ig1",
+        META_PAGE_ID="page1",
+        SITE_URL="https://mrcarpet24.com",
+    )
+    @patch("social.services.meta._graph")
+    def test_ig_reel_survives_a_missing_permalink(self, mock_graph):
+        """A broken link in a report must not fail a successful publish."""
+        mock_graph.side_effect = [
+            {"id": "c1"},
+            {"status_code": "FINISHED"},
+            {"id": "m1"},
+            RuntimeError("permalink unavailable"),
+        ]
+        result = meta.publish_instagram_reel(
+            video_url="https://mrcarpet24.com/media/x.mp4", caption="hi"
+        )
+        self.assertEqual(result["external_id"], "m1")
+        self.assertEqual(result["external_url"], "")
 
     @override_settings(
         META_PAGE_ACCESS_TOKEN="tok",

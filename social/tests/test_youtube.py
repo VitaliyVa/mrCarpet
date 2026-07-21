@@ -187,13 +187,17 @@ class UploadTests(TestCase):
         self.assertEqual(body["status"]["privacyStatus"], "public")
         self.assertIs(body["status"]["selfDeclaredMadeForKids"], False)
 
-    def test_ai_generated_content_is_declared(self):
-        """Same honesty as is_aigc on TikTok — the visuals are model-made."""
+    def test_synthetic_media_label_is_off(self):
+        """
+        The rug is a real product; only the room around it is generated, which
+        YouTube's own exemptions treat as a production aid rather than
+        something that could mislead. TikTok keeps its flag — see the constant.
+        """
         import json
 
         _, post, _ = self._upload()
         body = json.loads(post.call_args.kwargs["data"].decode())
-        self.assertTrue(body["status"]["containsSyntheticMedia"])
+        self.assertNotIn("containsSyntheticMedia", body["status"])
 
     def test_forced_private_is_reported_not_swallowed(self):
         """

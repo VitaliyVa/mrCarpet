@@ -42,11 +42,20 @@ CATEGORY_ID = "22"
 # YouTube expects an explicit answer; silence is treated as undeclared.
 MADE_FOR_KIDS = False
 
-# The visuals are model-generated, so this is declared for the same reason we
-# set is_aigc on TikTok. Marked here because the field name is the one part of
-# the payload not confirmed against a live upload yet — if the first attempt
-# returns 400 on an unknown field, drop it and disclose in the description.
-DECLARE_SYNTHETIC_MEDIA = True
+# YouTube requires disclosure for *realistic content that could mislead* —
+# invented events, words nobody said, places where nothing happened. Its own
+# exemptions cover generative AI used as a production aid and background
+# changes.
+#
+# The rug is real: a real product, real stock, real price. Only the room
+# around it is generated, which makes this a catalogue mockup rather than a
+# claim about something that happened. So the label is off here.
+#
+# TikTok keeps its is_aigc flag. Its policy on AI content is stricter, and the
+# app is mid-audit with a written statement that we declare generated visuals
+# — contradicting that while a reviewer is reading it would be a poor trade
+# for a cosmetic gain on a different network.
+DECLARE_SYNTHETIC_MEDIA = False
 
 MAX_TITLE = 100
 MAX_DESCRIPTION = 5000
