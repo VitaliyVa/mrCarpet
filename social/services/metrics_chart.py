@@ -143,7 +143,7 @@ def render_social_chart(totals: dict[str, dict], *, days: int) -> bytes:
             ax.text(
                 0.075 + max(width, 0.004) + 0.012,
                 y - 0.037,
-                f"{_fmt_int(data['views'])} 👁",
+                f"{_fmt_int(data['views'])} переглядів",
                 transform=ax.transAxes,
                 fontsize=9,
                 fontweight="600",
@@ -161,7 +161,10 @@ def render_social_chart(totals: dict[str, dict], *, days: int) -> bytes:
                 va="center",
             )
 
-        detail = f"{_fmt_int(data['likes'])} ❤   {_fmt_int(data['comments'])} 💬"
+        # Words, not emoji: matplotlib's bundled font has no glyphs for ❤/💬
+        # and renders them as empty boxes. They stay in the Telegram caption,
+        # which is drawn by Telegram's own font.
+        detail = f"{_fmt_int(data['likes'])} вподобань   {_fmt_int(data['comments'])} комент."
         if data["videos"]:
             detail += f"   ·   {data['videos']} відео"
         ax.text(
