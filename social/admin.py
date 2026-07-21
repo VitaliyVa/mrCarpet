@@ -6,6 +6,7 @@ from django import forms
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import path, reverse
+from django.utils.html import format_html
 
 from social.models import (
     SocialDelivery,
@@ -13,6 +14,7 @@ from social.models import (
     SocialPostImage,
     SocialSettings,
     TikTokDailyPick,
+    ThreadsToken,
     TikTokToken,
     VideoDelivery,
 )
@@ -425,6 +427,56 @@ class SocialSettingsAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+@admin.register(ThreadsToken)
+class ThreadsTokenAdmin(admin.ModelAdmin):
+    """Read-only view of the Threads token plus the link to (re)authorize."""
+
+    readonly_fields = (
+        "username",
+        "user_id",
+        "scope",
+        "issued_at",
+        "expires_at",
+        "last_refreshed_at",
+        "expiry_note",
+        "refresh_fail_count",
+        "last_error",
+        "authorize",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.display(description="Стан")
+    def expiry_note(self, obj):
+        if not obj.access_token:
+            return "Не авторизовано"
+        days = obj.days_until_expiry
+        if days is None:
+            return "Авторизовано"
+        if obj.expired:
+            return "❌ Токен протух — треба заново пройти OAuth"
+        note = f"Діє ще {days} дн."
+        if not obj.old_enough_to_refresh:
+            # Meta rejects a refresh in the first 24 hours; without this line
+            # the failure looks like broken credentials.
+            note += " · оновлення можливе не раніше ніж через 24 год після видачі"
+        return note
+
+    @admin.display(description="Авторизація")
+    def authorize(self, obj):
+        return format_html(
+            '<a class="button" href="{}">Авторизувати Threads</a>'
+            "<p style='margin-top:8px;color:#666'>Потрібен <b>Threads</b> App ID, "
+            "не основний Meta App ID — у застосунку їх два.</p>",
+            reverse("threads-oauth-start"),
+        )
 
 
 @admin.register(VideoDelivery)

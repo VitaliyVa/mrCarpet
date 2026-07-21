@@ -292,6 +292,14 @@ TIKTOK_AUDIT_PASSED = config("TIKTOK_AUDIT_PASSED", default="false")
 TIKTOK_REDIRECT_URI = config(
     "TIKTOK_REDIRECT_URI", default="https://mrcarpet24.com/api/tiktok/callback/"
 )
+# Threads is a separate OAuth world. A Meta app with the Threads use case
+# carries its OWN app id and secret alongside the main Meta pair — using the
+# Meta ones here fails without saying which id was wrong.
+THREADS_APP_ID = config("THREADS_APP_ID", default="")
+THREADS_APP_SECRET = config("THREADS_APP_SECRET", default="")
+THREADS_REDIRECT_URI = config(
+    "THREADS_REDIRECT_URI", default="https://mrcarpet24.com/api/threads/callback/"
+)
 SOCIAL_AI_I2V_MODEL = config(
     "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
 )

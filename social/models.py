@@ -278,6 +278,92 @@ class TikTokToken(models.Model):
         return (self.refresh_expires_at - timezone.now()).days
 
 
+class ThreadsToken(models.Model):
+    """
+    Singleton OAuth token store for Threads.
+
+    Threads works unlike TikTok: there is no refresh_token. One long-lived
+    access_token lives 60 days and is exchanged for a fresh 60 days using
+    itself. Two rules follow, and both bite if ignored:
+
+    * A token may only be refreshed once it is **at least 24 hours old**. The
+      obvious "refresh every night at 03:00" fails on day one.
+    * A token left unrefreshed past 60 days is dead, and only a human
+      repeating the OAuth flow in a browser brings it back.
+
+    user_id is stored because every publishing call is addressed to it, and
+    because a token minted for a different account fails in a way that looks
+    like an expiry.
+    """
+
+    #: Refresh once the remaining life drops below this.
+    REFRESH_MARGIN_DAYS = 30
+    #: Meta rejects a refresh before the token is this old.
+    MIN_AGE_HOURS = 24
+    REAUTH_WARNING_DAYS = 7
+
+    access_token = models.TextField(blank=True, default="")
+    user_id = models.CharField(max_length=128, blank=True, default="")
+    username = models.CharField(max_length=190, blank=True, default="")
+    scope = models.CharField(max_length=255, blank=True, default="")
+    issued_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    last_refreshed_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default="")
+    refresh_fail_count = models.PositiveIntegerField(default=0)
+    reauth_warned_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Threads token"
+        verbose_name_plural = "Threads token"
+
+    def __str__(self) -> str:
+        if not self.access_token:
+            return "Threads token (not authorized)"
+        return f"Threads token @{self.username or self.user_id or '?'}"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls) -> "ThreadsToken":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def is_authorized(self) -> bool:
+        return bool(self.access_token and self.user_id)
+
+    @property
+    def expired(self) -> bool:
+        if self.expires_at is None:
+            return False
+        return timezone.now() >= self.expires_at
+
+    @property
+    def old_enough_to_refresh(self) -> bool:
+        """Meta refuses a refresh within 24 hours of the token being issued."""
+        stamp = self.last_refreshed_at or self.issued_at
+        if stamp is None:
+            return False
+        return timezone.now() - stamp >= timezone.timedelta(hours=self.MIN_AGE_HOURS)
+
+    @property
+    def needs_refresh(self) -> bool:
+        if not self.access_token or self.expires_at is None:
+            return False
+        remaining = self.expires_at - timezone.now()
+        return remaining <= timezone.timedelta(days=self.REFRESH_MARGIN_DAYS)
+
+    @property
+    def days_until_expiry(self) -> int | None:
+        if self.expires_at is None:
+            return None
+        return (self.expires_at - timezone.now()).days
+
+
 class TikTokVerticalImage(AbstractCreatedUpdated):
     """
     9:16 version of a product's interior photo, generated once and reused.

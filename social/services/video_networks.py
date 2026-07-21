@@ -181,12 +181,47 @@ class FacebookReelsAdapter:
         )
 
 
+class ThreadsAdapter:
+    key = VideoDelivery.Platform.THREADS
+    label = "Threads"
+    needs_local_file = False
+
+    def is_configured(self) -> bool:
+        from social.services import threads
+
+        return threads.threads_configured()
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        return bool(social.video_threads_enabled)
+
+    def caption(self, pick, script: dict) -> str:
+        from social.services.video_caption import build_caption
+
+        return build_caption(pick, script, platform=self.key)
+
+    def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
+        from social.services import threads
+        from social.services.video_caption import threads_topic_tag
+
+        result = threads.publish_video(
+            video_url=video_url,
+            text=caption,
+            topic_tag=threads_topic_tag(pick.product),
+        )
+        return PublishResult(
+            external_id=result.get("external_id", ""),
+            external_url=result.get("external_url", ""),
+            private=False,
+        )
+
+
 #: Order matters — it is the order posts go out in, and the order they are
 #: reported in. TikTok stays first: it is the network the format was built for.
 REGISTRY: list[NetworkAdapter] = [
     TikTokAdapter(),
     InstagramReelsAdapter(),
     FacebookReelsAdapter(),
+    ThreadsAdapter(),
 ]
 
 

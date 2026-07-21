@@ -42,23 +42,53 @@ YOUTUBE_TITLE_LIMIT = 100
 
 BIO_LINE = "🛒 Каталог — лінк у профілі"
 
-# Instagram counts hashtags against a limit of 30 and rewards specificity;
-# Threads treats them as topic tags and a wall of them reads as spam.
-MAX_HASHTAGS = {
-    VideoDelivery.Platform.THREADS: 3,
-}
-
-
-def hashtags_for(product, platform: str) -> str:
+def _tags_for(product) -> list[str]:
     tags = list(BASE_HASHTAGS)
     for category in product.categories.all():
         tag = CATEGORY_HASHTAGS.get((category.title or "").strip())
         if tag and tag not in tags:
             tags.append(tag)
-    limit = MAX_HASHTAGS.get(platform)
-    if limit:
-        tags = tags[:limit]
-    return " ".join(f"#{tag}" for tag in tags)
+    return tags
+
+
+def hashtags_for(product, platform: str) -> str:
+    """Inline hashtag block. Not used for Threads — see threads_topic_tag."""
+    return " ".join(f"#{tag}" for tag in _tags_for(product))
+
+
+def threads_topic_tag(product) -> str:
+    """
+    The single topic tag a Threads post is allowed.
+
+    Documented, not a guess: "Only one topic tag is allowed per post, so the
+    first valid tag included in a post ... is treated as the tag for that
+    post." A wall of inline hashtags would render as plain text, read as
+    engagement bait, and gain nothing.
+
+    The most specific tag wins — category before the generic ones — because a
+    topic tag is how a community finds the post, not a keyword dump.
+    """
+    tags = _tags_for(product)
+    specific = tags[len(BASE_HASHTAGS):]
+    chosen = (specific or tags or [""])[0]
+    # Meta's rules: 1–50 chars, no dots or ampersands, never a bare number.
+    chosen = chosen.replace(".", "").replace("&", "").strip()[:50]
+    return "" if chosen.isdigit() else chosen
+
+
+def _fits(text: str, limit: int) -> str:
+    """
+    Trim to `limit`, counting whichever of characters or UTF-8 bytes binds first.
+
+    Meta documents the 500 limit in characters but counts URLs and emoji in
+    bytes, and does not say which applies to Cyrillic — where every character
+    is two bytes. Respecting both costs us nothing here (our Threads text is
+    short) and avoids a post silently truncated mid-word.
+    """
+    text = text[:limit]
+    while len(text.encode("utf-8")) > limit:
+        text = text[:-1]
+    return text
 
 
 def build_caption(pick, script: dict | None = None, *, platform: str) -> str:
@@ -130,6 +160,9 @@ def _threads_caption(product, script: dict, *, limit: int) -> str:
     With no "more" link there is nowhere to put the price where it will not be
     read before the video, so the size list is dropped and only the question
     survives. Anyone who wants the number watches, or asks.
+
+    No hashtags in the text either: Threads allows one topic tag, and it is
+    passed as its own parameter — see threads_topic_tag.
     """
     lines = [
         f"✨ {product.title}".strip(),
@@ -139,11 +172,7 @@ def _threads_caption(product, script: dict, *, limit: int) -> str:
         CTA,
         BIO_LINE,
     ]
-    text = "\n".join(lines)
-    tags = hashtags_for(product, VideoDelivery.Platform.THREADS)
-    if tags and len(text) + len(tags) + 2 <= limit:
-        text = f"{text}\n\n{tags}"
-    return text[:limit]
+    return _fits("\n".join(lines), limit)
 
 
 def _youtube_description(product, script: dict, *, limit: int) -> str:
