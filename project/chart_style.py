@@ -130,6 +130,34 @@ def fmt_pct(part: float, whole: float) -> str:
     return f"{100.0 * part / whole:.0f}%"
 
 
+def plural(n: int, one: str, few: str, many: str) -> str:
+    """
+    Ukrainian noun agreement: 1 покупка, 2 покупки, 5 покупок.
+
+    Worth the eight lines — "1 покупок" in a report shown to the owner reads
+    as machine output nobody proofread, which is exactly the impression a
+    dashboard must not give.
+    """
+    n = abs(int(n))
+    if n % 100 in (11, 12, 13, 14):
+        return many
+    last = n % 10
+    if last == 1:
+        return one
+    if last in (2, 3, 4):
+        return few
+    return many
+
+
+def count(n, one: str, few: str, many: str) -> str:
+    """"3 покупки" — number and correctly agreed noun."""
+    try:
+        value = int(round(float(n or 0)))
+    except (TypeError, ValueError):
+        value = 0
+    return f"{fmt_int(value)} {plural(value, one, few, many)}"
+
+
 def eyebrow(ax, kicker: str, subtitle: str) -> None:
     """Small caps label plus one line of context. Replaces the old boxed
     title: at phone size a rule under a heading is chrome, not structure."""
@@ -211,7 +239,10 @@ def footnote(ax, lines: list[str], *, source: str = "mr.Carpet") -> None:
         [LEFT, RIGHT], [FOOT_TOP, FOOT_TOP], transform=ax.transAxes,
         color=FAINT, linewidth=1.0,
     )
-    y = FOOT_TOP - 0.032
+    # The gap has to clear the text's own ascent, not just look right in the
+    # editor: va="top" anchors the box top, so 0.03 put the caps almost on
+    # the rule.
+    y = FOOT_TOP - 0.055
     for line in lines:
         if not line:
             y -= 0.014

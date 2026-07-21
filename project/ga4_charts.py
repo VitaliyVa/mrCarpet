@@ -29,6 +29,7 @@ from project.chart_style import (
     RIGHT,
     bar,
     canvas,
+    count,
     empty,
     eyebrow,
     fmt_int,
@@ -198,7 +199,19 @@ def render_daily_trend_chart(daily: list[dict[str, Any]], *, days: int) -> bytes
 
     headline(ax, fmt_int(sum(users)), "користувачів за період")
 
-    plot = fig.add_axes([LEFT, BAND_BOTTOM, RIGHT - LEFT, BAND_TOP - BAND_BOTTOM - 0.06])
+    # Legend above the plot, not below it. Figure coordinates and axes
+    # coordinates are the same numbers here but different spaces, so the old
+    # placement at BAND_BOTTOM - 0.045 landed inside the data area.
+    ax.text(
+        LEFT, BAND_TOP + 0.012, "— користувачі", transform=ax.transAxes,
+        fontsize=9, color=ACCENT, fontweight="semibold", va="bottom",
+    )
+    ax.text(
+        LEFT + 0.17, BAND_TOP + 0.012, "- - сесії", transform=ax.transAxes,
+        fontsize=9, color=GOLD, fontweight="semibold", va="bottom",
+    )
+
+    plot = fig.add_axes([LEFT, BAND_BOTTOM, RIGHT - LEFT, BAND_TOP - BAND_BOTTOM - 0.03])
     plot.set_facecolor(BG)
     for spine in ("top", "right", "left"):
         plot.spines[spine].set_visible(False)
@@ -215,15 +228,6 @@ def render_daily_trend_chart(daily: list[dict[str, Any]], *, days: int) -> bytes
     plot.set_xticks(list(x))
     plot.set_xticklabels(labels, fontsize=7.5)
     plot.set_ylim(bottom=0)
-
-    ax.text(
-        LEFT, BAND_BOTTOM - 0.045, "— користувачі", transform=ax.transAxes,
-        fontsize=9, color=ACCENT, fontweight="semibold", va="top",
-    )
-    ax.text(
-        LEFT + 0.18, BAND_BOTTOM - 0.045, "-- сесії", transform=ax.transAxes,
-        fontsize=9, color=GOLD, fontweight="semibold", va="top",
-    )
 
     footnote(
         ax,
@@ -257,9 +261,11 @@ def render_engagement_chart(kpis: dict[str, str], *, days: int) -> bytes:
     headline(ax, f"{pct:.0f}%", "сесій були залученими")
 
     # A bar rather than the donut it replaced: this is one share of one
-    # whole, and a bar shows it at a glance without a legend.
-    track(ax, BAND_TOP + 0.02, height=0.022)
-    bar(ax, BAND_TOP + 0.02, engaged / sessions, height=0.022)
+    # whole, and a bar shows it at a glance without a legend. Kept clear of
+    # the headline caption above it — at 0.755 it sat on the descenders.
+    bar_y = BAND_TOP - 0.01
+    track(ax, bar_y, height=0.022)
+    bar(ax, bar_y, engaged / sessions, height=0.022)
 
     stats = [
         (f"{fmt_int(engaged)} / {fmt_int(sessions)}", "Залучені / усі сесії"),
@@ -267,7 +273,7 @@ def render_engagement_chart(kpis: dict[str, str], *, days: int) -> bytes:
         (f"{(sessions / users):.1f}" if users else "—", "Візитів на людину"),
     ]
     row_h = rows_band(len(stats)) * 0.8
-    y = BAND_TOP - 0.06
+    y = bar_y - 0.06
     for value, label in stats:
         centre = y - row_h / 2
         row_label(ax, centre, label, value)
@@ -320,8 +326,22 @@ def render_funnel_chart(funnel: list[dict[str, Any]], *, days: int) -> bytes:
         track(ax, centre - row_h * 0.10)
         if value > 0:
             bar(ax, centre - row_h * 0.10, value / top, rank=i)
+        # Only when the step actually lost people. GA4 events are not a
+        # strict funnel — someone can reach payment without begin_checkout
+        # ever firing — so a later step can exceed an earlier one, and
+        # "дійшло 200% з попереднього кроку" is nonsense to a reader. Where
+        # that happens the comparable baseline is the first step.
         if prev is not None and prev > 0:
-            sub_label(ax, centre - row_h * 0.30, f"дійшло {100.0 * value / prev:.0f}% з попереднього кроку")
+            if value <= prev:
+                sub_label(
+                    ax, centre - row_h * 0.30,
+                    f"дійшло {100.0 * value / prev:.0f}% з попереднього кроку",
+                )
+            else:
+                sub_label(
+                    ax, centre - row_h * 0.30,
+                    f"{100.0 * value / top:.0f}% від переглядів товару",
+                )
         prev = value
         y -= row_h
 
@@ -329,8 +349,10 @@ def render_funnel_chart(funnel: list[dict[str, Any]], *, days: int) -> bytes:
         ax,
         [
             "Кожен рядок — скільки разів сталася подія, не скільки людей.",
-            "Відсоток під смугою — скільки дійшло з попереднього кроку. "
-            "Найбільше падіння показує, де саме люди йдуть.",
+            "Відсоток — скільки дійшло з попереднього кроку. Найбільше "
+            "падіння показує, де саме люди йдуть.",
+            "Кроки не строго вкладені: подія пізнішого кроку може статися "
+            "без попередньої, тому інколи число більше за попереднє.",
         ],
         source=SOURCE,
     )
@@ -374,7 +396,7 @@ def render_sources_chart(sources: list[dict[str, Any]], *, days: int) -> bytes:
                 label[:34],
                 sess,
                 f"{100.0 * sess / total:.0f}% усіх"
-                + (f" · {fmt_int(purch)} покупок" if purch else ""),
+                + (f" · {count(purch, 'покупка', 'покупки', 'покупок')}" if purch else ""),
             )
             for label, sess, purch in rows
         ],
@@ -415,7 +437,7 @@ def render_top_pages_chart(top_pages: list[dict[str, Any]], *, days: int) -> byt
             (
                 f"{i + 1}. {_friendly_path(str(p.get('path') or '/'))}",
                 int(_num(p.get("views"))),
-                f"{fmt_int(p.get('users'))} різних людей",
+                count(p.get("users"), "різна людина", "різні людини", "різних людей"),
             )
             for i, p in enumerate(pages)
         ],
@@ -453,7 +475,7 @@ def render_revenue_chart(
     headline(ax, fmt_money(revenue.get("purchaseRevenue")), "грн виручки за період")
 
     stats = [
-        (fmt_int(revenue.get("ecommercePurchases")), "Покупки", "оформлених замовлень у GA4"),
+        (fmt_int(revenue.get("ecommercePurchases")), "Покупки", "подій purchase у GA4 — не завжди дорівнює замовленням"),
         (fmt_money(revenue.get("averagePurchaseRevenue")), "Середній чек", "середня сума однієї покупки"),
         (cvr, "Конверсія", "% переглядів товару, що стали покупкою"),
     ]
@@ -517,12 +539,106 @@ def render_realtime_chart(data: dict[str, Any]) -> bytes:
 # ---- album ------------------------------------------------------------
 
 
+def render_today_chart(dashboard: dict[str, Any]) -> bytes:
+    """
+    Today at a glance — deliberately shallower than the period slides.
+
+    A single day is too small a sample for funnels and trends: with a handful
+    of sessions every percentage swings wildly and reads as signal when it is
+    noise. So this one states the raw counts and the one comparison that does
+    survive a small sample — where people came from.
+    """
+    kpis = dashboard.get("kpis") or {}
+    revenue = dashboard.get("revenue") or {}
+    sources = dashboard.get("sources") or []
+
+    fig, ax = canvas()
+    eyebrow(ax, "За сьогодні", "З початку доби · коротко")
+    headline(ax, fmt_int(kpis.get("activeUsers")), "людей сьогодні на сайті")
+
+    sessions = _num(kpis.get("sessions"))
+    views = _num(kpis.get("pageViews"))
+    purchases = _num(revenue.get("ecommercePurchases"))
+
+    stats = [
+        (fmt_int(sessions), "Візити", ""),
+        (fmt_int(views), "Перегляди сторінок", ""),
+        (
+            fmt_money(revenue.get("purchaseRevenue")),
+            "Виручка, грн",
+            count(purchases, "покупка", "покупки", "покупок"),
+        ),
+    ]
+    row_h = rows_band(len(stats)) * 0.62
+    y = BAND_TOP
+    for value, label, hint in stats:
+        centre = y - row_h / 2
+        row_label(ax, centre + row_h * 0.10, label, value)
+        if hint:
+            sub_label(ax, centre - row_h * 0.26, hint)
+        ax.plot(
+            [LEFT, RIGHT], [y - row_h, y - row_h],
+            transform=ax.transAxes, color=FAINT, linewidth=0.8,
+        )
+        y -= row_h
+
+    top = [
+        (
+            _human_source(str(r.get("source") or ""), str(r.get("medium") or ""))[:30],
+            int(_num(r.get("sessions"))),
+        )
+        for r in sources
+        if _num(r.get("sessions")) > 0
+    ][:3]
+
+    if top:
+        ax.text(
+            LEFT, y - 0.03, "ЗВІДКИ ПРИЙШЛИ", transform=ax.transAxes,
+            fontsize=8.5, color=ACCENT, fontweight="bold", va="top",
+        )
+        peak = max(v for _, v in top)
+        y -= 0.075
+        for i, (label, value) in enumerate(top):
+            row_label(ax, y, label, fmt_int(value))
+            track(ax, y - 0.022)
+            bar(ax, y - 0.022, value / peak, rank=i)
+            y -= 0.065
+
+    footnote(
+        ax,
+        [
+            "Один день — маленька вибірка: відсотки й воронка на такому "
+            "обсязі стрибають і показують шум, а не тенденцію.",
+            "За тенденцією дивись слайди за 7 днів.",
+        ],
+        source=SOURCE,
+    )
+    return png(fig)
+
+
+def build_today_photo() -> tuple[str, bytes] | None:
+    """
+    Today's slide, or None when GA4 will not answer.
+
+    Fetched separately from the album's period: the whole point is that it
+    covers a different window, so it cannot be derived from the 7-day payload.
+    Never raises — one missing slide must not cost the report the others.
+    """
+    try:
+        from project.ga4_client import fetch_dashboard
+
+        return ("00_today.png", render_today_chart(fetch_dashboard(1)))
+    except Exception:  # pragma: no cover - depends on the live API
+        return None
+
+
 def build_dashboard_photos(dashboard: dict[str, Any]) -> list[tuple[str, bytes]]:
     days = int(dashboard.get("days") or 7)
     kpis = dashboard.get("kpis") or {}
     revenue = dashboard.get("revenue") or {}
     funnel = dashboard.get("funnel") or []
-    return [
+    today = build_today_photo()
+    return ([today] if today else []) + [
         ("01_traffic.png", render_kpi_table(kpis, revenue, days=days)),
         ("02_daily.png", render_daily_trend_chart(dashboard.get("daily") or [], days=days)),
         ("03_engagement.png", render_engagement_chart(kpis, days=days)),
