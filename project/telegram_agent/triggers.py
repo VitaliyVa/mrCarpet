@@ -90,10 +90,28 @@ def chat_allowed(message: dict, settings) -> bool:
     if str(chat.get("id")) != expected:
         return False
     configured_thread = (settings.message_thread_id or "").strip()
-    if configured_thread:
-        msg_thread = message.get("message_thread_id")
-        if msg_thread is None:
-            return False
-        if str(msg_thread) != configured_thread:
-            return False
-    return True
+    if not configured_thread:
+        return True
+
+    msg_thread = message.get("message_thread_id")
+    if msg_thread is None:
+        return False
+    return str(msg_thread) in _allowed_threads(settings)
+
+
+def _allowed_threads(settings) -> set[str]:
+    """
+    Topics the assistant answers in.
+
+    message_thread_id stays a single value because it is also *where the
+    weekly report is sent* — turning it into a list would address the report
+    to "910,1040". The extra topics are a separate field for that reason:
+    listening in more places must not move where we speak.
+    """
+    allowed = {(settings.message_thread_id or "").strip()}
+    extra = getattr(settings, "listen_thread_ids", "") or ""
+    for part in extra.replace(";", ",").replace("\n", ",").split(","):
+        part = part.strip()
+        if part:
+            allowed.add(part)
+    return {a for a in allowed if a}

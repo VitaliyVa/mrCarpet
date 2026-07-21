@@ -226,7 +226,7 @@ class SummaryTests(TestCase):
         totals = weekly_summary()
         self.assertFalse(totals["instagram"]["views_known"])
         self.assertIn("перегляди н/д", format_summary(totals))
-        self.assertNotIn("0 👁", format_summary(totals))
+        self.assertNotIn("0 ▶️", format_summary(totals))
 
     def test_silent_networks_are_named_with_their_reason(self):
         """An empty line must read as a known limit, not a broken collector."""

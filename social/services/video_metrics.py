@@ -208,7 +208,7 @@ def format_summary(totals: dict[str, dict], *, days: int = REPORT_DAYS) -> str:
         return (1 if item[1]["views_known"] else 0, item[1]["views"])
 
     for platform, data in sorted(totals.items(), key=rank, reverse=True):
-        views = f"{data['views']} 👁" if data["views_known"] else "перегляди н/д"
+        views = f"{data['views']} ▶️" if data["views_known"] else "перегляди н/д"
         lines.append(
             f"• {labels.get(platform, platform)}: {views} · "
             f"{data['likes']} ❤ · {data['comments']} 💬 "

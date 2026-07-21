@@ -213,6 +213,17 @@ class TelegramSettings(models.Model):
             "Порожньо = General (часто закритий → TOPIC_CLOSED)."
         ),
     )
+    listen_thread_ids = models.CharField(
+        verbose_name="Ще топіки, де бот відповідає",
+        max_length=128,
+        blank=True,
+        default="",
+        help_text=(
+            "Через кому, напр. 1040,915. Бот відповідатиме і тут, і в основному топіку. "
+            "Порожньо = тільки основний. "
+            "Це НЕ адреса надсилання звітів — вона лишається в полі вище."
+        ),
+    )
     is_enabled = models.BooleanField(
         verbose_name="Увімкнено",
         default=False,

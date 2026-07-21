@@ -112,7 +112,13 @@ class TelegramSettingsAdmin(admin.ModelAdmin):
                     "4) Chat ID / Topic ID з getUpdates. "
                     "5) Увімкни «Увімкнено» (нотифікації) і/або «AI агент»."
                 ),
-                "fields": ("is_enabled", "bot_token", "chat_id", "message_thread_id"),
+                "fields": (
+                    "is_enabled",
+                    "bot_token",
+                    "chat_id",
+                    "message_thread_id",
+                    "listen_thread_ids",
+                ),
             },
         ),
         (
