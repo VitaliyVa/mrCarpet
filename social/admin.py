@@ -453,6 +453,20 @@ class ThreadsTokenAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def changelist_view(self, request, extra_context=None):
+        """
+        Land straight on the one record instead of an empty list.
+
+        The token is a singleton created lazily by load(), and adding is
+        disabled — so before the first authorization the changelist showed
+        "0 Threads token" with no way through to the form holding the
+        authorize button. A dead end exactly when the operator needs it most.
+        """
+        token = ThreadsToken.load()
+        return HttpResponseRedirect(
+            reverse("admin:social_threadstoken_change", args=[token.pk])
+        )
+
     @admin.display(description="Стан")
     def expiry_note(self, obj):
         if not obj.access_token:

@@ -325,6 +325,39 @@ class SignedRequestTests(TestCase):
         self.assertEqual(resp.json()["status"], "completed")
 
 
+class AdminTests(TestCase):
+    """
+    The authorize button must be reachable before the first authorization.
+
+    It lives on the change form of a singleton that load() creates lazily, and
+    adding is disabled — so an empty changelist would be a dead end exactly
+    when an operator needs the button most.
+    """
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        self.staff = User.objects.create_superuser(
+            "boss@example.com", password="pw12345678"
+        )
+        self.client.force_login(self.staff)
+
+    def test_changelist_lands_on_the_singleton(self):
+        self.assertEqual(ThreadsToken.objects.count(), 0)
+        resp = self.client.get("/admin/social/threadstoken/")
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(ThreadsToken.objects.count(), 1)
+
+        form = self.client.get(resp["Location"])
+        self.assertEqual(form.status_code, 200)
+        self.assertContains(form, "Авторизувати Threads")
+
+    def test_unauthorized_state_is_stated_plainly(self):
+        resp = self.client.get("/admin/social/threadstoken/", follow=True)
+        self.assertContains(resp, "Не авторизовано")
+
+
 class PublishTests(ProductMixin, TestCase):
     def setUp(self):
         _token()
