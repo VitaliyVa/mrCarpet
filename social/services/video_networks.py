@@ -215,6 +215,53 @@ class ThreadsAdapter:
         )
 
 
+class YouTubeShortsAdapter:
+    key = VideoDelivery.Platform.YOUTUBE
+    label = "YouTube Shorts"
+    #: The only network that wants the bytes rather than a URL — which is why
+    #: the montage outlives the publish instead of being deleted on the first
+    #: confirmation.
+    needs_local_file = True
+
+    def is_configured(self) -> bool:
+        from social.services import youtube
+
+        return youtube.youtube_configured()
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        return bool(social.video_youtube_enabled)
+
+    def caption(self, pick, script: dict) -> str:
+        from social.services.video_caption import build_caption
+
+        return build_caption(pick, script, platform=self.key)
+
+    def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
+        from social.services import youtube
+        from social.services.video_caption import build_youtube_title, hashtags_for
+
+        tags = [
+            t.lstrip("#")
+            for t in hashtags_for(pick.product, self.key).split()
+            if t.strip()
+        ]
+        result = youtube.upload_video(
+            file_path=local_path,
+            title=build_youtube_title(pick, script),
+            description=caption,
+            tags=tags,
+            privacy="public",
+        )
+        # Before the compliance audit YouTube silently forces private. Recording
+        # it as published_private keeps the daily report honest instead of
+        # claiming an audience that cannot see the video.
+        return PublishResult(
+            external_id=result.get("external_id", ""),
+            external_url=result.get("external_url", ""),
+            private=bool(result.get("forced_private")),
+        )
+
+
 #: Order matters — it is the order posts go out in, and the order they are
 #: reported in. TikTok stays first: it is the network the format was built for.
 REGISTRY: list[NetworkAdapter] = [
@@ -222,6 +269,7 @@ REGISTRY: list[NetworkAdapter] = [
     InstagramReelsAdapter(),
     FacebookReelsAdapter(),
     ThreadsAdapter(),
+    YouTubeShortsAdapter(),
 ]
 
 

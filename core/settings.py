@@ -301,6 +301,14 @@ THREADS_REDIRECT_URI = config(
     "THREADS_REDIRECT_URI", default="https://mrcarpet24.com/api/threads/callback/"
 )
 THREADS_WEBHOOK_VERIFY_TOKEN = config("THREADS_WEBHOOK_VERIFY_TOKEN", default="")
+
+# YouTube Data API v3 — Cloud project mrcarpet-video (separate from
+# mrcarpet-analytics so a block on one cannot take GA4 down with it).
+YOUTUBE_CLIENT_ID = config("YOUTUBE_CLIENT_ID", default="")
+YOUTUBE_CLIENT_SECRET = config("YOUTUBE_CLIENT_SECRET", default="")
+YOUTUBE_REDIRECT_URI = config(
+    "YOUTUBE_REDIRECT_URI", default="https://mrcarpet24.com/api/youtube/callback/"
+)
 SOCIAL_AI_I2V_MODEL = config(
     "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
 )

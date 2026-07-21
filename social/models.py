@@ -364,6 +364,72 @@ class ThreadsToken(models.Model):
         return (self.expires_at - timezone.now()).days
 
 
+class YouTubeToken(models.Model):
+    """
+    Singleton OAuth token store for the YouTube Data API.
+
+    Google's model is the classic one: a one-hour access_token plus a
+    refresh_token that does not expire on a schedule. Two things still kill it,
+    and both are worth naming because neither looks like what it is:
+
+    * **Testing mode.** While the Cloud app's publishing status is `Testing`,
+      Google expires the refresh_token after **seven days**. The scheduler
+      then fails weekly with an auth error that reads like bad credentials.
+      The app must be published — see social/YOUTUBE_SETUP.md.
+
+    * **Six months idle.** A refresh_token unused for six months is revoked.
+      Not our case at one upload a day, but it explains a dead token on a
+      project that was paused.
+
+    channel_id is stored so a misdirected authorization is visible rather than
+    silently uploading to somebody else's channel.
+    """
+
+    REFRESH_MARGIN_SECONDS = 300
+
+    access_token = models.TextField(blank=True, default="")
+    refresh_token = models.TextField(blank=True, default="")
+    scope = models.CharField(max_length=255, blank=True, default="")
+    channel_id = models.CharField(max_length=128, blank=True, default="")
+    channel_title = models.CharField(max_length=190, blank=True, default="")
+    expires_at = models.DateTimeField(null=True, blank=True)
+    authorized_at = models.DateTimeField(null=True, blank=True)
+    last_refreshed_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default="")
+    refresh_fail_count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "YouTube token"
+        verbose_name_plural = "YouTube token"
+
+    def __str__(self) -> str:
+        if not self.access_token and not self.refresh_token:
+            return "YouTube token (not authorized)"
+        return f"YouTube token · {self.channel_title or self.channel_id or '?'}"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls) -> "YouTubeToken":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def is_authorized(self) -> bool:
+        # The refresh_token is what matters: the access_token is disposable.
+        return bool(self.refresh_token)
+
+    @property
+    def needs_refresh(self) -> bool:
+        if not self.access_token or self.expires_at is None:
+            return True
+        margin = timezone.timedelta(seconds=self.REFRESH_MARGIN_SECONDS)
+        return self.expires_at - timezone.now() <= margin
+
+
 class TikTokVerticalImage(AbstractCreatedUpdated):
     """
     9:16 version of a product's interior photo, generated once and reused.

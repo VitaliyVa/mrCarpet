@@ -10,6 +10,7 @@ from .threads_callbacks import (
 from .threads_oauth import threads_oauth_callback, threads_oauth_start
 from .threads_webhook import threads_webhook
 from .tiktok_oauth import tiktok_oauth_callback, tiktok_oauth_start
+from .youtube_oauth import youtube_oauth_callback, youtube_oauth_start
 from .viber_webhook import viber_webhook
 from .views import (
     ContactRequestCreateView,
@@ -43,4 +44,6 @@ urlpatterns = [
         threads_data_deletion_status,
         name="threads-data-deletion-status",
     ),
+    path("youtube/authorize/", youtube_oauth_start, name="youtube-oauth-start"),
+    path("youtube/callback/", youtube_oauth_callback, name="youtube-oauth-callback"),
 ]

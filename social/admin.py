@@ -17,6 +17,7 @@ from social.models import (
     ThreadsToken,
     TikTokToken,
     VideoDelivery,
+    YouTubeToken,
 )
 from social.services.publish import (
     enqueue_publish,
@@ -490,6 +491,59 @@ class ThreadsTokenAdmin(admin.ModelAdmin):
             "<p style='margin-top:8px;color:#666'>Потрібен <b>Threads</b> App ID, "
             "не основний Meta App ID — у застосунку їх два.</p>",
             reverse("threads-oauth-start"),
+        )
+
+
+@admin.register(YouTubeToken)
+class YouTubeTokenAdmin(admin.ModelAdmin):
+    """Read-only view of the YouTube token plus the link to (re)authorize."""
+
+    readonly_fields = (
+        "channel_title",
+        "channel_id",
+        "scope",
+        "authorized_at",
+        "expires_at",
+        "last_refreshed_at",
+        "state_note",
+        "refresh_fail_count",
+        "last_error",
+        "authorize",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        """Land on the singleton — see ThreadsTokenAdmin for the same reason."""
+        token = YouTubeToken.load()
+        return HttpResponseRedirect(
+            reverse("admin:social_youtubetoken_change", args=[token.pk])
+        )
+
+    @admin.display(description="Стан")
+    def state_note(self, obj):
+        if not obj.is_authorized:
+            return "Не авторизовано"
+        note = "Авторизовано · access-токен оновлюється сам"
+        if obj.refresh_fail_count:
+            note += f" · невдалих оновлень: {obj.refresh_fail_count}"
+        return note
+
+    @admin.display(description="Авторизація")
+    def authorize(self, obj):
+        return format_html(
+            '<a class="button" href="{}">Авторизувати YouTube</a>'
+            "<p style='margin-top:8px;color:#666'>"
+            "Застосунок у Google Cloud має бути <b>published</b>, не Testing — "
+            "інакше refresh-токен помре через 7 днів.<br>"
+            "Поки не пройдено <b>compliance audit</b>, кожне завантаження "
+            "мовчки стає приватним. Це очікувано.</p>",
+            reverse("youtube-oauth-start"),
         )
 
 
