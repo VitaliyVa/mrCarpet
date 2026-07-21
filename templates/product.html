@@ -184,7 +184,7 @@
                     class="input-transparent validation_input"
                     name="name"
                     type="text"
-                    value="{{ user.first_name }}"
+                    value="{{ review_name|default:user.first_name }}"
                     data-type="name"
                     placeholder="Ім’я"
                     required
@@ -199,6 +199,26 @@
                     placeholder="Коментар"
                   ></textarea>
                 </div>
+
+                {# Carried, not asked for. getFormFields collects every
+                   .input-transparent by name, so these ride along with the
+                   form the compiled bundle already submits. The email is what
+                   lets the review be marked a verified purchase; the token
+                   says which order it came from. Both are empty for a visitor
+                   who arrived without an invitation, and the form still
+                   works. #}
+                <input
+                  type="hidden"
+                  class="input-transparent"
+                  name="email"
+                  value="{{ review_email|default:'' }}"
+                />
+                <input
+                  type="hidden"
+                  class="input-transparent"
+                  name="review_token"
+                  value="{{ review_token|default:'' }}"
+                />
               </div>
             </div>
 
@@ -942,6 +962,49 @@
       value: value,
       items: [item]
     });
+  }
+})();
+</script>
+{% endif %}
+{% if open_review_modal %}
+<script>
+(function () {
+  // Opens the review form when the URL asks for it — the invitation email
+  // links straight here, and a customer who lands on a product page and has
+  // to hunt for the form is a customer who closes the tab.
+  //
+  // Inline rather than in a bundle on purpose: webpack does not run on
+  // deploy, so anything added to the source JS would not reach production
+  // without rebuilding six bundles by hand. See docs/gotchas.md.
+  function openReviewModal() {
+    var overlay = document.querySelector(".review-write-modal-overlay");
+    if (!overlay) return false;
+    overlay.classList.add("active");
+    document.body.classList.add("lock");
+
+    // Focus the comment box, not the first field: the name is usually
+    // already filled from the invitation.
+    var content = overlay.querySelector("#content");
+    if (content) {
+      try { content.focus({ preventScroll: true }); } catch (e) {}
+    }
+    return true;
+  }
+
+  function start() {
+    if (openReviewModal()) return;
+    // The markup may still be rendering on a slow phone; try briefly, then
+    // give up rather than spin.
+    var tries = 0;
+    var timer = setInterval(function () {
+      if (openReviewModal() || ++tries > 20) clearInterval(timer);
+    }, 100);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
   }
 })();
 </script>

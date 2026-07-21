@@ -135,6 +135,23 @@ class Order(AbstractCreatedUpdated):
         editable=False,
         help_text="Measurement Protocol purchase already sent (dedupe).",
     )
+    completed_at = models.DateTimeField(
+        verbose_name="Стало «Виконано»",
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=(
+            "Момент переходу в статус «Виконано». Окреме поле, бо `updated` "
+            "зсувається від будь-якої правки замовлення."
+        ),
+    )
+    review_request_sent_at = models.DateTimeField(
+        verbose_name="Прохання про відгук надіслано",
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Порожньо = ще не просили. Один лист на замовлення, не більше.",
+    )
     ga4_client_id = models.CharField(
         verbose_name="GA4 client_id",
         max_length=64,

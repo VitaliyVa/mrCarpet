@@ -419,6 +419,7 @@ def product(request, slug):
         and bool(product.ar_texture),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
         "analytics_view_item": _analytics_view_item_payload(product),
+        **_review_invite_context(request),
     }
     if product_ld:
         context["product_jsonld"] = dumps_jsonld(product_ld)
@@ -489,3 +490,35 @@ def stock(request):
         products = paginator.page(paginator.num_pages)
     
     return render(request, "catalog.html", {"products": products})
+
+def _review_invite_context(request) -> dict:
+    """
+    Open the review modal when the URL asks for it, prefilled when it can be.
+
+    Two shapes of link, and both have to work:
+
+    * `?review=1` — a plain link anyone can paste anywhere. Opens the form.
+    * `?review=<token>` — the one in the invitation email. Opens the form and
+      fills in the name and email, so the person who already told us who they
+      are is not asked twice. Every extra field is a reason to close the tab.
+
+    An expired or forged token degrades to the plain case rather than to an
+    error page: the visitor still gets to write a review, it simply will not
+    count as a verified purchase.
+    """
+    raw = (request.GET.get("review") or "").strip()
+    if not raw:
+        return {"open_review_modal": False}
+
+    context = {"open_review_modal": True, "review_name": "", "review_email": ""}
+    if raw in ("1", "true", "yes"):
+        return context
+
+    from order.review_request import read_token
+
+    order = read_token(raw)
+    if order:
+        context["review_name"] = (order.name or "").strip()
+        context["review_email"] = (order.email or "").strip()
+        context["review_token"] = raw
+    return context

@@ -101,12 +101,30 @@ def _generate():
         logger.warning("metrics collection failed: %s", exc)
         collected = "metrics failed"
 
+    # Shop work in the social scheduler, deliberately. This is the only daemon
+    # that wakes daily, and the project's norm — stated in
+    # ga4_weekly_scheduler — is to piggy-back rather than run another
+    # container on a two-core droplet. Before the video, so a render failure
+    # does not swallow the day's invitations.
+    try:
+        invites = _send_review_requests()
+    except Exception as exc:
+        logger.warning("review requests failed: %s", exc)
+        invites = "review requests failed"
+
     pick = pick_product_for_today()
     path = build_final_video(pick)
     return (
         f"pick #{pick.pk} ({pick.product}) -> {path} "
-        f"(cleaned {removed} old files, {collected})"
+        f"(cleaned {removed} old files, {collected}, {invites})"
     )
+
+
+def _send_review_requests():
+    from order.review_request import send_due
+
+    sent = send_due()
+    return f"review invites: {sent}"
 
 
 def _collect_metrics():

@@ -137,6 +137,9 @@ class ProductReviewViewSet(ModelViewSet):
             )
 
         # Whatever the client sent for these, it does not get to decide them.
+        token = str(data.pop("review_token", "") or "")
+        if isinstance(token, list):
+            token = token[0] if token else ""
         data["status"] = ProductReview.Status.PENDING
         data["verified_purchase"] = False
 
@@ -148,7 +151,7 @@ class ProductReviewViewSet(ModelViewSet):
             ip_address=_client_ip(request),
         )
 
-        _mark_verified_purchase(review)
+        _mark_verified_purchase(review, token=token)
         _notify_staff_new_review(review)
 
         # The submitter is told it was received, not shown the stored row:
@@ -276,15 +279,36 @@ def _client_ip(request) -> str | None:
     return forwarded or request.META.get("REMOTE_ADDR") or None
 
 
-def _mark_verified_purchase(review) -> None:
+def _mark_verified_purchase(review, *, token: str = "") -> None:
     """
-    Flag the review when its email matches a real order for this product.
+    Flag the review when it provably belongs to a real order for this product.
 
-    Best effort and deliberately narrow: only a delivered or completed order
-    counts, because "verified purchase" has to mean the person actually
-    received the rug. A mismatch is not an error — plenty of honest reviewers
-    order by phone or use a different address.
+    Two routes, and the signed one is checked first because it is the only one
+    that cannot be guessed: the invitation email carries a token naming the
+    order. Falling back to the email address covers someone who reviews
+    without the invitation, and is deliberately narrow — only a shipped or
+    completed order counts, because "verified purchase" has to mean the person
+    actually received the rug.
+
+    A mismatch is not an error. Plenty of honest reviewers order by phone or
+    give a different address; they simply do not get the badge.
     """
+    if token:
+        try:
+            from order.review_request import products_in, read_token
+
+            order = read_token(token)
+            # The token names an order, not a product — so it still has to be
+            # the right product. Otherwise one invitation would verify a
+            # review of anything in the catalogue.
+            if order and any(p.pk == review.product_id for p in products_in(order)):
+                type(review).objects.filter(pk=review.pk).update(
+                    verified_purchase=True
+                )
+                return
+        except Exception:
+            logger.info("review token check failed for %s", review.pk)
+
     email = (review.email or "").strip().lower()
     if not email:
         return
