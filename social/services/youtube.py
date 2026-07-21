@@ -165,6 +165,18 @@ def upload_video(
     if not video_id:
         raise YouTubePublishError(f"YouTube returned no video id: {uploaded.text[:300]}")
 
+    # The upload response names the channel it landed on. That is how we learn
+    # it at all: the youtube.upload scope does not grant channels.list, and
+    # widening the request just to read a title would complicate the audit for
+    # nothing. Recorded once, so a misdirected authorization becomes visible.
+    channel_id = str((data.get("snippet") or {}).get("channelId") or "")
+    if channel_id:
+        stored = YouTubeToken.load()
+        if stored.channel_id != channel_id:
+            stored.channel_id = channel_id[:128]
+            stored.save(update_fields=["channel_id", "updated_at"])
+            logger.info("YouTube: uploads are going to channel %s", channel_id)
+
     applied = str((data.get("status") or {}).get("privacyStatus") or "")
     if applied and applied != privacy:
         # Expected before the compliance audit clears. Logged rather than
@@ -180,6 +192,7 @@ def upload_video(
         "external_url": f"https://www.youtube.com/shorts/{video_id}",
         "privacy": applied or privacy,
         "forced_private": bool(applied and applied != privacy),
+        "channel_id": channel_id,
     }
 
 

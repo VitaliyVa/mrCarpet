@@ -218,6 +218,24 @@ class UploadTests(TestCase):
         with self.assertRaises(youtube.YouTubePublishError):
             self._upload(finish_payload={"error": "quota"}, finish_status=403)
 
+    def test_channel_is_learned_from_the_upload_response(self):
+        """
+        youtube.upload does not grant channels.list, so the upload response is
+        the only place the channel identifies itself — and knowing it is what
+        makes a misdirected authorization visible.
+        """
+        result, _, _ = self._upload(
+            finish_payload={
+                "id": "vid123",
+                "snippet": {"channelId": "UCYssNNgxKFKEPSXRo8SDoLg"},
+                "status": {"privacyStatus": "private"},
+            }
+        )
+        self.assertEqual(result["channel_id"], "UCYssNNgxKFKEPSXRo8SDoLg")
+        self.assertEqual(
+            YouTubeToken.load().channel_id, "UCYssNNgxKFKEPSXRo8SDoLg"
+        )
+
     def test_unauthorized_account_is_refused(self):
         YouTubeToken.objects.all().delete()
         with self.assertRaises(youtube.YouTubeConfigError):
