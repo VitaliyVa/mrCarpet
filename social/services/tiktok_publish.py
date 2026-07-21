@@ -343,16 +343,39 @@ def _summary_text(
     failed: list[str],
     skipped: list[str],
 ) -> str:
-    head = "✅ Відео: опубліковано" if not failed else "⚠️ Відео: опубліковано частково"
-    lines = [
-        head,
-        f"Товар: {pick.product}",
-        f"{script['price']} · {script['size']}",
-        "",
-    ]
-    lines += [f"• {item}" for item in published]
-    lines += [f"✖ {item}" for item in failed]
-    lines += [f"– {item}" for item in skipped]
+    """
+    One message describing the finished rollout, built from the delivery rows.
+
+    Deliberately not from what this particular run did: with the stagger, the
+    last tick only publishes one network and would report the other four as
+    "already done" — true, but it reads as though a single network went out.
+    The rows know the whole story, including when each landed.
+    """
+    from social.services.video_networks import all_adapters
+
+    labels = {a.key: a.label for a in all_adapters()}
+    rows = list(pick.deliveries.all())
+    ok = [r for r in rows if r.is_success]
+    bad = [r for r in rows if r.status == VideoDelivery.Status.FAILED]
+    off = [r for r in rows if r.status == VideoDelivery.Status.SKIPPED]
+
+    if bad:
+        head = f"⚠️ Відео: {len(ok)} з {len(ok) + len(bad)} мереж"
+    else:
+        head = f"✅ Відео: опубліковано ({len(ok)})"
+
+    lines = [head, f"Товар: {pick.product}", f"{script['price']} · {script['size']}", ""]
+
+    for row in sorted(ok, key=lambda r: r.published_at or timezone.now()):
+        when = timezone.localtime(row.published_at).strftime("%H:%M") if row.published_at else "—"
+        mark = "🔒" if row.status == VideoDelivery.Status.PUBLISHED_PRIVATE else ""
+        link = f"\n   {row.external_url}" if row.external_url else ""
+        lines.append(f"• {when} {labels.get(row.platform, row.platform)} {mark}".rstrip() + link)
+
+    for row in bad:
+        lines.append(f"✖ {labels.get(row.platform, row.platform)} — {(row.error or '')[:120]}")
+    for row in off:
+        lines.append(f"– {labels.get(row.platform, row.platform)} — {(row.error or '')[:60]}")
 
     status = tiktok_budget.budget_status()
     lines += ["", f"Витрачено за місяць: ${status['spent_usd']} з ${status['ceiling_usd']}"]

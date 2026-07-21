@@ -198,8 +198,8 @@ class StaggerTests(TestCase):
              patch.object(tiktok_publish, "_notify"):
             return publish_pick(self.pick, **kwargs)
 
-    def _delayed(self, key, minutes):
-        adapter = FakeAdapter(key)
+    def _delayed(self, key, minutes, label=""):
+        adapter = FakeAdapter(key, label=label or key.title())
         adapter.delay_minutes = minutes
         return adapter
 
@@ -245,6 +245,43 @@ class StaggerTests(TestCase):
         later = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
         self._run([self._delayed(VideoDelivery.Platform.TIKTOK, 0), later], force=True)
         self.assertEqual(len(later.calls), 1)
+
+    def test_report_waits_for_the_last_network(self):
+        """One message at the end, not a ticker of five."""
+        with patch.object(video_networks, "REGISTRY", [
+            self._delayed(VideoDelivery.Platform.TIKTOK, 0),
+            self._delayed(VideoDelivery.Platform.INSTAGRAM, 20),
+        ]), \
+             patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
+             patch.object(tiktok_publish, "_notify") as notify:
+            publish_pick(self.pick)
+        notify.assert_not_called()
+
+    def test_final_report_lists_every_network_not_just_the_last(self):
+        """
+        Built from the delivery rows, not from what the last tick did —
+        otherwise four of five would read as "already done".
+        """
+        first = self._delayed(VideoDelivery.Platform.TIKTOK, 0, label="TikTok")
+        later = self._delayed(
+            VideoDelivery.Platform.INSTAGRAM, 20, label="Instagram Reels"
+        )
+        self._run([first, later])
+
+        row = self.pick.deliveries.get(platform="tiktok")
+        row.published_at = timezone.now() - timedelta(minutes=30)
+        row.save(update_fields=["published_at"])
+
+        with patch.object(video_networks, "REGISTRY", [first, later]), \
+             patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
+             patch.object(tiktok_publish, "_notify") as notify:
+            publish_pick(self.pick)
+
+        text = notify.call_args.args[0]
+        self.assertIn("TikTok", text)
+        self.assertIn("Instagram Reels", text)
+        self.assertNotIn("вже було", text)
+        self.assertIn("опубліковано (2)", text)
 
     def test_registry_delays_are_spread_out(self):
         seen = [
