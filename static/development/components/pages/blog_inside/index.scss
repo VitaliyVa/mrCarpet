@@ -85,9 +85,30 @@
         margin-top: 32px;
       }
 
+      // Every tag the sanitizer can pass through has a rule, including the
+      // two the prompt forbids. The prompt is an instruction; the sanitizer
+      // is the actual boundary, and anything that crosses it unstyled falls
+      // back to the global sheet — which is how the article looked like
+      // three documents in the first place.
+      h3 {
+        margin: 28px 0 10px;
+        color: #2f2a26;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
       strong {
         color: #2f2a26;
         font-weight: 700;
+      }
+
+      em {
+        font-style: italic;
+      }
+
+      br {
+        line-height: inherit;
       }
 
       ul,

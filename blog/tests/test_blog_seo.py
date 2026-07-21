@@ -401,3 +401,63 @@ class CatalogRealityTests(TestCase):
         prompt = gen.call_args[0][0]
         self.assertIn("Поліпропілен", prompt)
         self.assertIn("Не радь шерсть", prompt)
+
+
+class ArticleTypographyTests(TestCase):
+    """
+    Every tag that can reach the page has a style.
+
+    The article body used to define only <p>, so headings, lists and links
+    fell back to the global sheet and one article read as three documents
+    stacked together. The sanitizer — not the prompt — is the real boundary:
+    it permits h3 and em even though the prompt forbids them, and anything
+    crossing it unstyled brings the problem back.
+    """
+
+    CSS = "static/source/pages/blog_inside/index.css"
+
+    def _css(self):
+        from pathlib import Path
+
+        return Path(self.CSS).read_text(encoding="utf-8")
+
+    def test_every_allowed_tag_is_styled(self):
+        from blog.services.html_sanitize import ALLOWED_TAGS
+
+        css = self._css()
+        unstyled = [
+            tag
+            for tag in sorted(ALLOWED_TAGS)
+            if f".blog-inside__block-text {tag}{{" not in css
+            and f".blog-inside__block-text {tag}," not in css
+            and f",.blog-inside__block-text {tag}{{" not in css
+        ]
+        self.assertEqual(
+            unstyled,
+            [],
+            f"теги без стилю: {unstyled} — впадуть на глобальні правила",
+        )
+
+    def test_body_is_sized_for_reading(self):
+        """20px at 130% put the lines close enough to blur over a screenful."""
+        css = self._css()
+        self.assertIn(
+            ".blog-inside__block-text{color:#4a443f;font-size:18px;line-height:1.75}",
+            css,
+        )
+
+    def test_compiled_css_matches_the_source(self):
+        """
+        webpack does not run on deploy, so editing only the SCSS ships
+        nothing. This catches the half-applied change.
+        """
+        from pathlib import Path
+
+        scss = Path(
+            "static/development/components/pages/blog_inside/index.scss"
+        ).read_text(encoding="utf-8")
+        css = self._css()
+        for marker in ("counter-reset: step", "border-left: 3px solid #a46c46"):
+            self.assertIn(marker, scss)
+        for marker in ("counter-reset:step", "border-left:3px solid #a46c46"):
+            self.assertIn(marker, css)
