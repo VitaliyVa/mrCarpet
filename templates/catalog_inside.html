@@ -1,19 +1,19 @@
 {% extends '_base.html' %}
 {% load catalog_filters %}
-{% block title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock title %}
+{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"
-  content="{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet. Доставка по Україні.{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}"
+  content="{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}"
 />
 {% if categorie and categorie.meta_keys %}<meta name="keywords" content="{{ categorie.meta_keys }}" />{% endif %}
 {% endblock meta %}
 {% block canonical %}{% if categorie %}https://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}https://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
-{% block og_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
-{% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet. Доставка по Україні.{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
+{% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
+{% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
 {% block og_url %}{% if categorie %}https://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}https://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock og_url %}
-{% block twitter_title %}{% if categorie %}{{ categorie.meta_title|default:categorie.title }}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
-{% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}Купити {{ categorie.title }} в інтернет-магазині mr.Carpet.{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
+{% block twitter_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
 {% block structured_data %}
 {{ block.super }}
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
@@ -36,7 +36,7 @@
         <div class="catalog_inside-top">
             <div class="title">
                 <h1 class="catalog_inside__title">
-                    {% if categorie %}{{ categorie.title }}{% else %}{{ collection_title }}{% endif %}
+                    {% if categorie %}{{ categorie.title|category_phrase }}{% else %}{{ collection_title }}{% endif %}
                 </h1>
                 <span>{% if categorie %}{{ categorie.products.all|length }}{% else %}{{ products_count }}{% endif %} товари</span>
             </div>
