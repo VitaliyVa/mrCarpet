@@ -327,6 +327,10 @@ class SocialSettingsAdmin(admin.ModelAdmin):
                 "fields": (
                     "tiktok_auto_enabled",
                     "tiktok_audit_passed",
+                    "video_instagram_enabled",
+                    "video_facebook_enabled",
+                    "video_threads_enabled",
+                    "video_youtube_enabled",
                 ),
                 "description": (
                     "Один ролик на день розходиться по всіх увімкнених мережах. "

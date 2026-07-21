@@ -318,6 +318,194 @@ class VideoTopicTests(TestCase):
         self.assertTrue(notify.call_args.kwargs["video"])
 
 
+class CaptionTests(TestCase):
+    """
+    Every network gets the price rule applied to how much of the caption it
+    actually shows before the video is watched.
+    """
+
+    def setUp(self):
+        self.pick = _pick()
+        self.script = None
+
+    def _caption(self, platform):
+        from social.services.video_caption import build_caption
+
+        return build_caption(self.pick, platform=platform)
+
+    def test_feed_captions_hide_the_price_up_front(self):
+        for platform in (
+            VideoDelivery.Platform.TIKTOK,
+            VideoDelivery.Platform.INSTAGRAM,
+            VideoDelivery.Platform.FACEBOOK,
+        ):
+            with self.subTest(platform=platform):
+                head = " ".join(self._caption(platform).splitlines()[:2])
+                self.assertNotIn("2300", head)
+                self.assertNotIn("грн", head)
+
+    def test_feed_captions_still_list_the_sizes_further_down(self):
+        caption = self._caption(VideoDelivery.Platform.INSTAGRAM)
+        self.assertIn("2300 грн", caption)
+        self.assertIn("#килими", caption)
+
+    def test_threads_caption_omits_the_price_entirely(self):
+        """
+        Threads shows the whole post at once — there is no "further down" to
+        hide a price in, so the size list is dropped.
+        """
+        caption = self._caption(VideoDelivery.Platform.THREADS)
+        self.assertNotIn("2300", caption)
+        self.assertNotIn("грн", caption)
+        self.assertIn("Вгадали?", caption)
+
+    def test_threads_caption_fits_the_limit(self):
+        from social.services.video_caption import CAPTION_LIMITS
+
+        caption = self._caption(VideoDelivery.Platform.THREADS)
+        self.assertLessEqual(
+            len(caption), CAPTION_LIMITS[VideoDelivery.Platform.THREADS]
+        )
+
+    def test_threads_keeps_hashtags_few(self):
+        caption = self._caption(VideoDelivery.Platform.THREADS)
+        self.assertLessEqual(caption.count("#"), 3)
+
+    def test_facebook_caption_carries_a_clickable_link(self):
+        """The one network where a caption link works — do not waste it."""
+        caption = self._caption(VideoDelivery.Platform.FACEBOOK)
+        self.assertIn("http", caption)
+
+    def test_tiktok_and_instagram_captions_have_no_url(self):
+        for platform in (
+            VideoDelivery.Platform.TIKTOK,
+            VideoDelivery.Platform.INSTAGRAM,
+        ):
+            with self.subTest(platform=platform):
+                self.assertNotIn("https://", self._caption(platform))
+
+    def test_youtube_title_is_the_hook_without_a_price(self):
+        from social.services.video_caption import (
+            YOUTUBE_TITLE_LIMIT,
+            build_youtube_title,
+        )
+
+        title = build_youtube_title(self.pick)
+        self.assertNotIn("2300", title)
+        self.assertLessEqual(len(title), YOUTUBE_TITLE_LIMIT)
+        self.assertIn("килим", title.lower())
+
+
+class CommentRoutingTests(TestCase):
+    """
+    Comments are routed by the post, not by the platform.
+
+    Instagram carries both the daily Reels and the product photo carousels,
+    so the platform alone cannot say which topic a comment belongs in.
+    """
+
+    def setUp(self):
+        self.pick = _pick()
+
+    def _delivery(self, platform, *, external_id="", post_id="", status=None):
+        return VideoDelivery.objects.create(
+            pick=self.pick,
+            platform=platform,
+            status=status or VideoDelivery.Status.PUBLISHED,
+            external_id=external_id,
+            post_id=post_id,
+        )
+
+    def test_known_reel_is_recognised(self):
+        self._delivery(VideoDelivery.Platform.INSTAGRAM, external_id="ig-media-1")
+        self.assertTrue(video_networks.is_video_post("ig-media-1"))
+
+    def test_facebook_is_matched_on_the_post_id_not_the_video_id(self):
+        """FB publishes against a video_id but reports comments on a post_id."""
+        self._delivery(
+            VideoDelivery.Platform.FACEBOOK,
+            external_id="video-99",
+            post_id="page_777",
+        )
+        self.assertTrue(video_networks.is_video_post("page_777"))
+        self.assertTrue(video_networks.is_video_post("video-99"))
+
+    def test_unrelated_post_is_not_a_video(self):
+        self._delivery(VideoDelivery.Platform.INSTAGRAM, external_id="ig-media-1")
+        self.assertFalse(video_networks.is_video_post("some-carousel"))
+
+    def test_blank_id_is_not_a_video(self):
+        self.assertFalse(video_networks.is_video_post(""))
+        self.assertFalse(video_networks.is_video_post(None))
+
+    def test_failed_delivery_does_not_count(self):
+        self._delivery(
+            VideoDelivery.Platform.INSTAGRAM,
+            external_id="ig-media-1",
+            status=VideoDelivery.Status.FAILED,
+        )
+        self.assertFalse(video_networks.is_video_post("ig-media-1"))
+
+    def test_instagram_webhook_on_a_reel_routes_to_the_video_topic(self):
+        from social.services import meta_comments
+
+        self._delivery(VideoDelivery.Platform.INSTAGRAM, external_id="ig-media-1")
+        payload = {
+            "object": "instagram",
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "field": "comments",
+                            "value": {
+                                "id": "c1",
+                                "text": "2000?",
+                                "from": {"id": "u1", "username": "buyer"},
+                                "media": {"id": "ig-media-1"},
+                            },
+                        }
+                    ]
+                }
+            ],
+        }
+        with patch.object(meta_comments, "staff_comments_configured", return_value=True), \
+             patch.object(meta_comments, "_instagram_media_permalink", return_value=""), \
+             patch.object(meta_comments, "notify_staff_comment",
+                          return_value={"ok": True}) as notify:
+            meta_comments.handle_meta_webhook(payload)
+
+        self.assertTrue(notify.call_args.kwargs["video"])
+
+    def test_instagram_webhook_on_a_product_post_stays_in_the_comments_topic(self):
+        from social.services import meta_comments
+
+        payload = {
+            "object": "instagram",
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "field": "comments",
+                            "value": {
+                                "id": "c2",
+                                "text": "скільки коштує?",
+                                "from": {"id": "u1", "username": "buyer"},
+                                "media": {"id": "carousel-7"},
+                            },
+                        }
+                    ]
+                }
+            ],
+        }
+        with patch.object(meta_comments, "staff_comments_configured", return_value=True), \
+             patch.object(meta_comments, "_instagram_media_permalink", return_value=""), \
+             patch.object(meta_comments, "notify_staff_comment",
+                          return_value={"ok": True}) as notify:
+            meta_comments.handle_meta_webhook(payload)
+
+        self.assertFalse(notify.call_args.kwargs["video"])
+
+
 class CleanupTests(TestCase):
     """
     Files are removed on age, not on the first network's confirmation.

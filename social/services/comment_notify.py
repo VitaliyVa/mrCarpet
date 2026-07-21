@@ -54,6 +54,9 @@ class InboundComment:
     # Для HITL-відповіді: IG/FB comment id у Graph; TG — message_id у discussion
     external_id: str = ""
     raw_message_id: str = ""
+    # Пост, під яким залишили коментар. Вирішує, у який топік слати алерт:
+    # Instagram несе і щоденні Reels, і фото-каруселі товарів.
+    parent_post_id: str = ""
 
 
 def _staff_target(*, video: bool = False) -> tuple[str, str]:

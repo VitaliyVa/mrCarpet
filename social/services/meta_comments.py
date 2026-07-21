@@ -106,6 +106,7 @@ def inbound_from_facebook_change(value: dict) -> InboundComment | None:
         ),
         created_at=created_at,
         external_id=comment_id,
+        parent_post_id=post_id,
     )
 
 
@@ -132,6 +133,7 @@ def inbound_from_instagram_change(value: dict) -> InboundComment | None:
         author_id=str(from_obj.get("id") or ""),
         post_url=post_url,
         external_id=str(value.get("id") or ""),
+        parent_post_id=media_id,
     )
 
 
@@ -175,7 +177,15 @@ def handle_meta_webhook(payload: dict) -> int:
             if not staff_comments_configured():
                 logger.warning("meta comment skip: staff chat not configured")
                 continue
-            result = notify_staff_comment(comment)
+            # Route by the post, not by the platform: Instagram carries both
+            # the daily Reels and the product photo carousels, so the platform
+            # alone cannot say which topic a comment belongs in. An unknown
+            # post falls back to the regular comments topic.
+            from social.services.video_networks import is_video_post
+
+            result = notify_staff_comment(
+                comment, video=is_video_post(comment.parent_post_id)
+            )
             if result.get("ok"):
                 sent += 1
             else:

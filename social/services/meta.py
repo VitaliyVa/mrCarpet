@@ -144,6 +144,89 @@ def publish_facebook_page_video(*, video_url: str, caption: str, title: str = ""
     }
 
 
+RUPLOAD_URL = "https://rupload.facebook.com/video-upload"
+
+
+def publish_facebook_reel(
+    *, video_url: str, caption: str, title: str = ""
+) -> dict[str, str]:
+    """
+    Post a real Reel to the Page, in three phases.
+
+    Preferred over publish_facebook_page_video for the daily vertical video:
+    `/{page}/videos` with `file_url` still works but is not in the current
+    docs, and it produces a plain video post rather than a Reel.
+
+    The middle phase looks like a binary upload but is not: passing the file
+    location as a `file_url` *header* makes Meta fetch it themselves, which is
+    what lets us keep serving the montage from our own domain.
+
+    That fetch arrives as `facebookexternalhit/1.1` — any User-Agent filtering
+    in front of the media directory breaks this with a distinctly unhelpful
+    error, so leave it reachable.
+    """
+    page = _page_id()
+    token = _token()
+    if not page:
+        raise MetaConfigError("META_PAGE_ID empty")
+    if not token:
+        raise MetaConfigError("META_PAGE_ACCESS_TOKEN empty")
+    if not video_url.startswith("https://"):
+        raise MetaPublishError("video_url must be public HTTPS")
+
+    started = _graph("POST", f"{page}/video_reels", data={"upload_phase": "start"})
+    video_id = str(started.get("video_id") or "")
+    if not video_id:
+        raise MetaPublishError(f"No FB reel video_id: {started}")
+
+    try:
+        resp = requests.post(
+            f"{RUPLOAD_URL}/{_graph_version()}/{video_id}",
+            headers={
+                "Authorization": f"OAuth {token}",
+                "file_url": video_url,
+            },
+            timeout=HTTP_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise MetaPublishError(f"FB reel upload HTTP error: {exc}") from exc
+
+    try:
+        uploaded = resp.json() if resp.content else {}
+    except ValueError:
+        uploaded = {"raw": (resp.text or "")[:500]}
+    if resp.status_code >= 400 or uploaded.get("error"):
+        raise MetaPublishError(f"FB reel upload {resp.status_code}: {uploaded}")
+
+    body = {
+        "upload_phase": "finish",
+        "video_id": video_id,
+        "video_state": "PUBLISHED",
+        "description": caption or "",
+    }
+    if title:
+        body["title"] = title[:255]
+    _graph("POST", f"{page}/video_reels", data=body)
+
+    # Comments are reported against the post id, not the video id, so resolve
+    # it now while we know what we just published. Best-effort: failing to
+    # learn it costs comment routing, not the post.
+    post_id = ""
+    try:
+        post_id = str(
+            (_graph("GET", video_id, params={"fields": "post_id"}) or {}).get("post_id")
+            or ""
+        )
+    except Exception:
+        logger.info("FB reel post_id lookup failed video_id=%s", video_id)
+
+    return {
+        "external_id": video_id,
+        "post_id": post_id,
+        "external_url": f"https://www.facebook.com/reel/{video_id}/",
+    }
+
+
 def publish_instagram_photos(*, image_urls: list[str], caption: str) -> dict[str, str]:
     """Single IMAGE or CAROUSEL (2–10) via Graph Content Publishing."""
     ig = _ig_user_id()

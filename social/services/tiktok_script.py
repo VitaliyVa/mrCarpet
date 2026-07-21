@@ -124,35 +124,13 @@ CAPTION_LIMIT = 2200
 
 def build_caption(pick, script: dict | None = None) -> str:
     """
-    Caption for the post itself, distinct from the copy burned into the video.
+    TikTok caption. Kept here as the name the rest of the code already knows.
 
-    Deliberately mirrors the other networks' product post rather than leading
-    with the price: TikTok shows the opening lines under the video before it is
-    watched, so a price on line two answers the question the video just asked.
-    The full size list still appears further down, where it informs rather than
-    spoils.
-
-    No URL: TikTok captions are not clickable, so buyers are sent to the bio.
+    The rendering itself lives in `video_caption`, which holds one version per
+    network — imported lazily because that module reads this one's hashtags
+    and CTA.
     """
-    from social.services.post_content import build_product_content, render_plain
+    from social.models import VideoDelivery
+    from social.services.video_caption import build_caption as render
 
-    product = pick.product
-    script = script or build_script(pick)
-
-    tags = list(BASE_HASHTAGS)
-    for category in product.categories.all():
-        tag = CATEGORY_HASHTAGS.get((category.title or "").strip())
-        if tag and tag not in tags:
-            tags.append(tag)
-
-    hashtags = " ".join(f"#{tag}" for tag in tags)
-    tail = "\n".join([CTA, "🛒 Каталог — лінк у профілі", "", hashtags])
-
-    content = build_product_content(product)
-    body = render_plain(
-        content,
-        max_len=max(CAPTION_LIMIT - len(tail) - 2, 200),
-        with_url=False,
-        allow_friendly_outro=False,
-    )
-    return f"{body}\n\n{tail}"[:CAPTION_LIMIT]
+    return render(pick, script, platform=VideoDelivery.Platform.TIKTOK)

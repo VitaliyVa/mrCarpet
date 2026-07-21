@@ -240,6 +240,7 @@ def publish_pick(
         row.mark(
             status,
             external_id=str(result.get("external_id") or ""),
+            post_id=str(result.get("post_id") or ""),
             external_url=str(result.get("external_url") or ""),
         )
         results[adapter.key] = dict(result)

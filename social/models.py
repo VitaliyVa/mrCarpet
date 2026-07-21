@@ -37,6 +37,34 @@ class SocialSettings(models.Model):
         default=False,
         help_text="Майстер-рубильник щоденної авто-генерації відео для TikTok.",
     )
+    # Per-network switches for the daily video. TikTok keeps its historical
+    # name (tiktok_auto_enabled) because it doubles as the master switch for
+    # the generation step, which runs whether or not anything is published.
+    video_instagram_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Instagram Reels",
+        help_text="Постити щоденний ролик у Reels. Потребує META_IG_USER_ID.",
+    )
+    video_facebook_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Facebook",
+        help_text="Постити щоденний ролик на сторінку. Потребує META_PAGE_ID.",
+    )
+    video_threads_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Threads",
+        help_text="Потребує окремого Threads-токена (не Meta page token).",
+    )
+    video_youtube_enabled = models.BooleanField(
+        default=False,
+        verbose_name="YouTube Shorts",
+        help_text=(
+            "Не вмикати до проходження YouTube compliance audit: без нього "
+            "API мовчки робить відео приватним, і публічним його вже не "
+            "зробити ніколи."
+        ),
+    )
+
     tiktok_video_model = models.CharField(
         max_length=128,
         default="prunaai/p-video",
@@ -451,6 +479,16 @@ class VideoDelivery(AbstractCreatedUpdated):
     # Indexed because every inbound comment is matched against it to decide
     # which Telegram topic the alert belongs in.
     external_id = models.CharField(max_length=190, blank=True, default="", db_index=True)
+    # Facebook hands back a video_id on publish but reports comments against a
+    # post_id, and the two are different strings. Without this the daily Reel's
+    # comments would never be recognised as belonging to a video.
+    post_id = models.CharField(
+        max_length=190,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text="Ідентифікатор поста, коли він відрізняється від external_id (Facebook).",
+    )
     external_url = models.URLField(blank=True, default="")
     error = models.TextField(blank=True, default="")
     attempts = models.PositiveSmallIntegerField(default=0)
@@ -481,11 +519,14 @@ class VideoDelivery(AbstractCreatedUpdated):
         error: str = "",
         external_id: str = "",
         external_url: str = "",
+        post_id: str = "",
     ) -> "VideoDelivery":
         self.status = status
         self.error = (error or "")[:2000]
         if external_id:
             self.external_id = external_id[:190]
+        if post_id:
+            self.post_id = post_id[:190]
         if external_url:
             self.external_url = external_url
         # Counted on the way in, not on the way out: a call that times out
@@ -499,6 +540,7 @@ class VideoDelivery(AbstractCreatedUpdated):
                 "status",
                 "error",
                 "external_id",
+                "post_id",
                 "external_url",
                 "attempts",
                 "published_at",

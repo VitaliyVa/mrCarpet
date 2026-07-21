@@ -113,10 +113,80 @@ class TikTokAdapter:
         )
 
 
+class InstagramReelsAdapter:
+    key = VideoDelivery.Platform.INSTAGRAM
+    label = "Instagram Reels"
+    needs_local_file = False
+
+    def is_configured(self) -> bool:
+        from social.services import meta
+
+        return meta.meta_configured(need_ig=True)
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        return bool(social.video_instagram_enabled)
+
+    def caption(self, pick, script: dict) -> str:
+        from social.services.video_caption import build_caption
+
+        return build_caption(pick, script, platform=self.key)
+
+    def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
+        from social.services import meta
+
+        result = meta.publish_instagram_reel(video_url=video_url, caption=caption)
+        return PublishResult(
+            external_id=result.get("external_id", ""),
+            external_url=result.get("external_url", ""),
+            private=False,
+        )
+
+
+class FacebookReelsAdapter:
+    key = VideoDelivery.Platform.FACEBOOK
+    label = "Facebook Reels"
+    needs_local_file = False
+
+    def is_configured(self) -> bool:
+        from social.services import meta
+
+        return meta.meta_configured(need_fb=True)
+
+    def is_enabled(self, social: SocialSettings) -> bool:
+        return bool(social.video_facebook_enabled)
+
+    def caption(self, pick, script: dict) -> str:
+        from social.services.video_caption import build_caption
+
+        return build_caption(pick, script, platform=self.key)
+
+    def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
+        from social.services import meta
+
+        # A real Reel, not a plain video post: /{page}/videos with file_url
+        # still works but is undocumented and gets ordinary video distribution.
+        #
+        # The title shows above the video in the feed, so it carries the hook
+        # rather than the product name — and never the price.
+        result = meta.publish_facebook_reel(
+            video_url=video_url,
+            caption=caption,
+            title=script.get("hook", "")[:255],
+        )
+        return PublishResult(
+            external_id=result.get("external_id", ""),
+            post_id=result.get("post_id", ""),
+            external_url=result.get("external_url", ""),
+            private=False,
+        )
+
+
 #: Order matters — it is the order posts go out in, and the order they are
 #: reported in. TikTok stays first: it is the network the format was built for.
 REGISTRY: list[NetworkAdapter] = [
     TikTokAdapter(),
+    InstagramReelsAdapter(),
+    FacebookReelsAdapter(),
 ]
 
 
@@ -154,6 +224,28 @@ def plan_targets(social: SocialSettings | None = None) -> list[tuple[NetworkAdap
         else:
             targets.append((adapter, VideoDelivery.Status.PENDING))
     return targets
+
+
+def is_video_post(*ids: str) -> bool:
+    """
+    True when any of these ids belongs to a daily video we published.
+
+    Routing inbound comments by *platform* would not work: Instagram carries
+    both the daily Reels and the product photo carousels, so only the post
+    itself says which world a comment came from.
+
+    Several ids are accepted because Facebook publishes against a video_id but
+    reports comments against a post_id.
+    """
+    from django.db.models import Q
+
+    wanted = [str(i).strip() for i in ids if str(i or "").strip()]
+    if not wanted:
+        return False
+    return VideoDelivery.objects.filter(
+        Q(external_id__in=wanted) | Q(post_id__in=wanted),
+        status__in=VideoDelivery.SUCCESS_STATUSES,
+    ).exists()
 
 
 def skip_reason(adapter: NetworkAdapter, social: SocialSettings) -> str:
