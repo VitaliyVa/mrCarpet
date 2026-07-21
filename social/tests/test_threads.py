@@ -144,6 +144,21 @@ class TokenLifecycleTests(TestCase):
         self.assertIn("threads_content_publish", url)
         self.assertIn("state=st4te", url)
 
+    def test_reply_scopes_are_requested_up_front(self):
+        """
+        Adding a scope later costs another human trip through the consent
+        screen, and the format lives or dies on the replies.
+        """
+        self.assertEqual(
+            set(threads_auth.SCOPES),
+            {
+                "threads_basic",
+                "threads_content_publish",
+                "threads_read_replies",
+                "threads_manage_replies",
+            },
+        )
+
 
 class ProductMixin:
     def _pick(self, *, category=""):
@@ -210,6 +225,104 @@ class TopicTagTests(ProductMixin, TestCase):
         caption = build_caption(self._pick(), platform=VideoDelivery.Platform.THREADS)
         self.assertLessEqual(len(caption), limit)
         self.assertLessEqual(len(caption.encode("utf-8")), limit)
+
+
+@override_settings(**CREDS)
+class SignedRequestTests(TestCase):
+    """
+    The deauthorize/deletion callbacks are public URLs that clear credentials,
+    so the signature check is the only thing standing between a stranger and
+    our Threads integration.
+    """
+
+    def _signed(self, payload, secret="th-secret"):
+        import base64
+        import hashlib
+        import hmac
+        import json
+
+        encoded = base64.urlsafe_b64encode(
+            json.dumps(payload).encode("utf-8")
+        ).decode("utf-8").rstrip("=")
+        sig = hmac.new(
+            secret.encode("utf-8"), encoded.encode("utf-8"), hashlib.sha256
+        ).digest()
+        return (
+            base64.urlsafe_b64encode(sig).decode("utf-8").rstrip("=") + "." + encoded
+        )
+
+    def _payload(self, **extra):
+        data = {"algorithm": "HMAC-SHA256", "user_id": "th-user-1"}
+        data.update(extra)
+        return data
+
+    def test_valid_request_clears_the_token(self):
+        _token()
+        resp = self.client.post(
+            "/api/threads/deauthorize/",
+            {"signed_request": self._signed(self._payload())},
+        )
+        self.assertEqual(resp.status_code, 200)
+        stored = ThreadsToken.load()
+        self.assertEqual(stored.access_token, "")
+        self.assertIn("відкликав", stored.last_error)
+
+    def test_forged_signature_is_rejected(self):
+        _token()
+        resp = self.client.post(
+            "/api/threads/deauthorize/",
+            {"signed_request": self._signed(self._payload(), secret="wrong")},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ThreadsToken.load().access_token, "tok-old")
+
+    def test_garbage_is_rejected(self):
+        _token()
+        resp = self.client.post(
+            "/api/threads/deauthorize/", {"signed_request": "not-a-request"}
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ThreadsToken.load().access_token, "tok-old")
+
+    def test_unexpected_algorithm_is_rejected(self):
+        """'alg: none' is the classic way these checks get bypassed."""
+        _token()
+        resp = self.client.post(
+            "/api/threads/deauthorize/",
+            {"signed_request": self._signed(self._payload(algorithm="none"))},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(ThreadsToken.load().access_token, "tok-old")
+
+    def test_callback_for_another_account_is_ignored(self):
+        _token()
+        resp = self.client.post(
+            "/api/threads/deauthorize/",
+            {"signed_request": self._signed(self._payload(user_id="someone-else"))},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(ThreadsToken.load().access_token, "tok-old")
+
+    def test_data_deletion_returns_url_and_code(self):
+        _token()
+        resp = self.client.post(
+            "/api/threads/data-deletion/",
+            {"signed_request": self._signed(self._payload())},
+        )
+        self.assertEqual(resp.status_code, 200)
+        body = resp.json()
+        self.assertTrue(body["url"].startswith("https://"))
+        self.assertTrue(body["confirmation_code"])
+        self.assertEqual(ThreadsToken.load().access_token, "")
+
+    def test_get_is_not_allowed(self):
+        resp = self.client.get("/api/threads/deauthorize/")
+        self.assertEqual(resp.status_code, 405)
+
+    def test_status_page_answers(self):
+        resp = self.client.get("/api/threads/data-deletion/status/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["status"], "completed")
 
 
 class PublishTests(ProductMixin, TestCase):

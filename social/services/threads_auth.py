@@ -40,10 +40,18 @@ REFRESH_URL = f"{GRAPH}/refresh_access_token"
 HTTP_TIMEOUT = 30
 
 # threads_basic is required by every endpoint; threads_content_publish is what
-# lets us post at all. The reply scopes are not requested until the phase that
-# reads comments actually needs them — asking early only widens the consent
-# screen for no benefit.
-SCOPES = ("threads_basic", "threads_content_publish")
+# lets us post at all.
+#
+# The reply scopes are requested now even though nothing reads comments yet:
+# adding a scope later means dragging a human back through the consent screen
+# in a browser, and the whole point of the format is that people answer the
+# question in the replies. Cheaper to ask once.
+SCOPES = (
+    "threads_basic",
+    "threads_content_publish",
+    "threads_read_replies",
+    "threads_manage_replies",
+)
 
 
 class ThreadsAuthError(RuntimeError):
