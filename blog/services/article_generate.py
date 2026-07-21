@@ -33,7 +33,11 @@ IMAGE_ASPECT = "3:2"
 PREDICTION_TIMEOUT_SEC = 120
 POLL_INTERVAL_SEC = 2
 TOPIC_MIN_LEN = 3
-TOPIC_MAX_LEN = 300
+# 300 was sized for a human typing a title into the admin box. The weekly
+# generator sends the title plus a brief plus the category to link to, and
+# that brief is what makes the article specific instead of generic — cutting
+# it to fit would defeat the point. Still bounded, just not to a text input.
+TOPIC_MAX_LEN = 800
 MIN_BODY_PLAIN_CHARS = 1400  # after strip_tags — forces real article length
 
 SYSTEM_PROMPT_STRUCTURE = """Ти SEO/GEO-редактор блогу українського інтернет-магазину килимів mr.Carpet.
