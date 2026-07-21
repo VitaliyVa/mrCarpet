@@ -147,7 +147,25 @@ def send_for(order) -> bool:
 
     built = build_email(order)
     if not built:
-        logger.info("review request skipped for order %s: no products", order.pk)
+        # The order's cart has no rows, so there is nothing to link to. Marked
+        # anyway: left unmarked it would come due again every single day and
+        # log into the void. Staff are told once, because an order whose
+        # contents cannot be found is worth a human look — the only real order
+        # on record when this was written had exactly this shape, and whether
+        # that is a data artefact or a live bug is not yet known.
+        type(order).objects.filter(pk=order.pk).update(
+            review_request_sent_at=timezone.now()
+        )
+        logger.warning("review request skipped for order %s: cart is empty", order.pk)
+        try:
+            from social.services.comment_notify import notify_staff_text
+
+            notify_staff_text(
+                f"⚠️ Замовлення №{order.order_number} — не вдалось зібрати склад "
+                f"для листа про відгук: кошик порожній. Лист не пішов."
+            )
+        except Exception:
+            pass
         return False
 
     type(order).objects.filter(pk=order.pk).update(

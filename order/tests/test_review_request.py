@@ -158,6 +158,16 @@ class EmailTests(OrderFixtureMixin, TestCase):
         order.cart.cart_products.all().delete()
         self.assertIsNone(build_email(order))
 
+    def test_an_order_with_no_items_is_not_retried_forever(self):
+        """Left unmarked it would come due again every day and log into the
+        void; staff get told once instead."""
+        order = self._order()
+        order.cart.cart_products.all().delete()
+        self.assertFalse(send_for(order))
+        order.refresh_from_db()
+        self.assertIsNotNone(order.review_request_sent_at)
+        self.assertNotIn(order, list(due_orders()))
+
     def test_products_in_deduplicates(self):
         order = self._order()
         attr = order.cart.cart_products.first().product_attr
