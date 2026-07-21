@@ -309,6 +309,10 @@ YOUTUBE_CLIENT_SECRET = config("YOUTUBE_CLIENT_SECRET", default="")
 YOUTUBE_REDIRECT_URI = config(
     "YOUTUBE_REDIRECT_URI", default="https://mrcarpet24.com/api/youtube/callback/"
 )
+# Reading comments needs youtube.readonly, which our OAuth grant
+# deliberately does not carry. Comments on a public video are public
+# data, so a plain API key reads them without a second consent screen.
+YOUTUBE_API_KEY = config("YOUTUBE_API_KEY", default="")
 SOCIAL_AI_I2V_MODEL = config(
     "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
 )

@@ -25,8 +25,14 @@ PUBLISH_HOUR = 18
 COOLDOWN_SEC = 90
 
 
-def next_run(now: datetime | None = None) -> tuple[datetime, str]:
-    """Return the next scheduled moment and which step it is."""
+def next_daily_slot(now: datetime | None = None) -> tuple[datetime, str]:
+    """
+    The next of the two daily slots, crossing the day boundary when needed.
+
+    Kept separate from next_run so the day-boundary logic stays testable on
+    its own — the hourly poll would otherwise win almost every comparison and
+    hide it.
+    """
     now = (now or datetime.now(KYIV)).astimezone(KYIV)
     candidates = []
     for day_offset in (0, 1):
@@ -36,6 +42,30 @@ def next_run(now: datetime | None = None) -> tuple[datetime, str]:
             if moment > now:
                 candidates.append((moment, action))
     return min(candidates, key=lambda pair: pair[0])
+
+
+def next_run(now: datetime | None = None) -> tuple[datetime, str]:
+    """
+    Return the next scheduled moment and which step it is.
+
+    Three kinds of work share one loop: the two daily slots and an hourly
+    comment poll. YouTube has no webhooks for comments, so the only way to
+    see them is to ask — the other networks push and need nothing here.
+
+    A tie goes to the daily slot: at 04:00 generating the video matters more
+    than checking for comments, and the poll comes round again in an hour.
+    """
+    now = (now or datetime.now(KYIV)).astimezone(KYIV)
+    daily_moment, daily_action = next_daily_slot(now)
+
+    # Top of the next hour. Cheap: a few API calls against a 10k daily budget.
+    poll_moment = (now + timedelta(hours=1)).replace(
+        minute=0, second=0, microsecond=0
+    )
+
+    if daily_moment <= poll_moment:
+        return daily_moment, daily_action
+    return poll_moment, "poll_comments"
 
 
 def _generate():
@@ -62,13 +92,29 @@ def _publish():
     return f"pick #{pick.pk}: {result}"
 
 
+def _poll_comments():
+    from social.services.youtube_comments import comments_configured, poll_once
+
+    if not comments_configured():
+        return "youtube comments: no API key, skipped"
+    return f"youtube comments: {poll_once()} alert(s)"
+
+
+ACTIONS = {
+    "generate": _generate,
+    "publish": _publish,
+    "poll_comments": _poll_comments,
+}
+
+
 class Command(BaseCommand):
     help = "Daemon: TikTok generate at 04:00 and publish at 18:00 Europe/Kyiv"
 
     def handle(self, *args, **options):
         self.stdout.write(
             f"tiktok-scheduler started (Europe/Kyiv, "
-            f"generate {GENERATE_HOUR:02d}:00, publish {PUBLISH_HOUR:02d}:00)"
+            f"generate {GENERATE_HOUR:02d}:00, publish {PUBLISH_HOUR:02d}:00, "
+            f"comments hourly)"
         )
         while True:
             now = datetime.now(KYIV)
@@ -82,11 +128,13 @@ class Command(BaseCommand):
 
             self.stdout.write(f"running {action}…")
             try:
-                runner = _generate if action == "generate" else _publish
-                self.stdout.write(str(runner()))
+                self.stdout.write(str(ACTIONS[action]()))
             except Exception as exc:
                 # publish_pick already alerts Telegram and marks the pick, so
                 # here it is enough to survive and wait for the next slot.
                 self.stderr.write(f"{action} failed: {exc}")
 
-            time.sleep(COOLDOWN_SEC)
+            # The hourly poll must not eat its own slot: a 90s cooldown after
+            # a poll that ran at :00 is harmless, but sleeping it before
+            # recomputing the next hour would be wasteful on the daily slots.
+            time.sleep(COOLDOWN_SEC if action != "poll_comments" else 5)

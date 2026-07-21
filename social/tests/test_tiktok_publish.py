@@ -265,10 +265,12 @@ class SchedulerTests(TestCase):
         from datetime import datetime
         from zoneinfo import ZoneInfo
 
-        from social.management.commands.tiktok_scheduler import next_run
+        from social.management.commands.tiktok_scheduler import next_daily_slot
 
         now = datetime(2026, 7, 20, hour, minute, tzinfo=ZoneInfo("Europe/Kyiv"))
-        moment, action = next_run(now)
+        # next_daily_slot, not next_run: the hourly comment poll would win
+        # almost every comparison and hide the day-boundary logic under test.
+        moment, action = next_daily_slot(now)
         return moment.hour, action
 
     def test_before_dawn_goes_to_generate(self):
