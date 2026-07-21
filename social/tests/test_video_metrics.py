@@ -75,10 +75,45 @@ class CollectTests(TestCase):
         self.assertEqual(VideoMetric.objects.get(delivery=d).views, 9)
 
     def test_a_silent_network_writes_nothing(self):
-        """Threads answers nothing — that must not become a row of zeroes."""
-        _delivery(platform="threads", external_id="th1")
+        """TikTok answers nothing — that must not become a row of zeroes."""
+        _delivery(platform="tiktok", external_id="tt1")
         self.assertEqual(collect_once(), 0)
         self.assertEqual(VideoMetric.objects.count(), 0)
+
+    def test_threads_replies_are_stored_as_comments(self):
+        """
+        Threads calls them replies, the rest of our code calls them comments.
+        The rename has to happen at the boundary or the digest reads zero.
+        """
+        from social.services import threads
+
+        d = _delivery(platform="threads", external_id="th1")
+        payload = {
+            "data": [
+                {"name": "views", "values": [{"value": 30}]},
+                {"name": "replies", "values": [{"value": 2}]},
+                {"name": "likes", "values": [{"value": 5}]},
+            ]
+        }
+        with patch.object(threads, "_call", return_value=payload):
+            collect_once()
+
+        metric = VideoMetric.objects.get(delivery=d)
+        self.assertEqual(metric.comments, 2)
+        self.assertEqual(metric.views, 30)
+
+    def test_a_threads_metric_with_no_data_is_unknown_not_zero(self):
+        """Insights omit a metric entirely rather than reporting it as zero."""
+        from social.services import threads
+
+        d = _delivery(platform="threads", external_id="th1")
+        payload = {"data": [{"name": "likes", "values": [{"value": 4}]}]}
+        with patch.object(threads, "_call", return_value=payload):
+            collect_once()
+
+        metric = VideoMetric.objects.get(delivery=d)
+        self.assertIsNone(metric.views)
+        self.assertEqual(metric.likes, 4)
 
     def test_one_failing_network_does_not_cost_the_others(self):
         _delivery(platform="youtube", external_id="yt1")
@@ -158,6 +193,31 @@ class SummaryTests(TestCase):
         text = format_summary(weekly_summary())
         self.assertIn("threads_manage_insights", text)
         self.assertIn("video.list", text)
+
+    def test_threads_stops_being_listed_as_silent_once_reauthorized(self):
+        """
+        The explanation has to disappear on its own. Left hard-coded, the
+        report would keep asking for a permission already granted.
+        """
+        from social.models import ThreadsToken
+
+        token = ThreadsToken.load()
+        token.scope = "threads_basic,threads_manage_insights"
+        token.save()
+
+        self.assertNotIn(
+            VideoDelivery.Platform.THREADS, video_metrics.silent_networks()
+        )
+
+    def test_threads_is_listed_as_silent_while_the_token_is_old(self):
+        from social.models import ThreadsToken
+
+        token = ThreadsToken.load()
+        token.scope = "threads_basic,threads_content_publish"
+        token.save()
+
+        silent = video_metrics.silent_networks()
+        self.assertIn("повторна авторизація", silent[VideoDelivery.Platform.THREADS])
 
     def test_best_network_is_listed_first(self):
         today = timezone.localtime().date()

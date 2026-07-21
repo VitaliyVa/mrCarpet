@@ -148,6 +148,10 @@ class TokenLifecycleTests(TestCase):
         """
         Adding a scope later costs another human trip through the consent
         screen, and the format lives or dies on the replies.
+
+        threads_manage_insights is the one this reasoning missed — it was added
+        after the fact and cost exactly that trip. Pinned here so the next
+        addition is a deliberate decision rather than a silent one.
         """
         self.assertEqual(
             set(threads_auth.SCOPES),
@@ -156,6 +160,7 @@ class TokenLifecycleTests(TestCase):
                 "threads_content_publish",
                 "threads_read_replies",
                 "threads_manage_replies",
+                "threads_manage_insights",
             },
         )
 

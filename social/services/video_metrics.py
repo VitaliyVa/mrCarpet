@@ -11,10 +11,13 @@ docs:
   /video_insights would need read_insights; the plain fields do not.
 * **Instagram** — likes and comments only. Views live behind
   instagram_manage_insights, which this token lacks.
-* **Threads** — nothing. Every metric is behind threads_manage_insights.
-* **TikTok** — nothing. Needs the video.list scope from a product we have not
-  added, and adding a product while the content-posting audit is in review is
-  not a trade worth making.
+* **Threads** — views, likes and replies, but only once someone has
+  re-authorized: threads_manage_insights was added to the scope list after the
+  current token was issued, and a token never gains a scope retroactively.
+* **TikTok** — nothing, and nothing worth having yet. The scope lives in a
+  product we have not added, adding one mid-audit means recalling the
+  submission, and every post is SELF_ONLY until that audit passes — so the
+  counters would read zero regardless.
 
 The gaps are recorded as unknown rather than zero, so a report never claims
 Instagram got no views when it simply will not say.
@@ -65,7 +68,12 @@ def fetch_for(delivery: VideoDelivery) -> dict[str, int | None] | None:
 
         return meta.instagram_media_metrics(delivery.external_id)
 
-    # Threads and TikTok: see the module docstring. Not an error.
+    if platform == VideoDelivery.Platform.THREADS:
+        from social.services import threads
+
+        return threads.media_metrics(delivery.external_id)
+
+    # TikTok: see the module docstring. Not an error.
     return None
 
 
@@ -123,15 +131,38 @@ def collect_once(*, days: int = LOOKBACK_DAYS, now=None) -> int:
     return written
 
 
-#: Networks that answer nothing today, and what it would cost to change that.
-#: Named in the report rather than silently missing, so a run of empty lines
-#: reads as a known limit instead of a broken collector.
-SILENT_NETWORKS = {
-    VideoDelivery.Platform.THREADS: "потрібен дозвіл threads_manage_insights",
-    VideoDelivery.Platform.TIKTOK: "потрібен скоуп video.list (не чіпаємо під час аудиту)",
-}
-
 REPORT_DAYS = 7
+
+#: A TikTok post is SELF_ONLY until the audit passes, so its counters would be
+#: zero even with the scope — there is nothing to collect yet, and adding an
+#: app product mid-review means recalling the submission.
+TIKTOK_SILENT = "потрібен скоуп video.list (пости ще SELF_ONLY — рахувати нічого)"
+
+THREADS_NEEDS_REAUTH = "потрібна повторна авторизація — токен без threads_manage_insights"
+
+
+def silent_networks() -> dict[str, str]:
+    """
+    Networks that answer nothing, and why.
+
+    Named in the report rather than silently missing, because an absent line
+    is indistinguishable from a broken collector. Resolved at call time rather
+    than fixed at import: Threads stops being silent the moment someone
+    re-authorizes, and the report should notice without a deploy.
+    """
+    silent = {VideoDelivery.Platform.TIKTOK: TIKTOK_SILENT}
+
+    try:
+        from social.models import ThreadsToken
+
+        granted = (ThreadsToken.load().scope or "").replace(" ", "")
+        if "threads_manage_insights" not in granted:
+            silent[VideoDelivery.Platform.THREADS] = THREADS_NEEDS_REAUTH
+    except Exception:
+        # Never let a report fail over an explanatory line.
+        logger.info("could not read Threads token scope")
+
+    return silent
 
 
 def weekly_summary(*, days: int = REPORT_DAYS, now=None) -> dict[str, dict]:
@@ -183,7 +214,7 @@ def format_summary(totals: dict[str, dict], *, days: int = REPORT_DAYS) -> str:
             f"({data['videos']} відео)"
         )
 
-    for platform, reason in SILENT_NETWORKS.items():
+    for platform, reason in silent_networks().items():
         if platform not in totals:
             lines.append(f"• {labels.get(platform, platform)}: без даних — {reason}")
 

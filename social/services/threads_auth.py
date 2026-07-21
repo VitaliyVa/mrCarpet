@@ -46,11 +46,21 @@ HTTP_TIMEOUT = 30
 # adding a scope later means dragging a human back through the consent screen
 # in a browser, and the whole point of the format is that people answer the
 # question in the replies. Cheaper to ask once.
+#
+# threads_manage_insights was the one this reasoning failed to anticipate, and
+# it cost exactly the browser trip the comment above was trying to avoid. It
+# reads views, likes, replies, reposts and quotes on our own posts — despite
+# the "manage" in the name, insights are read-only.
+#
+# A token issued before a scope was added does not gain it. Widening this
+# tuple only affects the *next* authorization, so the operator has to go
+# through the consent screen once more for it to take effect.
 SCOPES = (
     "threads_basic",
     "threads_content_publish",
     "threads_read_replies",
     "threads_manage_replies",
+    "threads_manage_insights",
 )
 
 

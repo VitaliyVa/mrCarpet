@@ -155,6 +155,47 @@ def publish_video(
     }
 
 
+class ThreadsInsightsError(RuntimeError):
+    """Reading counters failed. Kept apart from publishing: a lost metric is a
+    gap in a chart, a lost publish is a missing post."""
+
+
+#: Threads reports more than the other networks do — reposts and quotes have no
+#: equivalent elsewhere. Only the three that are comparable across networks are
+#: stored, so the weekly digest compares like with like.
+INSIGHT_METRICS = ("views", "likes", "replies")
+
+
+def media_metrics(media_id: str) -> dict[str, int | None]:
+    """
+    Views, likes and replies for one post.
+
+    Returns a flat dict rather than the API's shape: insights arrive as a list
+    of {name, values:[{value}]} entries, in no guaranteed order, and a metric
+    with no data is absent from the list entirely rather than present as zero.
+    """
+    try:
+        data = _call("GET", f"{media_id}/insights", {"metric": ",".join(INSIGHT_METRICS)})
+    except ThreadsPublishError as exc:
+        raise ThreadsInsightsError(str(exc)) from exc
+
+    found: dict[str, int | None] = {}
+    for entry in data.get("data") or []:
+        values = entry.get("values") or []
+        if not values:
+            continue
+        value = values[0].get("value")
+        if value is not None:
+            found[entry.get("name") or ""] = int(value)
+
+    return {
+        "views": found.get("views"),
+        "likes": found.get("likes"),
+        # Named "replies" here, "comments" everywhere else in our code.
+        "comments": found.get("replies"),
+    }
+
+
 def setup_status() -> dict[str, Any]:
     from social.services.threads_auth import oauth_configured, token_status
 
