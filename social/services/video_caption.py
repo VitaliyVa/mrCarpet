@@ -163,16 +163,23 @@ def _threads_caption(product, script: dict, *, limit: int) -> str:
 
     No hashtags in the text either: Threads allows one topic tag, and it is
     passed as its own parameter — see threads_topic_tag.
+
+    Links *are* clickable here, unlike TikTok and Instagram, so the product
+    URL goes in directly rather than sending people hunting through the bio.
+    It is dropped only if the budget genuinely will not take it.
     """
-    lines = [
+    content = build_product_content(product)
+    head = [
         f"✨ {product.title}".strip(),
         "",
         script["hook"],
         "",
         CTA,
-        BIO_LINE,
     ]
-    return _fits("\n".join(lines), limit)
+    with_url = _fits("\n".join(head + [f"👉 {content.url}"]), limit) if content.url else ""
+    if with_url and content.url in with_url:
+        return with_url
+    return _fits("\n".join(head + [BIO_LINE]), limit)
 
 
 def _youtube_description(product, script: dict, *, limit: int) -> str:

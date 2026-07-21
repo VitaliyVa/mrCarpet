@@ -214,6 +214,17 @@ class TopicTagTests(ProductMixin, TestCase):
         caption = build_caption(self._pick(), platform=VideoDelivery.Platform.THREADS)
         self.assertNotIn("#", caption)
 
+    def test_caption_carries_a_clickable_product_link(self):
+        """
+        Threads renders links, unlike TikTok and Instagram — sending people
+        hunting through the bio there would waste a working surface.
+        """
+        from social.services.video_caption import build_caption
+
+        caption = build_caption(self._pick(), platform=VideoDelivery.Platform.THREADS)
+        self.assertIn("http", caption)
+        self.assertNotIn("лінк у профілі", caption)
+
     def test_caption_fits_both_the_character_and_byte_budget(self):
         """
         Meta documents 500 characters but counts some content in bytes, and
