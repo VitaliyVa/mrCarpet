@@ -154,23 +154,48 @@ def _instagram_permalink(media_id: str) -> str:
     return ""
 
 
+#: Reels metrics. `impressions` and `video_views` were removed in v22.0 —
+#: `views` replaces both. `reach` is deliberately not collected: no other
+#: network reports it, so it could not appear in a comparison.
+IG_INSIGHT_METRICS = ("views", "likes", "comments")
+
+
 def instagram_media_metrics(media_id: str) -> dict[str, int | None]:
     """
-    Likes and comments for a Reel, from the ordinary media fields.
+    Views, likes and comments for a Reel.
 
-    Views are absent and that is not an oversight: /insights needs
-    instagram_manage_insights, which this token does not carry (verified — the
-    call returns "(#10) Application does not have permission"). Rather than ask
-    a human to walk through a consent screen for one number, the two counters
-    that *are* free are collected and views is reported as unknown.
+    Uses /insights, which needs instagram_manage_insights — a permission the
+    token did not carry until the System User token was regenerated with it.
+
+    Falls back to the plain media fields if insights refuses. That path yields
+    no views, but likes and comments beat losing the reading entirely, and it
+    is what keeps a revoked permission from turning into a silent gap.
 
     None means "not reported", never zero — see VideoMetric.
     """
-    data = _graph("GET", media_id, params={"fields": "like_count,comments_count"})
+    try:
+        data = _graph(
+            "GET", f"{media_id}/insights", params={"metric": ",".join(IG_INSIGHT_METRICS)}
+        )
+    except MetaPublishError as exc:
+        logger.info("IG insights unavailable for %s (%s), using plain fields", media_id, exc)
+        plain = _graph("GET", media_id, params={"fields": "like_count,comments_count"})
+        return {
+            "views": None,
+            "likes": plain.get("like_count"),
+            "comments": plain.get("comments_count"),
+        }
+
+    found: dict[str, int | None] = {}
+    for entry in data.get("data") or []:
+        values = entry.get("values") or []
+        if values and values[0].get("value") is not None:
+            found[entry.get("name") or ""] = int(values[0]["value"])
+
     return {
-        "views": None,
-        "likes": data.get("like_count"),
-        "comments": data.get("comments_count"),
+        "views": found.get("views"),
+        "likes": found.get("likes"),
+        "comments": found.get("comments"),
     }
 
 

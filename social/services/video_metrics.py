@@ -9,8 +9,9 @@ docs:
 * **YouTube** — views, likes, comments, via the API key. No OAuth at all.
 * **Facebook** — views, likes, comments, from the video object's own fields.
   /video_insights would need read_insights; the plain fields do not.
-* **Instagram** — likes and comments only. Views live behind
-  instagram_manage_insights, which this token lacks.
+* **Instagram** — views, likes and comments, since the System User token was
+  regenerated with instagram_manage_insights. Worth the trip: it turned out to
+  be the widest-reaching network by a wide margin, and we had been blind to it.
 * **Threads** — views, likes and replies, but only once someone has
   re-authorized: threads_manage_insights was added to the scope list after the
   current token was issued, and a token never gains a scope retroactively.

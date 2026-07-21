@@ -102,6 +102,46 @@ class CollectTests(TestCase):
         self.assertEqual(metric.comments, 2)
         self.assertEqual(metric.views, 30)
 
+    def test_instagram_views_come_from_insights(self):
+        from social.services import meta
+
+        d = _delivery(platform="instagram", external_id="ig1")
+        payload = {
+            "data": [
+                {"name": "views", "values": [{"value": 99}]},
+                {"name": "likes", "values": [{"value": 2}]},
+                {"name": "comments", "values": [{"value": 0}]},
+            ]
+        }
+        with patch.object(meta, "_graph", return_value=payload):
+            collect_once()
+
+        metric = VideoMetric.objects.get(delivery=d)
+        self.assertEqual(metric.views, 99)
+        self.assertEqual(metric.likes, 2)
+
+    def test_instagram_falls_back_to_plain_fields_when_insights_refuses(self):
+        """
+        A revoked permission must cost us views, not the whole reading —
+        otherwise it becomes a silent gap in the digest.
+        """
+        from social.services import meta
+
+        d = _delivery(platform="instagram", external_id="ig1")
+
+        def graph(method, path, **kwargs):
+            if "insights" in path:
+                raise meta.MetaPublishError("(#10) Application does not have permission")
+            return {"like_count": 4, "comments_count": 1}
+
+        with patch.object(meta, "_graph", side_effect=graph):
+            collect_once()
+
+        metric = VideoMetric.objects.get(delivery=d)
+        self.assertIsNone(metric.views)
+        self.assertEqual(metric.likes, 4)
+        self.assertEqual(metric.comments, 1)
+
     def test_a_threads_metric_with_no_data_is_unknown_not_zero(self):
         """Insights omit a metric entirely rather than reporting it as zero."""
         from social.services import threads
@@ -179,6 +219,7 @@ class SummaryTests(TestCase):
         self.assertEqual(totals["youtube"]["videos"], 2)
 
     def test_a_network_without_views_is_not_reported_as_zero(self):
+        """Any network may fail to report views — the fallback path can too."""
         d = _delivery(platform="instagram", external_id="ig1")
         self._metric(d, timezone.localtime().date(), None, likes=5)
 
