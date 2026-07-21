@@ -184,7 +184,12 @@
                     class="input-transparent validation_input"
                     name="name"
                     type="text"
-                    value="{{ review_name|default:user.first_name }}"
+                    {# Not `review_name|default:user.first_name`: as a filter
+                       argument, user.first_name on AnonymousUser raises
+                       instead of resolving to "", which 500s every product
+                       page for logged-out visitors. Standalone it is
+                       swallowed, hence the if/else. #}
+                    value="{% if review_name %}{{ review_name }}{% else %}{{ user.first_name }}{% endif %}"
                     data-type="name"
                     placeholder="Ім’я"
                     required
