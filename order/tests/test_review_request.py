@@ -214,7 +214,7 @@ class VerifiedPurchaseTests(OrderFixtureMixin, TestCase):
             "product": attr.id,
             "name": "Оксана",
             "rating": 5,
-            "content": "Гарний",
+            "content": "Гарний килим, всім раджу",
         }
         payload.update(extra)
         self.client.post(
@@ -231,6 +231,7 @@ class VerifiedPurchaseTests(OrderFixtureMixin, TestCase):
                 "product": attr.id,
                 "name": "Оксана",
                 "rating": 5,
+                "content": "Килим чудовий, ворс мʼякий",
                 "review_token": make_token(order),
             },
             content_type="application/json",
@@ -251,6 +252,7 @@ class VerifiedPurchaseTests(OrderFixtureMixin, TestCase):
                 "product": other_attr.id,
                 "name": "Оксана",
                 "rating": 5,
+                "content": "Килим чудовий, ворс мʼякий",
                 "review_token": make_token(order),
             },
             content_type="application/json",
@@ -260,3 +262,47 @@ class VerifiedPurchaseTests(OrderFixtureMixin, TestCase):
     def test_no_token_means_no_badge(self):
         self._submit()
         self.assertFalse(ProductReview.objects.get().verified_purchase)
+
+    def test_a_verified_review_is_published_immediately(self):
+        """
+        A known buyer should not watch their review vanish for days — they
+        assume it was thrown away and do not write another.
+        """
+        order = self._order()
+        attr = order.cart.cart_products.first().product_attr
+        response = self.client.post(
+            "/api/product-reviews/",
+            {
+                "product": attr.id,
+                "name": "Оксана",
+                "rating": 5,
+                "content": "Килим чудовий, ворс мʼякий",
+                "review_token": make_token(order),
+            },
+            content_type="application/json",
+        )
+        self.assertIn("опубліковано", response.json()["message"])
+        self.assertEqual(
+            ProductReview.objects.get().status, ProductReview.Status.APPROVED
+        )
+
+    def test_an_unverified_review_still_waits(self):
+        """The endpoint takes anonymous POSTs; publishing those on sight is
+        the hole that was just closed."""
+        self._submit()
+        self.assertEqual(
+            ProductReview.objects.get().status, ProductReview.Status.PENDING
+        )
+
+    def test_a_bare_rating_is_refused(self):
+        """Google filters ratings with no comment, so collecting them wastes
+        the customer's click."""
+        order = self._order()
+        attr = order.cart.cart_products.first().product_attr
+        response = self.client.post(
+            "/api/product-reviews/",
+            {"product": attr.id, "name": "Оксана", "rating": 5, "content": ""},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(ProductReview.objects.count(), 0)

@@ -305,10 +305,16 @@ def _build_product_node(
                 "bestRating": 5,
                 "worstRating": 1,
             }
+        # `datePublished` is on Google's recommended list and was missing.
+        # There is deliberately no "verified purchase" property here: the
+        # review-snippet schema has none, so inventing one would add bytes
+        # nothing reads. The badge stays a thing we show to humans, where it
+        # affects whether they believe the review.
         data["review"] = [
             {
                 "@type": "Review",
                 "author": {"@type": "Person", "name": r.name},
+                "datePublished": r.created.date().isoformat(),
                 "reviewRating": {
                     "@type": "Rating",
                     "ratingValue": r.rating,

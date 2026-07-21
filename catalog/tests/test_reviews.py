@@ -31,7 +31,7 @@ class ReviewFactoryMixin:
             "product": self.attr.id,
             "name": "Оксана",
             "rating": 5,
-            "content": "Гарний килим",
+            "content": "Гарний килим, дуже мʼякий",
         }
         payload.update(overrides)
         return self.client.post(

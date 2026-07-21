@@ -29,6 +29,11 @@ from .pagination import CustomPagination
 
 logger = logging.getLogger(__name__)
 
+#: Shortest comment worth publishing. Google filters bare ratings out of
+#: snippets, so a star with no words costs the customer a click and buys
+#: nothing.
+MIN_REVIEW_CHARS = 10
+
 
 class FavouriteProductPermission(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -105,12 +110,18 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
 
 class ProductReviewViewSet(ModelViewSet):
     """
-    Anyone may submit a review; nobody may publish one.
+    Anyone may submit a review. Only a proven buyer publishes one instantly.
 
     IsAdminEdit only implements has_object_permission, which DRF does not call
     on create — so this endpoint has always accepted anonymous POSTs. That is
-    fine for a review form and fatal for anything downstream of it, which is
-    why moderation lives in the model default and the read side filters on it.
+    fine for a review form and fatal for anything downstream of it, since
+    whatever gets published feeds the rating Google reads.
+
+    So the split is by evidence, not by trust: a review carrying a valid
+    invitation token belongs to someone we can show bought this exact rug, and
+    it goes live immediately. Everything else waits for a human. That keeps
+    real customers from staring at a review that never appears, without
+    leaving the door open to anyone with curl.
     """
 
     serializer_class = ProductReviewSerializer
@@ -136,6 +147,20 @@ class ProductReviewViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Google's own guidance: only accept ratings that come with a comment
+        # and a name. A bare star is what gets filtered out of snippets, so
+        # collecting them wastes the customer's click.
+        if len((data.get("content") or "").strip()) < MIN_REVIEW_CHARS:
+            return Response(
+                {
+                    "message": (
+                        "Напишіть, будь ласка, кілька слів про килим — "
+                        "сама лише оцінка мало що каже покупцям."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Whatever the client sent for these, it does not get to decide them.
         token = str(data.pop("review_token", "") or "")
         if isinstance(token, list):
@@ -151,14 +176,35 @@ class ProductReviewViewSet(ModelViewSet):
             ip_address=_client_ip(request),
         )
 
-        _mark_verified_purchase(review, token=token)
-        _notify_staff_new_review(review)
+        verified = _mark_verified_purchase(review, token=token)
 
-        # The submitter is told it was received, not shown the stored row:
+        # Published straight away when the invitation token proves the person
+        # bought this rug. Waiting on a human there buys nothing: the writer
+        # is a known customer, and a review that sits invisible for days is
+        # one the customer assumes was thrown away.
+        #
+        # Everything else still waits, because this endpoint takes anonymous
+        # POSTs and whatever it publishes goes into the rating Google reads.
+        if verified:
+            type(review).objects.filter(pk=review.pk).update(
+                status=ProductReview.Status.APPROVED
+            )
+            review.status = ProductReview.Status.APPROVED
+
+        _notify_staff_new_review(review, auto_published=verified)
+
+        # The submitter is told what happened, not shown the stored row:
         # echoing the record back would leak the moderation state and the
         # email of a review that is not public yet.
         return Response(
-            {"ok": True, "message": "Дякуємо! Відгук з'явиться після перевірки."},
+            {
+                "ok": True,
+                "message": (
+                    "Дякуємо! Ваш відгук опубліковано."
+                    if verified
+                    else "Дякуємо! Відгук з'явиться після перевірки."
+                ),
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -279,7 +325,7 @@ def _client_ip(request) -> str | None:
     return forwarded or request.META.get("REMOTE_ADDR") or None
 
 
-def _mark_verified_purchase(review, *, token: str = "") -> None:
+def _mark_verified_purchase(review, *, token: str = "") -> bool:
     """
     Flag the review when it provably belongs to a real order for this product.
 
@@ -305,13 +351,14 @@ def _mark_verified_purchase(review, *, token: str = "") -> None:
                 type(review).objects.filter(pk=review.pk).update(
                     verified_purchase=True
                 )
-                return
+                review.verified_purchase = True
+                return True
         except Exception:
             logger.info("review token check failed for %s", review.pk)
 
     email = (review.email or "").strip().lower()
     if not email:
-        return
+        return False
     try:
         from order.models import Order
 
@@ -325,11 +372,14 @@ def _mark_verified_purchase(review, *, token: str = "") -> None:
         )
         if matched:
             type(review).objects.filter(pk=review.pk).update(verified_purchase=True)
+            review.verified_purchase = True
+            return True
     except Exception:
         logger.info("verified-purchase check skipped for review %s", review.pk)
+    return False
 
 
-def _notify_staff_new_review(review) -> None:
+def _notify_staff_new_review(review, *, auto_published: bool = False) -> None:
     """
     Tell the staff chat a review is waiting.
 
