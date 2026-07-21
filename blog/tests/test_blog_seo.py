@@ -186,7 +186,7 @@ class WeeklyTopicTests(TestCase):
         self.first.save()
         self.assertEqual(ArticleTopic.next_pending().title, "Друга")
 
-    def test_generation_produces_a_draft_not_a_post(self):
+    def test_generation_publishes(self):
         from unittest.mock import patch
 
         from blog.models import ArticleTopic
@@ -208,7 +208,8 @@ class WeeklyTopicTests(TestCase):
 
         self.assertTrue(result["ok"])
         article.refresh_from_db()
-        self.assertEqual(article.status, Article.Status.DRAFT)
+        self.assertEqual(article.status, Article.Status.PUBLISHED)
+        self.assertIsNotNone(article.published_at)
 
         self.first.refresh_from_db()
         self.assertEqual(self.first.status, ArticleTopic.Status.USED)
@@ -236,6 +237,36 @@ class WeeklyTopicTests(TestCase):
         self.assertIn("Найкраща тема", prompt)
         self.assertIn("про це", prompt)
         self.assertIn("/catalog/", prompt)
+
+    def test_the_alert_carries_the_text_not_just_a_link(self):
+        """
+        The post is already live, so a link asks someone to go and check and
+        nobody does. The opening lines in a chat already open are the whole
+        review this pipeline gets.
+        """
+        from unittest.mock import patch
+
+        from blog.services import weekly_topic
+
+        article = Article.objects.create(
+            title="Про килими",
+            description="<p>Килим під ліжко 1,8 м має бути 3,0 м завширшки.</p>",
+        )
+
+        class FakeResult:
+            article_id = article.pk
+            title = "Про килими"
+
+        with patch.object(weekly_topic, "_tell_staff") as tell, patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            return_value=FakeResult(),
+        ):
+            weekly_topic.generate_next()
+
+        text = tell.call_args[0][0]
+        self.assertIn("3,0 м завширшки", text)
+        self.assertIn("опублікована", text)
+        self.assertNotIn("<p>", text)
 
     def test_a_failed_generation_leaves_the_topic_queued(self):
         from unittest.mock import patch

@@ -1,13 +1,21 @@
 """
-One drafted article a week, from the top of the topic queue.
+One article a week, from the top of the topic queue.
 
-Generates and stops. It does not publish, and that is deliberate: Google's
-spam policy names scaled content abuse — pages produced in bulk mainly for
-search — and the penalty lands on the domain, not the post. A human reading
-the draft before it goes live is what separates a blog from that.
+Publishes on its own, by the owner's decision. Two things follow from that,
+and both are load-bearing.
 
-So the machine does the part machines are good at (never forgetting, never
-running out of topics) and leaves the judgement.
+First, the known failure modes are handled before the text exists rather
+than caught after: the prompt is limited to materials the catalogue actually
+stocks, empty target categories are swapped out, and the arithmetic rule is
+spelled out — the first batch of drafts got a bed-sized rug wrong by 60 cm
+by adding the margin to one side only.
+
+Second, the Telegram alert carries the opening of the article, not just a
+link. Nobody opens an admin panel to check something that already published;
+they might read three lines in a chat they already have open. That is the
+only review this pipeline gets, so it has to cost nothing.
+
+Set AUTO_PUBLISH to False to go back to drafts.
 """
 
 from __future__ import annotations
@@ -19,6 +27,10 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 SITE = "https://mrcarpet24.com"
+
+#: Publish without waiting for a human. The trade is deliberate: no post
+#: sits unread for a week, and no post gets a second pair of eyes either.
+AUTO_PUBLISH = True
 
 
 def generate_next(*, notify: bool = True) -> dict:
@@ -76,8 +88,16 @@ def generate_next(*, notify: bool = True) -> dict:
     article_id = result.article_id
     article_title = result.title
 
-    # Marked used even though it is only a draft. Leaving it pending would
-    # hand the same topic to next week's run while this draft sits unread.
+    if AUTO_PUBLISH:
+        from blog.models import Article
+
+        article = Article.objects.filter(pk=article_id).first()
+        if article:
+            article.status = Article.Status.PUBLISHED
+            article.save()
+
+    # Marked used regardless of outcome. Leaving it pending would hand the
+    # same topic to next week's run.
     topic.status = ArticleTopic.Status.USED
     topic.used_at = timezone.now()
     topic.article_id = article_id
@@ -87,13 +107,7 @@ def generate_next(*, notify: bool = True) -> dict:
         remaining = ArticleTopic.objects.filter(
             status=ArticleTopic.Status.PENDING
         ).count()
-        link = f"{SITE}/admin/blog/article/{article_id}/change/"
-        _tell_staff(
-            f"📝 Чернетка статті тижня готова\n"
-            f"{article_title}\n\n"
-            f"Прочитати, виправити й опублікувати:\n{link}\n\n"
-            f"Тем у черзі лишилось: {remaining}"
-        )
+        _tell_staff(_alert_text(article_id, article_title, remaining))
 
     return {"ok": True, "topic": topic.title, "article_id": article_id}
 
@@ -151,3 +165,48 @@ def _stocked_materials() -> str:
         return ", ".join(names)
     except Exception:
         return ""
+
+
+#: How much of the article to put in the chat message. Enough to catch a wrong
+#: number or an off-catalogue recommendation while scrolling; short enough
+#: that it is actually read.
+PREVIEW_CHARS = 600
+
+
+def _alert_text(article_id: int, title: str, remaining: int) -> str:
+    """
+    What goes to the staff chat.
+
+    Carries the opening of the article rather than only a link, because the
+    post is already live: a link asks someone to go and check, and nobody
+    does. Three lines in a chat that is already open sometimes get read, and
+    that is the entire review this pipeline has.
+    """
+    import re
+
+    from blog.models import Article
+
+    article = Article.objects.filter(pk=article_id).first()
+    published = bool(article and article.is_public)
+
+    preview = ""
+    if article:
+        plain = re.sub(r"<[^>]+>", " ", article.description or "")
+        plain = re.sub(r"\s+", " ", plain).strip()
+        preview = plain[:PREVIEW_CHARS]
+        if len(plain) > PREVIEW_CHARS:
+            preview += "…"
+
+    head = "✅ Стаття тижня опублікована" if published else "📝 Чернетка статті тижня"
+    action = "Виправити або зняти" if published else "Прочитати й опублікувати"
+
+    parts = [f"{head}\n{title}"]
+    if published and article:
+        parts.append(f"{SITE}{article.get_absolute_url()}")
+    if preview:
+        parts.append(f"\n{preview}")
+    parts.append(
+        f"\n{action}: {SITE}/admin/blog/article/{article_id}/change/"
+        f"\nТем у черзі: {remaining}"
+    )
+    return "\n".join(parts)
