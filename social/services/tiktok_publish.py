@@ -97,9 +97,21 @@ def build_final_video(pick: TikTokDailyPick, *, regenerate: bool = False) -> str
     The raw clip is reused whenever the pick already has one: a publish that
     failed on a network's side must not pay for a second video. Only
     `regenerate` buys a new clip — retrying a failed post does not.
+
+    The montage is reused on the same terms. This matters more than it looks:
+    the staggered rollout calls publish_pick every ten minutes, and an
+    unconditional render would put ffmpeg on a two-core droplet 144 times a
+    day, competing with the site for CPU the whole evening.
     """
     if not ffmpeg_available():
         raise TikTokPipelineError("ffmpeg is not installed in this environment")
+
+    relative = f"{MONTAGE_DIR}/pick-{pick.pk}.mp4"
+    if not regenerate and (Path(settings.MEDIA_ROOT) / relative).exists():
+        if pick.montage_path != relative:
+            pick.montage_path = relative
+            pick.save(update_fields=["montage_path", "updated"])
+        return relative
 
     if not pick.video_path or regenerate:
         generate_video_for_pick(pick, force=regenerate)
@@ -111,7 +123,6 @@ def build_final_video(pick: TikTokDailyPick, *, regenerate: bool = False) -> str
 
     script = build_script(pick)
     track = pick_track(pick.pk)
-    relative = f"{MONTAGE_DIR}/pick-{pick.pk}.mp4"
     target = Path(settings.MEDIA_ROOT) / relative
     build_montage(
         str(clip),

@@ -231,6 +231,36 @@ class RetryCostTests(TestCase):
             build_final_video(self.pick)
         generate.assert_not_called()
 
+    def test_existing_montage_is_not_rendered_again(self):
+        """
+        The staggered rollout calls publish_pick every ten minutes. An
+        unconditional render would run ffmpeg 144 times a day on a two-core
+        droplet, competing with the site for CPU all evening.
+        """
+        from social.services.tiktok_publish import build_final_video
+
+        with patch.object(tiktok_publish, "ffmpeg_available", return_value=True), \
+             patch.object(tiktok_publish, "build_montage") as montage, \
+             patch.object(tiktok_publish, "generate_video_for_pick") as generate, \
+             patch("pathlib.Path.exists", return_value=True):
+            build_final_video(self.pick)
+
+        montage.assert_not_called()
+        generate.assert_not_called()
+
+    def test_regenerate_renders_even_when_a_montage_exists(self):
+        from social.services.tiktok_publish import build_final_video
+
+        with patch.object(tiktok_publish, "ffmpeg_available", return_value=True), \
+             patch.object(tiktok_publish, "build_montage") as montage, \
+             patch.object(tiktok_publish, "generate_video_for_pick"), \
+             patch.object(tiktok_publish, "build_script", return_value={}), \
+             patch.object(tiktok_publish, "pick_track", return_value=""), \
+             patch("pathlib.Path.exists", return_value=True):
+            build_final_video(self.pick, regenerate=True)
+
+        montage.assert_called_once()
+
     def test_regenerate_buys_a_new_clip(self):
         from social.services.tiktok_publish import build_final_video
 
