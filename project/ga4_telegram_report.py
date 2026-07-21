@@ -33,6 +33,13 @@ def send_ga4_dashboard_report(
     try:
         data = fetch_dashboard(days)
         photos = build_dashboard_photos(data)
+        # Today first — it is the slide most likely to be read, and its window
+        # is fetched separately because it is not the album's period.
+        from project.ga4_charts import build_today_photo
+
+        today = build_today_photo()
+        if today:
+            photos.insert(0, today)
         # Same extra slide the on-demand report appends. Added in both places
         # rather than one, because these two paths already build their albums
         # independently — leaving it out here would mean the weekly report

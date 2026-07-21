@@ -369,11 +369,16 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
     # rather than how many then came to the site. Skipped for realtime, which
     # asks "who is online now" — a question the daily video does not answer.
     if report != "realtime":
+        from project.ga4_charts import build_today_photo
         from social.services.metrics_chart import build_social_photo
 
+        photos_raw = list(photos_raw)
+        today_photo = build_today_photo()
+        if today_photo:
+            photos_raw.insert(0, today_photo)
         social_photo = build_social_photo(days=days)
         if social_photo:
-            photos_raw = list(photos_raw) + [social_photo]
+            photos_raw.append(social_photo)
 
     # Built here rather than inside the branches so the slide count is the
     # real one. It used to be hardcoded at 7, which the ecommerce report —

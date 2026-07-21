@@ -637,8 +637,10 @@ def build_dashboard_photos(dashboard: dict[str, Any]) -> list[tuple[str, bytes]]
     kpis = dashboard.get("kpis") or {}
     revenue = dashboard.get("revenue") or {}
     funnel = dashboard.get("funnel") or []
-    today = build_today_photo()
-    return ([today] if today else []) + [
+    # Deliberately does not include the "today" slide: that one needs its own
+    # fetch, and a renderer that takes data and secretly makes a network call
+    # is one nobody can test or reason about. The report builders append it.
+    return [
         ("01_traffic.png", render_kpi_table(kpis, revenue, days=days)),
         ("02_daily.png", render_daily_trend_chart(dashboard.get("daily") or [], days=days)),
         ("03_engagement.png", render_engagement_chart(kpis, days=days)),
