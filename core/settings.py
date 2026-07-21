@@ -300,6 +300,7 @@ THREADS_APP_SECRET = config("THREADS_APP_SECRET", default="")
 THREADS_REDIRECT_URI = config(
     "THREADS_REDIRECT_URI", default="https://mrcarpet24.com/api/threads/callback/"
 )
+THREADS_WEBHOOK_VERIFY_TOKEN = config("THREADS_WEBHOOK_VERIFY_TOKEN", default="")
 SOCIAL_AI_I2V_MODEL = config(
     "SOCIAL_AI_I2V_MODEL", default="wan-video/wan-2.2-i2v-fast"
 )

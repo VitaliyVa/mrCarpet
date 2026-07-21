@@ -29,11 +29,13 @@ TIMEOUT = 20
 PLATFORM_TELEGRAM = "telegram"
 PLATFORM_INSTAGRAM = "instagram"
 PLATFORM_FACEBOOK = "facebook"
+PLATFORM_THREADS = "threads"
 
 PLATFORM_LABELS = {
     PLATFORM_TELEGRAM: "Telegram",
     PLATFORM_INSTAGRAM: "Instagram",
     PLATFORM_FACEBOOK: "Facebook",
+    PLATFORM_THREADS: "Threads",
 }
 
 

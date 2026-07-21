@@ -8,6 +8,7 @@ from .threads_callbacks import (
     threads_deauthorize,
 )
 from .threads_oauth import threads_oauth_callback, threads_oauth_start
+from .threads_webhook import threads_webhook
 from .tiktok_oauth import tiktok_oauth_callback, tiktok_oauth_start
 from .viber_webhook import viber_webhook
 from .views import (
@@ -30,6 +31,7 @@ urlpatterns = [
     path("tiktok/callback/", tiktok_oauth_callback, name="tiktok-oauth-callback"),
     path("threads/authorize/", threads_oauth_start, name="threads-oauth-start"),
     path("threads/callback/", threads_oauth_callback, name="threads-oauth-callback"),
+    path("threads/webhook/", threads_webhook, name="threads-webhook"),
     path("threads/deauthorize/", threads_deauthorize, name="threads-deauthorize"),
     path(
         "threads/data-deletion/",
