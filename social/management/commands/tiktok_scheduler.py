@@ -92,9 +92,41 @@ def _generate():
     except Exception as exc:
         logger.warning("token health check failed: %s", exc)
 
+    # Read yesterday's counters before rendering today's video. Ordering is
+    # not cosmetic: build_final_video is the slow, failure-prone step, and a
+    # crash there must not cost the day its metrics.
+    try:
+        collected = _collect_metrics()
+    except Exception as exc:
+        logger.warning("metrics collection failed: %s", exc)
+        collected = "metrics failed"
+
     pick = pick_product_for_today()
     path = build_final_video(pick)
-    return f"pick #{pick.pk} ({pick.product}) -> {path} (cleaned {removed} old files)"
+    return (
+        f"pick #{pick.pk} ({pick.product}) -> {path} "
+        f"(cleaned {removed} old files, {collected})"
+    )
+
+
+def _collect_metrics():
+    """
+    Snapshot the recent videos, and on Mondays send the digest.
+
+    Weekly rather than daily because a single day's numbers on a young account
+    are noise — one video per network, often single-digit views. Seven days is
+    the shortest window where "which network works" is a real question.
+    """
+    from social.services.video_metrics import collect_once, report_weekly
+
+    written = collect_once()
+    if datetime.now(KYIV).weekday() == 0:
+        try:
+            if report_weekly():
+                return f"metrics: {written} read, digest sent"
+        except Exception as exc:
+            logger.warning("weekly digest failed: %s", exc)
+    return f"metrics: {written} read"
 
 
 def _publish():

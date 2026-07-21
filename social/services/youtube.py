@@ -75,6 +75,11 @@ class YouTubePublishError(RuntimeError):
     pass
 
 
+class YouTubeMetricsError(RuntimeError):
+    """Reading counters failed. Separate from publishing: a lost metric is a
+    gap in a chart, a lost publish is a missing post."""
+
+
 def youtube_configured() -> bool:
     return bool(YouTubeToken.load().is_authorized)
 
@@ -219,6 +224,58 @@ def upload_video(
         "privacy": applied or privacy,
         "forced_private": bool(applied and applied != privacy),
         "channel_id": channel_id,
+    }
+
+
+def video_metrics(video_id: str) -> dict[str, int | None]:
+    """
+    View, like and comment counts for one Short.
+
+    Deliberately uses the API key, not the upload token. Public statistics need
+    no OAuth at all, so reading them cannot expire, cannot consume the refresh
+    token, and needs no scope beyond what the comment poller already uses. The
+    Analytics API would give richer data (watch time, traffic sources) but
+    wants yt-analytics.readonly — another consent screen for numbers we would
+    not act on yet.
+
+    Costs 1 quota unit against a daily 10,000.
+    """
+    from social.services.youtube_comments import api_key
+
+    key = api_key()
+    if not key:
+        raise YouTubeConfigError("YOUTUBE_API_KEY empty")
+    try:
+        resp = requests.get(
+            f"{API}/videos",
+            params={"part": "statistics", "id": video_id, "key": key},
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        raise YouTubeMetricsError(f"YouTube HTTP error: {exc}") from exc
+
+    payload = resp.json() if resp.content else {}
+    if resp.status_code >= 400 or payload.get("error"):
+        raise YouTubeMetricsError(f"YouTube API {resp.status_code}: {payload.get('error')}")
+
+    items = payload.get("items") or []
+    if not items:
+        # A deleted video, or one still processing. Not an error worth a red
+        # line in the report — there is simply nothing to record.
+        return {"views": None, "likes": None, "comments": None}
+
+    stats = items[0].get("statistics") or {}
+
+    def _int(name: str) -> int | None:
+        raw = stats.get(name)
+        # likeCount disappears entirely when the owner hides likes, which is
+        # "unknown", not zero.
+        return int(raw) if raw not in (None, "") else None
+
+    return {
+        "views": _int("viewCount"),
+        "likes": _int("likeCount"),
+        "comments": _int("commentCount"),
     }
 
 

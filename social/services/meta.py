@@ -154,6 +154,46 @@ def _instagram_permalink(media_id: str) -> str:
     return ""
 
 
+def instagram_media_metrics(media_id: str) -> dict[str, int | None]:
+    """
+    Likes and comments for a Reel, from the ordinary media fields.
+
+    Views are absent and that is not an oversight: /insights needs
+    instagram_manage_insights, which this token does not carry (verified — the
+    call returns "(#10) Application does not have permission"). Rather than ask
+    a human to walk through a consent screen for one number, the two counters
+    that *are* free are collected and views is reported as unknown.
+
+    None means "not reported", never zero — see VideoMetric.
+    """
+    data = _graph("GET", media_id, params={"fields": "like_count,comments_count"})
+    return {
+        "views": None,
+        "likes": data.get("like_count"),
+        "comments": data.get("comments_count"),
+    }
+
+
+def facebook_video_metrics(video_id: str) -> dict[str, int | None]:
+    """
+    Views, likes and comments for a Reel.
+
+    Uses the video object's own fields rather than /video_insights, which
+    needs read_insights that this token lacks. The plain `views` field returns
+    the same play count and costs no extra permission.
+    """
+    data = _graph(
+        "GET",
+        video_id,
+        params={"fields": "views,likes.summary(true),comments.summary(true)"},
+    )
+    return {
+        "views": data.get("views"),
+        "likes": ((data.get("likes") or {}).get("summary") or {}).get("total_count"),
+        "comments": ((data.get("comments") or {}).get("summary") or {}).get("total_count"),
+    }
+
+
 def publish_facebook_page_video(*, video_url: str, caption: str, title: str = "") -> dict[str, str]:
     page = _page_id()
     if not page:
