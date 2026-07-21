@@ -67,4 +67,16 @@ class Command(BaseCommand):
             except Exception as exc:
                 self.stderr.write(f"carts cleanup failed: {exc}")
 
+            # Стаття тижня — теж сюди, за тим самим принципом: це єдиний
+            # тижневий демон. Генерує ЧЕРНЕТКУ і пінгує в Telegram; публікує
+            # людина. Автопублікація масово згенерованого — це scaled content
+            # abuse, і штраф прилітає на домен, а не на пост.
+            try:
+                from blog.services.weekly_topic import generate_next
+
+                result = generate_next()
+                self.stdout.write(f"weekly article: {result}")
+            except Exception as exc:
+                self.stderr.write(f"weekly article failed: {exc}")
+
             time.sleep(90)

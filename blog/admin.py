@@ -4,7 +4,7 @@ from django.urls import path
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
-from .models import Article
+from .models import Article, ArticleTopic
 
 
 @admin.register(Article)
@@ -110,3 +110,33 @@ class ArticleAdmin(admin.ModelAdmin):
                 "models": result.models,
             }
         )
+
+
+@admin.register(ArticleTopic)
+class ArticleTopicAdmin(admin.ModelAdmin):
+    """
+    The queue the weekly generator draws from. Reordering here changes what
+    gets written next week — that is the whole control surface.
+    """
+
+    list_display = ("rank", "title", "target_path", "status", "article", "used_at")
+    list_display_links = ("title",)
+    list_editable = ("rank",)
+    list_filter = ("status",)
+    search_fields = ("title", "brief")
+    readonly_fields = ("used_at", "article")
+    ordering = ("rank", "pk")
+    list_per_page = 50
+    actions = ("requeue_topics", "skip_topics")
+
+    @admin.action(description="Повернути в чергу")
+    def requeue_topics(self, request, queryset):
+        updated = queryset.update(
+            status=ArticleTopic.Status.PENDING, used_at=None, article=None
+        )
+        self.message_user(request, f"Повернено в чергу: {updated}")
+
+    @admin.action(description="Пропустити тему")
+    def skip_topics(self, request, queryset):
+        updated = queryset.update(status=ArticleTopic.Status.SKIPPED)
+        self.message_user(request, f"Пропущено: {updated}")

@@ -61,3 +61,75 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         ordering = ("-published_at", "-created")
         verbose_name = "Стаття блогу"
         verbose_name_plural = "Статті блогу"
+
+
+class ArticleTopic(models.Model):
+    """
+    The backlog the weekly generator draws from, best first.
+
+    A stored, ranked queue rather than asking a model to invent a topic each
+    week: left to improvise, it drifts toward whatever is easy to write, and
+    the posts that actually earn traffic — the ones tied to a real search and
+    a real category page — never get written.
+
+    `rank` is the running order. Lower goes first, so the strongest topics
+    land in the weeks when there is least else on the blog to rank for.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "У черзі"
+        USED = "used", "Використана"
+        SKIPPED = "skipped", "Пропущена"
+
+    title = models.CharField(verbose_name="Тема", max_length=300)
+    brief = models.TextField(
+        verbose_name="Що розкрити",
+        blank=True,
+        default="",
+        help_text="Кут подачі для генератора: що саме має бути в статті.",
+    )
+    target_path = models.CharField(
+        verbose_name="Куди вести",
+        max_length=200,
+        blank=True,
+        default="",
+        help_text=(
+            "Шлях категорії або сторінки, на яку стаття має посилатись, "
+            "напр. /catalog/categorie/v-ditiachu/. Це і є сенс статті."
+        ),
+    )
+    rank = models.PositiveIntegerField(
+        verbose_name="Черга",
+        default=1000,
+        db_index=True,
+        help_text="Менше = раніше. Найсильніші теми йдуть першими.",
+    )
+    status = models.CharField(
+        verbose_name="Статус",
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    article = models.ForeignKey(
+        "blog.Article",
+        verbose_name="Стаття",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="topics",
+    )
+    used_at = models.DateTimeField(null=True, blank=True, editable=False)
+
+    class Meta:
+        ordering = ("rank", "pk")
+        verbose_name = "Тема для блогу"
+        verbose_name_plural = "Теми для блогу"
+        indexes = [models.Index(fields=["status", "rank"])]
+
+    def __str__(self):
+        return f"{self.rank}. {self.title}"
+
+    @classmethod
+    def next_pending(cls):
+        return cls.objects.filter(status=cls.Status.PENDING).order_by("rank", "pk").first()

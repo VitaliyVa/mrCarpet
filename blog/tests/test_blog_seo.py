@@ -158,3 +158,110 @@ class ListPageTests(TestCase):
     def test_empty_blog_says_so(self):
         html = self.client.get(reverse("blog")).content.decode()
         self.assertIn("Незабаром", html)
+
+
+class WeeklyTopicTests(TestCase):
+    """
+    The queue feeds the generator, and the generator stops at a draft.
+    """
+
+    def setUp(self):
+        from blog.models import ArticleTopic
+
+        self.first = ArticleTopic.objects.create(
+            title="Найкраща тема", brief="про це", target_path="/catalog/", rank=1
+        )
+        ArticleTopic.objects.create(title="Друга", rank=2)
+
+    def test_the_queue_is_ordered_best_first(self):
+        from blog.models import ArticleTopic
+
+        self.assertEqual(ArticleTopic.next_pending(), self.first)
+
+    def test_a_used_topic_leaves_the_queue(self):
+        """Otherwise next week rewrites the same article."""
+        from blog.models import ArticleTopic
+
+        self.first.status = ArticleTopic.Status.USED
+        self.first.save()
+        self.assertEqual(ArticleTopic.next_pending().title, "Друга")
+
+    def test_generation_produces_a_draft_not_a_post(self):
+        from unittest.mock import patch
+
+        from blog.models import ArticleTopic
+        from blog.services import weekly_topic
+
+        article = Article.objects.create(title="Згенерована")
+
+        class FakeResult:
+            article_id = article.pk
+            title = "Згенерована"
+
+        with patch.object(
+            weekly_topic, "_tell_staff"
+        ), patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            return_value=FakeResult(),
+        ):
+            result = weekly_topic.generate_next()
+
+        self.assertTrue(result["ok"])
+        article.refresh_from_db()
+        self.assertEqual(article.status, Article.Status.DRAFT)
+
+        self.first.refresh_from_db()
+        self.assertEqual(self.first.status, ArticleTopic.Status.USED)
+        self.assertEqual(self.first.article_id, article.pk)
+
+    def test_the_brief_and_target_reach_the_generator(self):
+        """A bare title produces something generic that links nowhere."""
+        from unittest.mock import patch
+
+        from blog.services import weekly_topic
+
+        article = Article.objects.create(title="X")
+
+        class FakeResult:
+            article_id = article.pk
+            title = "X"
+
+        with patch.object(weekly_topic, "_tell_staff"), patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            return_value=FakeResult(),
+        ) as gen:
+            weekly_topic.generate_next()
+
+        prompt = gen.call_args[0][0]
+        self.assertIn("Найкраща тема", prompt)
+        self.assertIn("про це", prompt)
+        self.assertIn("/catalog/", prompt)
+
+    def test_a_failed_generation_leaves_the_topic_queued(self):
+        from unittest.mock import patch
+
+        from blog.models import ArticleTopic
+        from blog.services import weekly_topic
+
+        with patch.object(weekly_topic, "_tell_staff"), patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            side_effect=RuntimeError("replicate down"),
+        ):
+            result = weekly_topic.generate_next()
+
+        self.assertFalse(result["ok"])
+        self.first.refresh_from_db()
+        self.assertEqual(self.first.status, ArticleTopic.Status.PENDING)
+
+    def test_an_empty_queue_is_not_a_crash(self):
+        from unittest.mock import patch
+
+        from blog.models import ArticleTopic
+        from blog.services import weekly_topic
+
+        ArticleTopic.objects.all().delete()
+        with patch.object(weekly_topic, "_tell_staff") as tell:
+            result = weekly_topic.generate_next()
+
+        self.assertFalse(result["ok"])
+        self.assertIn("порожня", tell.call_args[0][0])
