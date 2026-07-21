@@ -1,0 +1,218 @@
+# YouTube Shorts — що потрібно від тебе
+
+Покрокова інструкція. Роби у **звичайному Chrome** — Google блокує вхід
+у браузерах під автоматизацією, тому я цю частину зробити не можу.
+
+Усе, що не потребує входу в Google, роблю я: код, токени, деплой, тести.
+
+Дата: 2026-07-21.
+
+---
+
+## Головне, що треба розуміти перед стартом
+
+YouTube має **два незалежні гейти**, і їх постійно плутають:
+
+| Гейт | Що знімає | Де подається |
+|---|---|---|
+| **Publishing status → In production** | 7-денне протухання токена | Google Cloud Console |
+| **YouTube API compliance audit** | замок «відео назавжди приватне» | окрема форма підтримки |
+
+⚠️ **До проходження аудиту `videos.insert` повертає 200, мовчки ставить
+`privacyStatus = private`, і публічним це відео вже не зробити ніколи** —
+ні через API, ні руками в Studio.
+
+Тому: аудит подаємо якнайраніше (він іде тижнями), а YouTube у налаштуваннях
+вмикаємо **найпізніше** — коли прийде схвалення.
+
+---
+
+## Крок 1. Канал
+
+Спершу перевір, чи він узагалі є: [youtube.com](https://youtube.com) →
+аватарка справа зверху → **Перемкнути акаунт**.
+
+На «голому» Google-акаунті каналу немає, поки його не створиш.
+
+### Якщо каналу немає
+
+[youtube.com/create_channel](https://www.youtube.com/create_channel)
+
+**Обери «Використовувати спеціальну назву» (бренд-акаунт), а не своє імʼя.**
+
+Чому це не дрібниця:
+
+- бренд-канал не прив'язаний до однієї особистої Google-ідентичності
+- до нього можна дати доступ іншій людині, не віддаючи пароль від пошти
+- назву можна змінити, не чіпаючи акаунт
+
+```
+Назва:  mr.Carpet
+```
+
+### Налаштувати канал
+
+[studio.youtube.com](https://studio.youtube.com) → **Customization**
+
+```
+Опис:      Килими з доставкою по Україні. Щодня — новий килим і питання на вгадування ціни.
+Посилання: https://mrcarpet24.com
+Банер + аватарка: ті самі, що в Instagram
+```
+
+### Підтвердити канал (рекомендовано)
+
+[youtube.com/verify](https://www.youtube.com/verify) — підтвердження телефоном.
+
+Нашим 12-секундним роликам це не обов'язково, але знімає обмеження на
+кастомні обкладинки й довші відео. Робиться за хвилину.
+
+**➜ Скинь мені назву каналу і посилання на нього.**
+
+---
+
+## Крок 2. Проєкт у Google Cloud
+
+[console.cloud.google.com/projectcreate](https://console.cloud.google.com/projectcreate)
+
+```
+Project name:  mrcarpet-video
+Location:      No organization
+```
+
+Заходь **тим самим акаунтом**, на якому канал.
+
+---
+
+## Крок 3. Увімкнути API
+
+[console.cloud.google.com/apis/library/youtube.googleapis.com](https://console.cloud.google.com/apis/library/youtube.googleapis.com)
+
+Перевір, що зверху обрано `mrcarpet-video` → **Enable**.
+
+---
+
+## Крок 4. OAuth consent screen
+
+`APIs & Services → OAuth consent screen`
+
+```
+User type:            External
+App name:             mrCarpet
+User support email:   mr.carpet.shop@gmail.com
+App logo:             (не обов'язково)
+App domain:           mrcarpet24.com
+Home page:            https://mrcarpet24.com
+Privacy policy:       https://mrcarpet24.com/policy/
+Terms of service:     https://mrcarpet24.com/terms/
+Authorized domain:    mrcarpet24.com
+Developer email:      mr.carpet.shop@gmail.com
+```
+
+### Scopes
+
+**Add or remove scopes** → знайди й познач рівно один:
+
+```
+https://www.googleapis.com/auth/youtube.upload
+```
+
+Більше нічого не додавай. Кожен зайвий скоуп ускладнює перевірку, а нам
+для завантаження достатньо цього одного.
+
+---
+
+## Крок 5. ⚠️ PUBLISH APP — не пропусти
+
+На тому ж екрані OAuth consent screen, зверху:
+
+```
+Publishing status:  Testing  →  [ PUBLISH APP ]
+```
+
+**У статусі `Testing` авторизація протухає кожні 7 днів разом із
+refresh-токеном.** Планувальник ламався б щотижня, і виглядало б це як
+зіпсовані креденшели — найгірший тип помилки, бо шукаєш не там.
+
+Google покаже попередження «Unverified app» на екрані згоди — це нормально.
+Для одного власного акаунта верифікація не потрібна, ліміт 100 користувачів
+нам не заважає.
+
+---
+
+## Крок 6. OAuth client
+
+`APIs & Services → Credentials → + Create credentials → OAuth client ID`
+
+```
+Application type:          Web application
+Name:                      mrCarpet server
+
+Authorized redirect URIs:
+https://mrcarpet24.com/api/youtube/callback/
+```
+
+Redirect URI має збігатися **посимвольно**, разом зі слешем у кінці.
+
+**➜ Скинь мені Client ID і Client secret.** Покладу в `ops/` і на прод —
+у git вони не потраплять, як і решта секретів.
+
+---
+
+## Крок 7. Compliance audit
+
+Форма: [support.google.com/youtube/contact/yt_api_form](https://support.google.com/youtube/contact/yt_api_form)
+
+**Це не те саме, що перевірка Google з кроку 5.** Саме ця форма знімає
+замок «відео назавжди приватне».
+
+Текст я підготую повністю — тобі лишиться перевірити й натиснути
+«Відправити». Скажи, коли дійдеш до цього кроку.
+
+Знадобиться:
+
+- номер проєкту Google Cloud (Console → Dashboard → Project number)
+- посилання на канал
+- опис, як саме використовуємо API
+
+---
+
+## Що потім
+
+Після кроку 6 я:
+
+1. кладу креденшели на прод
+2. проходжу OAuth в адмінці — ти лише натиснеш «Дозволити»
+3. роблю тестове завантаження → воно ляже **приватним** (очікувано, аудиту ще немає)
+4. лишаю `video_youtube_enabled = False` до схвалення
+
+Після схвалення аудиту — вмикаю, і ролик починає йти в Shorts разом з рештою.
+
+---
+
+## Квота — не проблема
+
+З червня 2026 діє гранульована система:
+
+```
+videos.insert    100 викликів на добу   ← нам треба 1
+search.list      100 на добу
+решта            10 000 units на добу
+```
+
+Запас 100-кратний.
+
+---
+
+## Специфікація Shorts
+
+Наш ролик проходить із запасом:
+
+| Параметр | Вимога | У нас |
+|---|---|---|
+| Співвідношення | вертикальне | 9:16 ✅ |
+| Тривалість | до 3 хв | ~12 с ✅ |
+| Роздільність | до 1080p | 1080×1920 ✅ |
+
+Окремого ендпоінта для Shorts немає — YouTube класифікує сам за
+вертикальністю і тривалістю.
