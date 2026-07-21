@@ -61,5 +61,13 @@ class AbstractTitleSlug(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        self.slug = generate_slug(self)
-        return super().save()
+        # Generated once, then frozen. It used to be rebuilt from the title on
+        # every save, so correcting a typo in a product or article title
+        # silently changed its URL — breaking the link Google had indexed and
+        # every link anyone had shared. To deliberately re-slug something,
+        # clear the field and save.
+        if not (self.slug or "").strip():
+            self.slug = generate_slug(self)
+        # Args were being dropped, which quietly disabled update_fields and
+        # forced a full-row write on every partial save.
+        return super().save(*args, **kwargs)

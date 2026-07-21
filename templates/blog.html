@@ -6,6 +6,17 @@
   content="Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру."
 />
 {% endblock meta %}
+{# Page 2+ is the same collection sliced differently, so each page is its own
+   canonical. Pointing them all at /blog/ would ask Google to drop every
+   article listed past the first nine. #}
+{% block canonical %}https://{{ request.get_host }}{% url 'blog' %}{% if page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}{% endblock canonical %}
+{% block og_title %}Блог | mr.Carpet{% endblock og_title %}
+{% block og_description %}Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру.{% endblock og_description %}
+{% block og_url %}https://{{ request.get_host }}{% url 'blog' %}{% endblock og_url %}
+{% block structured_data %}
+{{ block.super }}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
@@ -35,8 +46,22 @@
                     </p>
                 </div>
             </a>
+            {% empty %}
+            <p class="color_black_sub">Незабаром тут з'являться статті про килими.</p>
             {% endfor %}
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="blog__pagination" aria-label="Сторінки блогу">
+          {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" rel="prev">← Новіші</a>
+          {% endif %}
+          <span>Сторінка {{ page_obj.number }} з {{ paginator.num_pages }}</span>
+          {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" rel="next">Старіші →</a>
+          {% endif %}
+        </nav>
+        {% endif %}
     </div>
 </section>
 {% endblock content %}{% block scripts %}

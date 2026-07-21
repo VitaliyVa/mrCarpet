@@ -450,7 +450,11 @@ def article_graph(request, article) -> dict[str, Any]:
     if article.image:
         data["image"] = absolute_uri(request, article.image.url)
     if article.created:
-        data["datePublished"] = article.created.isoformat()
+        # published_at, not created: a draft written in March and
+        # published in July is a July article, and claiming otherwise
+        # makes it look stale the day it appears.
+        published = getattr(article, "published_at", None) or article.created
+        data["datePublished"] = published.isoformat()
     if article.updated:
         data["dateModified"] = article.updated.isoformat()
     return data

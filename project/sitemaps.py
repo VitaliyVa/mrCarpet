@@ -58,7 +58,12 @@ class ArticleSitemap(Sitemap):
     priority = 0.6
 
     def items(self):
-        return Article.objects.all().only("id", "slug", "updated")
+        # Drafts must not be advertised to Google. Saving used to publish
+        # instantly, so this listed half-written articles by construction.
+        return (
+            Article.objects.filter(status=Article.Status.PUBLISHED)
+            .only("id", "slug", "updated")
+        )
 
     def lastmod(self, obj):
         return obj.updated

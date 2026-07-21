@@ -166,7 +166,16 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         # Це гарантує унікальність slug для товарів з однаковим title але різними кольорами
         from django.utils.text import slugify
         from unidecode import unidecode
-        
+
+        # Once only. This used to run on every save, so correcting a typo in a
+        # product title changed its URL — killing the link Google had indexed,
+        # the sitemap entry, and any link a customer had shared. A prettier
+        # slug is not worth a dead URL. To re-slug deliberately, clear the
+        # field and save.
+        if (self.slug or "").strip():
+            super().save(*args, **kwargs)
+            return
+
         if self.title:
             # Базова частина slug з title
             base_slug = slugify(unidecode(self.title))
