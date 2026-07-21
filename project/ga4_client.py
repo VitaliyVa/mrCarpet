@@ -155,11 +155,15 @@ def _metric_row(resp: dict, labels: list[str]) -> dict[str, str]:
     return out
 
 
-def fetch_overview(days: int) -> dict[str, Any]:
+def fetch_overview(days: int, *, start: str | None = None) -> dict[str, Any]:
     pid = property_id()
     if not pid.isdigit():
         raise Ga4ClientError("GA4_PROPERTY_ID must be digits")
-    start = f"{int(days)}daysAgo"
+    # "{n}daysAgo".."today" spans n+1 calendar days. Harmless for a week-long
+    # report, fatal for a one-day one — days=1 quietly returns yesterday as
+    # well, which is how a slide labelled "сьогодні" showed yesterday's
+    # purchases. `start` lets a caller ask for a genuine single day.
+    start = start or f"{int(days)}daysAgo"
     base = f"https://analyticsdata.googleapis.com/v1beta/properties/{pid}:runReport"
     overview = api_json(
         "POST",
@@ -236,9 +240,9 @@ def fetch_daily_trend(days: int) -> list[dict[str, Any]]:
     return out
 
 
-def fetch_ecommerce(days: int) -> dict[str, Any]:
+def fetch_ecommerce(days: int, *, start: str | None = None) -> dict[str, Any]:
     pid = property_id()
-    start = f"{int(days)}daysAgo"
+    start = start or f"{int(days)}daysAgo"
     base = f"https://analyticsdata.googleapis.com/v1beta/properties/{pid}:runReport"
 
     events = api_json(
@@ -361,6 +365,27 @@ def fetch_realtime() -> dict[str, Any]:
             }
         )
     return {"active_users": total, "screens": screens}
+
+
+def fetch_today() -> dict[str, Any]:
+    """
+    Today only — one calendar day, not "today and yesterday".
+
+    Deliberately not fetch_dashboard(1): that spans two days, and a slide
+    headed "За сьогодні" showing yesterday's revenue is worse than no slide.
+    No daily trend here; a trend across one point is not a trend.
+    """
+    overview = fetch_overview(1, start="today")
+    ecom = fetch_ecommerce(1, start="today")
+    return {
+        "days": 1,
+        "kpis": overview["kpis"],
+        "top_pages": overview["top_pages"],
+        "funnel": ecom["funnel"],
+        "revenue": ecom["revenue"],
+        "sources": ecom["sources"],
+        "daily": [],
+    }
 
 
 def fetch_dashboard(days: int) -> dict[str, Any]:

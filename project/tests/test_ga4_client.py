@@ -11,6 +11,7 @@ from project.ga4_client import (
     Ga4ClientError,
     _metric_row,
     fetch_overview,
+    fetch_today,
     ga4_configured,
 )
 
@@ -82,3 +83,38 @@ class Ga4ClientTests(TestCase):
     def test_bad_property(self):
         with self.assertRaises(Ga4ClientError):
             fetch_overview(7)
+
+
+class DateRangeTests(TestCase):
+    """
+    "{n}daysAgo".."today" spans n+1 calendar days.
+
+    Harmless over a week, fatal over one: fetch_dashboard(1) returned
+    yesterday as well, and a slide headed "За сьогодні" showed yesterday's
+    purchases as today's.
+    """
+
+    @override_settings(GA4_PROPERTY_ID="123", GA4_SERVICE_ACCOUNT_JSON="{}")
+    @patch("project.ga4_client.api_json")
+    def test_today_asks_for_a_single_day(self, api):
+        api.return_value = {"rows": []}
+        fetch_today()
+
+        ranges = [
+            call.kwargs["payload"]["dateRanges"][0]
+            for call in api.call_args_list
+            if call.kwargs.get("payload", {}).get("dateRanges")
+        ]
+        self.assertTrue(ranges)
+        for r in ranges:
+            self.assertEqual(r["startDate"], "today", r)
+            self.assertEqual(r["endDate"], "today", r)
+
+    @override_settings(GA4_PROPERTY_ID="123", GA4_SERVICE_ACCOUNT_JSON="{}")
+    @patch("project.ga4_client.api_json")
+    def test_period_reports_keep_their_range(self, api):
+        api.return_value = {"rows": []}
+        fetch_overview(7)
+
+        first = api.call_args_list[0].kwargs["payload"]["dateRanges"][0]
+        self.assertEqual(first["startDate"], "7daysAgo")

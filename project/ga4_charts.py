@@ -625,9 +625,9 @@ def build_today_photo() -> tuple[str, bytes] | None:
     Never raises — one missing slide must not cost the report the others.
     """
     try:
-        from project.ga4_client import fetch_dashboard
+        from project.ga4_client import fetch_today
 
-        return ("00_today.png", render_today_chart(fetch_dashboard(1)))
+        return ("00_today.png", render_today_chart(fetch_today()))
     except Exception:  # pragma: no cover - depends on the live API
         return None
 
