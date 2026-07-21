@@ -11,11 +11,14 @@ night, while the post itself should land when people are actually scrolling.
 
 from __future__ import annotations
 
+import logging
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from django.core.management.base import BaseCommand
+
+logger = logging.getLogger(__name__)
 
 KYIV = ZoneInfo("Europe/Kyiv")
 
@@ -23,6 +26,9 @@ GENERATE_HOUR = 4
 PUBLISH_HOUR = 18
 # A failed run must not spin: back off before the loop looks at the clock again.
 COOLDOWN_SEC = 90
+# Stagger granularity: networks go out 20 minutes apart, so the loop has to
+# wake at least that often to release them.
+TICK_MINUTES = 10
 
 
 def next_daily_slot(now: datetime | None = None) -> tuple[datetime, str]:
@@ -58,14 +64,16 @@ def next_run(now: datetime | None = None) -> tuple[datetime, str]:
     now = (now or datetime.now(KYIV)).astimezone(KYIV)
     daily_moment, daily_action = next_daily_slot(now)
 
-    # Top of the next hour. Cheap: a few API calls against a 10k daily budget.
-    poll_moment = (now + timedelta(hours=1)).replace(
-        minute=0, second=0, microsecond=0
-    )
+    # Every ten minutes. Two jobs share the tick: releasing networks whose
+    # stagger slot has come round, and — on the hour — asking YouTube for new
+    # comments. Ten is the granularity the 20-minute stagger needs; finer would
+    # just burn wakeups on nothing.
+    tick = (now + timedelta(minutes=TICK_MINUTES)).replace(second=0, microsecond=0)
+    tick -= timedelta(minutes=tick.minute % TICK_MINUTES)
 
-    if daily_moment <= poll_moment:
+    if daily_moment <= tick:
         return daily_moment, daily_action
-    return poll_moment, "poll_comments"
+    return tick, "tick"
 
 
 def _generate():
@@ -107,6 +115,28 @@ def _check_tokens():
     return format_report(report).splitlines()[0]
 
 
+def _publish_due():
+    """
+    Release any network whose stagger slot has arrived.
+
+    A no-op on most ticks: publish_pick skips everything already delivered and
+    everything not yet due, so this costs one query when there is nothing to do.
+    """
+    from social.services.tiktok_publish import publish_pick
+    from social.services.tiktok_rotation import todays_pick
+
+    pick = todays_pick()
+    if pick is None or pick.status == "published":
+        return ""
+    result = publish_pick(pick)
+    if result.get("already_published"):
+        return ""
+    fresh = [p for p in result.get("published", []) if "вже було" not in p]
+    if not fresh:
+        return ""
+    return f"released: {', '.join(fresh)}"
+
+
 def _poll_comments():
     from social.services.youtube_comments import comments_configured, poll_once
 
@@ -115,10 +145,29 @@ def _poll_comments():
     return f"youtube comments: {poll_once()} alert(s)"
 
 
+def _tick():
+    """Ten-minute heartbeat: release due networks, poll comments on the hour."""
+    parts = []
+    try:
+        released = _publish_due()
+        if released:
+            parts.append(released)
+    except Exception as exc:
+        parts.append(f"publish_due failed: {exc}")
+
+    if datetime.now(KYIV).minute < TICK_MINUTES:
+        try:
+            parts.append(_poll_comments())
+        except Exception as exc:
+            parts.append(f"poll failed: {exc}")
+
+    return " | ".join(parts) or "nothing to do"
+
+
 ACTIONS = {
     "generate": _generate,
     "publish": _publish,
-    "poll_comments": _poll_comments,
+    "tick": _tick,
 }
 
 
@@ -129,7 +178,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"tiktok-scheduler started (Europe/Kyiv, "
             f"generate {GENERATE_HOUR:02d}:00, publish {PUBLISH_HOUR:02d}:00, "
-            f"comments hourly)"
+            f"tick {TICK_MINUTES}m)"
         )
         while True:
             now = datetime.now(KYIV)
@@ -152,4 +201,4 @@ class Command(BaseCommand):
             # The hourly poll must not eat its own slot: a 90s cooldown after
             # a poll that ran at :00 is harmless, but sleeping it before
             # recomputing the next hour would be wasteful on the daily slots.
-            time.sleep(COOLDOWN_SEC if action != "poll_comments" else 5)
+            time.sleep(COOLDOWN_SEC if action != "tick" else 5)

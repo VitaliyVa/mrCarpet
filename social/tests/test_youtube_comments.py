@@ -189,7 +189,11 @@ class PollTests(TestCase):
 class SchedulerTests(TestCase):
     """The poll shares the loop with the two daily slots."""
 
-    def test_hourly_poll_is_scheduled(self):
+    def test_tick_is_scheduled_every_ten_minutes(self):
+        """
+        The stagger releases a network every 20 minutes, so the loop has to
+        wake at least that often to let them out.
+        """
         from datetime import datetime
         from zoneinfo import ZoneInfo
 
@@ -197,8 +201,8 @@ class SchedulerTests(TestCase):
 
         now = datetime(2026, 7, 21, 9, 15, tzinfo=ZoneInfo("Europe/Kyiv"))
         moment, action = next_run(now)
-        self.assertEqual(action, "poll_comments")
-        self.assertEqual((moment.hour, moment.minute), (10, 0))
+        self.assertEqual(action, "tick")
+        self.assertEqual((moment.hour, moment.minute), (9, 20))
 
     def test_daily_slots_still_win_when_closer(self):
         from datetime import datetime
@@ -207,7 +211,7 @@ class SchedulerTests(TestCase):
         from social.management.commands.tiktok_scheduler import next_run
 
         # 03:10 → generate at 04:00 lands before the 04:00 poll would matter.
-        now = datetime(2026, 7, 21, 3, 10, tzinfo=ZoneInfo("Europe/Kyiv"))
+        now = datetime(2026, 7, 21, 3, 55, tzinfo=ZoneInfo("Europe/Kyiv"))
         moment, action = next_run(now)
         self.assertEqual((moment.hour, moment.minute), (4, 0))
-        self.assertIn(action, ("generate", "poll_comments"))
+        self.assertEqual(action, "generate")

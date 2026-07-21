@@ -125,6 +125,32 @@ def build_final_video(pick: TikTokDailyPick, *, regenerate: bool = False) -> str
     return relative
 
 
+def _stagger_anchor(pick: TikTokDailyPick):
+    """
+    When this pick's rollout began — the moment every delay counts from.
+
+    Taken from the first network that actually published rather than a stored
+    timestamp: it survives a retry, a restart and a run that died halfway, all
+    without another column.
+    """
+    first = (
+        pick.deliveries.filter(published_at__isnull=False)
+        .order_by("published_at")
+        .first()
+    )
+    return first.published_at if first else timezone.now()
+
+
+def _minutes_until_due(adapter, anchor) -> int:
+    """Whole minutes left before this network's slot, 0 when it is time."""
+    delay = int(getattr(adapter, "delay_minutes", 0) or 0)
+    if delay <= 0:
+        return 0
+    due = anchor + timedelta(minutes=delay)
+    remaining = (due - timezone.now()).total_seconds()
+    return max(0, int(-(-remaining // 60)))
+
+
 def _deliveries_for(pick: TikTokDailyPick) -> dict[str, VideoDelivery]:
     """One row per network, created on first use and reused on every retry."""
     rows = {}
@@ -199,7 +225,9 @@ def publish_pick(
     published: list[str] = []
     failed: list[str] = []
     skipped: list[str] = []
+    waiting: list[str] = []
     results: dict[str, dict] = {}
+    anchor = _stagger_anchor(pick)
 
     for adapter, initial in targets:
         row = rows[adapter.key]
@@ -213,6 +241,11 @@ def publish_pick(
         # Idempotency: never post twice to a network that already took it.
         if row.is_success and not force:
             published.append(f"{adapter.label} — вже було")
+            continue
+
+        due_in = _minutes_until_due(adapter, anchor)
+        if due_in > 0 and not force:
+            waiting.append(f"{adapter.label} — через {due_in} хв")
             continue
 
         try:
@@ -248,9 +281,15 @@ def publish_pick(
             f"{adapter.label} — {'приватно' if result.get('private') else 'опубліковано'}"
         )
 
-    outcome = _record_outcome(pick, published=published, failed=failed)
+    # A pick still waiting on a slot is not finished, and calling it PUBLISHED
+    # now would stop the retry that has to deliver the rest.
+    outcome = (
+        TikTokDailyPick.Status.GENERATED
+        if waiting and published
+        else _record_outcome(pick, published=published, failed=failed)
+    )
 
-    if not published:
+    if not published and not waiting:
         error = "; ".join(failed) or "жодна площадка не увімкнена"
         _notify(
             f"❌ Відео: пост не вийшов\n"
@@ -260,12 +299,16 @@ def publish_pick(
         )
         raise TikTokPipelineError(error)
 
-    _notify(_summary_text(pick, script, published, failed, skipped))
+    # Only report once the rollout is over. A message per network would
+    # turn the topic into a ticker nobody reads.
+    if not waiting:
+        _notify(_summary_text(pick, script, published, failed, skipped))
     return {
         "status": outcome,
         "published": published,
         "failed": failed,
         "skipped": skipped,
+        "waiting": waiting,
         "results": results,
     }
 

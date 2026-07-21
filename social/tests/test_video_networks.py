@@ -173,6 +173,90 @@ class FanOutTests(TestCase):
         self.assertEqual(self.pick.status, TikTokDailyPick.Status.FAILED)
 
 
+class StaggerTests(TestCase):
+    """
+    Five identical posts landing to the same second is the signature of a bot.
+    Networks are released one at a time, and a pick is only finished once the
+    last slot has come round.
+    """
+
+    def setUp(self):
+        social = SocialSettings.load()
+        social.tiktok_auto_enabled = True
+        social.save()
+        self.pick = _pick()
+        self.montage = "social/tiktok/final/pick-stagger.mp4"
+        default_storage.save(self.montage, ContentFile(b"video-bytes"))
+
+    def tearDown(self):
+        if default_storage.exists(self.montage):
+            default_storage.delete(self.montage)
+
+    def _run(self, adapters, **kwargs):
+        with patch.object(video_networks, "REGISTRY", adapters), \
+             patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
+             patch.object(tiktok_publish, "_notify"):
+            return publish_pick(self.pick, **kwargs)
+
+    def _delayed(self, key, minutes):
+        adapter = FakeAdapter(key)
+        adapter.delay_minutes = minutes
+        return adapter
+
+    def test_first_network_goes_out_immediately(self):
+        now_net = self._delayed(VideoDelivery.Platform.TIKTOK, 0)
+        later = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
+        result = self._run([now_net, later])
+
+        self.assertEqual(len(now_net.calls), 1)
+        self.assertEqual(later.calls, [], "second network should still be waiting")
+        self.assertEqual(len(result["waiting"]), 1)
+
+    def test_pick_is_not_marked_published_while_a_slot_is_pending(self):
+        """Marking it done would stop the retry that has to deliver the rest."""
+        self._run(
+            [
+                self._delayed(VideoDelivery.Platform.TIKTOK, 0),
+                self._delayed(VideoDelivery.Platform.INSTAGRAM, 20),
+            ]
+        )
+        self.pick.refresh_from_db()
+        self.assertNotEqual(self.pick.status, TikTokDailyPick.Status.PUBLISHED)
+
+    def test_due_network_is_released_on_a_later_run(self):
+        now_net = self._delayed(VideoDelivery.Platform.TIKTOK, 0)
+        later = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
+        self._run([now_net, later])
+
+        # Pretend the first delivery happened half an hour ago.
+        row = self.pick.deliveries.get(platform="tiktok")
+        row.published_at = timezone.now() - timedelta(minutes=30)
+        row.save(update_fields=["published_at"])
+
+        released = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
+        self._run([now_net, released])
+
+        self.assertEqual(len(released.calls), 1)
+        self.pick.refresh_from_db()
+        self.assertEqual(self.pick.status, TikTokDailyPick.Status.PUBLISHED)
+
+    def test_force_ignores_the_stagger(self):
+        """An operator clicking publish has already decided to wait for nothing."""
+        later = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
+        self._run([self._delayed(VideoDelivery.Platform.TIKTOK, 0), later], force=True)
+        self.assertEqual(len(later.calls), 1)
+
+    def test_registry_delays_are_spread_out(self):
+        seen = [
+            (a.label, getattr(a, "delay_minutes", None))
+            for a in video_networks.all_adapters()
+        ]
+        delays = [d for _, d in seen]
+        self.assertEqual(delays[0], 0, "something must go out immediately")
+        self.assertEqual(sorted(delays), delays, "delays should ascend")
+        self.assertEqual(len(set(delays)), len(delays), "no two networks share a slot")
+
+
 class RetryTests(TestCase):
     """
     A partial run must be resumable without double-posting.

@@ -36,6 +36,10 @@ class NetworkAdapter(Protocol):
     #: True when the network uploads bytes instead of fetching a URL, which
     #: means the montage must still exist on disk at publish time.
     needs_local_file: bool
+    #: Minutes to wait after the first network before posting here. Five
+    #: identical posts landing to the same second is the signature of a bot;
+    #: spreading them also widens the window of activity each feed sees.
+    delay_minutes: int
 
     def is_configured(self) -> bool:
         """Credentials present. Missing ones mean SKIPPED, never FAILED."""
@@ -60,6 +64,7 @@ class TikTokAdapter:
     key = VideoDelivery.Platform.TIKTOK
     label = "TikTok"
     needs_local_file = False
+    delay_minutes = 0
 
     def is_configured(self) -> bool:
         from social.services import tiktok
@@ -117,6 +122,7 @@ class InstagramReelsAdapter:
     key = VideoDelivery.Platform.INSTAGRAM
     label = "Instagram Reels"
     needs_local_file = False
+    delay_minutes = 20
 
     def is_configured(self) -> bool:
         from social.services import meta
@@ -154,6 +160,7 @@ class FacebookReelsAdapter:
     key = VideoDelivery.Platform.FACEBOOK
     label = "Facebook Reels"
     needs_local_file = False
+    delay_minutes = 40
 
     def is_configured(self) -> bool:
         from social.services import meta
@@ -193,6 +200,7 @@ class ThreadsAdapter:
     key = VideoDelivery.Platform.THREADS
     label = "Threads"
     needs_local_file = False
+    delay_minutes = 60
 
     def is_configured(self) -> bool:
         from social.services import threads
@@ -231,6 +239,7 @@ class YouTubeShortsAdapter:
     key = VideoDelivery.Platform.YOUTUBE
     label = "YouTube Shorts"
     #: The only network that wants the bytes rather than a URL — which is why
+    delay_minutes = 80
     #: the montage outlives the publish instead of being deleted on the first
     #: confirmation.
     needs_local_file = True
