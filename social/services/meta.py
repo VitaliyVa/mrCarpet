@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from typing import Any
@@ -89,7 +90,13 @@ def _wait_container(container_id: str) -> None:
     raise MetaPublishError(f"IG container {container_id} timeout waiting FINISHED")
 
 
-def publish_instagram_reel(*, video_url: str, caption: str, cover_url: str = "") -> dict[str, str]:
+def publish_instagram_reel(
+    *,
+    video_url: str,
+    caption: str,
+    cover_url: str = "",
+    thumb_offset_ms: int | None = None,
+) -> dict[str, str]:
     ig = _ig_user_id()
     if not ig:
         raise MetaConfigError("META_IG_USER_ID empty")
@@ -99,11 +106,18 @@ def publish_instagram_reel(*, video_url: str, caption: str, cover_url: str = "")
     body: dict[str, Any] = {
         "media_type": "REELS",
         "video_url": video_url,
-        "caption": caption or "",
+        # Reels tab *and* the main feed. Without it the reel only appears in
+        # the Reels tab, which halves the surfaces it can be found on.
         "share_to_feed": "true",
+        "caption": caption or "",
     }
     if cover_url:
         body["cover_url"] = cover_url
+    elif thumb_offset_ms is not None:
+        # Frame zero is the empty room before the question fades in — a blank
+        # thumbnail in the grid. We already pick a better moment for TikTok;
+        # Instagram was defaulting to zero because nobody told it otherwise.
+        body["thumb_offset"] = int(thumb_offset_ms)
 
     created = _graph("POST", f"{ig}/media", data=body)
     container_id = str(created.get("id") or "")
@@ -224,6 +238,11 @@ def publish_facebook_reel(
         "video_id": video_id,
         "video_state": "PUBLISHED",
         "description": caption or "",
+        # feed_targeting, deliberately not targeting: the first prioritises an
+        # audience, the second *restricts* who may see the post at all. We want
+        # Ukrainians shown it first, not everyone else locked out — a rug ships
+        # to whoever wants it.
+        "feed_targeting": json.dumps({"geo_locations": {"countries": ["UA"]}}),
     }
     if title:
         body["title"] = title[:255]

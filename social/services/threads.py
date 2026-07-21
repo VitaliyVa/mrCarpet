@@ -32,6 +32,7 @@ POLL_INTERVAL_SEC = 10
 POLL_MAX_ATTEMPTS = 30
 
 TEXT_LIMIT = 500
+ALT_TEXT_LIMIT = 1000
 
 
 class ThreadsConfigError(RuntimeError):
@@ -93,7 +94,14 @@ def _wait_container(container_id: str) -> None:
     raise ThreadsPublishError(f"Threads container {container_id} timeout")
 
 
-def publish_video(*, video_url: str, text: str, topic_tag: str = "") -> dict[str, str]:
+def publish_video(
+    *,
+    video_url: str,
+    text: str,
+    topic_tag: str = "",
+    link: str = "",
+    alt_text: str = "",
+) -> dict[str, str]:
     """Post a video to Threads and return its id and permalink."""
     token = ThreadsToken.load()
     if not token.is_authorized:
@@ -105,11 +113,20 @@ def publish_video(*, video_url: str, text: str, topic_tag: str = "") -> dict[str
         "media_type": "VIDEO",
         "video_url": video_url,
         "text": (text or "")[:TEXT_LIMIT],
+        # Replies are the whole point of the guess-the-price format, so never
+        # narrow who may leave one.
+        "reply_control": "everyone",
     }
     # One tag per post, and its own parameter: Meta keeps inline "#" working
     # only for backwards compatibility and says so in the docs.
     if topic_tag:
         params["topic_tag"] = topic_tag[:50]
+    # A real attachment renders as a card and does not eat the 500-character
+    # budget, unlike the same URL pasted into the text.
+    if link:
+        params["link_attachment"] = link
+    if alt_text:
+        params["alt_text"] = alt_text[:ALT_TEXT_LIMIT]
 
     created = _call("POST", f"{token.user_id}/threads", params)
     container_id = str(created.get("id") or "")

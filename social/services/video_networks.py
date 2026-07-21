@@ -133,8 +133,16 @@ class InstagramReelsAdapter:
 
     def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
         from social.services import meta
+        from social.services.tiktok_publish import COVER_TIMESTAMP_MS
 
-        result = meta.publish_instagram_reel(video_url=video_url, caption=caption)
+        result = meta.publish_instagram_reel(
+            video_url=video_url,
+            caption=caption,
+            # The same frame TikTok gets: after the question has faded in,
+            # before the first countdown digit. Left unset, Instagram takes
+            # frame zero — the empty room, which reads as a blank tile.
+            thumb_offset_ms=COVER_TIMESTAMP_MS,
+        )
         return PublishResult(
             external_id=result.get("external_id", ""),
             external_url=result.get("external_url", ""),
@@ -201,12 +209,16 @@ class ThreadsAdapter:
 
     def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
         from social.services import threads
-        from social.services.video_caption import threads_topic_tag
+        from social.services.post_content import build_product_content
+        from social.services.video_caption import threads_alt_text, threads_topic_tag
 
+        content = build_product_content(pick.product)
         result = threads.publish_video(
             video_url=video_url,
             text=caption,
             topic_tag=threads_topic_tag(pick.product),
+            link=content.url or "",
+            alt_text=threads_alt_text(pick.product, script),
         )
         return PublishResult(
             external_id=result.get("external_id", ""),

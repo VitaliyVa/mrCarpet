@@ -328,6 +328,30 @@ class CaptionTests(TestCase):
         self.pick = _pick()
         self.script = None
 
+    def _pick_with_specs(self):
+        from catalog.models import (
+            ProductSpecification,
+            Specification,
+            SpecificationValue,
+        )
+
+        pick = self.pick
+        for name, value in (
+            ("Форма килима", "Овал"),
+            ("Виробник", "Україна"),
+            ("Основа", "Джут"),
+            ("Склад килима", "Поліпропілен"),
+            ("Висота ворса", "6.5 мм"),
+        ):
+            spec, _ = Specification.objects.get_or_create(title=name)
+            val, _ = SpecificationValue.objects.get_or_create(
+                specification=spec, title=value
+            )
+            ProductSpecification.objects.create(
+                product=pick.product, specification=spec, spec_value=val
+            )
+        return pick
+
     def _caption(self, platform):
         from social.services.video_caption import build_caption
 
@@ -394,6 +418,43 @@ class CaptionTests(TestCase):
         self.assertNotIn("2300", title)
         self.assertLessEqual(len(title), YOUTUBE_TITLE_LIMIT)
         self.assertIn("килим", title.lower())
+
+    def test_tags_describe_this_rug_not_rugs_in_general(self):
+        """
+        The generic list is identical for every product, so an algorithm
+        learns nothing from it. Shape, maker and backing are what a person
+        actually types into a search box.
+        """
+        from social.services.video_caption import spec_tags
+
+        pick = self._pick_with_specs()
+        tags = spec_tags(pick.product)
+        self.assertIn("овальнийкилим", tags)
+        self.assertIn("українськийкилим", tags)
+        self.assertIn("джутовийкилим", tags)
+
+    def test_specific_tags_come_before_the_generic_ones(self):
+        """Order decides what survives truncation — Threads keeps only one."""
+        from social.services.video_caption import hashtags_for
+
+        pick = self._pick_with_specs()
+        tags = hashtags_for(pick.product, VideoDelivery.Platform.TIKTOK).split()
+        self.assertLess(tags.index("#овальнийкилим"), tags.index("#килими"))
+
+    def test_untypeable_specs_do_not_become_tags(self):
+        """Nobody searches for polypropylene; a tag for it only adds noise."""
+        from social.services.video_caption import spec_tags
+
+        pick = self._pick_with_specs()
+        self.assertNotIn("поліпропілен", spec_tags(pick.product))
+
+    def test_pile_height_is_bucketed_not_copied(self):
+        """"6.5 мм" is not a search term; "short pile" is."""
+        from social.services.video_caption import _pile_tag
+
+        self.assertEqual(_pile_tag("6.5 мм"), "короткийворс")
+        self.assertEqual(_pile_tag("25 мм"), "довгийворс")
+        self.assertEqual(_pile_tag("Безворсовий"), "")
 
     def test_youtube_title_carries_the_shorts_tag(self):
         """

@@ -42,11 +42,82 @@ YOUTUBE_TITLE_LIMIT = 100
 
 BIO_LINE = "🛒 Каталог — лінк у профілі"
 
+# Tags derived from what the product actually is, keyed by (spec, value).
+#
+# Curated rather than generated: a value is only worth a tag if a human might
+# type it into a search box. "Овал" becomes #овальнийкилим because people look
+# for oval rugs; "Поліпропілен" gets nothing because nobody searches by
+# polymer. Mechanically turning every spec into a hashtag would bury the two
+# or three that carry weight.
+SPEC_TAGS: dict[tuple[str, str], str] = {
+    ("Форма килима", "Овал"): "овальнийкилим",
+    ("Форма килима", "Круглий"): "круглийкилим",
+    ("Форма килима", "Квадрат"): "квадратнийкилим",
+    ("Форма килима", "Напівколо"): "килимнапівколо",
+    ("Виробник", "Україна"): "українськийкилим",
+    ("Виробник", "Туреччина"): "турецькийкилим",
+    ("Виробник", "Турція"): "турецькийкилим",
+    ("Виробник", "Бельгія"): "бельгійськийкилим",
+    ("Склад килима", "Шовк"): "шовковийкилим",
+    ("Склад килима", "Гума"): "гумовийкилим",
+    ("Основа", "Джут"): "джутовийкилим",
+    ("Основа", "Резина"): "неслизькийкилим",
+    ("Висота ворса", "Безворсовий"): "безворсовийкилим",
+}
+
+#: Pile height arrives as "6.5 мм". The number itself is not a search term,
+#: but "long pile" and "short pile" are, so it is bucketed.
+LONG_PILE_MM = 15.0
+
+
+def _pile_tag(value: str) -> str:
+    raw = (value or "").replace(",", ".").replace("мм", "").strip()
+    try:
+        mm = float(raw)
+    except ValueError:
+        return ""
+    return "довгийворс" if mm >= LONG_PILE_MM else "короткийворс"
+
+
+def spec_tags(product) -> list[str]:
+    """Hashtags describing this particular rug, not rugs in general."""
+    out: list[str] = []
+    try:
+        specs = product.product_specs.select_related("specification", "spec_value")
+    except Exception:
+        return out
+
+    for spec in specs:
+        name = (getattr(spec.specification, "title", "") or "").strip()
+        value = (getattr(spec.spec_value, "title", "") or "").strip()
+        if not name or not value:
+            continue
+        tag = SPEC_TAGS.get((name, value))
+        if not tag and name == "Висота ворса":
+            tag = _pile_tag(value)
+        if tag and tag not in out:
+            out.append(tag)
+    return out
+
+
 def _tags_for(product) -> list[str]:
-    tags = list(BASE_HASHTAGS)
+    """
+    Specific first, generic last.
+
+    Order matters wherever the list gets truncated — Threads takes one tag,
+    YouTube fifteen. The tag that says "oval jute rug" is worth more than the
+    one that says "rugs", so it goes first and survives the cut.
+    """
+    tags: list[str] = []
     for category in product.categories.all():
         tag = CATEGORY_HASHTAGS.get((category.title or "").strip())
         if tag and tag not in tags:
+            tags.append(tag)
+    for tag in spec_tags(product):
+        if tag not in tags:
+            tags.append(tag)
+    for tag in BASE_HASHTAGS:
+        if tag not in tags:
             tags.append(tag)
     return tags
 
@@ -65,12 +136,12 @@ def threads_topic_tag(product) -> str:
     post." A wall of inline hashtags would render as plain text, read as
     engagement bait, and gain nothing.
 
-    The most specific tag wins — category before the generic ones — because a
-    topic tag is how a community finds the post, not a keyword dump.
+    The most specific tag wins, which is simply the first: _tags_for orders
+    category and product specifics ahead of the generic ones. Slicing by the
+    length of BASE_HASHTAGS used to work here and broke the moment that order
+    changed — position is a poor way to ask "which is the specific one".
     """
-    tags = _tags_for(product)
-    specific = tags[len(BASE_HASHTAGS):]
-    chosen = (specific or tags or [""])[0]
+    chosen = (_tags_for(product) or [""])[0]
     # Meta's rules: 1–50 chars, no dots or ampersands, never a bare number.
     chosen = chosen.replace(".", "").replace("&", "").strip()[:50]
     return "" if chosen.isdigit() else chosen
@@ -164,22 +235,38 @@ def _threads_caption(product, script: dict, *, limit: int) -> str:
     No hashtags in the text either: Threads allows one topic tag, and it is
     passed as its own parameter — see threads_topic_tag.
 
-    Links *are* clickable here, unlike TikTok and Instagram, so the product
-    URL goes in directly rather than sending people hunting through the bio.
-    It is dropped only if the budget genuinely will not take it.
+    The product link is not in the text: `link_attachment` renders it as a
+    card and costs none of the 500-character budget.
     """
-    content = build_product_content(product)
-    head = [
-        f"✨ {product.title}".strip(),
-        "",
-        script["hook"],
-        "",
-        CTA,
-    ]
-    with_url = _fits("\n".join(head + [f"👉 {content.url}"]), limit) if content.url else ""
-    if with_url and content.url in with_url:
-        return with_url
-    return _fits("\n".join(head + [BIO_LINE]), limit)
+    return _fits(
+        "\n".join([f"✨ {product.title}".strip(), "", script["hook"], "", CTA]),
+        limit,
+    )
+
+
+def threads_alt_text(product, script: dict | None = None) -> str:
+    """
+    Describes the video for people who cannot see it.
+
+    Accessibility first, but it also puts the concrete words — shape,
+    material, maker — somewhere machine-readable, which the caption
+    deliberately keeps free of clutter.
+    """
+    parts = [f"Відео: килим {product.title}".strip()]
+    try:
+        specs = product.product_specs.select_related("specification", "spec_value")
+        details = [
+            f"{(s.specification.title or '').strip().lower()}: "
+            f"{(s.spec_value.title or '').strip()}"
+            for s in specs
+            if getattr(s, "specification", None) and getattr(s, "spec_value", None)
+        ]
+        if details:
+            parts.append(", ".join(details))
+    except Exception:
+        pass
+    parts.append("килим показано в інтер'єрі кімнати")
+    return _fits(". ".join(parts), 1000)
 
 
 def _youtube_description(product, script: dict, *, limit: int) -> str:

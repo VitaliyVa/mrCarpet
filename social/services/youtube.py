@@ -62,6 +62,10 @@ DECLARE_SYNTHETIC_MEDIA = False
 MAX_TITLE = 100
 MAX_DESCRIPTION = 5000
 
+#: Geotagging is not an option here — recordingDetails.location was deprecated
+#: in 2017 and is no longer settable. Language is what is left.
+DEFAULT_LANGUAGE = "uk"
+
 
 class YouTubeConfigError(RuntimeError):
     pass
@@ -84,13 +88,24 @@ def _body(*, title: str, description: str, tags: list[str], privacy: str) -> dic
         "title": (title or "")[:MAX_TITLE],
         "description": (description or "")[:MAX_DESCRIPTION],
         "categoryId": CATEGORY_ID,
+        # BCP-47. Without it YouTube guesses the language of the title and
+        # description, and guesses worse for Ukrainian than for English.
+        #
+        # defaultAudioLanguage would be the stronger signal — it drives auto
+        # captions and dubbing — but it is not in the settable list for
+        # videos.insert, so it is left to Studio rather than sent blind.
+        "defaultLanguage": DEFAULT_LANGUAGE,
     }
     if tags:
         snippet["tags"] = tags[:15]
 
     status: dict[str, Any] = {
         "privacyStatus": privacy,
+        # false matters more than it looks: true switches off personalised
+        # recommendations and comments entirely, which for us would remove
+        # both the reach and the question the video asks.
         "selfDeclaredMadeForKids": MADE_FOR_KIDS,
+        "embeddable": True,
     }
     if DECLARE_SYNTHETIC_MEDIA:
         status["containsSyntheticMedia"] = True

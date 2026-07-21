@@ -214,16 +214,24 @@ class TopicTagTests(ProductMixin, TestCase):
         caption = build_caption(self._pick(), platform=VideoDelivery.Platform.THREADS)
         self.assertNotIn("#", caption)
 
-    def test_caption_carries_a_clickable_product_link(self):
+    def test_link_travels_as_an_attachment_not_inside_the_text(self):
         """
-        Threads renders links, unlike TikTok and Instagram — sending people
-        hunting through the bio there would waste a working surface.
+        link_attachment renders a card and costs none of the 500-character
+        budget, unlike the same URL pasted into the caption.
         """
         from social.services.video_caption import build_caption
 
         caption = build_caption(self._pick(), platform=VideoDelivery.Platform.THREADS)
-        self.assertIn("http", caption)
+        self.assertNotIn("http", caption)
         self.assertNotIn("лінк у профілі", caption)
+
+    def test_alt_text_describes_the_rug_concretely(self):
+        from social.services.video_caption import threads_alt_text
+
+        pick = self._pick()
+        alt = threads_alt_text(pick.product)
+        self.assertIn("килим", alt.lower())
+        self.assertLessEqual(len(alt), 1000)
 
     def test_caption_fits_both_the_character_and_byte_budget(self):
         """
