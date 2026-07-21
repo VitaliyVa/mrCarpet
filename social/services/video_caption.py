@@ -147,6 +147,37 @@ def threads_topic_tag(product) -> str:
     return "" if chosen.isdigit() else chosen
 
 
+#: Campaign name shared by every network, so GA4 can answer both "how much
+#: traffic does the daily video bring" and "which network brings it" from the
+#: same data.
+UTM_CAMPAIGN = "daily-video"
+UTM_MEDIUM = "video"
+
+
+def product_url_for(product, platform: str) -> str:
+    """
+    The product link, tagged so GA4 can tell the networks apart.
+
+    Platform metrics answer "who watched"; this answers "who came and bought".
+    The second question is the one worth optimising for, and it is the only
+    one we can measure without asking any platform for extra permissions.
+    """
+    from urllib.parse import urlencode
+
+    content = build_product_content(product)
+    if not content.url:
+        return ""
+    params = urlencode(
+        {
+            "utm_source": platform,
+            "utm_medium": UTM_MEDIUM,
+            "utm_campaign": UTM_CAMPAIGN,
+        }
+    )
+    joiner = "&" if "?" in content.url else "?"
+    return f"{content.url}{joiner}{params}"
+
+
 def _fits(text: str, limit: int) -> str:
     """
     Trim to `limit`, counting whichever of characters or UTF-8 bytes binds first.
@@ -206,9 +237,10 @@ def _facebook_caption(product, script: dict, *, limit: int) -> str:
     get, so the product URL goes in directly.
     """
     content = build_product_content(product)
+    url = product_url_for(product, VideoDelivery.Platform.FACEBOOK)
     tail_parts = [CTA]
-    if content.url:
-        tail_parts.append(f"👉 Дивитись у каталозі: {content.url}")
+    if url:
+        tail_parts.append(f"👉 Дивитись у каталозі: {url}")
     else:
         tail_parts.append(BIO_LINE)
     tail_parts += ["", hashtags_for(product, VideoDelivery.Platform.FACEBOOK)]
@@ -272,9 +304,10 @@ def threads_alt_text(product, script: dict | None = None) -> str:
 def _youtube_description(product, script: dict, *, limit: int) -> str:
     """YouTube: the description is collapsed by default, so it may carry the lot."""
     content = build_product_content(product)
+    url = product_url_for(product, VideoDelivery.Platform.YOUTUBE)
     tail_parts = [CTA]
-    if content.url:
-        tail_parts.append(f"👉 Каталог: {content.url}")
+    if url:
+        tail_parts.append(f"👉 Каталог: {url}")
     tail_parts += ["", hashtags_for(product, VideoDelivery.Platform.YOUTUBE)]
     tail = "\n".join(tail_parts)
 

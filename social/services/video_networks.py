@@ -217,15 +217,17 @@ class ThreadsAdapter:
 
     def publish(self, *, pick, script, caption, video_url, local_path) -> PublishResult:
         from social.services import threads
-        from social.services.post_content import build_product_content
-        from social.services.video_caption import threads_alt_text, threads_topic_tag
+        from social.services.video_caption import (
+            product_url_for,
+            threads_alt_text,
+            threads_topic_tag,
+        )
 
-        content = build_product_content(pick.product)
         result = threads.publish_video(
             video_url=video_url,
             text=caption,
             topic_tag=threads_topic_tag(pick.product),
-            link=content.url or "",
+            link=product_url_for(pick.product, self.key),
             alt_text=threads_alt_text(pick.product, script),
         )
         return PublishResult(

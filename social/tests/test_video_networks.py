@@ -521,6 +521,41 @@ class CaptionTests(TestCase):
         caption = self._caption(VideoDelivery.Platform.FACEBOOK)
         self.assertIn("http", caption)
 
+    def test_links_are_tagged_so_ga4_can_tell_networks_apart(self):
+        """
+        Platform metrics answer "who watched". This answers "who came and
+        bought" — and it needs no permission from anyone.
+        """
+        from social.services.video_caption import product_url_for
+
+        url = product_url_for(self.pick.product, VideoDelivery.Platform.FACEBOOK)
+        self.assertIn("utm_source=facebook", url)
+        self.assertIn("utm_medium=video", url)
+        self.assertIn("utm_campaign=daily-video", url)
+
+    def test_each_network_gets_its_own_utm_source(self):
+        from social.services.video_caption import product_url_for
+
+        sources = {
+            product_url_for(self.pick.product, p).split("utm_source=")[1].split("&")[0]
+            for p in (
+                VideoDelivery.Platform.FACEBOOK,
+                VideoDelivery.Platform.YOUTUBE,
+                VideoDelivery.Platform.THREADS,
+            )
+        }
+        self.assertEqual(len(sources), 3)
+
+    def test_tagged_url_survives_an_existing_query_string(self):
+        from social.services.video_caption import product_url_for
+
+        with patch(
+            "social.services.video_caption.build_product_content"
+        ) as content:
+            content.return_value.url = "https://mrcarpet24.com/p/x/?ref=1"
+            url = product_url_for(self.pick.product, "threads")
+        self.assertIn("?ref=1&utm_source=threads", url)
+
     def test_tiktok_and_instagram_captions_have_no_url(self):
         for platform in (
             VideoDelivery.Platform.TIKTOK,
