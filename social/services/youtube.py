@@ -35,9 +35,11 @@ API = "https://www.googleapis.com/youtube/v3"
 HTTP_TIMEOUT = 60
 UPLOAD_TIMEOUT = 600
 
-# 22 = People & Blogs. Retail product clips have no better fit, and the
-# category mainly affects browse surfaces rather than Shorts distribution.
-CATEGORY_ID = "22"
+# 26 = Howto & Style, which is where interiors, décor and home improvement
+# live. Not a formality: the category steers who gets recommended the clip.
+# 22 (People & Blogs) is the catch-all, and there it would compete with vlogs
+# instead of with people already thinking about their floor.
+CATEGORY_ID = "26"
 
 # YouTube expects an explicit answer; silence is treated as undeclared.
 MADE_FOR_KIDS = False

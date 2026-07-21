@@ -187,6 +187,17 @@ class UploadTests(TestCase):
         self.assertEqual(body["status"]["privacyStatus"], "public")
         self.assertIs(body["status"]["selfDeclaredMadeForKids"], False)
 
+    def test_category_is_howto_and_style_not_the_catch_all(self):
+        """
+        26 is where interiors and décor live. 22 (People & Blogs) is the
+        catch-all, and the category steers who gets recommended the clip.
+        """
+        import json
+
+        _, post, _ = self._upload()
+        body = json.loads(post.call_args.kwargs["data"].decode())
+        self.assertEqual(body["snippet"]["categoryId"], "26")
+
     def test_synthetic_media_label_is_off(self):
         """
         The rug is a real product; only the room around it is generated, which
