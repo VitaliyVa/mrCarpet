@@ -47,7 +47,18 @@ class CategorySitemap(Sitemap):
     priority = 0.8
 
     def items(self):
-        return ProductCategory.objects.all().only("id", "slug")
+        # Empty categories are not offered to Google. "Для ванни" and
+        # "Акрилові килими" both had zero products and both sat in the
+        # sitemap: an invitation to index a page that shows nothing, which
+        # reads as thin content and wastes a visit if it ever ranks.
+        # They come back automatically once they hold something.
+        from django.db.models import Count
+
+        return (
+            ProductCategory.objects.annotate(n=Count("products"))
+            .filter(n__gt=0)
+            .only("id", "slug")
+        )
 
     def lastmod(self, obj):
         return None

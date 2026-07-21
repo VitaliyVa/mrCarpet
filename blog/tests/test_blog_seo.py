@@ -265,3 +265,108 @@ class WeeklyTopicTests(TestCase):
 
         self.assertFalse(result["ok"])
         self.assertIn("порожня", tell.call_args[0][0])
+
+
+class CatalogRealityTests(TestCase):
+    """
+    The article must not send readers where the shop has nothing.
+
+    Both failures were real in the first five drafts: one recommended cotton
+    and nylon rugs the catalogue has never carried, and two topics pointed at
+    categories with zero products.
+    """
+
+    def setUp(self):
+        from blog.models import ArticleTopic
+        from catalog.models import (
+            Product,
+            ProductAttribute,
+            ProductCategory,
+            Size,
+        )
+
+        self.empty = ProductCategory.objects.create(title="Порожня", slug="porozhnia")
+        self.filled = ProductCategory.objects.create(title="Повна", slug="povna")
+        product = Product.objects.create(title="Килим", slug="kylym-blog")
+        size = Size.objects.create(title="1.6 x 2.3")
+        ProductAttribute.objects.create(
+            product=product, size=size, price=1000, quantity=3
+        )
+        product.categories.add(self.filled)
+
+        self.topic = ArticleTopic.objects.create(
+            title="Тема",
+            target_path="/catalog/categorie/porozhnia/",
+            rank=1,
+        )
+
+    def test_empty_category_is_swapped_for_the_catalogue(self):
+        from blog.services.weekly_topic import _usable_target
+
+        self.assertEqual(
+            _usable_target("/catalog/categorie/porozhnia/"), "/catalog/"
+        )
+
+    def test_a_stocked_category_is_kept(self):
+        from blog.services.weekly_topic import _usable_target
+
+        self.assertEqual(
+            _usable_target("/catalog/categorie/povna/"),
+            "/catalog/categorie/povna/",
+        )
+
+    def test_prompt_never_points_at_an_empty_category(self):
+        from unittest.mock import patch
+
+        from blog.services import weekly_topic
+
+        article = Article.objects.create(title="X")
+
+        class FakeResult:
+            article_id = article.pk
+            title = "X"
+
+        with patch.object(weekly_topic, "_tell_staff"), patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            return_value=FakeResult(),
+        ) as gen:
+            weekly_topic.generate_next()
+
+        prompt = gen.call_args[0][0]
+        self.assertNotIn("porozhnia", prompt)
+        self.assertIn("/catalog/", prompt)
+
+    def test_prompt_lists_only_stocked_materials(self):
+        from unittest.mock import patch
+
+        from catalog.models import (
+            ProductSpecification,
+            Specification,
+            SpecificationValue,
+        )
+        from blog.services import weekly_topic
+
+        spec = Specification.objects.create(title="Склад килима")
+        value = SpecificationValue.objects.create(title="Поліпропілен")
+        product = Article.objects.none()  # placeholder, spec attaches below
+        from catalog.models import Product
+
+        ProductSpecification.objects.create(
+            product=Product.objects.first(), specification=spec, spec_value=value
+        )
+
+        article = Article.objects.create(title="Y")
+
+        class FakeResult:
+            article_id = article.pk
+            title = "Y"
+
+        with patch.object(weekly_topic, "_tell_staff"), patch(
+            "blog.services.article_generate.ReplicateArticleService.generate_and_create",
+            return_value=FakeResult(),
+        ) as gen:
+            weekly_topic.generate_next()
+
+        prompt = gen.call_args[0][0]
+        self.assertIn("Поліпропілен", prompt)
+        self.assertIn("Не радь шерсть", prompt)

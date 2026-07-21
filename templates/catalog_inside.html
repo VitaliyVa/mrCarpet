@@ -8,6 +8,11 @@
 />
 {% if categorie and categorie.meta_keys %}<meta name="keywords" content="{{ categorie.meta_keys }}" />{% endif %}
 {% endblock meta %}
+{# An empty category is a page that shows nothing. Asking Google to index
+   it earns a thin-content signal and, if it ever ranks, a visitor who
+   learns the shop has none of what they searched for. It becomes
+   indexable again the moment it holds a product. #}
+{% block robots %}{% if categorie and not categorie.products.exists %}<meta name="robots" content="noindex, follow" />{% else %}{{ block.super }}{% endif %}{% endblock robots %}
 {% block canonical %}{% if categorie %}https://{{ request.get_host }}{{ categorie.get_absolute_url }}{% else %}https://{{ request.get_host }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
 {% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}

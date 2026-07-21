@@ -44,10 +44,23 @@ def generate_next(*, notify: bool = True) -> dict:
     prompt = topic.title
     if topic.brief:
         prompt = f"{topic.title}. {topic.brief}"
-    if topic.target_path:
+
+    target = _usable_target(topic.target_path)
+    if target:
         prompt = (
-            f"{prompt} Зроби в тексті природне посилання на {topic.target_path} "
+            f"{prompt} Зроби в тексті природне посилання на {target} "
             f"там, де читачеві справді час подивитись товар."
+        )
+
+    stocked = _stocked_materials()
+    if stocked:
+        # Otherwise the article recommends what the shop does not sell. The
+        # first drafts advised cotton and nylon rugs; the catalogue has
+        # neither, so the piece would have ranked and sent the reader
+        # elsewhere.
+        prompt = (
+            f"{prompt} У порадах згадуй лише матеріали, які є в магазині: "
+            f"{stocked}. Не радь шерсть, бавовну, шовк чи нейлон."
         )
 
     try:
@@ -92,3 +105,49 @@ def _tell_staff(text: str) -> None:
         notify_staff_text(text)
     except Exception:
         logger.info("weekly blog notification failed")
+
+
+def _usable_target(path: str) -> str:
+    """
+    The category to link to, or the general catalogue if it is empty.
+
+    An article that ranks and lands the reader on a category with no products
+    is worse than no article: they learn the shop has none of what they
+    searched for. Checked at generation time rather than fixed in the seed
+    list, so a category that fills up starts being linked again on its own.
+    """
+    path = (path or "").strip()
+    if not path or "/categorie/" not in path:
+        return path
+
+    slug = path.rstrip("/").rsplit("/", 1)[-1]
+    try:
+        from catalog.models import ProductCategory
+
+        category = ProductCategory.objects.filter(slug=slug).first()
+        if category and category.products.exists():
+            return path
+    except Exception:
+        logger.info("category check failed for %s", path)
+        return path
+
+    logger.info("category %s is empty, linking to the catalogue instead", slug)
+    return "/catalog/"
+
+
+def _stocked_materials() -> str:
+    """What the shop actually sells, for the prompt to stay inside."""
+    try:
+        from catalog.models import ProductSpecification
+
+        values = (
+            ProductSpecification.objects.filter(
+                specification__title__in=("Склад килима", "Основа")
+            )
+            .values_list("spec_value__title", flat=True)
+            .distinct()
+        )
+        names = sorted({(v or "").strip() for v in values if (v or "").strip()})
+        return ", ".join(names)
+    except Exception:
+        return ""
