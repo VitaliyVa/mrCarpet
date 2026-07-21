@@ -193,11 +193,25 @@ def _youtube_description(product, script: dict, *, limit: int) -> str:
     return f"{body}\n\n{tail}"[:limit]
 
 
+#: YouTube is supposed to classify a Short from the file alone — vertical and
+#: under three minutes — and our montage is 1080x1920 at 13s. It did not: the
+#: first upload landed as an ordinary video. The hashtag is the historical
+#: explicit signal and it is what actually works, so it is appended rather
+#: than trusted to be unnecessary.
+SHORTS_TAG = "#Shorts"
+
+
 def build_youtube_title(pick, script: dict | None = None) -> str:
     """
-    The title is the most visible text we write, so it carries the hook only.
+    The title is the most visible text we write, so it carries the hook.
 
-    A price here would be read in the feed before the video ever plays.
+    A price here would be read in the feed before the video ever plays, so it
+    stays out. The Shorts tag goes on the end, where it does not break the
+    question a viewer reads first.
     """
     script = script or build_script(pick)
-    return script["hook"][:YOUTUBE_TITLE_LIMIT]
+    hook = script["hook"]
+    room = YOUTUBE_TITLE_LIMIT - len(SHORTS_TAG) - 1
+    if len(hook) > room:
+        hook = hook[:room].rstrip()
+    return f"{hook} {SHORTS_TAG}"

@@ -395,6 +395,27 @@ class CaptionTests(TestCase):
         self.assertLessEqual(len(title), YOUTUBE_TITLE_LIMIT)
         self.assertIn("килим", title.lower())
 
+    def test_youtube_title_carries_the_shorts_tag(self):
+        """
+        A 1080x1920 clip of 13s should classify as a Short on its own. The
+        first real upload landed as an ordinary video, so the historical
+        explicit signal is sent rather than assumed unnecessary.
+        """
+        from social.services.video_caption import build_youtube_title
+
+        self.assertTrue(build_youtube_title(self.pick).endswith("#Shorts"))
+
+    def test_long_hook_is_trimmed_to_keep_the_shorts_tag(self):
+        """The tag must survive the limit — it is what makes it a Short."""
+        from social.services.video_caption import (
+            YOUTUBE_TITLE_LIMIT,
+            build_youtube_title,
+        )
+
+        title = build_youtube_title(self.pick, {"hook": "П" * 300})
+        self.assertLessEqual(len(title), YOUTUBE_TITLE_LIMIT)
+        self.assertTrue(title.endswith("#Shorts"))
+
 
 class CommentRoutingTests(TestCase):
     """
