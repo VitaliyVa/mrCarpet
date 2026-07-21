@@ -40,15 +40,108 @@
     }
 
     &-text {
-      color: #89817c;
+      // Article typography. The body used to inherit almost nothing: only
+      // <p> had a size, so headings, lists and links each fell back to
+      // whatever the global sheet said and the page read as three different
+      // documents stacked together.
+      //
+      // 18px/1.75 rather than 20px/1.3 — at that size the old leading put
+      // the lines close enough to blur into each other over a screenful.
+      color: #4a443f;
+      font-size: 18px;
+      line-height: 1.75;
 
       p {
-        font-size: 20px;
-        line-height: 130%;
+        margin: 0;
+        font-size: inherit;
+        line-height: inherit;
       }
 
       p + p {
-        margin-top: 20px;
+        margin-top: 18px;
+      }
+
+      // The "Коротко:" opener is the answer someone came for, so it reads
+      // as a lead rather than as the first of many paragraphs.
+      > p:first-child {
+        padding: 18px 20px;
+        border-left: 3px solid #a46c46;
+        border-radius: 0 8px 8px 0;
+        background: #faf6f1;
+        color: #2f2a26;
+        font-size: 19px;
+      }
+
+      h2 {
+        margin: 40px 0 14px;
+        color: #2f2a26;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      // First heading sits under the lead, not adrift from it.
+      > p:first-child + h2 {
+        margin-top: 32px;
+      }
+
+      strong {
+        color: #2f2a26;
+        font-weight: 700;
+      }
+
+      ul,
+      ol {
+        margin: 16px 0;
+        padding-left: 0;
+        list-style: none;
+      }
+
+      li {
+        position: relative;
+        padding-left: 28px;
+      }
+
+      li + li {
+        margin-top: 10px;
+      }
+
+      ul li::before {
+        position: absolute;
+        top: 0.72em;
+        left: 8px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #a46c46;
+        content: "";
+      }
+
+      ol {
+        counter-reset: step;
+      }
+
+      ol li {
+        counter-increment: step;
+      }
+
+      ol li::before {
+        position: absolute;
+        left: 0;
+        color: #a46c46;
+        font-weight: 700;
+        content: counter(step) ".";
+      }
+
+      a {
+        border-bottom: 1px solid rgba(164, 108, 70, 0.35);
+        color: #a46c46;
+        text-decoration: none;
+        transition: border-color 0.2s ease;
+
+        &:hover {
+          border-bottom-color: #a46c46;
+        }
       }
     }
   }
@@ -230,6 +323,24 @@
       &-img {
         img {
           max-height: 220px;
+        }
+      }
+
+      // A 24px heading and a 20px lead crowd a phone column; the body stays
+      // at 18px because that is the size being read, not skimmed.
+      &-title {
+        font-size: 24px;
+      }
+
+      &-text {
+        h2 {
+          margin-top: 32px;
+          font-size: 21px;
+        }
+
+        > p:first-child {
+          padding: 14px 16px;
+          font-size: 18px;
         }
       }
     }
