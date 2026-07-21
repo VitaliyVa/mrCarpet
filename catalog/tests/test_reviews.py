@@ -142,3 +142,45 @@ class StructuredDataTests(ReviewFactoryMixin, TestCase):
             status=ProductReview.Status.APPROVED,
         )
         self.assertEqual(self._rating()["ratingValue"], 2)
+
+
+class StaffAlertTests(ReviewFactoryMixin, TestCase):
+    """
+    The alert exists so a review can be dealt with from a phone. A relative
+    path is not tappable in Telegram, which quietly defeats that.
+    """
+
+    def setUp(self):
+        self.product = self._product()
+
+    def _sent_text(self, **overrides):
+        from unittest.mock import patch
+
+        with patch("social.services.comment_notify.notify_staff_text") as notify:
+            self._post(**overrides)
+        self.assertTrue(notify.called, "staff was not told about a new review")
+        return notify.call_args[0][0]
+
+    def test_link_is_absolute(self):
+        text = self._sent_text()
+        self.assertIn("https://mrcarpet24.com/admin/catalog/productreview/", text)
+
+    def test_pending_review_asks_for_approval(self):
+        text = self._sent_text()
+        self.assertIn("на модерації", text)
+        self.assertIn("Схвалити", text)
+
+    def test_published_review_does_not_ask_for_approval(self):
+        """"Схвалити" on something already live is an instruction to nowhere."""
+        from order.models import Order
+        from order.review_request import make_token
+        from cart.models import Cart, CartProduct
+
+        order = Order.objects.create(name="Оксана", email="b@e.com")
+        cart = Cart.objects.create(order=order)
+        CartProduct.objects.create(cart=cart, product_attr=self.attr, quantity=1)
+
+        text = self._sent_text(review_token=make_token(order))
+        self.assertIn("опубліковано", text)
+        self.assertIn("Переглянути", text)
+        self.assertNotIn("Схвалити", text)

@@ -389,14 +389,26 @@ def _notify_staff_new_review(review, *, auto_published: bool = False) -> None:
     """
     try:
         from social.services.comment_notify import notify_staff_text
+        from order.review_request import SITE
 
         stars = "★" * int(review.rating or 0)
+        # Absolute: a bare path is not tappable in Telegram, and the whole
+        # point of the alert is that the review can be dealt with from a phone.
+        link = f"{SITE}/admin/catalog/productreview/{review.pk}/change/"
+
+        if auto_published:
+            head = "✅ Новий відгук опубліковано (перевірена покупка)"
+            action = "Переглянути"
+        else:
+            head = "📝 Новий відгук на модерації"
+            action = "Схвалити"
+
         notify_staff_text(
-            f"📝 Новий відгук на модерації\n"
+            f"{head}\n"
             f"{review.product}\n"
             f"{stars} від {review.name}\n"
             f"{(review.content or '').strip()[:300]}\n\n"
-            f"Схвалити: /admin/catalog/productreview/{review.pk}/change/"
+            f"{action}: {link}"
         )
     except Exception:
         logger.info("review notification failed for %s", review.pk)
