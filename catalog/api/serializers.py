@@ -106,9 +106,30 @@ class FavouriteProductsSerializer(serializers.ModelSerializer):
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):
+    """
+    Explicit field list, not "__all__".
+
+    "__all__" exposed the reviewer's email to anyone reading the endpoint and
+    let a submitter set `status` themselves — which would have made the
+    moderation added alongside this purely decorative.
+    """
+
     class Meta:
         model = ProductReview
-        fields = "__all__"
+        fields = (
+            "id",
+            "product",
+            "name",
+            "email",
+            "content",
+            "rating",
+            "verified_purchase",
+            "created",
+        )
+        read_only_fields = ("id", "verified_purchase", "created")
+        # Accepted on submit, never returned: it is the reviewer's address,
+        # and it is what the verified-purchase check reads.
+        extra_kwargs = {"email": {"write_only": True, "required": False}}
         
         
 class ProductSaleSerializer(serializers.ModelSerializer):

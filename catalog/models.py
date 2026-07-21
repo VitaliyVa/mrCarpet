@@ -777,12 +777,49 @@ class ProductReview(AbstractCreatedUpdated):
         validators=[MaxValueValidator(5)], blank=False, null=False
     )
 
+    class Status(models.TextChoices):
+        PENDING = "pending", "На модерації"
+        APPROVED = "approved", "Опубліковано"
+        REJECTED = "rejected", "Відхилено"
+
+    #: Moderated by default, and that default is the whole point. The create
+    #: endpoint is open to anonymous POSTs, and every review it accepted went
+    #: straight into the aggregateRating that Google reads — a stranger could
+    #: set the star rating of any product. Nothing reaches the page or the
+    #: structured data until a human approves it.
+    status = models.CharField(
+        verbose_name="Статус",
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    email = models.EmailField(
+        verbose_name="Email",
+        blank=True,
+        default="",
+        help_text="Не показується на сайті. Потрібен, щоб звірити з замовленням.",
+    )
+    verified_purchase = models.BooleanField(
+        verbose_name="Перевірена покупка",
+        default=False,
+        help_text="Email збігся з виконаним замовленням на цей товар.",
+    )
+    #: Abuse handling only — never rendered.
+    ip_address = models.GenericIPAddressField(null=True, blank=True, editable=False)
+
     class Meta:
+        ordering = ("-created",)
         verbose_name = "Відгук"
         verbose_name_plural = "Відгуки"
+        indexes = [models.Index(fields=["product", "status"])]
 
     def __str__(self):
-        return f"{self.name}'s review"
+        return f"{self.name} · {self.rating}★ · {self.product}"
+
+    @property
+    def is_public(self) -> bool:
+        return self.status == self.Status.APPROVED
 
 
 class RelatedProduct(models.Model):

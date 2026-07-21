@@ -288,7 +288,13 @@ def _build_product_node(
     if color:
         data["color"] = color
 
-    reviews = list(product.reviews.all())
+    # Approved only. The create endpoint accepts anonymous POSTs, so anything
+    # else here would let a stranger set the star rating Google shows for a
+    # product — and unverifiable ratings in structured data are what earns a
+    # manual action, which costs every rich result on the site, not just stars.
+    from catalog.models import ProductReview
+
+    reviews = list(product.reviews.filter(status=ProductReview.Status.APPROVED))
     if reviews:
         ratings = [r.rating for r in reviews if r.rating]
         if ratings:

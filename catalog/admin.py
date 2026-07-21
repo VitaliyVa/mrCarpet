@@ -1315,7 +1315,45 @@ admin.site.register(SpecificationValue, SpecificationValueAdmin)
 admin.site.register(ProductSpecification)
 admin.site.register(Size, SizeAdmin)
 admin.site.register(ProductAttribute)
-admin.site.register(ProductReview)
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    """
+    Moderation queue first: pending reviews are the only ones needing action,
+    so the default view is filtered to them and approving is a bulk action.
+    """
+
+    list_display = (
+        "created",
+        "product",
+        "rating",
+        "name",
+        "status",
+        "verified_purchase",
+        "short_content",
+    )
+    list_filter = ("status", "rating", "verified_purchase")
+    search_fields = ("name", "email", "content", "product__title")
+    list_select_related = ("product",)
+    readonly_fields = ("created", "updated", "ip_address", "verified_purchase")
+    actions = ("approve_reviews", "reject_reviews")
+    list_per_page = 50
+
+    @admin.display(description="Коментар")
+    def short_content(self, obj):
+        text = (obj.content or "").strip()
+        return (text[:70] + "…") if len(text) > 70 else (text or "—")
+
+    @admin.action(description="Опублікувати відгук")
+    def approve_reviews(self, request, queryset):
+        updated = queryset.update(status=ProductReview.Status.APPROVED)
+        self.message_user(request, f"Опубліковано: {updated}")
+
+    @admin.action(description="Відхилити відгук")
+    def reject_reviews(self, request, queryset):
+        updated = queryset.update(status=ProductReview.Status.REJECTED)
+        self.message_user(request, f"Відхилено: {updated}")
+
+
 admin.site.register(ProductSale)
 admin.site.register(ProductColor, ProductColorAdmin)
 admin.site.register(ProductWidth)

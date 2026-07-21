@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import generics
 from rest_framework import mixins
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
@@ -24,6 +26,8 @@ from ..models import Product, Favourite, FavouriteProducts, ProductReview, Promo
 from ..utils import get_favourite
 from .filters import ProductFilter
 from .pagination import CustomPagination
+
+logger = logging.getLogger(__name__)
 
 
 class FavouriteProductPermission(permissions.BasePermission):
@@ -100,9 +104,25 @@ class FavouriteProductView(mixins.ListModelMixin, generics.GenericAPIView):
 
 
 class ProductReviewViewSet(ModelViewSet):
-    queryset = ProductReview.objects.all()
+    """
+    Anyone may submit a review; nobody may publish one.
+
+    IsAdminEdit only implements has_object_permission, which DRF does not call
+    on create — so this endpoint has always accepted anonymous POSTs. That is
+    fine for a review form and fatal for anything downstream of it, which is
+    why moderation lives in the model default and the read side filters on it.
+    """
+
     serializer_class = ProductReviewSerializer
     permission_classes = [IsAdminEdit]
+
+    def get_queryset(self):
+        # Reading is public, so only approved reviews are listed. Staff see
+        # everything, which is what makes the admin useful.
+        qs = ProductReview.objects.all()
+        if self.request.user.is_staff:
+            return qs
+        return qs.filter(status=ProductReview.Status.APPROVED)
 
     def create(self, request, *args, **kwargs):
         # Мутуємо копію, а не request.data; далі — той самий флоу, що CreateModelMixin
@@ -115,11 +135,29 @@ class ProductReviewViewSet(ModelViewSet):
                 {"message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # Whatever the client sent for these, it does not get to decide them.
+        data["status"] = ProductReview.Status.PENDING
+        data["verified_purchase"] = False
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        review = serializer.save(
+            status=ProductReview.Status.PENDING,
+            verified_purchase=False,
+            ip_address=_client_ip(request),
+        )
+
+        _mark_verified_purchase(review)
+        _notify_staff_new_review(review)
+
+        # The submitter is told it was received, not shown the stored row:
+        # echoing the record back would leak the moderation state and the
+        # email of a review that is not public yet.
+        return Response(
+            {"ok": True, "message": "Дякуємо! Відгук з'явиться після перевірки."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class FavouriteProductViewSet(ModelViewSet):
@@ -230,3 +268,61 @@ class SaleProductsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Gene
         if self.action == "retrieve":
             return ProductSaleDetailSerializer
         return SaleSerializer
+
+
+def _client_ip(request) -> str | None:
+    """Left-most X-Forwarded-For entry, since nginx sits in front."""
+    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+    return forwarded or request.META.get("REMOTE_ADDR") or None
+
+
+def _mark_verified_purchase(review) -> None:
+    """
+    Flag the review when its email matches a real order for this product.
+
+    Best effort and deliberately narrow: only a delivered or completed order
+    counts, because "verified purchase" has to mean the person actually
+    received the rug. A mismatch is not an error — plenty of honest reviewers
+    order by phone or use a different address.
+    """
+    email = (review.email or "").strip().lower()
+    if not email:
+        return
+    try:
+        from order.models import Order
+
+        matched = (
+            Order.objects.filter(
+                email__iexact=email,
+                status__in=(Order.STATUS_SHIPPED, Order.STATUS_COMPLETED),
+                cart__cart_products__product__product__id=review.product_id,
+            )
+            .exists()
+        )
+        if matched:
+            type(review).objects.filter(pk=review.pk).update(verified_purchase=True)
+    except Exception:
+        logger.info("verified-purchase check skipped for review %s", review.pk)
+
+
+def _notify_staff_new_review(review) -> None:
+    """
+    Tell the staff chat a review is waiting.
+
+    Without this, moderation depends on someone remembering to open the admin,
+    and a review sitting unapproved for a week is the same as no review at all
+    — the customer sees nothing appear and does not write another.
+    """
+    try:
+        from social.services.comment_notify import notify_staff_text
+
+        stars = "★" * int(review.rating or 0)
+        notify_staff_text(
+            f"📝 Новий відгук на модерації\n"
+            f"{review.product}\n"
+            f"{stars} від {review.name}\n"
+            f"{(review.content or '').strip()[:300]}\n\n"
+            f"Схвалити: /admin/catalog/productreview/{review.pk}/change/"
+        )
+    except Exception:
+        logger.info("review notification failed for %s", review.pk)
