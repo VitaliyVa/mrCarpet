@@ -53,8 +53,11 @@ READ tools (execute immediately):
 - count_products()
 - count_in_stock_products()
 - get_product_stock(query: string) — search product by title/slug/url
-- get_ga4_report(days?: int 1..30, report?: dashboard|ecommerce|realtime)
-  — GA4 analytics with chart images (Ukrainian shop metrics)
+- get_ga4_report(days?: int 1..30, report?: dashboard|ecommerce|realtime|social)
+  — GA4 analytics with chart images (Ukrainian shop metrics).
+  dashboard/ecommerce also include a social-networks slide (views on the
+  daily video per network). report=social returns that slide alone —
+  use it only when asked specifically about соцмережі/Instagram/TikTok.
 
 WRITE tools (NEVER execute yourself — system will ask human confirm):
 - set_order_status(order_number, status) — status = code (completed) або UA (Виконано)
@@ -265,6 +268,44 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
             "cooldown": True,
         }
 
+    try:
+        days = int(args.get("days") or 7)
+    except (TypeError, ValueError):
+        days = 7
+    days = max(1, min(days, 30))
+    report = (args.get("report") or "dashboard").strip().lower()
+    if report not in ("dashboard", "ecommerce", "realtime", "social"):
+        report = "dashboard"
+
+    # Answered before the GA4 check on purpose: the networks report their own
+    # view counts, so this question stays answerable even when GA4 is down or
+    # unconfigured.
+    if report == "social":
+        from social.services.metrics_chart import build_social_photo
+        from social.services.video_metrics import format_summary, weekly_summary
+
+        photo = build_social_photo(days=days)
+        if not photo:
+            return {
+                "ok": False,
+                "error": (
+                    "Ще немає зібраних метрик соцмереж — "
+                    "вони збираються щодня о 04:00."
+                ),
+            }
+        _analytics_cooldown[chat_key] = time.time()
+        return {
+            "ok": True,
+            "report": report,
+            "days": days,
+            "caption": format_summary(weekly_summary(days=days), days=days)[:1024],
+            "summary": {"days": days},
+            "photos": [
+                {"name": photo[0], "b64": base64.b64encode(photo[1]).decode("ascii")}
+            ],
+            "skip_llm": True,
+        }
+
     if not ga4_configured():
         return {
             "ok": False,
@@ -275,19 +316,11 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
         }
 
     try:
-        days = int(args.get("days") or 7)
-    except (TypeError, ValueError):
-        days = 7
-    days = max(1, min(days, 30))
-    report = (args.get("report") or "dashboard").strip().lower()
-    if report not in ("dashboard", "ecommerce", "realtime"):
-        report = "dashboard"
-
-    try:
         if report == "realtime":
             data = fetch_realtime()
             photos_raw = [("realtime.png", render_realtime_chart(data))]
             caption = build_realtime_caption(data)
+            caption_data = None
             summary = {"active_users": data.get("active_users"), "screens": data.get("screens")}
         elif report == "ecommerce":
             data = fetch_ecommerce(days)
@@ -312,7 +345,7 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
                     ),
                 ),
             ]
-            caption = build_caption(dash)
+            caption_data = dash
             summary = {
                 "days": days,
                 "revenue": data.get("revenue"),
@@ -321,7 +354,7 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
         else:
             data = fetch_dashboard(days)
             photos_raw = build_dashboard_photos(data)
-            caption = build_caption(data)
+            caption_data = data
             summary = {
                 "days": days,
                 "kpis": data.get("kpis"),
@@ -331,6 +364,22 @@ def _execute_ga4_report(args: dict) -> dict[str, Any]:
         return {"ok": False, "error": str(exc)}
     except Exception as exc:
         return {"ok": False, "error": f"Помилка звіту GA4: {exc}"}
+
+    # One extra slide answering what GA4 cannot: how many people watched,
+    # rather than how many then came to the site. Skipped for realtime, which
+    # asks "who is online now" — a question the daily video does not answer.
+    if report != "realtime":
+        from social.services.metrics_chart import build_social_photo
+
+        social_photo = build_social_photo(days=days)
+        if social_photo:
+            photos_raw = list(photos_raw) + [social_photo]
+
+    # Built here rather than inside the branches so the slide count is the
+    # real one. It used to be hardcoded at 7, which the ecommerce report —
+    # three slides — has been contradicting all along.
+    if caption_data is not None:
+        caption = build_caption(caption_data, slides=len(photos_raw))
 
     _analytics_cooldown[chat_key] = time.time()
     photos = [

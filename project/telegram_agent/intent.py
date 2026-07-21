@@ -28,6 +28,20 @@ _ANALYTICS_RE = re.compile(
 )
 
 
+# Asking about the networks specifically. Deliberately narrower than a bare
+# "соцмереж": that word turns up in ordinary talk about posting more often,
+# and answering it with a chart album would be noise. An analytics word has
+# to appear alongside it, on either side.
+_SOCIAL_RE = re.compile(
+    r"((аналітик|статистик|метрик|показник|звіт|результат)\w*\s+"
+    r"(по\s+|з\s+)?(соц|мереж|instagram|інстаграм|tiktok|тікток|youtube|ютуб)"
+    r"|(соц\.?\s*мереж|соцмереж)\w*\s*"
+    r"(аналітик|статистик|метрик|показник|звіт|результат)"
+    r"|скільки\s+(переглядів|людей)\s+(подивил|побачил|переглянул))",
+    re.I,
+)
+
+
 def _analytics_days(text: str) -> int:
     t = (text or "").casefold()
     if re.search(r"(сьогодні|today|1\s*дн)", t):
@@ -351,6 +365,15 @@ def maybe_direct_plan(user_text: str, *, context_text: str = "") -> dict | None:
     stock_plan = _parse_stock_change(user_text or "")
     if stock_plan:
         return stock_plan
+
+    # Social networks only — before the GA4 branch, which "аналітика" would
+    # otherwise claim first and answer with the whole album.
+    if _SOCIAL_RE.search(t):
+        return {
+            "type": "tool",
+            "name": "get_ga4_report",
+            "args": {"days": _analytics_days(user_text or ""), "report": "social"},
+        }
 
     # GA4 analytics (charts) — before order lookups that match «покажи»
     if _ANALYTICS_RE.search(t) or re.search(

@@ -33,7 +33,16 @@ def send_ga4_dashboard_report(
     try:
         data = fetch_dashboard(days)
         photos = build_dashboard_photos(data)
-        caption = build_caption(data)
+        # Same extra slide the on-demand report appends. Added in both places
+        # rather than one, because these two paths already build their albums
+        # independently — leaving it out here would mean the weekly report
+        # silently lacks a slide the ad-hoc one has.
+        from social.services.metrics_chart import build_social_photo
+
+        social_photo = build_social_photo(days=days)
+        if social_photo:
+            photos.append(social_photo)
+        caption = build_caption(data, slides=len(photos))
         if intro:
             caption = f"{intro}\n{caption}"
     except Ga4ClientError as exc:

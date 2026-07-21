@@ -885,7 +885,44 @@ def build_dashboard_photos(dashboard: dict[str, Any]) -> list[tuple[str, bytes]]
     ]
 
 
-def build_caption(dashboard: dict[str, Any]) -> str:
+def _social_caption_line(days: int) -> str:
+    """
+    One line of social totals for the album caption.
+
+    The slide alone is not enough: an album is read caption-first, and a
+    number that appears only in the eighth picture is a number nobody sees.
+    Silent by design when there is nothing collected yet.
+    """
+    try:
+        from social.services.video_metrics import weekly_summary
+
+        totals = weekly_summary(days=days)
+        if not totals:
+            return ""
+        views = sum(d["views"] for d in totals.values() if d["views_known"])
+        likes = sum(d["likes"] for d in totals.values())
+        best = max(
+            (kv for kv in totals.items() if kv[1]["views_known"]),
+            key=lambda kv: kv[1]["views"],
+            default=None,
+        )
+        line = f"📱 Соцмережі: {_fmt_int(views)} переглядів · {_fmt_int(likes)} ❤"
+        if best:
+            from social.models import VideoDelivery
+
+            labels = dict(VideoDelivery.Platform.choices)
+            line += f" · найкраще {labels.get(best[0], best[0])}"
+        return line
+    except Exception:
+        return ""
+
+
+def build_caption(dashboard: dict[str, Any], *, slides: int = 7) -> str:
+    """
+    `slides` is passed rather than assumed: the album grew a social-networks
+    slide that is appended only when there are metrics to show, so the count
+    is not fixed and a hardcoded one would be wrong half the time.
+    """
     days = int(dashboard.get("days") or 7)
     k = dashboard.get("kpis") or {}
     r = dashboard.get("revenue") or {}
@@ -893,18 +930,20 @@ def build_caption(dashboard: dict[str, Any]) -> str:
     purch = next((x for x in funnel if x.get("event") == "purchase"), None)
     purch_events = purch.get("events") if purch else 0
 
-    return "\n".join(
-        [
-            f"GA4 · останні {days} дн. · 7 слайдів",
-            f"👥 {_fmt_int(k.get('activeUsers'))} корист. · "
-            f"{_fmt_int(k.get('sessions'))} сесій · "
-            f"{_fmt_int(k.get('pageViews'))} перегл.",
-            f"🛒 Покупки: {_fmt_int(r.get('ecommercePurchases'))} · "
-            f"виручка {_fmt_money(r.get('purchaseRevenue'))} грн · "
-            f"purchase: {_fmt_int(purch_events)}",
-            "Внизу кожного фото — коротке пояснення простими словами.",
-        ]
-    )
+    lines = [
+        f"GA4 · останні {days} дн. · {slides} слайдів",
+        f"👥 {_fmt_int(k.get('activeUsers'))} корист. · "
+        f"{_fmt_int(k.get('sessions'))} сесій · "
+        f"{_fmt_int(k.get('pageViews'))} перегл.",
+        f"🛒 Покупки: {_fmt_int(r.get('ecommercePurchases'))} · "
+        f"виручка {_fmt_money(r.get('purchaseRevenue'))} грн · "
+        f"purchase: {_fmt_int(purch_events)}",
+    ]
+    social = _social_caption_line(days)
+    if social:
+        lines.append(social)
+    lines.append("Внизу кожного фото — коротке пояснення простими словами.")
+    return "\n".join(lines)
 
 
 def build_realtime_caption(data: dict[str, Any]) -> str:

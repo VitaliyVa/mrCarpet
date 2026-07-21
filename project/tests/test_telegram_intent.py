@@ -53,6 +53,44 @@ class IntentRouterTests(TestCase):
         self.assertEqual(plan["name"], "get_ga4_report")
         self.assertEqual(plan["args"]["report"], "realtime")
 
+    def test_general_analytics_still_means_the_whole_dashboard(self):
+        """
+        The social slide rides along with the full album rather than
+        replacing it — asking broadly must not narrow the answer.
+        """
+        for text in ("скинь аналітику", "покажи аналітику за тиждень", "dashboard"):
+            plan = maybe_direct_plan(text)
+            self.assertEqual(plan["args"]["report"], "dashboard", text)
+
+    def test_asking_about_the_networks_returns_only_that_slide(self):
+        for text in (
+            "скинь аналітику по соцмережах",
+            "статистика соцмереж",
+            "покажи метрики інстаграму",
+            "аналітика по tiktok",
+        ):
+            plan = maybe_direct_plan(text)
+            self.assertEqual(plan["name"], "get_ga4_report", text)
+            self.assertEqual(plan["args"]["report"], "social", text)
+
+    def test_social_days_are_parsed_like_the_others(self):
+        plan = maybe_direct_plan("статистика соцмереж за 14 днів")
+        self.assertEqual(plan["args"]["report"], "social")
+        self.assertEqual(plan["args"]["days"], 14)
+
+    def test_ordinary_talk_about_posting_is_not_a_report_request(self):
+        """
+        A bare "соцмережі" turns up in normal conversation. Answering it with
+        a chart would make the bot tiresome, so an analytics word is required.
+        """
+        for text in (
+            "треба більше постити в соцмережах",
+            "давай запустимо рекламу в інстаграмі",
+        ):
+            plan = maybe_direct_plan(text)
+            if plan and plan.get("name") == "get_ga4_report":
+                self.fail(f"{text!r} should not trigger a report")
+
     def test_list_statuses(self):
         plan = maybe_direct_plan("які є статуси?")
         self.assertEqual(plan["type"], "reply")

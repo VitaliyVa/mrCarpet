@@ -275,6 +275,37 @@ class SummaryTests(TestCase):
         notify.assert_not_called()
 
 
+class ChartTests(TestCase):
+    """
+    Rendering itself is verified on the server: matplotlib 3.8.4 does not
+    build on the Python running these tests locally. What is checked here is
+    the part that decides whether we render at all.
+    """
+
+    def test_no_metrics_means_no_slide(self):
+        """
+        Returning an empty image would put a blank picture in the album. The
+        report is better off with seven slides than eight with one lying.
+        """
+        from social.services.metrics_chart import build_social_photo
+
+        self.assertIsNone(build_social_photo())
+
+    def test_a_broken_chart_does_not_cost_the_album(self):
+        from social.services import metrics_chart
+
+        _delivery()
+        VideoMetric.objects.create(
+            delivery=VideoDelivery.objects.first(),
+            collected_on=timezone.localtime().date(),
+            views=5,
+        )
+        with patch.object(
+            metrics_chart, "render_social_chart", side_effect=RuntimeError("no fonts")
+        ):
+            self.assertIsNone(metrics_chart.build_social_photo())
+
+
 class SchedulerTests(TestCase):
     def test_metrics_are_collected_before_the_video_is_rendered(self):
         """
