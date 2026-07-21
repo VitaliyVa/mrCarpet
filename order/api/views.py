@@ -142,26 +142,29 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             elif payment_type == Order.PAYMENT_LIQPAY:
                 enqueue_order_telegram(order.pk, event="awaiting_payment")
 
-            analytics_purchase = None
+            # Purchase is reported server-side only — see project/ga4_mp.py.
+            #
+            # The client_id is captured here for *both* payment types even
+            # though only cash sends immediately: the LiqPay callback arrives
+            # without a request, and without a stored id it used to fall back
+            # to a hash of the order number. That made every card purchase
+            # look like a brand-new visitor, which is why card revenue kept
+            # landing under "Прямі / невідомі" instead of the source that
+            # actually brought the buyer.
             try:
-                analytics_purchase = purchase_payload(order, cart)
-                if hasattr(request, "session"):
-                    request.session["ga4_purchase"] = analytics_purchase
-            except Exception:
-                analytics_purchase = None
+                from project.ga4_mp import (
+                    client_id_from_ga_cookie,
+                    enqueue_order_purchase_mp,
+                )
 
-            # Server-side purchase (Measurement Protocol). Cash now; LiqPay on paid callback.
-            if payment_type == Order.PAYMENT_CASH:
-                try:
-                    from project.ga4_mp import (
-                        client_id_from_ga_cookie,
-                        enqueue_order_purchase_mp,
-                    )
+                cid = client_id_from_ga_cookie(request.COOKIES.get("_ga"))
+                if cid:
+                    Order.objects.filter(pk=order.pk).update(ga4_client_id=cid)
 
-                    cid = client_id_from_ga_cookie(request.COOKIES.get("_ga"))
+                if payment_type == Order.PAYMENT_CASH:
                     enqueue_order_purchase_mp(order.pk, client_id=cid)
-                except Exception:
-                    pass
+            except Exception:
+                pass
 
             # Purchase payload stays in session only — /success/ gates by order status.
             # Do not echo ecommerce JSON in the API response (avoids early client fire).

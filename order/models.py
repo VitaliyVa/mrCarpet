@@ -135,6 +135,17 @@ class Order(AbstractCreatedUpdated):
         editable=False,
         help_text="Measurement Protocol purchase already sent (dedupe).",
     )
+    ga4_client_id = models.CharField(
+        verbose_name="GA4 client_id",
+        max_length=64,
+        blank=True,
+        default="",
+        editable=False,
+        help_text=(
+            "Значення з куки _ga на момент оформлення. Потрібне, щоб покупка "
+            "прив'язалась до сесії, з якої людина прийшла."
+        ),
+    )
 
     class Meta:
         verbose_name = "Замовлення"

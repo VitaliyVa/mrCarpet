@@ -132,45 +132,16 @@ def success(request):
     from order.models import Order
     from project.ga4_ecommerce import order_allows_purchase_event
 
-    purchase = None
-    purchase_retry = False
+    # The purchase event is sent server-side, so this page no longer carries
+    # an ecommerce payload. What is left is cleanup: sessions written before
+    # the change still hold a payload, and leaving it there would keep it in
+    # the cookie jar for the session's lifetime for no reason.
     session = getattr(request, "session", None)
-
     if session is not None:
-        pending = session.get("ga4_purchase")
-        if pending and pending.get("transaction_id"):
-            tx = pending["transaction_id"]
-            order = Order.objects.filter(order_number=tx).first()
-            if order is None:
-                try:
-                    order = Order.objects.filter(order_number=int(tx)).first()
-                except (TypeError, ValueError):
-                    order = None
+        session.pop("ga4_purchase", None)
+        session.pop("ga4_purchase_retry", None)
 
-            if order_allows_purchase_event(order):
-                purchase = session.pop("ga4_purchase", None)
-                session.pop("ga4_purchase_retry", None)
-            elif order and order.status == Order.STATUS_AWAITING_PAYMENT:
-                # Race with LiqPay server_url callback — reload once.
-                if session.get("ga4_purchase_retry"):
-                    session.pop("ga4_purchase", None)
-                    session.pop("ga4_purchase_retry", None)
-                else:
-                    session["ga4_purchase_retry"] = 1
-                    purchase_retry = True
-            else:
-                # cancelled / unknown — drop stale payload
-                session.pop("ga4_purchase", None)
-                session.pop("ga4_purchase_retry", None)
-
-    return render(
-        request,
-        "success.html",
-        {
-            "analytics_purchase": purchase,
-            "analytics_purchase_retry": purchase_retry,
-        },
-    )
+    return render(request, "success.html", {})
 
 def reset_password(request):
     return render(request, 'reset_password.html')

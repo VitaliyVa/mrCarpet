@@ -191,7 +191,9 @@ def create_payment(request, response):
 
         enqueue_order_confirmation_email(order.pk)
         enqueue_order_telegram(order.pk, event="paid")
-        # Revenue source of truth for card payments (browser may miss success).
-        enqueue_order_purchase_mp(order.pk)
+        # The only purchase event for card payments. The client_id was stored
+        # at checkout — passing it is what keeps the sale attributed to the
+        # session that produced it rather than to a synthetic visitor.
+        enqueue_order_purchase_mp(order.pk, client_id=order.ga4_client_id or None)
 
     return payment

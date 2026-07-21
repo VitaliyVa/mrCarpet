@@ -31,45 +31,12 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/success/index.js?v={{ static_v }}"></script>
-{% if analytics_purchase %}
-<script>
-(function () {
-  // Inline purchase — must not depend on webpack cache.
-  var el = document.getElementById("ga4-purchase-data");
-  if (!el) return;
-  var purchase;
-  try {
-    purchase = JSON.parse(el.textContent);
-  } catch (e) {
-    return;
-  }
-  if (!purchase || !purchase.transaction_id) return;
-  var key = "ga4_purchase_" + purchase.transaction_id;
-  try {
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-  } catch (e) {}
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ ecommerce: null });
-  window.dataLayer.push({ event: "purchase", ecommerce: purchase });
-  if (typeof gtag === "function") {
-    gtag("event", "purchase", purchase);
-  }
-})();
-</script>
-{% endif %}
-{% if analytics_purchase_retry %}
-<script>
-(function () {
-  // LiqPay callback race: one delayed reload, then give up.
-  try {
-    if (sessionStorage.getItem("ga4_purchase_page_retry")) return;
-    sessionStorage.setItem("ga4_purchase_page_retry", "1");
-  } catch (e) {}
-  window.setTimeout(function () {
-    window.location.reload();
-  }, 2000);
-})();
-</script>
-{% endif %}
+{# Purchase is reported server-side (Measurement Protocol), so nothing is
+   sent from here. Firing it in both places counted every sale twice: the
+   browser deduped against sessionStorage and the server against
+   Order.ga4_mp_sent, and neither knew about the other.
+
+   The page-reload retry that used to live here went with it — it existed
+   only to wait out the LiqPay callback race so the browser could fire the
+   event. The callback is now where the event comes from. #}
 {% endblock scripts %}

@@ -65,3 +65,70 @@ class Ga4MpHelpersTests(TestCase):
         self.assertEqual(
             kwargs["json"]["events"][0]["params"]["transaction_id"], "999"
         )
+
+
+class SingleSourceOfTruthTests(TestCase):
+    """
+    Purchase is reported from exactly one place.
+
+    It used to fire from two: the browser on /success/ and the server via
+    Measurement Protocol. Each deduped against itself — sessionStorage on one
+    side, Order.ga4_mp_sent on the other — and neither knew about the other,
+    so every sale that completed normally was counted twice at double the
+    revenue.
+    """
+
+    def test_success_page_does_not_send_a_purchase(self):
+        from pathlib import Path
+
+        html = Path("templates/success.html").read_text(encoding="utf-8")
+        self.assertNotIn('gtag("event", "purchase"', html)
+        self.assertNotIn('event: "purchase"', html)
+
+    def test_success_page_does_not_reload_itself(self):
+        """The reload existed only to wait out the LiqPay callback race so the
+        browser could fire the event. The callback now sends it."""
+        from pathlib import Path
+
+        html = Path("templates/success.html").read_text(encoding="utf-8")
+        self.assertNotIn("window.location.reload", html)
+
+
+class CardAttributionTests(TestCase):
+    """
+    A card purchase must carry the client_id captured at checkout.
+
+    Without it client_id_for_order falls back to a hash of the order number,
+    which GA4 reads as a visitor it has never seen — so the sale is attributed
+    to "direct" rather than to whatever brought the buyer.
+    """
+
+    def test_liqpay_callback_passes_the_stored_client_id(self):
+        import inspect
+
+        from payment import utils
+
+        source = inspect.getsource(utils)
+        self.assertIn("enqueue_order_purchase_mp(order.pk, client_id=", source)
+        self.assertIn("ga4_client_id", source)
+
+    def test_checkout_stores_the_client_id_for_both_payment_types(self):
+        import inspect
+
+        from order.api import views
+
+        source = inspect.getsource(views)
+        captured = source.index("cid = client_id_from_ga_cookie")
+        stored = source.index("ga4_client_id=cid")
+        self.assertLess(captured, stored)
+
+        # The whole point: nothing may gate the store on payment type.
+        # Scoped to the span between capture and store, because PAYMENT_CASH
+        # legitimately appears elsewhere in this module.
+        between = source[captured:stored]
+        self.assertNotIn(
+            "PAYMENT_CASH",
+            between,
+            "storing the client_id must not be inside the cash-only branch, "
+            "otherwise card orders never get one",
+        )
