@@ -28,6 +28,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -293,10 +294,13 @@ def publish_pick(
         )
 
     # A pick still waiting on a slot is not finished, and calling it PUBLISHED
-    # now would stop the retry that has to deliver the rest.
+    # now would stop the retry that has to deliver the rest. Waiting alone is
+    # enough to stay GENERATED: if the first network failed while four are
+    # still queued, recording FAILED here would kill the day the ticks were
+    # about to save.
     outcome = (
         TikTokDailyPick.Status.GENERATED
-        if waiting and published
+        if waiting
         else _record_outcome(pick, published=published, failed=failed)
     )
 
@@ -367,7 +371,12 @@ def _summary_text(
     lines = [head, f"Товар: {pick.product}", f"{script['price']} · {script['size']}", ""]
 
     for row in sorted(ok, key=lambda r: r.published_at or timezone.now()):
-        when = timezone.localtime(row.published_at).strftime("%H:%M") if row.published_at else "—"
+        # The project's TIME_ZONE is UTC; the person reading the report is not.
+        when = (
+            row.published_at.astimezone(ZoneInfo("Europe/Kyiv")).strftime("%H:%M")
+            if row.published_at
+            else "—"
+        )
         mark = "🔒" if row.status == VideoDelivery.Status.PUBLISHED_PRIVATE else ""
         link = f"\n   {row.external_url}" if row.external_url else ""
         lines.append(f"• {when} {labels.get(row.platform, row.platform)} {mark}".rstrip() + link)

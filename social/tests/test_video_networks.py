@@ -283,6 +283,19 @@ class StaggerTests(TestCase):
         self.assertNotIn("вже було", text)
         self.assertIn("опубліковано (2)", text)
 
+    def test_first_network_failure_with_slots_pending_keeps_the_pick_alive(self):
+        """
+        FAILED here would kill the day: four networks were queued and the
+        ticks were about to deliver them.
+        """
+        broken = FakeAdapter(VideoDelivery.Platform.TIKTOK, error="api down")
+        broken.delay_minutes = 0
+        later = self._delayed(VideoDelivery.Platform.INSTAGRAM, 20)
+        self._run([broken, later])
+
+        self.pick.refresh_from_db()
+        self.assertEqual(self.pick.status, TikTokDailyPick.Status.GENERATED)
+
     def test_registry_delays_are_spread_out(self):
         seen = [
             (a.label, getattr(a, "delay_minutes", None))
@@ -292,6 +305,59 @@ class StaggerTests(TestCase):
         self.assertEqual(delays[0], 0, "something must go out immediately")
         self.assertEqual(sorted(delays), delays, "delays should ascend")
         self.assertEqual(len(set(delays)), len(delays), "no two networks share a slot")
+
+
+class TickGateTests(TestCase):
+    """
+    The ten-minute tick may CONTINUE a rollout, never begin one. When it could,
+    the whole day went out right after the 04:00 generation instead of at 18:00.
+    """
+
+    def setUp(self):
+        social = SocialSettings.load()
+        social.tiktok_auto_enabled = True
+        social.save()
+        self.pick = _pick()
+        self.montage = "social/tiktok/final/pick-tickgate.mp4"
+        default_storage.save(self.montage, ContentFile(b"video-bytes"))
+
+    def tearDown(self):
+        if default_storage.exists(self.montage):
+            default_storage.delete(self.montage)
+
+    def test_tick_does_not_start_a_rollout(self):
+        """A GENERATED pick with no delivery rows belongs to the 18:00 slot."""
+        from social.management.commands.tiktok_scheduler import _publish_due
+
+        adapter = FakeAdapter(VideoDelivery.Platform.TIKTOK)
+        adapter.delay_minutes = 0
+        with patch.object(video_networks, "REGISTRY", [adapter]), \
+             patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
+             patch.object(tiktok_publish, "_notify"):
+            out = _publish_due()
+
+        self.assertEqual(out, "")
+        self.assertEqual(adapter.calls, [])
+        self.assertFalse(self.pick.deliveries.exists())
+
+    def test_tick_continues_a_started_rollout(self):
+        from social.management.commands.tiktok_scheduler import _publish_due
+
+        first = FakeAdapter(VideoDelivery.Platform.TIKTOK)
+        first.delay_minutes = 0
+        later = FakeAdapter(VideoDelivery.Platform.INSTAGRAM, label="Instagram Reels")
+        later.delay_minutes = 20
+        with patch.object(video_networks, "REGISTRY", [first, later]), \
+             patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
+             patch.object(tiktok_publish, "_notify"):
+            publish_pick(self.pick)  # the 18:00 slot starts the rollout
+            row = self.pick.deliveries.get(platform="tiktok")
+            row.published_at = timezone.now() - timedelta(minutes=30)
+            row.save(update_fields=["published_at"])
+            out = _publish_due()
+
+        self.assertIn("Instagram Reels", out)
+        self.assertEqual(len(later.calls), 1)
 
 
 class RetryTests(TestCase):

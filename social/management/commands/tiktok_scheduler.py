@@ -178,6 +178,15 @@ def _publish_due():
     pick = todays_pick()
     if pick is None or pick.status == "published":
         return ""
+    # A tick may only CONTINUE a rollout the 18:00 slot has started. Before
+    # that, the stagger has no anchor: publish_pick would anchor it to "now",
+    # TikTok's zero delay would fire immediately, and the whole day would go
+    # out right after the 04:00 generation instead of at prime time.
+    # Delivery rows are only ever created by publish_pick, so their absence
+    # means the 18:00 slot has not run yet. Presence — even all-failed — means
+    # the rollout is underway and the tick may retry and release the rest.
+    if not pick.deliveries.exists():
+        return ""
     result = publish_pick(pick)
     if result.get("already_published"):
         return ""
