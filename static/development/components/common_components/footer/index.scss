@@ -70,6 +70,13 @@
     }
   }
 
+  &__bottom {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
   &__links {
     display: flex;
     flex-direction: column;
@@ -131,6 +138,22 @@
       a {
         font-size: 12px;
       }
+    }
+
+    // Logo + © keep the first row to themselves; the card icons drop to a
+    // second row, smaller and pushed to the right.
+    &__bottom {
+      gap: 8px 12px;
+      justify-content: flex-end;
+
+      > a:first-child {
+        flex: 0 0 100%;
+      }
+    }
+
+    &__pay img {
+      width: 36px;
+      height: 24px;
     }
   }
 }

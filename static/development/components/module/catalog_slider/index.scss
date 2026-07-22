@@ -112,9 +112,22 @@
   }
 
   @media (max-width: 1024px) {
+    // The 260px reservation belongs to the desktop layout, where the info
+    // block sits beside the slider. On mobile the info block is a full-width
+    // row above, and the leftover calc() makes the wrapper's percentage
+    // sizing circular — the swiper resolves wider than the screen and the
+    // page gains a horizontal scroll.
+    &__block {
+      width: 100%;
+    }
+
     &__wrapper {
       flex-wrap: wrap;
       justify-content: center;
+
+      .swiper {
+        max-width: 100%;
+      }
 
       .catalog-swiper .cart_item {
         width: 176px;

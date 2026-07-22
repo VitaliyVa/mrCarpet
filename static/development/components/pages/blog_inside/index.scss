@@ -326,6 +326,11 @@
 
     &__swiper {
       display: block;
+      // The centered flex column gives the swiper fit-content width, and its
+      // percent-sized slides resolve against intrinsic width — wider than the
+      // screen. Pin it to the container instead.
+      width: 100%;
+      max-width: 100%;
       padding: 0 20px;
 
       .blog {
