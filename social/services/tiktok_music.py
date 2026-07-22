@@ -14,7 +14,6 @@ single day. Generation is a one-off; the daily job only picks a file.
 from __future__ import annotations
 
 import logging
-import random
 import time
 from pathlib import Path
 
@@ -26,6 +25,10 @@ from django.core.files.storage import default_storage
 logger = logging.getLogger(__name__)
 
 MUSIC_DIR = "social/tiktok/music"
+# Hand-picked tracks can be dropped into this directory too (any of these
+# formats); ffmpeg reads them all. The rotation treats them the same as the
+# generated ones.
+TRACK_EXTENSIONS = (".wav", ".mp3", ".m4a", ".ogg")
 # Community models need an explicit version; the bare name returns 404.
 MODEL = (
     "meta/musicgen:"
@@ -57,20 +60,29 @@ def library_paths() -> list[str]:
         _dirs, files = default_storage.listdir(MUSIC_DIR)
     except (FileNotFoundError, OSError):
         return []
-    return sorted(f"{MUSIC_DIR}/{name}" for name in files if name.endswith(".wav"))
+    return sorted(
+        f"{MUSIC_DIR}/{name}"
+        for name in files
+        if name.lower().endswith(TRACK_EXTENSIONS)
+    )
 
 
 def pick_track(seed: int | None = None) -> str:
     """
-    Choose a track. Seeded by the pick id so a regenerated video keeps its music.
+    Choose a track: round-robin by pick id.
 
-    Returns an empty string when the library has not been generated yet, so the
-    montage can fall back to a silent bed rather than failing the whole run.
+    Deterministic, so a regenerated video keeps its music — and unlike the
+    seeded-random choice this replaces, consecutive picks can never land on
+    the same track (two days in a row of one melody is exactly what listeners
+    notice, and what TikTok's reused-audio heuristics look at).
+
+    Returns an empty string when the library is empty, so the montage can fall
+    back to a silent bed rather than failing the whole run.
     """
     tracks = library_paths()
     if not tracks:
         return ""
-    return random.Random(seed or 0).choice(tracks)
+    return tracks[(seed or 0) % len(tracks)]
 
 
 def absolute_track_path(relative: str) -> str:

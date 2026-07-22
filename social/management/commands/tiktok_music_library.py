@@ -31,10 +31,27 @@ class Command(BaseCommand):
             action="store_true",
             help="Regenerate even if the library already has tracks.",
         )
+        parser.add_argument(
+            "--clear",
+            action="store_true",
+            help=(
+                "Delete every stored track and stop. For switching to a "
+                "hand-picked library: clear, then upload files into "
+                "media/social/tiktok/music/."
+            ),
+        )
 
     def handle(self, *args, **options):
         existing = library_paths()
         self.stdout.write(f"library now: {len(existing)} track(s)")
+        if options["clear"]:
+            from django.core.files.storage import default_storage
+
+            for path in existing:
+                default_storage.delete(path)
+                self.stdout.write(f"  - {path}")
+            self.stdout.write(self.style.SUCCESS(f"cleared: {len(existing)} track(s)"))
+            return
         if existing and not options["overwrite"]:
             for path in existing:
                 self.stdout.write(f"  {path}")
