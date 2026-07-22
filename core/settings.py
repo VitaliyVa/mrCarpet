@@ -84,6 +84,26 @@ CSRF_TRUSTED_ORIGINS += [
     if o.strip()
 ]
 
+# --- Security hardening ---
+# Гейт на "не DEBUG": локальна розробка по http не ламається (secure cookie
+# по http не відправиться, redirect зациклив би dev). На проді (DEBUG=False)
+# все вмикається. nginx термінує TLS, Django бачить https через X-Forwarded-Proto.
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: рік, з субдоменами. Preload лишаємо вимкненим до свідомого рішення.
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = False
+    # Redirect http→https робить nginx; лишаємо тут вимкненим, щоб не було
+    # подвійного редіректу / циклів за проксі. Django довіряє X-Forwarded-Proto.
+    SECURE_SSL_REDIRECT = False
+
+# Захисні заголовки — безпечні в обох режимах.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # JS читає токен для AJAX; лишаємо як є
+
 
 # Application definition
 

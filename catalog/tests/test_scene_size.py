@@ -179,7 +179,7 @@ class SceneGenerateAdminGateTests(TestCase):
         self.assertFalse(data["success"])
         self.assertIn("розмір", data["error"].lower())
 
-    @patch("catalog.admin.ReplicateProductImageService")
+    @patch("catalog.admin.product.ReplicateProductImageService")
     def test_scene_with_db_size_injects_into_options(self, service_cls):
         product = _make_product()
         size = Size.objects.create(title="Ø 67 см")

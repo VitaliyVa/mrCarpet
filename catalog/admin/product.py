@@ -1,3 +1,5 @@
+"""Product admin: the catalog's main admin, with image/AR/SEO generation."""
+
 import base64
 import os
 import shutil
@@ -5,19 +7,15 @@ import time
 import uuid
 from pathlib import Path
 
-from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.admin.widgets import AdminFileWidget
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.urls import path
-from django.shortcuts import render
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from django.db.models import Sum
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.views.decorators.http import require_POST
 
 from catalog.services.replicate_product_images import (
@@ -26,154 +24,28 @@ from catalog.services.replicate_product_images import (
 )
 from catalog.services.replicate_prompt_options import GenerationOptions
 from catalog.services.scene_size import SceneSizeError, resolve_scene_size
-from catalog.admin_forms import ProductAdminForm, ProductAttributeAdminForm
+from catalog.admin_forms import ProductAdminForm
 from catalog.services.ar_texture import ArTextureService, mark_ar_ready_from_manual_upload
-from catalog.services.product_attr_sort import (
-    ordered_size_queryset,
-    reorder_product_attributes,
-)
+from catalog.services.product_attr_sort import reorder_product_attributes
 from catalog.tasks import generate_ar_texture_task, generate_seo_batch_task
-from .models import (
+from catalog.models import (
     Product,
-    ProductCategory,
-    Favourite,
-    FavouriteProducts,
-    Specification,
-    SpecificationValue,
-    ProductSpecification,
-    Size,
     ProductAttribute,
-    ProductReview,
-    RelatedProduct,
-    ProductSale,
     ProductColor,
-    ProductWidth,
-    PromoCode, ProductImage,
+    ProductImage,
+    ProductSpecification,
+    RelatedProduct,
+    SpecificationValue,
     ColorGroup,
 )
 
-
-class ColorSelectWidget(forms.Select):
-    """
-    Select для «Активного кольору»: додає кожній опції data-color / data-texture,
-    щоб JS (select2) намалював кружечок-прев'ю кольору або текстури.
-    Якщо select2 недоступний — лишається звичайний робочий select.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        css = (self.attrs.get('class', '') + ' color-select').strip()
-        self.attrs['class'] = css
-
-    def _color_map(self):
-        cmap = getattr(self, '_cmap', None)
-        if cmap is None:
-            cmap = {}
-            for c in ProductColor.objects.all():
-                cmap[str(c.pk)] = {
-                    'color': str(c.color) if c.color else '',
-                    'texture': c.texture.url if c.texture else '',
-                }
-            self._cmap = cmap
-        return cmap
-
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
-        pk = str(getattr(value, 'value', value) or '')
-        data = self._color_map().get(pk)
-        if data:
-            if data['texture']:
-                option['attrs']['data-texture'] = data['texture']
-            elif data['color']:
-                option['attrs']['data-color'] = data['color']
-        return option
-
-
-class ImagePreviewWidget(AdminFileWidget):
-    """Віджет ImageField, що показує мініатюру завантаженого фото біля поля."""
-
-    def render(self, name, value, attrs=None, renderer=None):
-        html = super().render(name, value, attrs, renderer)
-        # value — це FieldFile; порожній FieldFile дає False, тож прев'ю лише коли є файл
-        if value and getattr(value, "url", None):
-            preview = format_html(
-                '<div class="image-preview" style="margin:0 0 8px;">'
-                '<img src="{}" alt="preview" style="max-height:160px; max-width:240px; '
-                'border-radius:8px; border:1px solid var(--border-color,#ccc); '
-                'object-fit:contain; background:#fff; padding:2px;" /></div>',
-                value.url,
-            )
-            return mark_safe(preview + html)
-        return html
-
-
-# Register your models here.
-class FavouriteItemInLine(admin.TabularInline):
-    model = FavouriteProducts
-    extra = 0
-
-
-class FavouriteAdmin(admin.ModelAdmin):
-    inlines = [FavouriteItemInLine]
-
-    class Meta:
-        model = Favourite
-
-
-class ProductInLine(admin.TabularInline):
-    model = ProductAttribute
-    form = ProductAttributeAdminForm
-    extra = 1
-    min_num = 1
-    validate_min = True
-    exclude = ("sort_order",)
-    ordering = ("sort_order", "id")
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "size":
-            kwargs["queryset"] = ordered_size_queryset()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 0
-    fields = ("sort_order", "image", "alt", "is_ai")
-    ordering = ("sort_order", "id")
-    formfield_overrides = {
-        models.ImageField: {"widget": ImagePreviewWidget},
-    }
-
-
-class RelatedProductInline(admin.TabularInline):
-    model = RelatedProduct
-    fk_name = "related_to"
-    extra = 0
-
-
-class SpecificationInline(admin.TabularInline):
-    model = ProductSpecification
-    extra = 0
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """Фільтрація значень характеристики по вибраній характеристиці"""
-        if db_field.name == "spec_value":
-            # Отримуємо ID вибраної specification з параметрів запиту (для нового рядка)
-            # Або з існуючого об'єкта (для редагування)
-            spec_id = request.GET.get('specification') or kwargs.get('initial', {}).get('specification')
-            
-            if spec_id:
-                try:
-                    spec_id = int(spec_id)
-                    kwargs["queryset"] = SpecificationValue.objects.filter(specification_id=spec_id).order_by('title')
-                except (ValueError, TypeError):
-                    pass
-            else:
-                # Якщо характеристика не вибрана - показуємо всі значення
-                # (JavaScript буде фільтрувати динамічно)
-                kwargs["queryset"] = SpecificationValue.objects.all().order_by('title')
-        
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+from .widgets import ColorSelectWidget, ImagePreviewWidget
+from .inlines import (
+    ProductImageInline,
+    ProductInLine,
+    RelatedProductInline,
+    SpecificationInline,
+)
 
 
 class ProductAdmin(admin.ModelAdmin):
@@ -252,7 +124,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('has_discount',)
         }),
     )
-    
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Для «Активного кольору» вмикаємо віджет з прев'ю кольору/текстури в опціях."""
         if db_field.name == 'active_color':
@@ -504,7 +376,7 @@ class ProductAdmin(admin.ModelAdmin):
                 'texture': c.texture.url if c.texture else '',
             }
         return JsonResponse({'colors': data})
-    
+
     @admin.action(description='Обʼєднати вибрані в кольорову групу')
     def group_color_variants_action(self, request, queryset):
         """
@@ -579,35 +451,35 @@ class ProductAdmin(admin.ModelAdmin):
         """
         updated_count = 0
         total_colors_added = 0
-        
+
         for product in queryset:
             if not product.title:
                 continue
-            
+
             # Шукаємо всі товари з однаковим title (включаючи поточний)
             products_with_same_title = Product.admin_objects.filter(
                 title__iexact=product.title
             ).select_related('active_color')
-            
+
             # Збираємо всі унікальні active_color з знайдених товарів
             color_ids = set()
-            
+
             for p in products_with_same_title:
                 if p.active_color and p.active_color.id not in color_ids:
                     color_ids.add(p.active_color.id)
-            
+
             if color_ids:
                 # Отримуємо об'єкти кольорів
                 colors = ProductColor.objects.filter(id__in=color_ids)
-                
+
                 # Очищаємо старий список кольорів та додаємо нові
                 product.colors.clear()
                 product.colors.add(*colors)
                 product.save()
-                
+
                 updated_count += 1
                 total_colors_added += len(color_ids)
-        
+
         if updated_count == 0:
             self.message_user(request, "Немає товарів для оновлення або вони не мають назв.", level='warning')
         else:
@@ -616,7 +488,7 @@ class ProductAdmin(admin.ModelAdmin):
                 f"Кольори оновлено для {updated_count} товарів. Всього додано {total_colors_added} кольорів.",
                 level='success'
             )
-    
+
     @admin.action(description='Копіювати вибрані товари')
     def duplicate_product_action(self, request, queryset):
         """
@@ -624,14 +496,14 @@ class ProductAdmin(admin.ModelAdmin):
         Створює повну копію товару з усіма пов'язаними об'єктами та змінює title.
         """
         duplicated_count = 0
-        
+
         for original_product in queryset:
             if not original_product.title:
                 continue
-            
+
             # Генеруємо новий title
             base_title = original_product.title
-            
+
             # Перевіряємо чи вже є "(копія)" в назві
             if " (копія" in base_title:
                 # Знаходимо номер копії якщо є
@@ -651,7 +523,7 @@ class ProductAdmin(admin.ModelAdmin):
                     new_title = f"{base_title} (копія)"
             else:
                 new_title = f"{base_title} (копія)"
-            
+
             # Перевіряємо унікальність title (на випадок якщо вже є товар з таким title)
             counter = 2
             while Product.admin_objects.filter(title=new_title).exists():
@@ -664,12 +536,12 @@ class ProductAdmin(admin.ModelAdmin):
                 else:
                     new_title = f"{base_title} (копія {counter})"
                 counter += 1
-            
+
             # Створюємо копію товару
             # Спочатку зберігаємо ManyToMany зв'язки
             original_categories = list(original_product.categories.all())
             original_colors = list(original_product.colors.all())
-            
+
             # Створюємо новий продукт, копіюючи всі поля крім id та автоматичних
             new_product = Product(
                 title=new_title,
@@ -687,11 +559,11 @@ class ProductAdmin(admin.ModelAdmin):
                 # created та updated будуть автоматично встановлені
             )
             new_product.save()  # Зберігаємо для отримання id
-            
+
             # Копіюємо ManyToMany зв'язки
             new_product.categories.set(original_categories)
             new_product.colors.set(original_colors)
-            
+
             # Копіюємо ProductImage
             for original_image in original_product.images.all().order_by("sort_order", "id"):
                 ProductImage.objects.create(
@@ -701,7 +573,7 @@ class ProductAdmin(admin.ModelAdmin):
                     sort_order=original_image.sort_order,
                     is_ai=original_image.is_ai,
                 )
-            
+
             # Копіюємо ProductAttribute (порядок уже відсортований Meta.ordering)
             for original_attr in original_product.product_attr.all():
                 original_widths = list(original_attr.width.all())
@@ -720,7 +592,7 @@ class ProductAdmin(admin.ModelAdmin):
                 # Копіюємо ManyToMany width
                 new_attr.width.set(original_widths)
             reorder_product_attributes(new_product)
-            
+
             # Копіюємо ProductSpecification
             for original_spec in original_product.product_specs.all():
                 ProductSpecification.objects.create(
@@ -728,7 +600,7 @@ class ProductAdmin(admin.ModelAdmin):
                     specification=original_spec.specification,
                     spec_value=original_spec.spec_value
                 )
-            
+
             # Копіюємо RelatedProduct
             # related_to вказує на новий товар, product залишається на оригінальний товар
             for original_related in original_product.related_products.all():
@@ -736,9 +608,9 @@ class ProductAdmin(admin.ModelAdmin):
                     related_to=new_product,
                     product=original_related.product
                 )
-            
+
             duplicated_count += 1
-        
+
         if duplicated_count == 0:
             self.message_user(request, "Немає товарів для копіювання.", level='warning')
         else:
@@ -1089,7 +961,7 @@ class ProductAdmin(admin.ModelAdmin):
                     color_title
                 )
         return format_html('<span style="color: var(--body-quiet-color, #999);">—</span>')
-    
+
     get_color_display.short_description = 'Колір'
     get_color_display.admin_order_field = 'active_color'
 
@@ -1113,35 +985,35 @@ class ProductAdmin(admin.ModelAdmin):
 
     get_color_group_display.short_description = 'Кольор. група'
     get_color_group_display.admin_order_field = 'color_group'
-    
+
     def get_total_quantity(self, obj):
         """Відображає загальну кількість товару з усіх ProductAttribute"""
         total = obj.product_attr.aggregate(total=Sum('quantity'))['total'] or 0
         return total
-    
+
     get_total_quantity.short_description = 'Кількість'
     get_total_quantity.admin_order_field = 'product_attr__quantity'
-    
+
     def update_colors_from_title(self, request, object_id):
         """AJAX view для оновлення кольорів поточного товару на основі title"""
         if request.method != 'POST':
             return JsonResponse({'error': 'Метод не дозволений'}, status=405)
-        
+
         try:
             current_product = Product.admin_objects.get(id=object_id)
         except Product.DoesNotExist:
             return JsonResponse({'error': 'Товар не знайдено'}, status=404)
-        
+
         if not current_product.title:
             return JsonResponse({'error': 'У поточного товару немає назви'}, status=400)
-        
+
         # Шукаємо всі товари з однаковим title (без урахування регістру)
         products = Product.admin_objects.filter(title__iexact=current_product.title).exclude(id=current_product.id).select_related('active_color')
-        
+
         # Збираємо всі унікальні active_color з знайдених товарів
         color_ids = set()
         colors_data = []
-        
+
         for product in products:
             if product.active_color and product.active_color.id not in color_ids:
                 color_ids.add(product.active_color.id)
@@ -1151,7 +1023,7 @@ class ProductAdmin(admin.ModelAdmin):
                     'color': str(product.active_color.color),
                     'slug': product.active_color.slug,
                 })
-        
+
         if not color_ids:
             return JsonResponse({
                 'success': True,
@@ -1159,15 +1031,15 @@ class ProductAdmin(admin.ModelAdmin):
                 'updated_count': 0,
                 'colors_count': 0
             })
-        
+
         # Отримуємо об'єкти кольорів
         colors = ProductColor.objects.filter(id__in=color_ids)
-        
+
         # Очищаємо старий список кольорів та додаємо нові
         current_product.colors.clear()
         current_product.colors.add(*colors)
         current_product.save()
-        
+
         return JsonResponse({
             'success': True,
             'message': f'Кольори оновлено. Додано {len(color_ids)} кольорів',
@@ -1175,24 +1047,24 @@ class ProductAdmin(admin.ModelAdmin):
             'colors_count': len(color_ids),
             'colors': colors_data
         })
-    
+
     def get_spec_values(self, request):
         """AJAX view для отримання значень характеристики"""
         if request.method != 'GET':
             return JsonResponse({'error': 'Метод не дозволений'}, status=405)
-        
+
         spec_id = request.GET.get('specification_id')
         if not spec_id:
             return JsonResponse({'error': 'Не вказано ID характеристики'}, status=400)
-        
+
         try:
             spec_id = int(spec_id)
         except ValueError:
             return JsonResponse({'error': 'Невірний ID характеристики'}, status=400)
-        
+
         # Отримуємо всі значення для цієї характеристики
         values = SpecificationValue.objects.filter(specification_id=spec_id).order_by('title')
-        
+
         values_data = [
             {
                 'id': value.id,
@@ -1200,12 +1072,12 @@ class ProductAdmin(admin.ModelAdmin):
             }
             for value in values
         ]
-        
+
         return JsonResponse({
             'success': True,
             'values': values_data
         })
-    
+
     def get_queryset(self, request):
         """Використовуємо admin_objects менеджер для показу всіх товарів в адмінці"""
         return self.model.admin_objects.all()
@@ -1241,178 +1113,4 @@ class ProductAdmin(admin.ModelAdmin):
         model = Product
 
 
-class ProductColorAdmin(admin.ModelAdmin):
-    fields = ["title", "color", "texture"]
-    formfield_overrides = {
-        models.ImageField: {"widget": ImagePreviewWidget},
-    }
-
-    class Media:
-        js = ('admin/js/texture_paste.js',)
-    list_display = [
-        "title",
-        "color",
-        "get_texture_display",
-    ]
-    
-    def get_texture_display(self, obj):
-        """Відображає мініатюру текстури або '—' якщо немає"""
-        if obj.texture:
-            return format_html('<img src="{}" width="30" height="30" style="border-radius: 50%; object-fit: cover;" />', obj.texture.url)
-        return format_html('<span style="color: #999;">—</span>')
-    
-    get_texture_display.short_description = 'Текстура'
-    
-    def save_model(self, request, obj, form, change):
-        # Перевіряємо чи title не порожній
-        if not obj.title or obj.title.strip() == '':
-            # Якщо title порожній, встановлюємо його на основі кольору або текстури
-            if obj.color:
-                obj.title = f"Колір {str(obj.color)}"
-            elif obj.texture:
-                obj.title = "Текстура"
-            else:
-                obj.title = "Без назви"
-        super().save_model(request, obj, form, change)
-
-
-class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ['title', 'slug']
-    search_fields = ['title', 'slug', 'meta_title']
-    exclude = ['slug']
-    fieldsets = (
-        ('Основне', {
-            'fields': ('title', 'image'),
-        }),
-        ('SEO', {
-            'fields': ('meta_title', 'meta_description', 'meta_keys'),
-            'description': (
-                'Мета-теги категорії. Якщо порожньо — у <title> буде назва категорії. '
-                'Description: ~150–160 символів, як відповідь на інтент.'
-            ),
-        }),
-    )
-
-
 admin.site.register(Product, ProductAdmin)
-admin.site.register(ProductCategory, ProductCategoryAdmin)
-admin.site.register(Favourite, FavouriteAdmin)
-class SpecificationValueAdmin(admin.ModelAdmin):
-    fields = ["specification", "title"]
-    list_display = ["title", "specification"]
-    list_filter = ["specification"]
-    search_fields = ["title"]
-
-class SizeAdmin(admin.ModelAdmin):
-    search_fields = ["title"]
-
-    def get_queryset(self, request):
-        return ordered_size_queryset(super().get_queryset(request))
-
-
-admin.site.register(Specification)
-admin.site.register(SpecificationValue, SpecificationValueAdmin)
-admin.site.register(ProductSpecification)
-admin.site.register(Size, SizeAdmin)
-admin.site.register(ProductAttribute)
-@admin.register(ProductReview)
-class ProductReviewAdmin(admin.ModelAdmin):
-    """
-    Moderation queue first: pending reviews are the only ones needing action,
-    so the default view is filtered to them and approving is a bulk action.
-    """
-
-    list_display = (
-        "created",
-        "product",
-        "rating",
-        "name",
-        "status",
-        "verified_purchase",
-        "short_content",
-    )
-    list_filter = ("status", "rating", "verified_purchase")
-    search_fields = ("name", "email", "content", "product__title")
-    list_select_related = ("product",)
-    readonly_fields = ("created", "updated", "ip_address", "verified_purchase")
-    actions = ("approve_reviews", "reject_reviews")
-    list_per_page = 50
-
-    @admin.display(description="Коментар")
-    def short_content(self, obj):
-        text = (obj.content or "").strip()
-        return (text[:70] + "…") if len(text) > 70 else (text or "—")
-
-    @admin.action(description="Опублікувати відгук")
-    def approve_reviews(self, request, queryset):
-        updated = queryset.update(status=ProductReview.Status.APPROVED)
-        self.message_user(request, f"Опубліковано: {updated}")
-
-    @admin.action(description="Відхилити відгук")
-    def reject_reviews(self, request, queryset):
-        updated = queryset.update(status=ProductReview.Status.REJECTED)
-        self.message_user(request, f"Відхилено: {updated}")
-
-
-admin.site.register(ProductSale)
-admin.site.register(ProductColor, ProductColorAdmin)
-admin.site.register(ProductWidth)
-@admin.register(PromoCode)
-class PromoCodeAdmin(admin.ModelAdmin):
-    list_display = (
-        "code",
-        "discount",
-        "end_time",
-        "max_uses_total",
-        "max_uses_per_user",
-        "uses_display",
-        "is_active_display",
-    )
-    list_filter = ("end_time",)
-    search_fields = ("code",)
-    ordering = ("-created",)
-    fieldsets = (
-        (
-            None,
-            {
-                "fields": ("code", "discount", "end_time"),
-                "description": (
-                    "Дата закінчення порожня = без терміну. "
-                    "Ліміти використань — окремо нижче; можна комбінувати."
-                ),
-            },
-        ),
-        (
-            "Ліміти використань",
-            {
-                "fields": ("max_uses_total", "max_uses_per_user"),
-                "description": (
-                    "Порожнє поле = без ліміту. "
-                    "«На користувача = 1» — одноразовий код на email/акаунт."
-                ),
-            },
-        ),
-    )
-
-    @admin.display(description="Використано")
-    def uses_display(self, obj):
-        used = obj.uses_count()
-        if obj.max_uses_total is not None:
-            return f"{used} / {obj.max_uses_total}"
-        return str(used)
-
-    @admin.display(description="Активний", boolean=True)
-    def is_active_display(self, obj):
-        return obj.is_active
-
-
-class ColorGroupAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'get_variants_count']
-    search_fields = ['name', 'variants__title']
-
-    def get_variants_count(self, obj):
-        return obj.variants.count()
-    get_variants_count.short_description = 'Кількість варіантів'
-
-
-admin.site.register(ColorGroup, ColorGroupAdmin)
