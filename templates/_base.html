@@ -54,6 +54,9 @@
     {% if organization_jsonld %}
     <script type="application/ld+json">{{ organization_jsonld|safe }}</script>
     {% endif %}
+    {% if website_jsonld %}
+    <script type="application/ld+json">{{ website_jsonld|safe }}</script>
+    {% endif %}
     {% endblock structured_data %}
 </head>
 

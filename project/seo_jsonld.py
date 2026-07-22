@@ -128,6 +128,31 @@ def organization_graph(request) -> dict[str, Any]:
     }
 
 
+def website_graph(request) -> dict[str, Any]:
+    """WebSite + SearchAction — enables Google's sitelinks search box.
+
+    Target is the catalog full-page search (`/catalog/?q=...`), which returns a
+    real HTML results page (the header box is AJAX-only and has no such URL).
+    """
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": ORG_NAME,
+        "alternateName": ORG_ALT,
+        "url": absolute_uri(request, "/"),
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                # Braces must stay literal — build_absolute_uri would percent-encode
+                # them, which breaks Google's sitelinks search box. Append by hand.
+                "urlTemplate": f"{absolute_uri(request, '/catalog/')}?q={{search_term_string}}",
+            },
+            "query-input": "required name=search_term_string",
+        },
+    }
+
+
 def breadcrumb_graph(
     request, crumbs: list[tuple[str, str | None]]
 ) -> dict[str, Any]:
