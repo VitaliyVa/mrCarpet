@@ -240,7 +240,9 @@ def _scale() -> str:
     )
 
 
-def _build_audio(out: Path, *, duration: float, music_path: str) -> Path:
+def _build_audio(
+    out: Path, *, duration: float, music_path: str, music_offset: float = 0.0
+) -> Path:
     """
     One continuous bed: music across the whole video plus a tick per digit.
 
@@ -262,7 +264,13 @@ def _build_audio(out: Path, *, duration: float, music_path: str) -> Path:
         # buries the ticks and the beat loses its punctuation.
         duck_from = max(COUNT_START - 0.25, 0)
         duck_to = COUNT_START + len(TICK_FREQS) * COUNT_STEP + 0.25
-        music_in = ["-stream_loop", "-1", "-i", music_path]
+        if music_offset > 0:
+            # A long track seeked to its chorus. The offset is chosen so the
+            # whole window fits, which is what lets the loop be dropped —
+            # looping a mid-song seek would restart from the seek point.
+            music_in = ["-ss", f"{music_offset:.2f}", "-i", music_path]
+        else:
+            music_in = ["-stream_loop", "-1", "-i", music_path]
         music_chain = (
             f"[0:a]atrim=0:{duration:.2f},asetpts=N/SR/TB,"
             f"volume={MUSIC_GAIN},"
@@ -400,7 +408,17 @@ def build_montage(clip_path: str, script: dict, out_path: str, *, music_path: st
         )
 
         total = HOOK_SECONDS + source_seconds + reverse_len
-        audio = _build_audio(tmp / "bed.m4a", duration=total, music_path=music_path)
+        music_offset = 0.0
+        if music_path:
+            from social.services.tiktok_music import chorus_offset
+
+            music_offset = chorus_offset(music_path, total)
+        audio = _build_audio(
+            tmp / "bed.m4a",
+            duration=total,
+            music_path=music_path,
+            music_offset=music_offset,
+        )
 
         out = Path(out_path)
         out.parent.mkdir(parents=True, exist_ok=True)

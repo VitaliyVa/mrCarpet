@@ -14,6 +14,8 @@ single day. Generation is a one-off; the daily job only picks a file.
 from __future__ import annotations
 
 import logging
+import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -87,6 +89,106 @@ def pick_track(seed: int | None = None) -> str:
 
 def absolute_track_path(relative: str) -> str:
     return str(Path(settings.MEDIA_ROOT) / relative)
+
+
+# ---------------------------------------------------------------------------
+# Chorus finder: where to start a long track.
+#
+# Hand-picked tracks run 2+ minutes, and second 0 is usually the intro — the
+# quietest, least recognisable part. The hook of the song is the loudest
+# sustained stretch, so the montage should start there. No structural analysis
+# is attempted: mean loudness over a montage-length window is a proxy that
+# lands on the chorus or the drop for the kind of upbeat tracks this account
+# posts, and it needs nothing beyond one ffmpeg decode pass.
+# ---------------------------------------------------------------------------
+
+# Windows shorter than this gain nothing from seeking: the generated 16s
+# library must keep starting at 0, where its single musical idea begins.
+MIN_SEEK_SURPLUS = 4.0
+
+_RMS_LINE = re.compile(r"lavfi\.astats\.Overall\.RMS_level=(-?[\d.]+|-inf)")
+_TIME_LINE = re.compile(r"pts_time:([\d.]+)")
+
+
+def _rms_chunks(path: str) -> list[tuple[float, float]]:
+    """(start_seconds, rms_db) per ~half-second of audio, via one ffmpeg pass."""
+    out = subprocess.run(
+        [
+            "ffmpeg", "-v", "error", "-i", path,
+            "-af",
+            # ~0.5s at 48k; other sample rates just give slightly different
+            # chunk lengths, which is why times are read from pts, not assumed.
+            "asetnsamples=n=24000,astats=metadata=1:reset=1,"
+            "ametadata=mode=print:key=lavfi.astats.Overall.RMS_level:file=-",
+            "-f", "null", "-",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=True,
+    ).stdout
+
+    chunks: list[tuple[float, float]] = []
+    when = 0.0
+    for line in out.splitlines():
+        t = _TIME_LINE.search(line)
+        if t:
+            when = float(t.group(1))
+            continue
+        m = _RMS_LINE.search(line)
+        if m:
+            value = m.group(1)
+            chunks.append((when, -90.0 if value == "-inf" else float(value)))
+    return chunks
+
+
+def _choose_offset(chunks: list[tuple[float, float]], duration: float) -> float:
+    """
+    The start of the loudest sustained window, nudged onto a quiet moment.
+
+    The nudge matters for how the cut sounds: the loudest window's edge can
+    fall mid-note, while a local dip just before it is the breath between
+    phrases. Search is over chunk starts, so the result is deterministic.
+    """
+    if not chunks:
+        return 0.0
+    track_end = chunks[-1][0] + 0.5
+    latest_start = track_end - duration - 0.5
+    if latest_start <= 0:
+        return 0.0
+
+    candidates = [(t, db) for t, db in chunks if t <= latest_start]
+    best_start, best_mean = 0.0, float("-inf")
+    for start, _db in candidates:
+        window = [db for t, db in chunks if start <= t < start + duration]
+        mean = sum(window) / len(window) if window else float("-inf")
+        if mean > best_mean:
+            best_start, best_mean = start, mean
+
+    # Snap to the quietest chunk within ±1.5s — the gap between phrases.
+    near = [(db, t) for t, db in candidates if abs(t - best_start) <= 1.5]
+    if near:
+        best_start = min(near)[1]
+    return round(best_start, 2)
+
+
+def chorus_offset(path: str, duration: float) -> float:
+    """
+    Seconds into the track the montage's music should start. 0 means "from the
+    top" — short tracks, unreadable files and analysis failures all land there,
+    so the caller never has to care why.
+    """
+    try:
+        chunks = _rms_chunks(path)
+        if not chunks or chunks[-1][0] + 0.5 < duration + MIN_SEEK_SURPLUS:
+            return 0.0
+        offset = _choose_offset(chunks, duration)
+        if offset:
+            logger.info("music %s: starting at %.1fs (chorus window)", path, offset)
+        return offset
+    except Exception:
+        logger.exception("chorus analysis failed for %s, starting at 0", path)
+        return 0.0
 
 
 def generate_library(count: int = 8, *, overwrite: bool = False) -> list[str]:
