@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL = "wan-video/wan-2.2-i2v-fast"
 DEFAULT_PROMPT = (
     "Photorealistic product video of a soft area rug on a wooden floor, "
-    "slow gentle camera push-in, soft natural daylight, cozy living room, "
+    "locked-off tripod camera, minimal camera movement, the rug stays "
+    "perfectly still, stable consistent fabric weave that does not warp or "
+    "shift, soft natural daylight, cozy living room, "
     "no text, no logos, no watermark, high detail fabric texture"
 )
 
@@ -93,9 +95,13 @@ def generate_draft_from_product(
             input={
                 "image": image_url,
                 "prompt": final_prompt,
-                # Common Wan I2V knobs — ignored if model schema differs
                 "num_frames": 81,
-                "fps": 16,
+                "frames_per_second": 16,
+                # Texture-stability knobs: low sample_shift = less per-frame
+                # redraw (kills "texture crawl"); 720p holds the weave that
+                # 480p smears into flicker.
+                "sample_shift": 4,
+                "resolution": "720p",
             },
         )
     except Exception as exc:
