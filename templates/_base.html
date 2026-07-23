@@ -58,6 +58,25 @@
     <script type="application/ld+json">{{ website_jsonld|safe }}</script>
     {% endif %}
     {% endblock structured_data %}
+    {# Speculation Rules: prefetch catalog/blog navigations on hover (moderate
+       eagerness). Allowlist only — never cart/checkout/payment/profile, since
+       prefetch issues a real GET and those paths mutate state or are private.
+       Prefetch (not prerender) = no JS/analytics fire until the user clicks. #}
+    <script type="speculationrules">
+    {
+      "prefetch": [
+        {
+          "where": {
+            "or": [
+              { "href_matches": "/catalog/*" },
+              { "href_matches": "/blog/*" }
+            ]
+          },
+          "eagerness": "moderate"
+        }
+      ]
+    }
+    </script>
 </head>
 
 <body class="body-main">

@@ -5,6 +5,16 @@
   name="description"
   content="Купити килим онлайн у mr.Carpet. Великий асортимент від українських та турецьких виробників. Доставка по Україні."
 />
+<!-- LCP: preload the hero image (matches the <picture> srcset below) so it
+     starts downloading before the parser reaches the markup. -->
+<link
+  rel="preload"
+  as="image"
+  href="/static/utils/assets/index/cover-1200.webp"
+  imagesrcset="/static/utils/assets/index/cover-640.webp 640w, /static/utils/assets/index/cover-1200.webp 1200w, /static/utils/assets/index/cover-1920.webp 1920w"
+  imagesizes="100vw"
+  fetchpriority="high"
+/>
 {% endblock meta %}
 {% block og_title %}Килими від українських та турецьких виробників | mr.Carpet{% endblock og_title %}
 {% block og_description %}Купити килим онлайн у mr.Carpet. Великий асортимент від українських та турецьких виробників. Доставка по Україні.{% endblock og_description %}
