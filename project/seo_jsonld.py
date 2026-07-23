@@ -13,7 +13,6 @@ from django.utils.html import strip_tags
 from project.text_encoding import fix_utf8_mojibake
 
 ORG_NAME = "mr.Carpet"
-ORG_ALT = "Магазин Меблі Килими"
 ORG_EMAIL = "mr.carpet.shop@gmail.com"
 ORG_PHONE = "+380963988875"
 ORG_STREET = "вул. Незалежності 5а"
@@ -111,7 +110,6 @@ def organization_graph(request) -> dict[str, Any]:
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": ORG_NAME,
-        "alternateName": ORG_ALT,
         "url": absolute_uri(request, "/"),
         "logo": logo,
         "email": ORG_EMAIL,
@@ -138,7 +136,6 @@ def website_graph(request) -> dict[str, Any]:
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": ORG_NAME,
-        "alternateName": ORG_ALT,
         "url": absolute_uri(request, "/"),
         "potentialAction": {
             "@type": "SearchAction",
