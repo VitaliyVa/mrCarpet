@@ -174,11 +174,12 @@ def publish_video(
     cover_timestamp_ms: int | None = None,
 ) -> dict[str, str]:
     """
-    Queue a video to the TikTok channel and return the created Buffer post id.
+    Publish a video to the TikTok channel now and return the created Buffer post id.
 
-    The post lands in Buffer's queue (mode addToQueue) and Buffer publishes it at
-    the channel's next slot, so there is no live TikTok url to return yet — the
-    id here is Buffer's, enough to reconcile against the daily report.
+    Sent with mode shareNow, so Buffer publishes immediately rather than deferring
+    to the channel's next queue slot. There is still no live TikTok url to return
+    at this instant — the id here is Buffer's, enough to reconcile against the
+    daily report; the post appears on TikTok once Buffer finishes pushing it.
     """
     if not buffer_configured():
         raise BufferConfigError("Buffer not configured")
@@ -193,12 +194,16 @@ def publish_video(
         # in — a blank-looking thumbnail. Same offset TikTok's cover used.
         metadata = " metadata: { thumbnailOffset: " + str(int(cover_timestamp_ms)) + " }"
 
+    # shareNow, not addToQueue: the daily scheduler already fires this at the
+    # intended evening slot, and addToQueue would instead defer to the channel's
+    # next Buffer queue slot — which landed the first post at ~21:29 Kyiv, hours
+    # after the other networks. shareNow publishes at send time, in step with them.
     mutation = (
         "mutation { createPost(input: { "
         "text: " + _gql_str(caption) + " "
         "channelId: " + _gql_str(channel_id) + " "
         "schedulingType: automatic "
-        "mode: addToQueue "
+        "mode: shareNow "
         "assets: [{ video: { url: " + _gql_str(video_url) + metadata + " } }] "
         "}) { "
         "... on PostActionSuccess { post { id text } } "
