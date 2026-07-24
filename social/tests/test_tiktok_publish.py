@@ -82,47 +82,29 @@ class PublishTests(TestCase):
                 default_storage.delete(path)
 
     def _publish(self, **overrides):
+        # The TikTok delivery goes through Buffer's audited app, not TikTok's
+        # Direct Post API — privacy level, the AI-generated flag and music
+        # confirmation now live in Buffer's channel settings, not in our call.
         defaults = dict(
             build=self.montage,
-            options=["PUBLIC_TO_EVERYONE", "SELF_ONLY"],
-            audited=False,
-            result={"external_id": "v123", "privacy": "SELF_ONLY"},
+            result={"external_id": "buf_123", "external_url": ""},
         )
         defaults.update(overrides)
         with patch.object(tiktok_publish, "build_final_video", return_value=defaults["build"]), \
-             patch("social.services.tiktok.creator_privacy_options",
-                   return_value=defaults["options"]), \
-             patch("social.services.tiktok.audit_passed",
-                   return_value=defaults["audited"]), \
-             patch("social.services.tiktok.tiktok_configured", return_value=True), \
-             patch("social.services.tiktok.publish_video",
+             patch("social.services.buffer.buffer_configured", return_value=True), \
+             patch("social.services.buffer.publish_video",
                    return_value=defaults["result"]) as publish, \
              patch.object(tiktok_publish, "_notify"):
             publish_pick(self.pick)
         return publish
 
-    def test_unaudited_posts_are_forced_private(self):
-        publish = self._publish()
-        self.assertEqual(publish.call_args.kwargs["privacy_level"], "SELF_ONLY")
-
-    def test_audited_account_posts_publicly(self):
-        publish = self._publish(audited=True)
-        self.assertEqual(publish.call_args.kwargs["privacy_level"], "PUBLIC_TO_EVERYONE")
-
-    def test_privacy_falls_back_to_a_supported_option(self):
-        """The account offers no FOLLOWER_OF_CREATOR; never send what it lacks."""
-        publish = self._publish(audited=True, options=["MUTUAL_FOLLOW_FRIENDS"])
-        self.assertEqual(
-            publish.call_args.kwargs["privacy_level"], "MUTUAL_FOLLOW_FRIENDS"
-        )
-
-    def test_video_is_declared_as_ai_generated(self):
-        publish = self._publish()
-        self.assertTrue(publish.call_args.kwargs["made_with_ai"])
-
-    def test_music_usage_is_confirmed(self):
-        publish = self._publish()
-        self.assertTrue(publish.call_args.kwargs["music_usage_confirmed"])
+    def test_tiktok_delivery_is_public(self):
+        """Buffer's app is audited and public, so the post is never owner-only."""
+        self._publish()
+        self.pick.refresh_from_db()
+        self.assertEqual(self.pick.status, TikTokDailyPick.Status.PUBLISHED)
+        row = self.pick.deliveries.get(platform="tiktok")
+        self.assertTrue(row.is_success)
 
     def test_pull_url_is_public_https(self):
         publish = self._publish()
@@ -171,11 +153,8 @@ class PublishTests(TestCase):
     def test_failure_keeps_the_files_and_marks_the_pick(self):
         """A 04:00 failure must leave something to diagnose in the morning."""
         with patch.object(tiktok_publish, "build_final_video", return_value=self.montage), \
-             patch("social.services.tiktok.creator_privacy_options",
-                   return_value=["SELF_ONLY"]), \
-             patch("social.services.tiktok.audit_passed", return_value=False), \
-             patch("social.services.tiktok.tiktok_configured", return_value=True), \
-             patch("social.services.tiktok.publish_video",
+             patch("social.services.buffer.buffer_configured", return_value=True), \
+             patch("social.services.buffer.publish_video",
                    side_effect=RuntimeError("TikTok said no")), \
              patch.object(tiktok_publish, "_notify") as notify:
             with self.assertRaises(RuntimeError):
@@ -276,12 +255,9 @@ class RetryCostTests(TestCase):
     def test_force_publish_does_not_regenerate(self):
         """--force bypasses the guards; it must not reach for the wallet."""
         with patch.object(tiktok_publish, "build_final_video") as build, \
-             patch("social.services.tiktok.creator_privacy_options",
-                   return_value=["SELF_ONLY"]), \
-             patch("social.services.tiktok.audit_passed", return_value=False), \
-             patch("social.services.tiktok.tiktok_configured", return_value=True), \
-             patch("social.services.tiktok.publish_video",
-                   return_value={"external_id": "x", "privacy": "SELF_ONLY"}), \
+             patch("social.services.buffer.buffer_configured", return_value=True), \
+             patch("social.services.buffer.publish_video",
+                   return_value={"external_id": "x", "external_url": ""}), \
              patch.object(tiktok_publish, "_notify"):
             build.return_value = "social/tiktok/final/x.mp4"
             publish_pick(self.pick, force=True)
@@ -335,12 +311,9 @@ class CoverAndLabelTests(TestCase):
     def _publish(self):
         with patch.object(tiktok_publish, "build_final_video",
                           return_value="social/tiktok/final/x.mp4"), \
-             patch("social.services.tiktok.creator_privacy_options",
-                   return_value=["SELF_ONLY"]), \
-             patch("social.services.tiktok.audit_passed", return_value=False), \
-             patch("social.services.tiktok.tiktok_configured", return_value=True), \
-             patch("social.services.tiktok.publish_video",
-                   return_value={"external_id": "x", "privacy": "SELF_ONLY"}) as pub, \
+             patch("social.services.buffer.buffer_configured", return_value=True), \
+             patch("social.services.buffer.publish_video",
+                   return_value={"external_id": "x", "external_url": ""}) as pub, \
              patch.object(tiktok_publish, "_notify"):
             publish_pick(self.pick)
         return pub
@@ -351,6 +324,3 @@ class CoverAndLabelTests(TestCase):
         ms = self._publish().call_args.kwargs["cover_timestamp_ms"]
         self.assertGreater(ms / 1000, 0.55)  # question has faded in
         self.assertLess(ms / 1000, montage.COUNT_START)  # no digit yet
-
-    def test_ai_label_is_requested(self):
-        self.assertTrue(self._publish().call_args.kwargs["made_with_ai"])

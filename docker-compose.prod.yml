@@ -105,6 +105,11 @@ services:
       - TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
       - TIKTOK_OPEN_ID=${TIKTOK_OPEN_ID}
       - TIKTOK_AUDIT_PASSED=${TIKTOK_AUDIT_PASSED:-false}
+      # Buffer publishes the daily video to TikTok (its app is audited; ours was
+      # declined for "internal use"). ORG/CHANNEL optional — resolved from the key.
+      - BUFFER_API_KEY=${BUFFER_API_KEY}
+      - BUFFER_ORG_ID=${BUFFER_ORG_ID}
+      - BUFFER_TIKTOK_CHANNEL_ID=${BUFFER_TIKTOK_CHANNEL_ID}
       - SOCIAL_AI_I2V_MODEL=${SOCIAL_AI_I2V_MODEL:-wan-video/wan-2.2-i2v-fast}
     # SQLite: 1 worker. Кілька workers → "database is locked". Для scale — Postgres.
     command: sh -c "chmod -R 755 /app/static_root && python manage.py migrate --noinput && python manage.py collectstatic --noinput && chmod -R 755 /app/static_root && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300"
@@ -157,6 +162,11 @@ services:
       - TIKTOK_ACCESS_TOKEN=${TIKTOK_ACCESS_TOKEN}
       - TIKTOK_OPEN_ID=${TIKTOK_OPEN_ID}
       - TIKTOK_AUDIT_PASSED=${TIKTOK_AUDIT_PASSED:-false}
+      # Buffer is the publish path for TikTok; the scheduler runs the daily post
+      # so it needs the key. ORG/CHANNEL optional — resolved from the account.
+      - BUFFER_API_KEY=${BUFFER_API_KEY}
+      - BUFFER_ORG_ID=${BUFFER_ORG_ID}
+      - BUFFER_TIKTOK_CHANNEL_ID=${BUFFER_TIKTOK_CHANNEL_ID}
       # The Telegram bot token lives in the database, not the env, and
       # SECRET_KEY is read by decouple from the mounted /app/.env — listing
       # either here would inject an empty value that wins over the file.

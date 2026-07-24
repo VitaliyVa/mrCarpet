@@ -312,6 +312,14 @@ TIKTOK_AUDIT_PASSED = config("TIKTOK_AUDIT_PASSED", default="false")
 TIKTOK_REDIRECT_URI = config(
     "TIKTOK_REDIRECT_URI", default="https://mrcarpet24.com/api/tiktok/callback/"
 )
+# Buffer publishes to TikTok through its own audited app, which is the only
+# supported route for a single brand account: TikTok rejects Content Posting
+# API production access for "personal or internal company use" (our own Direct
+# Post audit was declined for exactly that). ORG/CHANNEL ids are optional — the
+# client resolves them from the account when left blank and caches them.
+BUFFER_API_KEY = config("BUFFER_API_KEY", default="")
+BUFFER_ORG_ID = config("BUFFER_ORG_ID", default="")
+BUFFER_TIKTOK_CHANNEL_ID = config("BUFFER_TIKTOK_CHANNEL_ID", default="")
 # Threads is a separate OAuth world. A Meta app with the Threads use case
 # carries its OWN app id and secret alongside the main Meta pair — using the
 # Meta ones here fails without saying which id was wrong.

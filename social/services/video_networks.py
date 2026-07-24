@@ -66,10 +66,17 @@ class TikTokAdapter:
     needs_local_file = False
     delay_minutes = 0
 
-    def is_configured(self) -> bool:
-        from social.services import tiktok
+    #: Posts go through Buffer, not TikTok's Direct Post API. TikTok declined our
+    #: own app's production audit as "personal or internal company use" — the one
+    #: category they never approve for a single brand posting to its own account.
+    #: Buffer already holds an audited TikTok app, so it publishes on our behalf.
+    #: The direct-post code (services/tiktok.py) stays for OAuth/admin diagnostics
+    #: but is no longer on the publish path.
 
-        return tiktok.tiktok_configured()
+    def is_configured(self) -> bool:
+        from social.services import buffer
+
+        return buffer.buffer_configured()
 
     def is_enabled(self, social: SocialSettings) -> bool:
         return bool(social.tiktok_auto_enabled)
@@ -88,33 +95,23 @@ class TikTokAdapter:
         video_url: str,
         local_path: str,
     ) -> PublishResult:
-        from social.services import tiktok
+        from social.services import buffer
         from social.services.tiktok_publish import COVER_TIMESTAMP_MS
 
-        # Unaudited apps may only post SELF_ONLY, and the account's own list is
-        # narrower than the API's constant, so ask rather than assume.
-        options = tiktok.creator_privacy_options()
-        privacy = (
-            "SELF_ONLY"
-            if not tiktok.audit_passed()
-            else ("PUBLIC_TO_EVERYONE" if "PUBLIC_TO_EVERYONE" in options else options[0])
-        )
-
-        result = tiktok.publish_video(
+        # Buffer pulls the montage from its public URL — the same PULL_FROM_URL
+        # shape TikTok used — so the file must stay reachable until Buffer's queue
+        # slot fires (cleanup runs a day later, well after that).
+        result = buffer.publish_video(
             video_url=video_url,
             caption=caption,
-            privacy_level=privacy,
-            allow_comment=True,
-            # The music is ours and the visuals are generated, so both
-            # declarations are honest and required.
-            music_usage_confirmed=True,
-            made_with_ai=True,
             cover_timestamp_ms=COVER_TIMESTAMP_MS,
         )
+        # Queued through Buffer's own audited, public app: the post is public once
+        # published, so it is never a private/owner-only delivery.
         return PublishResult(
             external_id=result.get("external_id", ""),
             external_url=result.get("external_url", ""),
-            private=privacy == "SELF_ONLY",
+            private=False,
         )
 
 
