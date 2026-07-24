@@ -464,3 +464,30 @@ Free-план Buffer це дозволяє: новий GraphQL API — на вс
 2. `docker compose exec web python manage.py buffer_status` — підтвердити канал
 3. Тестовий пост через адмінку → перевірити, що зʼявився в TikTok
 4. `tiktok_auto_enabled = True` (якщо ще не) — планувальник підхопить о 18:00
+
+### LIVE — розгорнуто і перевірено наживо (2026-07-24)
+
+Buffer-акаунт створений (free), TikTok-канал `mrcarpet24` підключений, акаунт
+**публічний**. Personal API key згенерований (**термін 1 рік — протухає
+2027-07-24**, ротація в порталі; збережений в `ops/CREDENTIALS.md` + прод/локал
+`.env`). Org id `6a63596fb088b578e20690d3`, channel id `6a635998e2638b94d7c7ff8f`.
+
+Endpoint/схема підтверджені живими викликами (200): `account.organizations`,
+`channels`, `createPost`. **Тест наскрізь**: `buffer.publish_video` з реальним
+montage pick #7 (`https://mrcarpet24.com/media/.../pick-7.mp4`, 6.95 MB, 200
+video/mp4) → Buffer прийняв на free-плані, поставив у чергу TikTok, `status
+scheduled`, `dueAt` = наступний слот черги (~18:29 UTC). Тестовий пост потім
+**видалено** (`deletePost(input:{id})` → union `DeletePostSuccess`/`VoidMutationError`),
+щоб планувальник о 18:00 Kyiv відпрацював без дубля.
+
+**Граблі деплою**: на проді є **авто-pull** — він підтягнув push і перестворив
+`web`, той OOM-нувся (`Exited 137`), сайт впав у 502. Підняв `web` окремо (пам'ять
+здорова, 2.9 ГБ вільно — не як у постмортемі 07-17). Далі додав `BUFFER_*` у прод
+`.env` і перестворив `web` та `tiktok-daily` **по одному** (stop→sleep→up→curl 200).
+Обидва бачать ключ (`buffer_status` → ready).
+
+**Стан**: повністю робоче. Планувальник `tiktok-daily` о 18:00 Kyiv публікує
+pick #7 у TikTok через Buffer (+ фан-аут у Meta/YT/Threads як раніше).
+
+**Єдиний TODO по політиці**: AIGC-мітка — Buffer `createPost` її в API не має,
+увімкнути AI-content toggle у налаштуваннях TikTok-каналу в Buffer вручну.
