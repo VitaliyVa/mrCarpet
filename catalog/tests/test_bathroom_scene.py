@@ -82,6 +82,39 @@ class BathroomPromptTests(SimpleTestCase):
         self.assertIn('0.5 × 0.6', p)
         self.assertIn('0.6 × 0.9', p)
 
+    def test_prompt_limits_cutout_count(self):
+        # головний баг: нейронка малювала другий виріз на тому ж килимку
+        p = self._prompt()
+        self.assertIn('SILHOUETTE LOCK', p)
+        self.assertIn('EXACTLY ONE notch', p)
+        self.assertIn('NO notch', p)
+        self.assertIn('no second notch', p)
+
+    def test_prompt_identifies_rugs_by_shape_not_order(self):
+        p = self._prompt()
+        self.assertIn('BY THEIR SHAPE, not by their order', p)
+        self.assertIn('MAT-U', p)
+        self.assertIn('MAT-R', p)
+
+    def test_prompt_forbids_warping(self):
+        p = self._prompt()
+        self.assertIn('no stretching', p)
+        self.assertIn('Trace both outlines', p)
+
+    def test_sizes_normalized_to_metres(self):
+        # сирий лейбл більше не клеїться з ' m': '∅ 67 см' → '0.67 × 0.67 m'
+        p = self._prompt(second_size_label='∅ 67 см')
+        self.assertIn('0.67 × 0.67 m', p)
+        self.assertNotIn('67 см m', p)
+
+    def test_metric_size_wins_over_label(self):
+        p = self._prompt(size_label='0.5 × 0.6', width_m='0.45', length_m='0.55')
+        self.assertIn('0.45 × 0.55 m', p)
+
+    def test_unparsable_second_size_falls_back(self):
+        p = self._prompt(second_size_label='як завжди')
+        self.assertIn('0.6 × 0.9 m', p)
+
     def test_prompt_camera_shows_both(self):
         p = self._prompt()
         self.assertIn('doorway', p)
@@ -146,10 +179,12 @@ class BathroomServiceTests(SimpleTestCase):
         captured = {}
 
         def fake_run(source_bytes, source_name, prompt, phase_label,
-                     aspect_ratio, second_bytes=None, second_name=''):
+                     aspect_ratio, second_bytes=None, second_name='',
+                     quality='low'):
             captured['first'] = source_bytes
             captured['second'] = second_bytes
             captured['prompt'] = prompt
+            captured['quality'] = quality
             return b'result'
 
         svc._run_and_download = fake_run
@@ -172,3 +207,23 @@ class BathroomServiceTests(SimpleTestCase):
         self.assertEqual(captured['second'], b'rect-mat')
         self.assertIn('TWO SEPARATE RUGS', captured['prompt'])
         self.assertTrue(meta['prompt_options']['second_rug'])
+        # виріз під унітаз не переживає low — ванний комплект іде в medium
+        self.assertEqual(captured['quality'], 'medium')
+        self.assertEqual(meta['quality'], 'medium')
+
+    def test_quality_stays_low_outside_bathroom_set(self):
+        from catalog.services.replicate_product_images import resolve_quality
+
+        scene = GenerationOptions()
+        scene.scene = ScenePromptOptions(
+            room_type='living_room', size_label='1.5 × 2.3'
+        ).normalized()
+        self.assertEqual(resolve_quality('scene', scene), 'low')
+        self.assertEqual(resolve_quality('catalog', GenerationOptions()), 'low')
+
+        # ванна без другого килимка — теж звичайна сцена
+        single = GenerationOptions()
+        single.scene = ScenePromptOptions(
+            room_type='bathroom', size_label='0.5 × 0.6'
+        ).normalized()
+        self.assertEqual(resolve_quality('scene', single), 'low')

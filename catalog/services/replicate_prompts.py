@@ -7,6 +7,7 @@ touching Django admin / HTTP layers.
 
 from __future__ import annotations
 
+from catalog.services.parse_size import SizeParseError, parse_size_label
 from catalog.services.replicate_prompt_options import (
     DEFAULT_BATH_CONTOUR_SIZE,
     DEFAULT_BATH_MAT_SIZE,
@@ -14,7 +15,7 @@ from catalog.services.replicate_prompt_options import (
     ScenePromptOptions,
 )
 
-PROMPT_VERSION = 'v6-bathroom-set'
+PROMPT_VERSION = 'v7-bathroom-set'
 
 
 # ---------------------------------------------------------------------------
@@ -208,40 +209,113 @@ def _scene_scale_block(options: ScenePromptOptions) -> str:
     )
 
 
+def _num(value) -> str:
+    """0.50 → '0.5', 1.00 → '1' — щоб фраза читалась як людський розмір."""
+    return f'{float(value):g}'
+
+
+def _size_phrase_from_metres(width_m: str, length_m: str) -> str:
+    try:
+        w = float(str(width_m).replace(',', '.'))
+        l = float(str(length_m).replace(',', '.'))
+    except (TypeError, ValueError):
+        return ''
+    if w <= 0 or l <= 0:
+        return ''
+    return f'{_num(w)} × {_num(l)} m'
+
+
+def _size_phrase_from_label(*labels: str) -> str:
+    """Перший лейбл, що парситься, → метри.
+
+    Раніше сюди підставлявся сирий рядок з адмінки і до нього дописувалось ' m'.
+    Для лейбла на кшталт '∅ 67 см' це давало «67 см m» — модель отримувала
+    сміття замість розміру і масштабувала килимок навмання.
+    """
+    for label in labels:
+        label = (label or '').strip()
+        if not label:
+            continue
+        try:
+            width_m, length_m = parse_size_label(label)
+        except SizeParseError:
+            continue
+        return f'{_num(width_m)} × {_num(length_m)} m'
+    return ''
+
+
+def _bath_sizes(options: ScenePromptOptions) -> tuple[str, str]:
+    contour = _size_phrase_from_metres(options.width_m, options.length_m)
+    if not contour:
+        contour = _size_phrase_from_label(
+            options.size_label, DEFAULT_BATH_CONTOUR_SIZE
+        )
+    mat = _size_phrase_from_label(options.second_size_label, DEFAULT_BATH_MAT_SIZE)
+    return contour, mat
+
+
 def _bathroom_set_block(options: ScenePromptOptions) -> str:
     """Промпт для комплекту з двох килимків у ванній.
 
-    Модель отримує ДВА референси: [0] контурний з вирізом під унітаз,
-    [1] прямокутний під двері. Найбільші ризики, які треба явно заборонити:
-    змішування візерунків між килимками, «заростання» вирізу, дублювання
-    одного килимка двічі, wall-to-wall покриття.
+    Модель отримує ДВА референси: контурний з вирізом під унітаз і
+    прямокутний під двері. Ключове: килимки адресуються ОПИСОМ силуету
+    («той, що з вирізом» / «той, що без вирізу»), а не порядковим номером —
+    gpt-image-2 не вміє надійно мапити «FIRST/SECOND image» на конкретний
+    вхідний файл і через це змішує ознаки, дорисовуючи другий виріз.
     """
-    contour_size = options.size_label or DEFAULT_BATH_CONTOUR_SIZE
-    mat_size = options.second_size_label or DEFAULT_BATH_MAT_SIZE
+    contour_size, mat_size = _bath_sizes(options)
+    contour_size_part = f' Its real size is about {contour_size}.' if contour_size else ''
+    mat_size_part = f' Its real size is about {mat_size}.' if mat_size else ''
     return (
         'BATHROOM SET — TWO SEPARATE RUGS, BOTH MUST BE FULLY VISIBLE IN ONE FRAME:\n'
         '- There are exactly TWO reference images, and they are DIFFERENT products. '
         'Render exactly two rugs on the floor — no more, no less.\n'
-        f'- RUG A = the FIRST reference image: a contour bath mat with a U-shaped '
-        f'cutout on one side. Its real size is about {contour_size} m. '
-        'Place it on the floor directly in front of the toilet so that the U-shaped '
-        'cutout wraps snugly around the base/pedestal of the toilet. '
-        'The cutout MUST stay open and clearly visible — never fill it in, '
-        'never turn RUG A into a plain rectangle or oval.\n'
-        f'- RUG B = the SECOND reference image: a small rectangular bath mat. '
-        f'Its real size is about {mat_size} m. '
-        'Place it flat on the floor near the bathroom door or in front of the sink, '
-        'clearly separated from RUG A — the two mats must NOT touch or overlap.\n'
-        '- PATTERN IDENTITY (critical): RUG A keeps the exact pattern, colors and '
-        'texture of the FIRST reference; RUG B keeps the exact pattern, colors and '
-        'texture of the SECOND reference. Do NOT swap, mirror, blend or average the '
-        'two designs. If the references differ in color, that difference must remain.\n'
+        '- Identify the two references BY THEIR SHAPE, not by their order. '
+        'One reference shows a mat whose outline is interrupted by a U-shaped notch '
+        '(this is MAT-U, the toilet contour mat, normally the FIRST reference). '
+        'The other reference shows a mat with a plain unbroken rectangular outline '
+        '(this is MAT-R, the door mat, normally the SECOND reference). '
+        'If the two references look identical in shape, still render one notched mat '
+        'and one plain rectangular mat.\n'
+        f'- MAT-U (the notched one) goes on the floor directly in front of the toilet, '
+        f'with its U-shaped notch wrapping snugly around the base of the toilet '
+        f'pedestal, notch opening towards the toilet.{contour_size_part} '
+        'The notch MUST stay open and clearly visible — never fill it in, '
+        'never turn MAT-U into a plain rectangle or oval.\n'
+        f'- MAT-R (the plain one) lies flat near the bathroom door, '
+        f'clearly separated from MAT-U — the two mats must NOT touch or '
+        f'overlap.{mat_size_part}\n'
+        '- PATTERN IDENTITY (critical): MAT-U keeps the exact pattern, colors and '
+        'texture of the notched reference; MAT-R keeps the exact pattern, colors and '
+        'texture of the plain rectangular reference. Do NOT swap, mirror, blend or '
+        'average the two designs. If the references differ in color, that difference '
+        'must remain.\n'
         '- SCALE: both mats are small bathroom textiles, not area rugs. Together they '
         'must cover only a modest part of the tiled floor; plenty of bare tile stays '
         'visible between and around them. Forbidden: wall-to-wall carpeting, '
         'mats scaled up to room size.\n'
         '- FORBIDDEN: a third rug, a duplicate of the same mat, a rug on the wall or '
         'inside the bathtub/shower, people, feet, text, watermarks, logos.'
+    )
+
+
+def _bathroom_geometry_block() -> str:
+    """Явний ліміт на кількість вирізів — головна причина браку на скріншоті."""
+    return (
+        'SILHOUETTE LOCK (highest priority — check this before finishing the image):\n'
+        '- The whole picture contains EXACTLY ONE notch/cutout in total, and it '
+        'belongs to MAT-U. Count the notches: one, not two, not three.\n'
+        '- MAT-U outline = a rectangle with ONE single U-shaped notch bitten out of '
+        'the middle of ONE short edge. All of its other edges are straight and '
+        'unbroken. It has no second notch, no notch on the opposite edge, no notch '
+        'on the long sides.\n'
+        '- MAT-R outline = a closed rectangle, four straight edges, four soft '
+        'corners, NO notch, NO cutout, NO bite taken out of it. Never copy MAT-U\'s '
+        'notch onto MAT-R.\n'
+        '- Trace both outlines from the reference photos instead of redrawing them: '
+        'no stretching, no squashing, no bending, no wavy or melting edges, no '
+        'perspective warp beyond natural foreshortening. Both mats lie perfectly '
+        'flat on the tiles and stay rectangular in plan view.'
     )
 
 
@@ -312,8 +386,12 @@ def build_scene_prompt(options: ScenePromptOptions | None = None) -> str:
             ),
             _ROOM_TYPE_BLOCKS['bathroom'],
             _bathroom_set_block(options),
+            _bathroom_geometry_block(),
             _bathroom_camera_block(),
-            _FLOOR_STYLE_BLOCKS.get(options.floor_style, 'Floor: light ceramic tiles.'),
+            # 'auto' у ванній = плитка, а не generic "residential flooring"
+            _FLOOR_STYLE_BLOCKS['tile']
+            if options.floor_style == 'auto'
+            else _FLOOR_STYLE_BLOCKS.get(options.floor_style, _FLOOR_STYLE_BLOCKS['tile']),
             _COLOR_MODE_BLOCKS['preserve_exact'],
         ]
         if options.extra_prompt:

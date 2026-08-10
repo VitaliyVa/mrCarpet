@@ -29,6 +29,12 @@ PHASE_SCENE = "scene"
 PREDICTION_TIMEOUT_SEC = 360
 POLL_INTERVAL_SEC = 3
 
+# gpt-image-2 quality: скрізь "low" (дешево і достатньо — каталог/hover ще й
+# кольорокоригуються та обрізаються). Виняток — комплект для ванної: там
+# тонка геометрія вирізу під унітаз на low розсипається, тому "medium".
+QUALITY_DEFAULT = "low"
+QUALITY_BATHROOM_SET = "medium"
+
 PHASE_CONFIG = {
     PHASE_CATALOG: {
         "label": "Каталог",
@@ -52,6 +58,13 @@ PHASE_CONFIG = {
         "options_meta": lambda opts: opts.scene.as_meta(),
     },
 }
+
+
+def resolve_quality(phase: str, options: GenerationOptions) -> str:
+    """low скрізь, medium — лише для ванного комплекту (два килимки з вирізом)."""
+    if phase == PHASE_SCENE and options.scene.normalized().is_bathroom_set:
+        return QUALITY_BATHROOM_SET
+    return QUALITY_DEFAULT
 
 
 class ReplicateGenerationError(Exception):
@@ -147,6 +160,7 @@ class ReplicateProductImageService:
             )
         self.job_log.info(f"{phase_label}: відправлено на Replicate…")
 
+        quality = resolve_quality(phase, opts)
         raw_bytes = self._run_and_download(
             source_bytes,
             source_name,
@@ -155,6 +169,7 @@ class ReplicateProductImageService:
             aspect_ratio,
             second_bytes=second_bytes,
             second_name=second_name,
+            quality=quality,
         )
         if phase in (PHASE_CATALOG, PHASE_HOVER):
             self.job_log.info(f"{phase_label}: підгонка кольору під джерело…")
@@ -179,6 +194,7 @@ class ReplicateProductImageService:
             "prompt_version": PROMPT_VERSION,
             "phase": phase,
             "aspect_ratio": aspect_ratio,
+            "quality": quality,
             "prompt_options": config["options_meta"](opts),
             "duration_sec": duration,
             "output_size_kb": len(optimized) // 1024,
@@ -195,6 +211,7 @@ class ReplicateProductImageService:
         aspect_ratio: str,
         second_bytes: bytes | None = None,
         second_name: str = "",
+        quality: str = "low",
     ) -> bytes:
         file_obj = io.BytesIO(source_bytes)
         file_obj.name = source_name
@@ -211,7 +228,7 @@ class ReplicateProductImageService:
                 "prompt": prompt,
                 "input_images": input_images,
                 "aspect_ratio": aspect_ratio,
-                "quality": "low",
+                "quality": quality,
                 "output_format": "webp",
                 "output_compression": 90,
                 "background": "opaque",
