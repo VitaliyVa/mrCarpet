@@ -253,8 +253,20 @@
           <ul class="catalog_seo_guides__list">
             {% for g in seo_guides %}
             <li>
-              <a href="{{ g.get_absolute_url }}" class="color_gold">{{ g.title }}</a>
-              {% if g.meta_description %}<span class="color_black_sub"> — {{ g.meta_description|truncatechars:110 }}</span>{% endif %}
+              <a href="{{ g.get_absolute_url }}" class="catalog_seo_guides__card">
+                <div class="catalog_seo_guides__image">
+                  {% if g.has_image %}
+                  <img src="{{ g.image.url }}" alt="{{ g.title }}" width="376" height="170" loading="lazy" decoding="async" />
+                  {% else %}
+                  <img src="/static/utils/assets/blog/img.png" alt="{{ g.title }}" width="376" height="170" loading="lazy" decoding="async" />
+                  {% endif %}
+                </div>
+                <div class="catalog_seo_guides__body">
+                  <h3 class="catalog_seo_guides__card-title">{{ g.title }}</h3>
+                  {% if g.meta_description %}<p class="catalog_seo_guides__card-text">{{ g.meta_description|truncatechars:110 }}</p>{% endif %}
+                  <span class="catalog_seo_guides__read">Читати статтю <span aria-hidden="true">→</span></span>
+                </div>
+              </a>
             </li>
             {% endfor %}
           </ul>
