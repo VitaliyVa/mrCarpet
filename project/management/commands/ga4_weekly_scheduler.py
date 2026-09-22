@@ -6,6 +6,7 @@ Deployed as a small docker service (same pattern as certbot-renew).
 
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -41,7 +42,13 @@ class Command(BaseCommand):
     help = "Daemon: weekly GA4 Telegram report every Monday 10:00 Kyiv"
 
     def handle(self, *args, **options):
+        article_generation_enabled = os.getenv(
+            "WEEKLY_ARTICLE_GENERATION_ENABLED", "true"
+        ).lower() in {"1", "true", "yes", "on"}
         self.stdout.write("ga4-weekly-scheduler started (Europe/Kyiv)")
+        self.stdout.write(
+            f"weekly article generation: {'enabled' if article_generation_enabled else 'paused'}"
+        )
         while True:
             now = datetime.now(KYIV)
             target = next_monday_10(now)
@@ -71,12 +78,15 @@ class Command(BaseCommand):
             # тижневий демон. Генерує ЧЕРНЕТКУ і пінгує в Telegram; публікує
             # людина. Автопублікація масово згенерованого — це scaled content
             # abuse, і штраф прилітає на домен, а не на пост.
-            try:
-                from blog.services.weekly_topic import generate_next
+            if article_generation_enabled:
+                try:
+                    from blog.services.weekly_topic import generate_next
 
-                result = generate_next()
-                self.stdout.write(f"weekly article: {result}")
-            except Exception as exc:
-                self.stderr.write(f"weekly article failed: {exc}")
+                    result = generate_next()
+                    self.stdout.write(f"weekly article: {result}")
+                except Exception as exc:
+                    self.stderr.write(f"weekly article failed: {exc}")
+            else:
+                self.stdout.write("weekly article: paused by configuration")
 
             time.sleep(90)
