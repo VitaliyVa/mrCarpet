@@ -1,0 +1,5 @@
+.catalog_inside_filter{position:sticky;top:100px;align-self:flex-start;height:max-content}
+
+@media(max-width:828px){
+  .catalog_inside_filter{position:fixed;top:58px;align-self:initial;height:100%}
+}
