@@ -1,0 +1,1 @@
+.blog-section .blog__items{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;width:100%}.blog-section .blog .blog_item{width:auto;max-width:none}@media (max-width:1024px){.blog-section .blog__items{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}}@media (max-width:550px){.blog-section .blog__items{grid-template-columns:1fr}}

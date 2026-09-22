@@ -9,6 +9,8 @@
 
   .blog {
     &__items {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
       width: 100%;
       margin-top: 52px;
@@ -16,7 +18,7 @@
 
     .blog_item {
       max-width: 376px;
-      width: 100%;
+      width: auto;
       margin: 0;
     }
   }
