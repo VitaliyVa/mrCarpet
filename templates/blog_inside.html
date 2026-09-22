@@ -13,10 +13,10 @@
 {% block og_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock og_description %}
 {% block og_url %}https://{{ request.get_host }}{{ article.get_absolute_url }}{% endblock og_url %}
-{% block og_image %}{% if article.image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock og_image %}
+{% block og_image %}{% if article.has_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock og_image %}
 {% block twitter_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock twitter_title %}
 {% block twitter_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock twitter_description %}
-{% block twitter_image %}{% if article.image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock twitter_image %}
+{% block twitter_image %}{% if article.has_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.image.url }}" />{% endif %}{% endblock twitter_image %}
 {% block structured_data %}
 {{ block.super }}
 {% if article_jsonld %}<script type="application/ld+json">{{ article_jsonld|safe }}</script>{% endif %}
@@ -42,8 +42,10 @@
         <div class="blog-inside__center">
             <div class="blog-inside__block">
                 <div class="blog-inside__block-img">
-                    {% if article.image %}
+                {% if article.has_image %}
                     <img src="{{ article.image.url }}" alt="{{ article.title }}" width="820" height="400" fetchpriority="high" decoding="async" />
+                    {% else %}
+                    <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="820" height="400" fetchpriority="high" decoding="async" />
                     {% endif %}
                 </div>
                 <div class="blog-inside__block-info">
@@ -64,8 +66,10 @@
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item">
                         <div class="blog_item_img">
-                            {% if article.image %}
+                            {% if article.has_image %}
                             <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
+                            {% else %}
+                            <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
                             {% endif %}
                         </div>
                         <div class="blog_item_info">
@@ -87,8 +91,10 @@
                     {% for article in articles %}
                     <a href="{% url 'article' article.slug %}" class="blog_item slider_item swiper-slide">
                         <div class="blog_item_img">
-                            {% if article.image %}
+                            {% if article.has_image %}
                             <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
+                            {% else %}
+                            <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
                             {% endif %}
                         </div>
                         <div class="blog_item_info">

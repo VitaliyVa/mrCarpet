@@ -22,6 +22,7 @@
 {% block twitter_description %}Купити килим онлайн у mr.Carpet. Доставка по Україні.{% endblock twitter_description %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/index/index.css?v={{ static_v }}" />
+<link rel="stylesheet" href="/static/source/pages/index/blog-fix.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="first_section">
   <div class="cover_img">
@@ -151,7 +152,7 @@
         {% for post in posts %}
         <a href="{{ post.get_absolute_url }}" class="blog_item">
           <div class="blog_item_img">
-            {% if post.image %}
+            {% if post.has_image %}
             <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
             {% else %}
             <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
@@ -172,7 +173,7 @@
           {% for post in posts %}
           <a href="{{ post.get_absolute_url }}" class="blog_item slider_item swiper-slide">
             <div class="blog_item_img">
-              {% if post.image %}
+              {% if post.has_image %}
               <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
               {% else %}
               <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />

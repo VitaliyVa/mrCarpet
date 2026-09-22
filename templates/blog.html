@@ -35,8 +35,10 @@
             {% for article in articles %}
             <a href="{% url 'article' article.slug %}" class="blog_item">
                 <div class="blog_item_img">
-                    {% if article.image %}
+                {% if article.has_image %}
                     <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
+                    {% else %}
+                    <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
                     {% endif %}
                 </div>
                 <div class="blog_item_info">

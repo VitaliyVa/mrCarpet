@@ -47,6 +47,15 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     def is_public(self) -> bool:
         return self.status == self.Status.PUBLISHED
 
+    @property
+    def has_image(self) -> bool:
+        """True only when the stored image file is actually readable."""
+        return bool(
+            self.image
+            and self.image.name
+            and self.image.storage.exists(self.image.name)
+        )
+
     def save(self, *args, **kwargs):
         # Stamped on the first publish only. Editing a live article later must
         # not move its datePublished — Google reads that date, and an article

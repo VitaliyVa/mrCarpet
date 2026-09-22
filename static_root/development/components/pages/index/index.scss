@@ -32,21 +32,13 @@
 }
 
 .blog-section {
-  .mob-blog {
+  .blog {
     display: none;
   }
-}
 
-@media (max-width: 1440px) {
-  .blog-section {
-    .blog {
-      display: none;
-    }
-
-    .mob-blog {
-      display: flex;
-      gap: 0;
-    }
+  .mob-blog {
+    display: flex;
+    gap: 0;
   }
 }
 

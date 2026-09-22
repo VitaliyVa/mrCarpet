@@ -160,6 +160,17 @@ class ListPageTests(TestCase):
         self.assertIn("Незабаром", html)
 
 
+    def test_missing_image_file_uses_the_fallback_cover(self):
+        Article.objects.create(
+            title="Missing cover",
+            status=Article.Status.PUBLISHED,
+            image="articles/missing-cover.webp",
+        )
+        html = self.client.get(reverse("blog")).content.decode()
+        self.assertIn("/static/utils/assets/blog/img.png", html)
+        self.assertNotIn("missing-cover.webp", html)
+
+
 class WeeklyTopicTests(TestCase):
     """
     The queue feeds the generator, and the generator stops at a draft.
