@@ -11,6 +11,10 @@
   &_filter {
     min-width: 240px;
     margin-right: 20px;
+    position: sticky;
+    top: 100px;
+    align-self: flex-start;
+    height: max-content;
 
     &-btn {
       display: none;
