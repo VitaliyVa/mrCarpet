@@ -59,14 +59,27 @@ def merchant_return_policy(request) -> dict[str, Any]:
     }
 
 
-def offer_shipping_details() -> dict[str, Any] | None:
-    """Free shipping OfferShippingDetails when enabled in ShopSettings."""
+def offer_shipping_details(price=None) -> dict[str, Any] | None:
+    """OfferShippingDetails matching checkout: free from the threshold, else
+    the carrier "from" price shown at checkout (Nova Poshta, paid by buyer).
+
+    Used to claim free shipping on every offer, including 300 грн doormats.
+    Merchant Center compares this with its own shipping settings and the
+    checkout, so a blanket "0" is a mismatch that gets items disapproved.
+    """
+    rate = 0
     try:
         from project.free_shipping import get_shop_settings
 
         settings = get_shop_settings()
-        if not settings.free_shipping_enabled:
-            return None
+        threshold = int(settings.free_shipping_threshold or 0)
+        free = bool(settings.free_shipping_enabled) and (
+            price is None or (threshold > 0 and float(price) >= threshold)
+        )
+        if not free:
+            rate = int(settings.delivery_from_price or 0)
+            if not rate:
+                return None
     except Exception:
         pass
 
@@ -74,7 +87,7 @@ def offer_shipping_details() -> dict[str, Any] | None:
         "@type": "OfferShippingDetails",
         "shippingRate": {
             "@type": "MonetaryAmount",
-            "value": "0",
+            "value": str(rate),
             "currency": "UAH",
         },
         "shippingDestination": {
@@ -208,7 +221,8 @@ def _attach_merchant_offer_fields(offers: dict[str, Any], request) -> None:
     # validFrom: GSC lists it as a missing (non-critical) offer field.
     offers["validFrom"] = timezone.now().date().isoformat()
     offers["priceValidUntil"] = _price_valid_until()
-    shipping = offer_shipping_details()
+    price = offers.get("price", offers.get("lowPrice"))
+    shipping = offer_shipping_details(price)
     if shipping is not None:
         offers["shippingDetails"] = shipping
     offers["hasMerchantReturnPolicy"] = merchant_return_policy(request)

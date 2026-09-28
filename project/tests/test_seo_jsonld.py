@@ -116,3 +116,19 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
     def test_merchant_return_policy_id_stable(self):
         policy = merchant_return_policy(self.request)
         self.assertTrue(policy["@id"].endswith("/refund/#merchant-return-policy"))
+
+
+class OfferShippingRateTests(SimpleTestCase):
+    def _settings(self, **kw):
+        from types import SimpleNamespace as NS
+        base = dict(free_shipping_enabled=True, free_shipping_threshold=1499, delivery_from_price=90)
+        base.update(kw)
+        return NS(**base)
+
+    def test_below_threshold_charges_from_price(self):
+        from unittest import mock
+        from project.seo_jsonld import offer_shipping_details
+        with mock.patch("project.free_shipping.get_shop_settings", return_value=self._settings()):
+            self.assertEqual(offer_shipping_details(400)["shippingRate"]["value"], "90")
+            self.assertEqual(offer_shipping_details(1499)["shippingRate"]["value"], "0")
+            self.assertEqual(offer_shipping_details(5500)["shippingRate"]["value"], "0")
