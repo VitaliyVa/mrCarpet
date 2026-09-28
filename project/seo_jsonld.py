@@ -184,7 +184,29 @@ def _price_valid_until() -> str:
     return (timezone.now() + timedelta(days=PRICE_VALID_DAYS)).date().isoformat()
 
 
+# Google product taxonomy paths. GSC "Merchant listings" flagged our raw
+# category titles ("Турецькі") as an invalid `category` value: Google wants
+# its own taxonomy string, not a shop label.
+GOOGLE_CATEGORY_RUGS = "Home & Garden > Decor > Rugs"
+GOOGLE_CATEGORY_BATH_MATS = "Home & Garden > Bathroom Accessories > Bath Mats & Rugs"
+GOOGLE_CATEGORY_DOOR_MATS = "Home & Garden > Decor > Door Mats"
+_CATEGORY_SLUG_TO_GOOGLE = {
+    "dlia-vanni": GOOGLE_CATEGORY_BATH_MATS,
+    "pid-dveri": GOOGLE_CATEGORY_DOOR_MATS,
+}
+
+
+def _google_product_category(product) -> str:
+    slugs = {c.slug for c in product.categories.all()}
+    for slug, path in _CATEGORY_SLUG_TO_GOOGLE.items():
+        if slug in slugs:
+            return path
+    return GOOGLE_CATEGORY_RUGS
+
+
 def _attach_merchant_offer_fields(offers: dict[str, Any], request) -> None:
+    # validFrom: GSC lists it as a missing (non-critical) offer field.
+    offers["validFrom"] = timezone.now().date().isoformat()
     offers["priceValidUntil"] = _price_valid_until()
     shipping = offer_shipping_details()
     if shipping is not None:
@@ -296,9 +318,7 @@ def _build_product_node(
     if image_urls:
         data["image"] = image_urls if len(image_urls) > 1 else image_urls[0]
 
-    category = product.categories.first()
-    if category:
-        data["category"] = category.title
+    data["category"] = _google_product_category(product)
 
     color = _product_color(product)
     if color:
