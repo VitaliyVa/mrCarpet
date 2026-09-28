@@ -147,6 +147,13 @@ def reset_password(request):
     return render(request, 'reset_password.html')
 
 
+def google_merchant_feed(request):
+    """Product feed for Google Merchant Center (scheduled fetch)."""
+    from project.merchant_feed import build_feed
+
+    return HttpResponse(build_feed(), content_type="application/xml; charset=utf-8")
+
+
 def robots_txt(request):
     """
     robots.txt gated by SEO_INDEXING_ENABLED (default False = full Disallow).
