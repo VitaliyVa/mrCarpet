@@ -156,12 +156,9 @@ def robots_txt(request):
     """
     from project.seo_indexing import SITE_CANONICAL_ORIGIN, build_robots_txt
 
+    # Never derive from request host: www.mrcarpet24.com would advertise a
+    # www sitemap and split the site into two hosts for Google.
     sitemap_url = f"{SITE_CANONICAL_ORIGIN}/sitemap.xml"
-    if getattr(request, "get_host", None):
-        try:
-            sitemap_url = request.build_absolute_uri("/sitemap.xml")
-        except Exception:
-            pass
     return HttpResponse(
         build_robots_txt(sitemap_url=sitemap_url),
         content_type="text/plain; charset=utf-8",

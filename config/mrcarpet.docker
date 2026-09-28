@@ -8,14 +8,28 @@ server {
     }
 
     location / {
-        return 301 https://$host$request_uri;
+        return 301 https://mrcarpet24.com$request_uri;
     }
+}
+
+# www → apex. Both hosts served 200 with identical content and Google picked
+# www as canonical for ~14 URLs (GSC "Копія, інша канонічна"). One host only.
+server {
+    listen 443 ssl http2;
+    server_name www.mrcarpet24.com;
+
+    ssl_certificate     /etc/letsencrypt/live/mrcarpet24.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mrcarpet24.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    return 301 https://mrcarpet24.com$request_uri;
 }
 
 # HTTPS: сайт
 server {
     listen 443 ssl http2;
-    server_name mrcarpet24.com www.mrcarpet24.com;
+    server_name mrcarpet24.com;
 
     client_max_body_size 100M;
 

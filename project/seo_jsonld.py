@@ -10,6 +10,7 @@ from typing import Any
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from project.seo_urls import absolute_site_url, canonical_url
 from project.text_encoding import fix_utf8_mojibake
 
 ORG_NAME = "mr.Carpet"
@@ -32,7 +33,9 @@ def absolute_uri(request, path_or_url: str | None) -> str | None:
     value = str(path_or_url)
     if value.startswith("http://") or value.startswith("https://"):
         return value
-    return request.build_absolute_uri(value)
+    # Always the canonical host: www.mrcarpet24.com used to leak into JSON-LD
+    # and Google then picked www as canonical for a third of the catalog.
+    return absolute_site_url(value)
 
 
 def dumps_jsonld(data: dict[str, Any] | list[Any]) -> str:
@@ -127,26 +130,17 @@ def organization_graph(request) -> dict[str, Any]:
 
 
 def website_graph(request) -> dict[str, Any]:
-    """WebSite + SearchAction — enables Google's sitelinks search box.
+    """WebSite entity.
 
-    Target is the catalog full-page search (`/catalog/?q=...`), which returns a
-    real HTML results page (the header box is AJAX-only and has no such URL).
+    No SearchAction: `/catalog/?q=` never was a search page (catalog ignores
+    `q`), Googlebot crawled the literal `{search_term_string}` URL and filed it
+    as a duplicate of /catalog/. Sitelinks search box is deprecated anyway.
     """
     return {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": ORG_NAME,
         "url": absolute_uri(request, "/"),
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-                "@type": "EntryPoint",
-                # Braces must stay literal — build_absolute_uri would percent-encode
-                # them, which breaks Google's sitelinks search box. Append by hand.
-                "urlTemplate": f"{absolute_uri(request, '/catalog/')}?q={{search_term_string}}",
-            },
-            "query-input": "required name=search_term_string",
-        },
     }
 
 
@@ -156,7 +150,7 @@ def breadcrumb_graph(
     """crumbs: list of (name, path_or_None). Last item may have path None = current URL."""
     elements = []
     for position, (name, path) in enumerate(crumbs, start=1):
-        item_url = absolute_uri(request, path) if path else request.build_absolute_uri()
+        item_url = absolute_uri(request, path) if path else canonical_url(request)
         elements.append(
             {
                 "@type": "ListItem",
