@@ -26,6 +26,15 @@ def absolute_site_url(path: str = "/") -> str:
     return base + path
 
 
+def google_review_url() -> str | None:
+    """Link that opens Google's review form for the store, or None until
+    GOOGLE_PLACE_ID is set (see core/settings.py)."""
+    place_id = (getattr(settings, "GOOGLE_PLACE_ID", "") or "").strip()
+    if not place_id:
+        return None
+    return f"https://search.google.com/local/writereview?placeid={place_id}"
+
+
 def canonical_url(request) -> str:
     """
     Prefer SITE_URL + path/query so canonical is never http:// behind TLS proxy.

@@ -36,6 +36,17 @@
   </tr>
   {% endfor %}
 
+  {% if google_review_url %}
+  <tr>
+    <td style="padding:0 28px 16px;">
+      <p style="margin:0;font-size:13px;line-height:1.55;color:#89817c;font-family:Arial,Helvetica,sans-serif;">
+        Або, якщо так зручніше,
+        <a href="{{ google_review_url }}" target="_blank" style="color:#a46c46;">залиште відгук у Google</a>.
+      </p>
+    </td>
+  </tr>
+  {% endif %}
+
   <tr>
     <td style="padding:4px 28px 32px;">
       <p style="margin:0;font-size:13px;line-height:1.55;color:#89817c;font-family:Arial,Helvetica,sans-serif;">

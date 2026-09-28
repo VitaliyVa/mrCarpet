@@ -21,6 +21,8 @@ from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from project.seo_urls import google_review_url
+
 logger = logging.getLogger(__name__)
 
 #: Days after the order became "Виконано". Long enough that the rug has
@@ -124,6 +126,7 @@ def build_email(order) -> tuple[str, str, str] | None:
         "name": (order.name or "").strip(),
         "items": items,
         "site": SITE,
+        "google_review_url": google_review_url(),
     }
     subject = "Як вам килим? Поділіться враженням"
     html = render_to_string("emails/review_request.html", context)

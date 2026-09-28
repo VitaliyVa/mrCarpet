@@ -45,6 +45,14 @@ for _h in ('127.0.0.1', 'localhost'):
 # Private pages (cart/checkout/…) always force noindex in templates.
 SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
 
+# Google Business Profile place id, for the "leave a review on Google" link
+# after an on-site review. Empty until the profile is verified (Google does
+# not expose a stable review link for an unverified place) — the feature
+# ships inert and turns on the moment this is set, no deploy needed beyond
+# the env var. Find it via business.google.com → location → "Get more
+# reviews", or the Place ID Finder (developers.google.com/maps/documentation/places/web-service/place-id).
+GOOGLE_PLACE_ID = config("GOOGLE_PLACE_ID", default="")
+
 # Analytics / measurement (Phase 9). Empty = scripts not injected.
 # Example: GA4_MEASUREMENT_ID=G-XXXXXXXXXX
 # Prefer GTM_CONTAINER_ID=GTM-XXXXXXX if you manage tags in GTM (then skip raw GA4 id).

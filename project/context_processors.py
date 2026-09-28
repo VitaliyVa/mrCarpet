@@ -2,7 +2,7 @@ from project.free_shipping import get_shop_settings
 from project.seo_analytics import analytics_context, analytics_user_id
 from project.seo_indexing import is_indexing_enabled
 from project.seo_jsonld import dumps_jsonld, organization_graph, website_graph
-from project.seo_urls import canonical_url, site_base
+from project.seo_urls import canonical_url, google_review_url, site_base
 
 
 def seo_jsonld(request):
@@ -13,6 +13,7 @@ def seo_jsonld(request):
         "seo_indexing_enabled": is_indexing_enabled(),
         "canonical_url": canonical_url(request),
         "site_url": site_base(),
+        "google_review_url": google_review_url(),
     }
     ctx.update(analytics_context())
     ctx["ga4_user_id"] = analytics_user_id(getattr(request, "user", None))

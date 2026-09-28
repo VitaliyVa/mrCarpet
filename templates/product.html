@@ -257,7 +257,7 @@
     </div>
 
     {% with default_attr=product.get_default_size_attr %}
-    <div class="product" data-product-id="{{ default_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-slug="{{ product.slug }}" data-product-title="{{ product.title }}" {% if ar_ready %}data-ar-ready="1"{% endif %}>
+    <div class="product" data-product-id="{{ default_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-slug="{{ product.slug }}" data-product-title="{{ product.title }}" {% if ar_ready %}data-ar-ready="1"{% endif %} {% if google_review_url %}data-google-review-url="{{ google_review_url }}"{% endif %}>
       <div class="product_slider">
         <div class="product_slider_mini swiper">
           <div class="swiper-wrapper">
