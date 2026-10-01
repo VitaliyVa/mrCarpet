@@ -143,6 +143,8 @@ services:
       - mrcarpet_network
 
   tiktok-daily:
+    # Paused: normal deploys must not restart paid video generation.
+    profiles: [social-automation]
     build:
       context: .
       dockerfile: Dockerfile.prod
