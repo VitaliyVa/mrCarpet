@@ -111,8 +111,14 @@ services:
       - BUFFER_ORG_ID=${BUFFER_ORG_ID}
       - BUFFER_TIKTOK_CHANNEL_ID=${BUFFER_TIKTOK_CHANNEL_ID}
       - SOCIAL_AI_I2V_MODEL=${SOCIAL_AI_I2V_MODEL:-wan-video/wan-2.2-i2v-fast}
-    # SQLite: 1 worker. Кілька workers → "database is locked". Для scale — Postgres.
-    command: sh -c "(chmod -R a+rX /app/media/thumbs 2>/dev/null || true) && chmod -R 755 /app/static_root && python manage.py migrate --noinput && python manage.py collectstatic --noinput && chmod -R 755 /app/static_root && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300"
+    # 2 processes x 4 threads. One worker with 2 threads served category pages
+    # strictly in pairs (rendering is CPU bound under the GIL), so a burst of 8
+    # requests waited up to 3-4 s. SQLite runs in WAL (core/settings.py):
+    # readers in any process never block, writers queue on busy_timeout=30s.
+    # Process-local state (thumbnail _lock/_memo, token caches) is only a memo,
+    # dedup that matters (Telegram updates) lives in the DB. Raise workers only
+    # after checking nproc and free RAM on the server; for more, move to Postgres.
+    command: sh -c "(chmod -R a+rX /app/media/thumbs 2>/dev/null || true) && chmod -R 755 /app/static_root && python manage.py migrate --noinput && python manage.py collectstatic --noinput && chmod -R 755 /app/static_root && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 300"
     restart: unless-stopped
     networks:
       - mrcarpet_network
