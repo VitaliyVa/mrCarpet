@@ -603,7 +603,7 @@
           <ul class="product__trust">
             <li>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              <a href="{% url 'delivery' %}">Доставка Новою Поштою по всій Україні, {{ shop_terms.transit_text }}{% if not shop_terms.free_enabled and shop_terms.from_price %}, від {{ shop_terms.from_price }} грн{% endif %}</a>
+              <a href="{% url 'delivery' %}">Доставка Новою Поштою по всій Україні, {{ shop_terms.transit_text }}{% if shop_terms.free_enabled %}, безкоштовно від {{ shop_terms.threshold }} грн{% elif shop_terms.from_price %}, від {{ shop_terms.from_price }} грн{% endif %}</a>
             </li>
             <li>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
