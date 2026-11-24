@@ -81,6 +81,15 @@ def shape_phrase(label: str) -> str:
 
 
 def color_label(product) -> str:
+    """Colour words from the title first (what the shopper reads and what the
+    Merchant feed sends), the admin's active_color only when the title has
+    none: on the live site active_color was wrong on several rugs
+    (a grey ModernGK506 marked "Синій")."""
+    from project.merchant_feed import parse_title
+
+    colors = parse_title(getattr(product, "title", "") or "")["colors"]
+    if colors:
+        return "/".join(colors[:3])
     color = getattr(product, "active_color", None)
     return (color.title or "").strip() if color else ""
 
