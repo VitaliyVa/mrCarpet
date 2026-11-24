@@ -1,11 +1,28 @@
 """XML sitemaps for storefront (Phase 3). Indexing still closed via robots/noindex."""
 
-from django.contrib.sitemaps import Sitemap
+from urllib.parse import urlsplit
+
+from django.contrib.sitemaps import Sitemap as DjangoSitemap
 from django.urls import reverse
 
 from blog.models import Article
 from catalog.models import Product, ProductCategory
 from project.seo_jsonld import article_modified_at
+from project.seo_urls import site_base
+
+
+class Sitemap(DjangoSitemap):
+    """<loc> always on SITE_URL (project.seo_urls), never the request host.
+
+    Django builds every <loc> from the host and scheme the sitemap was
+    fetched with: through an IP, a www alias or plain http it would list
+    URLs that are not the canonical ones."""
+
+    def get_protocol(self, protocol=None):
+        return urlsplit(site_base()).scheme or "https"
+
+    def get_domain(self, site=None):
+        return urlsplit(site_base()).netloc
 
 
 class StaticViewSitemap(Sitemap):
@@ -83,9 +100,30 @@ class ArticleSitemap(Sitemap):
         return article_modified_at(obj)
 
 
+class SizeLandingSitemap(Sitemap):
+    """/catalog/rozmir/<size>/ pages that exist right now (enough stock).
+
+    A size that drops below the minimum is a 404 and leaves the list on
+    the next fetch; it comes back on its own when stock returns."""
+
+    changefreq = "weekly"
+    priority = 0.7
+
+    def items(self):
+        from catalog.size_landings import landing_slugs
+
+        return [chip.slug for chip in landing_slugs()]
+
+    def location(self, item):
+        from catalog.size_landings import landing_url
+
+        return landing_url(item)
+
+
 sitemaps = {
     "static": StaticViewSitemap,
     "products": ProductSitemap,
     "categories": CategorySitemap,
+    "sizes": SizeLandingSitemap,
     "articles": ArticleSitemap,
 }

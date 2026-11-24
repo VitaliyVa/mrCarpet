@@ -47,7 +47,7 @@ CANONICAL_KEEP_PARAMS = ("page",)
 # its canonical must point at the clean URL instead of minting a duplicate.
 # A regex, not a prefix: "/blog/" as a prefix would also cover articles.
 PAGINATED_PATH_RE = re.compile(
-    r"^/(?:blog/|catalog/collection/|catalog/categorie/[^/]+/)$"
+    r"^/(?:blog/|catalog/collection/|catalog/categorie/[^/]+/|catalog/rozmir/[^/]+/)$"
 )
 
 

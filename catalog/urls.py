@@ -7,6 +7,7 @@ urlpatterns = [
     path('collection/', views.all_collection, name='all_collection'),
     path('favourites/', views.favourites, name='favourites'),
     path('categorie/<str:slug>/', views.catalog_detail, name='categorie'),
+    path('rozmir/<str:size>/', views.size_landing, name='size_landing'),
     path('product/<str:slug>/', views.product, name='product'),
     path('product/<str:slug>/ar-glb/', views.product_ar_glb, name='product_ar_glb'),
     path('stock/', views.stock, name='stock'),

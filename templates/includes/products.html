@@ -1,11 +1,11 @@
 {% load thumbnails catalog_filters %}
-{% with default_attr=product.get_default_size_attr %}
+{% with default_attr=product.get_card_size_attr %}
 
 {% if product.is_novelty %}
 <div class="cart_item_new color_white small">Новинка</div>
 {% endif %}
 <div class="cart_item-top">
-  <a href="{{ product.get_absolute_url }}">
+  <a href="{{ product.get_card_url }}">
     <div class="cart_item_img">
         {# Card is ~45vw on phones, 365px on desktop: serve a WebP that size, not the upload. #}
         <img
@@ -108,7 +108,7 @@
     </div>
   </div>
   <div class="cart_item_title small color_black">
-    <a href="{{ product.get_absolute_url }}">{{ product.title }}</a>
+    <a href="{{ product.get_card_url }}">{{ product.title }}</a>
   </div>
 <div class="sizes-block cart_item_size__block">
   {% for attr in product.product_attr.all %}
