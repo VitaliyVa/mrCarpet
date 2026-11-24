@@ -249,94 +249,72 @@ def _product_group_name(product) -> str:
     return title or ORG_NAME
 
 
-def _build_product_node(
-    request, product, images=None, *, with_context: bool = True
-) -> dict[str, Any] | None:
-    attrs = list(
-        product.product_attr.select_related("size").order_by("sort_order", "pk")
-    )
-    prices: list[float | int] = []
-    in_stock = False
-    for attr in attrs:
-        price = _offer_price(attr)
-        if price is not None:
-            prices.append(price)
-        if (attr.quantity or 0) > 0:
-            in_stock = True
+def _is_placeholder_image(field) -> bool:
+    # products/default.png is the upload placeholder. Google calls it a
+    # generic image and refuses the merchant listing, so it is never offered.
+    name = getattr(field, "name", "") or getattr(field, "url", "") or ""
+    return str(name).endswith("default.png")
 
-    if not prices:
-        return None
 
-    image_urls: list[str] = []
-    if product.image:
+def _image_urls(request, product, images=None) -> list[str]:
+    urls: list[str] = []
+    if product.image and not _is_placeholder_image(product.image):
         url = absolute_uri(request, product.image.url)
         if url:
-            image_urls.append(url)
+            urls.append(url)
     for img in images or []:
-        if getattr(img, "image", None):
-            url = absolute_uri(request, img.image.url)
-            if url and url not in image_urls:
-                image_urls.append(url)
+        field = getattr(img, "image", None)
+        if field and not _is_placeholder_image(field):
+            url = absolute_uri(request, field.url)
+            if url and url not in urls:
+                urls.append(url)
+    return urls
 
-    availability = (
-        "https://schema.org/InStock"
-        if in_stock
-        else "https://schema.org/OutOfStock"
-    )
-    low = min(prices)
-    high = max(prices)
-    product_url = absolute_uri(request, product.get_absolute_url())
 
-    if len(prices) == 1:
-        offers: dict[str, Any] = {
-            "@type": "Offer",
-            "url": product_url,
-            "priceCurrency": "UAH",
-            "price": low,
-            "availability": availability,
-            "itemCondition": "https://schema.org/NewCondition",
-            "seller": {"@type": "Organization", "name": ORG_NAME},
-        }
-    else:
-        offers = {
-            "@type": "AggregateOffer",
-            "url": product_url,
-            "priceCurrency": "UAH",
-            "lowPrice": low,
-            "highPrice": high,
-            "offerCount": len(prices),
-            "availability": availability,
-            "itemCondition": "https://schema.org/NewCondition",
-            "seller": {"@type": "Organization", "name": ORG_NAME},
-        }
-    _attach_merchant_offer_fields(offers, request)
+def _size_label(attr) -> str:
+    # Same "120x200 см" wording as the Merchant feed, so a listing built from
+    # the feed and one built from the page describe one size the same way.
+    from project.merchant_feed import format_size
 
+    size = getattr(attr, "size", None)
+    title = getattr(size, "title", None) if size is not None else None
+    return format_size(title if isinstance(title, str) else "")
+
+
+def _availability(in_stock: bool) -> str:
+    return "https://schema.org/InStock" if in_stock else "https://schema.org/OutOfStock"
+
+
+def _single_offer(request, url: str, price, in_stock: bool) -> dict[str, Any]:
+    offer: dict[str, Any] = {
+        "@type": "Offer",
+        "url": url,
+        "priceCurrency": "UAH",
+        "price": price,
+        "availability": _availability(in_stock),
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": {"@type": "Organization", "name": ORG_NAME},
+    }
+    _attach_merchant_offer_fields(offer, request)
+    return offer
+
+
+def _product_details(request, product) -> dict[str, Any]:
+    """Properties shared by every size of one product page.
+
+    On a ProductGroup they sit on the group (Google: common properties go on
+    the group, variant-specific ones on each Product).
+    """
     description = fix_utf8_mojibake(
         strip_tags(
             product.meta_description or product.description or product.title or ""
         )
     )[:5000]
-
     data: dict[str, Any] = {
-        "@type": "Product",
-        "name": product.title,
         "description": description,
-        "sku": str(product.pk),
-        "url": product_url,
         "brand": {"@type": "Brand", "name": ORG_NAME},
-        "offers": offers,
+        "category": _google_product_category(product),
     }
-    if with_context:
-        data = {"@context": "https://schema.org", **data}
-
-    if image_urls:
-        data["image"] = image_urls if len(image_urls) > 1 else image_urls[0]
-
-    data["category"] = _google_product_category(product)
-
-    color = _product_color(product)
-    if color:
-        data["color"] = color
 
     # Approved only. The create endpoint accepts anonymous POSTs, so anything
     # else here would let a stranger set the star rating Google shows for a
@@ -380,6 +358,7 @@ def _build_product_node(
             for r in reviews[:20]
         ]
 
+    spec_color = None
     for row in product.product_specs.select_related(
         "specification", "spec_value"
     ).all():
@@ -399,79 +378,240 @@ def _build_product_node(
         name_l = name.lower()
         if any(k in name_l for k in ("матеріал", "склад", "материал")):
             data["material"] = value
-        if "color" not in data and any(
+        if spec_color is None and any(
             k in name_l for k in ("колір", "цвет", "color")
         ):
-            data["color"] = value
+            spec_color = value
 
+    color = _product_color(product) or spec_color
+    if color:
+        data["color"] = color
     return data
 
 
-def _variant_stub(request, variant) -> dict[str, Any]:
-    stub: dict[str, Any] = {
+def _fixed_size_offers(product) -> list[tuple[Any, float | int, bool]]:
+    """(attr, price, in_stock) for every sellable fixed size, in shop order.
+
+    Custom sizes are priced per m², which is not a price anyone pays, and
+    merchant listings need a real price above zero, so they are left out.
+    """
+    out = []
+    for attr in product.product_attr.select_related("size").order_by(
+        "sort_order", "pk"
+    ):
+        if attr.custom_attribute:
+            continue
+        price = _offer_price(attr)
+        if price is None or price <= 0:
+            continue
+        out.append((attr, price, (attr.quantity or 0) > 0))
+    return out
+
+
+def _build_product_node(
+    request, product, images=None, *, with_context: bool = True
+) -> dict[str, Any] | None:
+    """Plain Product for a page that sells one thing at one price.
+
+    Also the fallback for a product sold only by custom size (price per m²):
+    the old AggregateOffer/Offer shape, since it has no fixed size to list.
+    """
+    product_url = absolute_uri(request, product.get_absolute_url())
+    fixed = _fixed_size_offers(product)
+
+    if len(fixed) == 1:
+        # One real size: one Offer, even if a per-m² custom size sits next to
+        # it (mixing the two into an AggregateOffer made a fake price range).
+        _attr, price, in_stock = fixed[0]
+        offers = _single_offer(request, product_url, price, in_stock)
+        low = high = price
+        prices = [price]
+    else:
+        attrs = list(
+            product.product_attr.select_related("size").order_by("sort_order", "pk")
+        )
+        prices = []
+        in_stock = False
+        for attr in attrs:
+            price = _offer_price(attr)
+            if price is not None:
+                prices.append(price)
+            if (attr.quantity or 0) > 0:
+                in_stock = True
+        if not prices:
+            return None
+        low = min(prices)
+        high = max(prices)
+
+    if len(prices) == 1 and len(fixed) != 1:
+        offers = _single_offer(request, product_url, low, in_stock)
+    elif len(fixed) != 1:
+        offers = {
+            "@type": "AggregateOffer",
+            "url": product_url,
+            "priceCurrency": "UAH",
+            "lowPrice": low,
+            "highPrice": high,
+            "offerCount": len(prices),
+            "availability": _availability(in_stock),
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {"@type": "Organization", "name": ORG_NAME},
+        }
+        _attach_merchant_offer_fields(offers, request)
+
+    data: dict[str, Any] = {
         "@type": "Product",
-        "sku": str(variant.pk),
-        "url": absolute_uri(request, variant.get_absolute_url()),
-        "name": variant.title,
+        "name": product.title,
+        "sku": str(product.pk),
+        "url": product_url,
+        "offers": offers,
     }
-    color = _product_color(variant)
-    if color:
-        stub["color"] = color
-    if variant.image:
-        img = absolute_uri(request, variant.image.url)
-        if img:
-            stub["image"] = img
-    return stub
+    if len(fixed) == 1:
+        # Same id as the Merchant feed item, so Google can tie the two.
+        data["sku"] = f"{product.pk}-{fixed[0][0].pk}"
+        size = _size_label(fixed[0][0])
+        if size:
+            data["size"] = size
+    if with_context:
+        data = {"@context": "https://schema.org", **data}
+
+    image_urls = _image_urls(request, product, images)
+    if image_urls:
+        data["image"] = image_urls if len(image_urls) > 1 else image_urls[0]
+    data.update(_product_details(request, product))
+    return data
+
+
+def _size_url(product, attr) -> str:
+    from project.merchant_feed import variant_link
+
+    return variant_link(product, attr)
+
+
+def _selected_size_node(request, product, images, row) -> dict[str, Any]:
+    attr, price, in_stock = row
+    size = _size_label(attr)
+    data: dict[str, Any] = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": f"{product.title} {size}".strip(),
+        "sku": f"{product.pk}-{attr.pk}",
+        "url": absolute_uri(request, product.get_absolute_url()),
+        "offers": _single_offer(request, _size_url(product, attr), price, in_stock),
+    }
+    if size:
+        data["size"] = size
+    image_urls = _image_urls(request, product, images)
+    if image_urls:
+        data["image"] = image_urls if len(image_urls) > 1 else image_urls[0]
+    data.update(_product_details(request, product))
+    return data
+
+
+def _color_siblings(product) -> list[Any]:
+    group = getattr(product, "color_group", None)
+    if not group:
+        return []
+    variants = list(group.variants.select_related("active_color").order_by("pk"))
+    if len(variants) <= 1:
+        return []
+    return [v for v in variants if v.pk != product.pk]
 
 
 def product_graph(
-    request, product, images=None
-) -> dict[str, Any] | list[Any] | None:
+    request, product, images=None, selected_attr=None
+) -> dict[str, Any] | None:
+    """Product JSON-LD for a PDP.
+
+    One price, one colour: a plain Product with a single Offer.
+
+    Several sizes and/or colour siblings: a ProductGroup whose hasVariant
+    holds one Product + Offer per size of this page, and a bare {"url"} for
+    every colour sibling (Google's multi-page variant pattern: full variants
+    for this page, url-only references to the variants on other pages).
+
+    Why not AggregateOffer, which this used to emit for every multi-size
+    rug (41 of 99 pages): merchant listings do not accept it, and Google says
+    not to use it for variants. Those pages were valid Product snippets at
+    best and never merchant listings. The colour pages were worse: their
+    sibling stubs were Products with no offers, each one an invalid item.
+
+    `selected_attr` (the page was opened as `?size=<attr.pk>`, which is the
+    link the Merchant feed gives every size): a plain Product with one Offer
+    at that size's price and URL, so Merchant Center's landing-page price
+    check reads exactly the price of the item it is checking.
     """
-    Product JSON-LD for PDP.
-    Color variants (multi-URL): ProductGroup + nested hasVariant (Google multi-page).
-    """
-    node = _build_product_node(request, product, images=images, with_context=True)
-    if not node:
-        return None
+    fixed = _fixed_size_offers(product)
+    if selected_attr is not None:
+        chosen = [row for row in fixed if row[0].pk == selected_attr.pk]
+        if chosen:
+            return _selected_size_node(request, product, images, chosen[0])
+    siblings = _color_siblings(product)
 
-    group = getattr(product, "color_group", None)
-    if not group:
-        return node
+    if not fixed or (len(fixed) == 1 and not siblings):
+        return _build_product_node(request, product, images=images, with_context=True)
 
-    variants = list(
-        group.variants.select_related("active_color").order_by("pk")
-    )
-    if len(variants) <= 1:
-        return node
+    product_url = absolute_uri(request, product.get_absolute_url())
+    image_urls = _image_urls(request, product, images)
+    details = _product_details(request, product)
+    color = details.pop("color", None)
 
-    group_id = f"cg-{group.pk}"
-    current = _build_product_node(
-        request, product, images=images, with_context=False
-    )
-    if not current:
-        return node
+    if siblings:
+        group_id = f"cg-{product.color_group.pk}"
+        group_name = _product_group_name(product)
+    else:
+        # Matches the feed's item_group_id.
+        group_id = str(product.pk)
+        group_name = (product.title or "").strip() or ORG_NAME
 
-    current["inProductGroupWithID"] = group_id
+    varies_by = []
+    if len(fixed) > 1:
+        varies_by.append("https://schema.org/size")
+    if siblings:
+        varies_by.append("https://schema.org/color")
 
     has_variant: list[dict[str, Any]] = []
-    for variant in variants:
-        if variant.pk == product.pk:
-            has_variant.append(current)
-        else:
-            has_variant.append(_variant_stub(request, variant))
+    for attr, price, in_stock in fixed:
+        size = _size_label(attr)
+        # `?size=<attr.pk>` opens the page with this size chosen (see
+        # catalog.views._selected_size_attr); the canonical stays bare. Same
+        # URL the Merchant feed links, so feed item and offer agree.
+        offer_url = _size_url(product, attr) if len(fixed) > 1 else product_url
+        variant: dict[str, Any] = {
+            "@type": "Product",
+            "name": f"{product.title} {size}".strip(),
+            "sku": f"{product.pk}-{attr.pk}",
+            "inProductGroupWithID": group_id,
+            "offers": _single_offer(request, offer_url, price, in_stock),
+        }
+        if size:
+            variant["size"] = size
+        if color:
+            variant["color"] = color
+        if image_urls:
+            variant["image"] = image_urls if len(image_urls) > 1 else image_urls[0]
+        has_variant.append(variant)
+
+    for sibling in siblings:
+        url = absolute_uri(request, sibling.get_absolute_url())
+        if url:
+            has_variant.append({"url": url})
 
     product_group: dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": "ProductGroup",
-        "@id": f"#product-group-{group_id}",
-        "name": _product_group_name(product),
-        "brand": {"@type": "Brand", "name": ORG_NAME},
+        "name": group_name,
         "productGroupID": group_id,
-        "variesBy": ["https://schema.org/color"],
+        "variesBy": varies_by,
+        **details,
         "hasVariant": has_variant,
     }
-    return [product_group]
+    if not siblings:
+        # Single-page group: one canonical URL. Multi-page groups have none.
+        product_group["url"] = product_url
+    if image_urls:
+        product_group["image"] = image_urls[0]
+    return product_group
 
 
 def article_graph(request, article) -> dict[str, Any]:
