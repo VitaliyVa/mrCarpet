@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponse
 from django.db.models import Prefetch
 
 from catalog.models import Product, ProductAttribute, ProductSale
+from catalog.ordering import diversified
 from blog.models import Article
 from cart.utils import get_cart
 from project.seo_jsonld import dumps_jsonld, faq_graph, get_faq_items
@@ -13,10 +14,15 @@ def index(request):
         "product_attr",
         queryset=ProductAttribute.objects.select_related("size").order_by("sort_order", "id"),
     )
-    # Product.objects manager already filters/orders by stock + created
-    products = Product.objects.prefetch_related(product_attrs)[:24]
+    # In stock first, then kinds take turns (catalog/ordering.py), so the
+    # newest batch of bath mats does not fill the whole slider.
+    products = diversified(Product.objects.all()).prefetch_related(product_attrs)[:24]
+    # A finished sale is not shown: the block used to stay up for months after
+    # the end date, a «Розпродаж» of full-price rugs with a timer at 00:00:00.
+    from django.utils import timezone
+
     main_sale = (
-        ProductSale.objects.filter(main_sale=True)
+        ProductSale.objects.filter(main_sale=True, date_end__gt=timezone.now())
         .prefetch_related(Prefetch("products", queryset=Product.objects.prefetch_related(product_attrs)))
         .first()
     )

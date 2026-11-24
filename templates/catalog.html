@@ -1,5 +1,5 @@
 {% extends '_base.html' %}
-{% load thumbnails %}
+{% load thumbnails catalog_filters %}
 {% block title %}Каталог килимів | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -8,9 +8,8 @@
 />
 {% endblock meta %}
 {% comment %} One URL for this page. The template renders `categories` only and ignores
-   the view's `products`, so /catalog/?page=N and /catalog/stock/ (which
-   reuses this template) show exactly what /catalog/ shows — Search Console
-   filed /catalog/stock/ as a duplicate with its own canonical. {% endcomment %}
+   the view's `products`, so /catalog/?page=N shows exactly what /catalog/
+   shows. /catalog/stock/ has its own template (stock.html) since 24.11.2026. {% endcomment %}
 {% block canonical %}{{ site_url }}{% url 'catalog' %}{% endblock canonical %}
 {% block og_url %}{{ site_url }}{% url 'catalog' %}{% endblock og_url %}
 {% block styles %}
@@ -53,7 +52,7 @@
     <div class="catalog_section_bottom cart_item_wrapper" data-ga-list-id="catalog_{{ category.slug }}" data-ga-list-name="Каталог: {{ category.title }}" data-ga-item-category="{{ category.title }}">
       {% comment %} Preview only: every category used to render all of its products here
          (~590 KB of HTML, 300+ images). The category page has the full list. {% endcomment %}
-      {% for product in category.products.all|slice:":8" %}
+      {% for product in category.products.all|mixed_order|slice:":8" %}
       <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
         {% include 'includes/products.html' %}
       </div>
