@@ -57,16 +57,31 @@ server {
         application/font-woff
         application/font-woff2;
 
+    location = /favicon.ico {
+        alias /app/static_root/utils/assets/favicon.ico;
+        access_log off;
+        log_not_found off;
+        add_header Cache-Control "public, max-age=604800";
+    }
+
+    # Webpack page bundles change in place (no content-hash filenames) and are
+    # cache-busted only by ?v=STATIC_ASSET_VERSION. Never immutable here, or a
+    # deploy without a version bump keeps stale JS/CSS in browsers for weeks.
+    location ^~ /static/source/pages/ {
+        alias /app/static_root/source/pages/;
+        add_header Cache-Control "public, max-age=3600, must-revalidate";
+    }
+
+    # One Cache-Control header per response: `expires` + `add_header
+    # Cache-Control` used to send two (max-age=… and "public, immutable").
     location /static/ {
         alias /app/static_root/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, max-age=2592000, immutable";
     }
 
     location /media/ {
         alias /app/media/;
-        expires 30d;
-        add_header Cache-Control "public";
+        add_header Cache-Control "public, max-age=2592000";
         # A types block REPLACES the inherited mime.types rather than adding to
         # it, so anything missing here is served as application/octet-stream.
         # TikTok pulls the daily video from this location by URL, and the file
