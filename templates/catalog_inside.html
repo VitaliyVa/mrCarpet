@@ -1,6 +1,6 @@
 {% extends '_base.html' %}
 {% load catalog_filters %}
-{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %} — сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
+{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"

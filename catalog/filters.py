@@ -6,7 +6,7 @@ from .models import Product, ProductSpecification, Specification
 
 
 class ProductFilter(django_filters.FilterSet):
-    size = django_filters.CharFilter(field_name="product_attr__size")
+    size = django_filters.CharFilter(method="filter_by_size")
     price = django_filters.OrderingFilter(
         fields=("product_attr__price",), method="order_by_price"
     )
@@ -19,6 +19,15 @@ class ProductFilter(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ["size", "price"]
+
+    def filter_by_size(self, queryset, name, value):
+        # `size` is a ProductSize id. A bot or a broken link sending text
+        # (?size=60x100) used to raise ValueError deep in the ORM and 500
+        # the whole listing; a non-id simply matches nothing now.
+        value = (value or "").strip()
+        if not value.isdigit():
+            return queryset.none()
+        return queryset.filter(product_attr__size=int(value))
 
     def filter_queryset(self, queryset):
         """

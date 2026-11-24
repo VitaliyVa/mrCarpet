@@ -145,3 +145,9 @@ class ListingSeoTests(TestCase):
         self.assertEqual(_robots(html), "noindex, nofollow")
         html = self.get("/catalog/collection/")
         self.assertEqual(_robots(html), "noindex, nofollow")
+
+
+class SizeFilterGarbageTests(TestCase):
+    def test_text_size_param_does_not_500(self):
+        resp = self.client.get("/catalog/collection/?size=60x100")
+        self.assertEqual(resp.status_code, 200)
