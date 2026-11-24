@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -50,7 +51,7 @@ def catalog_detail(request, slug):
     from project.seo_content import get_seo_guides
     from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
 
-    categorie = ProductCategory.objects.get(slug=slug)
+    categorie = get_object_or_404(ProductCategory, slug=slug)
     base_products = categorie.products.all()
     products = base_products
     
@@ -400,7 +401,7 @@ def product(request, slug):
         product_graph,
     )
 
-    product = Product.objects.get(slug=slug)
+    product = get_object_or_404(Product, slug=slug)
     images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
 
     category = product.categories.first()

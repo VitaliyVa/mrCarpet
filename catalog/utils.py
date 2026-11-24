@@ -3,6 +3,24 @@ from django.db.models import Count, Min, Max, Case, When, DecimalField, Q, Expre
 from .models import Specification, SpecificationValue, Size, ProductColor
 
 
+def get_favourite_readonly(request):
+    """The visitor's Favourite if one exists, else None. Never writes.
+
+    The context processor runs on every page. Calling get_favourite there
+    created a Favourite row and a session for every anonymous hit, Googlebot
+    included, and the Set-Cookie made every HTML response uncacheable.
+    """
+    try:
+        if request.user.is_authenticated:
+            return Favourite.objects.filter(user=request.user).first()
+        fav_id = request.session.get("fav_id")
+        if not fav_id:
+            return None
+        return Favourite.objects.filter(id=fav_id).first()
+    except Exception:
+        return None
+
+
 def get_favourite(request) -> Favourite:
     if request.user.is_authenticated:
         try:

@@ -143,10 +143,6 @@ def success(request):
 
     return render(request, "success.html", {})
 
-def reset_password(request):
-    return render(request, 'reset_password.html')
-
-
 def google_merchant_feed(request):
     """Product feed for Google Merchant Center (scheduled fetch)."""
     from project.merchant_feed import build_feed

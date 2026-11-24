@@ -6,10 +6,10 @@
   content="Каталог килимів і покриттів для підлоги mr.Carpet. Обирайте за категоріями, розміром і стилем. Доставка по Україні."
 />
 {% endblock meta %}
-{# One URL for this page. The template renders `categories` only and ignores
+{% comment %} One URL for this page. The template renders `categories` only and ignores
    the view's `products`, so /catalog/?page=N and /catalog/stock/ (which
    reuses this template) show exactly what /catalog/ shows — Search Console
-   filed /catalog/stock/ as a duplicate with its own canonical. #}
+   filed /catalog/stock/ as a duplicate with its own canonical. {% endcomment %}
 {% block canonical %}{{ site_url }}{% url 'catalog' %}{% endblock canonical %}
 {% block og_url %}{{ site_url }}{% url 'catalog' %}{% endblock og_url %}
 {% block styles %}

@@ -31,12 +31,12 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/success/index.js?v={{ static_v }}"></script>
-{# Purchase is reported server-side (Measurement Protocol), so nothing is
+{% comment %} Purchase is reported server-side (Measurement Protocol), so nothing is
    sent from here. Firing it in both places counted every sale twice: the
    browser deduped against sessionStorage and the server against
    Order.ga4_mp_sent, and neither knew about the other.
 
    The page-reload retry that used to live here went with it — it existed
    only to wait out the LiqPay callback race so the browser could fire the
-   event. The callback is now where the event comes from. #}
+   event. The callback is now where the event comes from. {% endcomment %}
 {% endblock scripts %}

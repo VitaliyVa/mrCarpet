@@ -30,7 +30,7 @@ class StaticViewSitemap(Sitemap):
 
 
 class ProductSitemap(Sitemap):
-    """In-stock products (storefront manager). Each color variant = own URL."""
+    """All products, in stock or not (OOS pages stay live with OutOfStock). Each color variant = own URL."""
 
     changefreq = "daily"
     priority = 0.9
