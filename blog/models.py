@@ -1,6 +1,23 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from s_content.models import AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug
+
+
+class ArticleQuerySet(models.QuerySet):
+    def public(self, now=None):
+        """
+        What a visitor may see: published, and its moment has come.
+
+        published_at in the future is how an article is scheduled: it is
+        finished and approved, but stays off the list, the sitemap and every
+        cross-link until that moment. An empty published_at on a published
+        row (bulk updates skip save()) counts as public, as before.
+        """
+        now = now or timezone.now()
+        return self.filter(status=Article.Status.PUBLISHED).filter(
+            models.Q(published_at__isnull=True) | models.Q(published_at__lte=now)
+        )
 
 
 class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
@@ -33,9 +50,13 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         verbose_name="Опубліковано",
         null=True,
         blank=True,
-        editable=False,
-        help_text="Момент першої публікації. Дата в розмітці береться звідси.",
+        help_text=(
+            "Момент публікації. Порожньо: проставиться сам при першій публікації. "
+            "Дата в майбутньому: стаття запланована і з'явиться на сайті саме тоді."
+        ),
     )
+
+    objects = ArticleQuerySet.as_manager()
 
     def __str__(self):
         return self.title
@@ -43,9 +64,25 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
     def get_absolute_url(self):
         return reverse('article', kwargs={'slug': self.slug})
 
+    def is_public_at(self, now=None) -> bool:
+        if self.status != self.Status.PUBLISHED:
+            return False
+        if self.published_at is None:
+            return True
+        return self.published_at <= (now or timezone.now())
+
     @property
     def is_public(self) -> bool:
-        return self.status == self.Status.PUBLISHED
+        return self.is_public_at()
+
+    @property
+    def is_scheduled(self) -> bool:
+        """Published, but its moment is still ahead."""
+        return (
+            self.status == self.Status.PUBLISHED
+            and self.published_at is not None
+            and self.published_at > timezone.now()
+        )
 
     @property
     def has_image(self) -> bool:
@@ -61,8 +98,6 @@ class Article(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
         # not move its datePublished — Google reads that date, and an article
         # that keeps claiming to be new looks like churn.
         if self.status == self.Status.PUBLISHED and self.published_at is None:
-            from django.utils import timezone
-
             self.published_at = timezone.now()
         return super().save(*args, **kwargs)
 

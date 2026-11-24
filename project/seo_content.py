@@ -25,7 +25,7 @@ def get_seo_guides(limit: int = 3):
     from blog.models import Article
 
     return list(
-        Article.objects.filter(status=Article.Status.PUBLISHED)
+        Article.objects.public()
         .order_by("-published_at", "-created", "-pk")
         .only(
             "id", "title", "slug", "description", "image", "meta_description"

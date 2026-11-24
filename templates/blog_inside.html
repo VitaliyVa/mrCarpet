@@ -1,5 +1,6 @@
 {% extends "_base.html" %}
-{% load blog_filters %}
+{% load blog_filters tz %}
+{% block robots %}{% if is_preview %}{% include 'includes/robots_noindex.html' %}{% else %}{{ block.super }}{% endif %}{% endblock robots %}
 {% block title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -31,6 +32,11 @@
 {% with topic=article|article_topic date=article.published_at|default:article.created %}
 <article class="blog-inside bl-article first_section">
     <div class="container">
+        {% if is_preview %}
+        <p class="bl-preview-note" style="margin:0 0 16px;padding:10px 14px;border-radius:10px;background:#f6f1ea;color:#2f2a26;font-size:15px;">
+            {% if article.is_scheduled %}Перегляд для персоналу. Стаття запланована на {{ article.published_at|timezone:"Europe/Kyiv"|date:"j E Y, H:i" }} (Київ), відвідувачі її ще не бачать.{% else %}Перегляд для персоналу. Це чернетка, відвідувачі її не бачать.{% endif %}
+        </p>
+        {% endif %}
         <div class="bread-crumbs">
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
             <span class="color_black_sub">/</span>

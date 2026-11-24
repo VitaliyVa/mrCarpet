@@ -17,9 +17,10 @@ def published_articles():
     The only queryset the public side may use.
 
     Ordering comes from Meta, so it happens in SQL rather than by slicing the
-    whole table backwards in memory.
+    whole table backwards in memory. Scheduled articles (published_at in the
+    future) stay out until their moment, see ArticleQuerySet.public.
     """
-    return Article.objects.filter(status=Article.Status.PUBLISHED)
+    return Article.objects.public()
 
 
 def _topic_chips(titles_by_pk):
@@ -109,10 +110,14 @@ def post(request, slug):
 
     from project.seo_jsonld import article_graph, breadcrumb_graph, dumps_jsonld
 
-    # Drafts 404 for visitors and stay readable for staff, so an article can
-    # be checked in place before it goes live.
+    # Drafts and scheduled articles 404 for visitors and stay readable for
+    # staff, so an article can be checked in place before it goes live.
     visible = Article.objects.all() if request.user.is_staff else published_articles()
     article = get_object_or_404(visible, slug=slug)
+
+    # A staff preview of a draft or a scheduled article must not leak into
+    # an index or a rich result: noindex in the template, no Article JSON-LD.
+    is_preview = not article.is_public
 
     crumbs = [
         ("Головна", "/"),
@@ -124,8 +129,11 @@ def post(request, slug):
         "blog_inside.html",
         context={
             "article": article,
+            "is_preview": is_preview,
             "related": related_articles(article),
-            "article_jsonld": dumps_jsonld(article_graph(request, article)),
+            "article_jsonld": (
+                "" if is_preview else dumps_jsonld(article_graph(request, article))
+            ),
             "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
         },
     )
