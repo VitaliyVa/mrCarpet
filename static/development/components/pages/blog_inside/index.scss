@@ -1283,10 +1283,31 @@ $bl-header-offset: 110px;
         }
       }
 
-      .blog-products,
-      .blog-products--3 {
+      .blog-products {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px 12px;
+      }
+
+      // Three cards in a 2-column grid left one hanging alone on its own
+      // row. On phones they become a swipeable row instead, with the next
+      // card peeking in so it is obvious there is more.
+      .blog-products--3 {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: 62%;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+
+        > * {
+          scroll-snap-align: start;
+        }
       }
 
       .blog-products--1 {
