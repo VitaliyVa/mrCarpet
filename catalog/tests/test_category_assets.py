@@ -92,4 +92,30 @@ class CategorySliderAssetsTests(TestCase):
 
     def test_missing_slider_library_does_not_break_filters(self):
         for url, html in self.pages():
-            self.assertIn("priceMaxInput && window.noUiSlider)", html, url)
+            self.assertIn("priceMaxInput && window.noUiSlider && maxPrice > minPrice)", html, url)
+
+    def test_untouched_price_range_is_not_submitted(self):
+        """With real numbers in the inputs every filter submit would carry the
+        full range as price_min/price_max, which then sticks to later requests
+        and can drop the cheapest rug on float rounding. A formdata listener
+        drops a bound nobody moved."""
+        for url, html in self.pages():
+            self.assertIn("form.addEventListener('formdata'", html, url)
+            self.assertIn("Math.abs(vMin - lo) <= 0.5) e.formData.delete('price_min')", html, url)
+            self.assertIn("Math.abs(vMax - hi) <= 0.5) e.formData.delete('price_max')", html, url)
+
+    def test_untouched_full_range_does_not_filter_server_side(self):
+        """Even if an old browser without formdata sends the bounds, the full
+        range keeps both rugs."""
+        for url, html in self.pages():
+            vals = {}
+            for input_id in ("price_min_input", "price_max_input"):
+                tag = re.search(rf'<input type="number" id="{input_id}"[^>]*>', html, re.S).group(0)
+                vals[input_id] = re.search(r'value="([^"]*)"', tag).group(1)
+            resp = self.client.get(
+                url, {"price_min": vals["price_min_input"], "price_max": vals["price_max_input"]}
+            )
+            self.assertEqual(resp.status_code, 200, url)
+            body = resp.content.decode()
+            for slug in ("kylym-assets-0", "kylym-assets-1"):
+                self.assertIn(slug, body, (url, slug))

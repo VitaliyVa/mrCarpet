@@ -314,10 +314,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const priceMinInput = document.getElementById('price_min_input');
         const priceMaxInput = document.getElementById('price_max_input');
         
+        // The inputs come prefilled with the full price range. A range nobody
+        // narrowed is not a filter: sent as price_min/price_max it would stick
+        // to the next request (unticking a size would keep hiding cheaper rugs)
+        // and the Python bound can sit a float ulp above the SQL price.
+        // formdata fires for form.submit(), a native submit and new FormData(form).
+        if (priceMinInput && priceMaxInput) {
+            form.addEventListener('formdata', function(e) {
+                const lo = Number(priceMinInput.getAttribute('min'));
+                const hi = Number(priceMaxInput.getAttribute('max'));
+                const vMin = priceMinInput.value === '' ? NaN : Number(priceMinInput.value);
+                const vMax = priceMaxInput.value === '' ? NaN : Number(priceMaxInput.value);
+                // 0.5: the slider rounds to whole hryvnias. A value typed past
+                // the bound is the buyer's own choice and still goes through.
+                if (!isFinite(vMin) || Math.abs(vMin - lo) <= 0.5) e.formData.delete('price_min');
+                if (!isFinite(vMax) || Math.abs(vMax - hi) <= 0.5) e.formData.delete('price_max');
+            });
+        }
+
         // window.noUiSlider is missing only if the CDN failed; the number inputs still work.
-        if (priceSlider && priceMinInput && priceMaxInput && window.noUiSlider) {
-            const minPrice = Number(priceMinInput.getAttribute('min')) || 0;
-            const maxPrice = Number(priceMaxInput.getAttribute('max')) || 10000;
+        const minPrice = priceMinInput ? Number(priceMinInput.getAttribute('min')) || 0 : 0;
+        const maxPrice = priceMaxInput ? Number(priceMaxInput.getAttribute('max')) || 10000 : 0;
+        // noUiSlider throws on an empty range (one price left after filtering)
+        if (priceSlider && priceMinInput && priceMaxInput && window.noUiSlider && maxPrice > minPrice) {
             const currentMin = Number(priceMinInput.value) || minPrice;
             const currentMax = Number(priceMaxInput.value) || maxPrice;
             
