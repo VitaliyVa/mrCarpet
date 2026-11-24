@@ -245,6 +245,12 @@ document.addEventListener("click", async ({ target }) => {
       analyticsItem.price =
         Math.round(analyticsItem.price * widthM * basketData.length * 100) / 100;
       analyticsItem.item_variant = `${basketData.length}м`;
+      // Cut-to-length lines are not feed offers: the cart, checkout and
+      // purchase send the bare Product.pk for them (merchant_feed.offer_id),
+      // never the id of a fixed-size chip that may still be marked active.
+      if (analyticsItem.item_group_id) {
+        analyticsItem.item_id = analyticsItem.item_group_id;
+      }
     }
     const basketProduct = await addToBasket(basketData, null, analyticsItem);
 

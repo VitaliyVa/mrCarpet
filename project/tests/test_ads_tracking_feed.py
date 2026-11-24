@@ -278,6 +278,14 @@ class BundleSyncTests(SimpleTestCase):
             css = bundle.with_suffix(".css").read_text(encoding="utf-8")
             self.assertIn(".checkout-notification__action{", css, bundle)
 
+    def test_cut_to_length_add_to_cart_sends_bare_pk(self):
+        src = (ROOT / "static/development/components/pages/product/product.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("analyticsItem.item_id = analyticsItem.item_group_id", src)
+        bundle = (BUNDLES / "product" / "index.js").read_text(encoding="utf-8")
+        self.assertRegex(bundle, r"(\w)\.item_group_id&&\(\1\.item_id=\1\.item_group_id\)")
+
     def test_sources_match(self):
         basket = (ROOT / "static/development/api/basket.js").read_text(encoding="utf-8")
         self.assertIn("withCheckoutLink(data?.message", basket)
@@ -299,7 +307,6 @@ class ItemFromProductElNodeTests(SimpleTestCase):
             self.skipTest("node not installed")
 
     def test_item_id_prefers_explicit_then_chip_then_product(self):
-        src = (ROOT / "static/development/utils/analytics.js").as_uri()
         script = """
 globalThis.window = globalThis;
 globalThis.document = { readyState: "complete", addEventListener() {}, querySelectorAll() { return []; } };
@@ -316,8 +323,13 @@ console.log(JSON.stringify([
   itemFromProductEl(el({ catalogProductId: "44", gaItemId: "44-9" }, chip)),
   itemFromProductEl(el({ productId: "5" }, null)),
 ]));
-""" % json.dumps(src)
+"""
         with tempfile.TemporaryDirectory() as tmp:
+            # .mjs copy: Node before 22 will not load ES module syntax from a
+            # plain .js file without "type": "module" in package.json.
+            module = Path(tmp) / "analytics.mjs"
+            shutil.copyfile(ROOT / "static/development/utils/analytics.js", module)
+            script = script % json.dumps(module.as_uri())
             path = Path(tmp) / "item_test.mjs"
             path.write_text(script, encoding="utf-8")
             out = subprocess.run(
