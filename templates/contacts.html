@@ -1,0 +1,171 @@
+{% extends '_base.html' %}
+{% block title %}Контакти магазину килимів у Ланівцях | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="Контакти mr.Carpet: телефон {{ contact.phone_display }}, пошта, Telegram і Viber. Магазин у м. Ланівці, вул. Незалежності 5а. Доставка Новою Поштою по всій Україні."
+/>
+{% endblock meta %}
+{% block styles %}
+<link rel="stylesheet" href="/static/source/pages/delivery/index.css?v={{ static_v }}" />
+<style>
+  .contacts-page__lines {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 15px;
+    padding: 0;
+    list-style: none;
+  }
+  .contacts-page__line {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+  .contacts-page__line svg {
+    flex: none;
+    margin-top: 2px;
+    color: #a46c46;
+  }
+  .contacts-page__line a {
+    color: #453f3a;
+    text-decoration: none;
+  }
+  .contacts-page__line a:hover {
+    color: #a46c46;
+  }
+  .contacts-page__label {
+    display: block;
+    font-size: 14px;
+    color: #8a827b;
+  }
+  .contacts-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .contacts-page__actions .btn-gold {
+    padding: 12px 24px;
+  }
+  @media (max-width: 500px) {
+    .contacts-page__line {
+      font-size: 15px;
+    }
+  }
+</style>
+{% endblock styles %}{% block content %}
+{% comment %} Phone, email and address come from the ORG_* constants (project.seo_jsonld), the same as the Organization JSON-LD. Hours are the ones in the header. {% endcomment %}
+<section class="delivery contacts-page first_section">
+  <div class="container">
+    <div class="bread-crumbs">
+      <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+      <span class="color_black_sub">/</span>
+      <a href="{% url 'contacts' %}" class="color_gold">Контакти</a>
+    </div>
+    <div class="terms-and-policies">
+      {% include 'includes/policy_sidebar.html' with active='contacts' %}
+
+      <div class="terms-and-policies__content">
+        <div class="title">
+          <h1 class="terms-and-policies__title bold">Контакти</h1>
+        </div>
+
+        <div class="terms-and-policies__items">
+          <div class="terms-and-policies__block-item">
+            <div class="terms-and-policies__block-item-text">
+              <p>
+                Маєте питання про килим, розмір чи доставку? Подзвоніть або
+                напишіть нам, ми радо допоможемо.
+              </p>
+            </div>
+            <ul class="contacts-page__lines">
+              <li class="contacts-page__line">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span>
+                  <span class="contacts-page__label">Телефон</span>
+                  <a href="tel:{{ contact.phone }}">{{ contact.phone_display }}</a>
+                </span>
+              </li>
+              <li class="contacts-page__line">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <span>
+                  <span class="contacts-page__label">Пошта</span>
+                  <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+                </span>
+              </li>
+              <li class="contacts-page__line">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>
+                  <span class="contacts-page__label">Коли ми на зв'язку</span>
+                  Понеділок-п'ятниця, 9:00-18:00. Субота і неділя вихідні.
+                </span>
+              </li>
+              <li class="contacts-page__line">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>
+                  <span class="contacts-page__label">Магазин</span>
+                  <span>{{ contact.region }}, м. {{ contact.locality }}, {{ contact.street }}</span><br />
+                  <a href="{{ contact.maps_url }}" class="color_gold" target="_blank" rel="noopener noreferrer">Відкрити на карті</a>
+                </span>
+              </li>
+            </ul>
+            <div class="contacts-page__actions">
+              <a href="tel:{{ contact.phone }}" class="btn-gold">Подзвонити</a>
+              <button type="button" class="btn-gold btn-gold-bordered modal_open" data-href="contacts-modal">
+                Написати нам
+              </button>
+            </div>
+          </div>
+
+          <div class="terms-and-policies__block-item">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Ми в соцмережах і месенджерах
+            </h3>
+            <div class="terms-and-policies__block-item-text">
+              <p>Пишіть нам у Telegram чи Viber, а нові килими дивіться в Instagram, Facebook і TikTok.</p>
+              <div style="margin-top: 15px">{% include 'includes/social_links.html' %}</div>
+            </div>
+          </div>
+
+          <div class="terms-and-policies__block-item">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Доставка і повернення
+            </h3>
+            <div class="terms-and-policies__block-item-text">
+              <p>
+                Відправляємо килими Новою Поштою по всій
+                Україні.{% if shop_terms.free_enabled %} Від {{ shop_terms.threshold }} грн
+                доставка безкоштовна.{% endif %} Можна оплатити при отриманні або
+                онлайн карткою.
+              </p>
+              <p>
+                Килим можна повернути протягом
+                {{ shop_terms.return_days_text|default:"14 днів" }}.
+                Деталі на сторінках
+                <a href="{% url 'delivery' %}" class="color_gold">«Доставка і оплата»</a>
+                і <a href="{% url 'refund' %}" class="color_gold">«Повернення»</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %}{% block scripts %}
+<script src="/static/source/pages/delivery/index.js?v={{ static_v }}"></script>
+{% endblock scripts %}

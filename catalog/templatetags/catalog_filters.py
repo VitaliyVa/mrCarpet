@@ -90,6 +90,20 @@ def ga_item_id(attr):
     return offer_id(attr.product_id, attr)
 
 
+@register.filter
+def size_cm(size):
+    """Size label as the Merchant feed and the ads write it: "2.0х3.0" ->
+    "200x300 см" (project.merchant_feed.format_size). Display only: chips
+    keep the stored label, JS and the AR viewer read it."""
+    from project.merchant_feed import format_size
+
+    if size is None:
+        return ""
+    if not isinstance(size, str):
+        size = getattr(size, "title", "") or ""
+    return format_size(str(size))
+
+
 def plural_uk_form(n, forms):
     """
     Ukrainian plural: 1 товар, 2-4 товари, 5+ товарів, 11-14 товарів.

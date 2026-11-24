@@ -55,7 +55,7 @@
                                         />
                                     </div>
                                     <h4 class="basket__checkbox-item-title">Нова Пошта</h4>
-                                    <div class="basket__checkbox-item-time">Від 3 днів</div>
+                                    <div class="basket__checkbox-item-time">{% if shop_terms %}{{ shop_terms.transit_text }}{% else %}Від 3 днів{% endif %}</div>
                                     <div
                                         class="basket__checkbox-item-price medium{% if free_shipping.qualifies %} is-free{% endif %}"
                                         id="nova-post-delivery-price"
@@ -412,6 +412,7 @@
                                     <h4 class="basket__checkbox-item-title">
                                         Оплата готівкою при доставці
                                     </h4>
+                                    <div class="basket__checkbox-item-time">+ комісія Нової Пошти</div>
                                 </div>
                             </div>
 

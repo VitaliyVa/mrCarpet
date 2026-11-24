@@ -460,6 +460,24 @@
             {% endfor %}
           </div>
 
+          {% if default_attr and not default_attr.custom_attribute %}
+          {% comment %} The chosen size in centimetres, as the ad and the Merchant feed write it ("200x300 см"). Chips keep the stored label (JS and the AR viewer read it). The line follows the active chip with :has(); without :has() it shows the size the page opened with. {% endcomment %}
+          <p class="product__size-cm color_black_sub">
+            Розмір:
+            {% for attr in product.product_attr.all %}{% if not attr.custom_attribute %}<span class="product__size-cm-value{% if attr.id == default_attr.id %} is-default{% endif %}" data-for="{{ attr.id }}">{{ attr.size|size_cm }}</span>{% endif %}{% endfor %}
+          </p>
+          <style>
+            .product__size-cm { margin: 10px 0 0; font-size: 15px; }
+            .product__size-cm-value { display: none; color: #453f3a; }
+            .product__size-cm-value.is-default { display: inline; }
+            @supports selector(:has(*)) {
+              .product__size-cm-value.is-default { display: none; }
+              {% for attr in product.product_attr.all %}{% if not attr.custom_attribute %}.product:has(.size-label.active[data-item="{{ attr.id }}"]) .product__size-cm-value[data-for="{{ attr.id }}"] { display: inline; }
+              {% endif %}{% endfor %}
+            }
+          </style>
+          {% endif %}
+
           {% for attr in product.product_attr.all %}
           {% if attr.custom_attribute %}
           <div class="custom-size-block" data-custom-attr-id="{{ attr.id }}" data-min-len="{{ attr.min_len }}" data-max-len="{{ attr.max_len }}" data-custom-price="{{ attr.custom_price }}">
@@ -579,6 +597,36 @@
               </svg>
             </button>
           </div>
+
+          {% if shop_terms %}
+          {% comment %} Same facts as /delivery/, /refund/ and the Offer JSON-LD (project.free_shipping). {% endcomment %}
+          <ul class="product__trust">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              <a href="{% url 'delivery' %}">Доставка Новою Поштою по всій Україні, {{ shop_terms.transit_text }}{% if not shop_terms.free_enabled and shop_terms.from_price %}, від {{ shop_terms.from_price }} грн{% endif %}</a>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              <span>Оплата при отриманні або онлайн карткою</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+              <a href="{% url 'refund' %}">Повернення протягом {{ shop_terms.return_days_text }}</a>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Питання? Дзвоніть <a href="tel:+380963988875">+380 96 398 88 75</a></span>
+            </li>
+          </ul>
+          <style>
+            .product__trust { margin: 18px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.4; color: #453f3a; }
+            .product__trust li { display: flex; align-items: flex-start; gap: 10px; }
+            .product__trust svg { flex: none; margin-top: 1px; color: #a46c46; }
+            .product__trust a { color: inherit; text-decoration: none; }
+            .product__trust a:hover { color: #a46c46; text-decoration: underline; }
+            @media (max-width: 500px) { .product__trust { font-size: 14px; } }
+          </style>
+          {% endif %}
         </div>
 
         <div class="product__info-bottom">

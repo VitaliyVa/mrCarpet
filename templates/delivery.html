@@ -3,12 +3,13 @@
 {% block meta %}
 <meta
   name="description"
-  content="Доставка та оплата в mr.Carpet: Нова Пошта, онлайн-оплата LiqPay.{% if shop_settings and shop_settings.free_shipping_enabled %} Безкоштовна доставка від {{ shop_settings.free_shipping_threshold }} грн.{% endif %} Умови по Україні."
+  content="Доставка килимів Новою Поштою по всій Україні.{% if shop_terms.free_enabled %} Від {{ shop_terms.threshold }} грн доставка безкоштовна.{% endif %} Оплата при отриманні або онлайн карткою. Повернення {{ shop_terms.return_days_text|default:'14 днів' }}."
 />
 {% endblock meta %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/delivery/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
+{% comment %} Every number here comes from ShopSettings / project.free_shipping (shop_terms), the same source as the JSON-LD shippingDetails and the Merchant feed. Do not type numbers by hand. {% endcomment %}
 <section class="delivery first_section">
   <div class="container">
     <div class="bread-crumbs">
@@ -17,49 +18,7 @@
       <a href="{% url 'delivery' %}" class="color_gold">Доставка і оплата</a>
     </div>
     <div class="terms-and-policies">
-      <div class="terms-and-policies__sidebar nav-sidebar">
-        <ul class="nav-sidebar__items">
-          <li>
-            <a href="{% url 'delivery' %}" class="color_gold">
-              <span>Доставка і оплата</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'refund' %}" class="color_black">
-              <span>Повернення</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'terms' %}" class="color_black">
-              <span>Умови і положення</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'policy' %}" class="color_black">
-              <span>Політика конфіденційності</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-        </ul>
-      </div>
+      {% include 'includes/policy_sidebar.html' with active='delivery' %}
 
       <div class="terms-and-policies__content">
         <div class="title">
@@ -67,135 +26,121 @@
         </div>
 
         <div class="terms-and-policies__items">
-          <div class="terms-and-policies__block-item">
-            <h3
-              class="terms-and-policies__block-item-title color_gold bold"
-            >
-              Оплата:
-            </h3>
-            <div class="terms-and-policies__block-item-text">
-              <p>Онлайн-оплата карткою через LiqPay</p>
-              <p>Готівковий розрахунок</p>
-              <p>Безготівковий розрахунок</p>
-              <p>Післяплатою при доставці</p>
-            </div>
-          </div>
-
-          <div class="terms-and-policies__block-item">
-            <h3
-              class="terms-and-policies__block-item-title color_gold bold"
-            >
-              Доставка:
+          <div class="terms-and-policies__block-item" id="delivery">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Доставка
             </h3>
             <div class="terms-and-policies__block-item-text">
               <p>
-                Доставка здійснюється службами доставки Нова Пошта,
-                Делівері, інші служби доставки можна обговорити
-                безпосередньо з менеджером при оформленні замовлення.
+                Відправляємо килими Новою Поштою по всій Україні. Забираєте
+                посилку у відділенні, яке оберете при оформленні замовлення.
+                У поштомати килими не поміщаються, тому їх у виборі немає.
               </p>
               <p>
-                Відвантаження підлягає тільки повністю оплачений товар, за
-                винятком післяплати.
+                Якщо вам зручніше інша служба доставки, напишіть або подзвоніть
+                нам, і ми домовимось.
               </p>
             </div>
           </div>
 
-          <div class="terms-and-policies__block-item">
-            <h3
-              class="terms-and-policies__block-item-title color_gold bold"
-            >
-              Оплата доставки:
+          <div class="terms-and-policies__block-item" id="delivery-price">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Скільки коштує доставка
             </h3>
             <div class="terms-and-policies__block-item-text">
-              <p>Оплата доставки здійснюється коштом покупця.</p>
+              {% if shop_terms.free_enabled %}
+              <p class="bold">
+                Від {{ shop_terms.threshold }} грн доставка безкоштовна, її
+                оплачуємо ми.
+              </p>
               <p>
-                Вартість доставки може відрізнятися в залежності від обраної
-                служби доставки та способу доставки, а також місця
-                призначення також зверніть увагу, що оплата післяплатою
-                передбачає додаткову комісію яку стягує служба доставки.
+                Якщо замовлення дешевше, доставку оплачуєте ви за тарифами Нової
+                Пошти{% if shop_terms.from_price %}, від {{ shop_terms.from_price }} грн{% endif %}.
+                Ціна залежить від ваги і розміру килима.
+              </p>
+              {% else %}
+              <p>
+                Доставку оплачуєте ви за тарифами Нової
+                Пошти{% if shop_terms.from_price %}, від {{ shop_terms.from_price }} грн{% endif %}.
+                Ціна залежить від ваги і розміру килима.
+              </p>
+              {% endif %}
+              <p>
+                Сума для безкоштовної доставки рахується за товари в кошику,
+                уже зі знижкою за промокодом.
               </p>
             </div>
           </div>
 
-          <div class="terms-and-policies__block-item">
-            <h3
-              class="terms-and-policies__block-item-title color_gold bold"
-            >
-              Термін доставки:
+          <div class="terms-and-policies__block-item" id="delivery-time">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Коли приїде килим
             </h3>
             <div class="terms-and-policies__block-item-text">
+              {% if shop_terms %}
               <p>
-                Терміни доставки можуть відрізнятися в залежності від служби
-                доставки та обраного способу доставки, а також місця
-                призначення..
+                Відправляємо в день замовлення або {{ shop_terms.handling_text }}.
+                У дорозі посилка зазвичай {{ shop_terms.transit_text }}.
               </p>
+              {% endif %}
               <p>
-                Ви можете дізнатися у нашого менеджера попередню вартість і
-                терміни доставки.
+                Хочете знати точний день відправки? Подзвоніть або напишіть
+                нам, і ми підкажемо.
               </p>
             </div>
           </div>
 
-          <div class="terms-and-policies__block-item">
-            <h3
-              class="terms-and-policies__block-item-title color_gold bold"
-            >
-              Важливо!
+          <div class="terms-and-policies__block-item" id="payment">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Оплата
             </h3>
             <div class="terms-and-policies__block-item-text">
               <p>
-                Відповідальність за доставку і цілісність товару після
-                відправки несе транспортна компанія. Всі товари проходять
-                огляд перед відправкою в інше місто.
+                <span class="bold">При отриманні.</span> Платите у відділенні
+                Нової Пошти, коли забираєте посилку. За таку оплату Нова Пошта
+                бере свою комісію, її оплачує покупець.
               </p>
               <p>
-                При отриманні товару в службі доставки переконайтеся в
-                цілісності пакування і перевірте на наявність пошкоджень
-                товару. Якщо вами були помічені такі пошкодження зафіксуйте
-                їх (фото на телефон) і відразу вкажіть це співробітнику
-                служби доставки та нашого менеджера, в іншому випадку
-                відповідальність за пошкодження товару не несе ні служба
-                доставки ні наша компанія.
-              </p>
-              <p>Гарантія доставки передплаченого товару в інше місто:</p>
-              <p>
-                Після оплати товару готівкою (у відділенні банку) або за
-                безготівковим розрахунком у вас на руках залишаються
-                документи, що підтверджують зроблену оплату: платіжне
-                доручення з банку, виписка з вашого рахунку і т.п.
+                <span class="bold">Онлайн карткою.</span> Оплата через LiqPay
+                одразу при оформленні замовлення.
               </p>
               <p>
-                Якщо доставка сплаченого товару не буде проведена - ви
-                можете звертатися з цими документами до відповідних
-                інстанцій, наприклад в товариство захисту прав споживачів.
-                Доказом відправки товару з нашого боку є квитанція
-                транспортної компанії, що підтверджує, що товар був Вам
-                відправлений.
+                Можна також оплатити готівкою або переказом на рахунок, якщо
+                домовитесь з нашим менеджером.
               </p>
               <p>
-                Отримуючи товар в офісі кур'єрської компанії ви підписуєте
-                документи, що підтверджують отримання Вами товару.
+                Килими, які ми робимо на замовлення під ваш розмір, потрібно
+                оплатити наперед повністю.
+              </p>
+            </div>
+          </div>
+
+          <div class="terms-and-policies__block-item" id="receiving">
+            <h3 class="terms-and-policies__block-item-title color_gold bold">
+              Коли забираєте посилку
+            </h3>
+            <div class="terms-and-policies__block-item-text">
+              <p>
+                Ми оглядаємо кожен килим перед відправкою. За посилку в дорозі
+                відповідає Нова Пошта.
               </p>
               <p>
-                При відправці товар може бути застрахований кур'єрською
-                компанією, таким чином у вас буде гарантія цілісності
-                одержуваного товару.
-              </p>
-              <p>Оплата товарів індивідуально виробництва:</p>
-              <p>
-                Купити товари за індивідуальним замовленням можливо тільки
-                при умові 100% передоплати. У зв'язку з тим, що товар
-                виробляється відповідно до ваших вимог, то реалізація його в
-                подальшому надзвичайно складна. У зв'язку з цим товар, який
-                виготовлений за індивідуальним замовленням поверненню та
-                обміну не підлягає.
+                У відділенні подивіться, чи ціле пакування і сам килим. Якщо
+                бачите пошкодження, сфотографуйте його, одразу скажіть
+                працівнику пошти і напишіть нам. Так ми швидко все владнаємо.
               </p>
               <p>
-                Для уникнення непорозумінь вкажіть всі вимоги до замовлення,
-                також вартість терміни виготовлення можуть відрізнятися від
-                представлених в каталозі готової продукції.
+                Килим не підійшов? Його можна повернути протягом
+                {{ shop_terms.return_days_text|default:"14 днів" }}. Як це
+                зробити, написано на сторінці
+                <a href="{% url 'refund' %}" class="color_gold">«Повернення»</a>.
               </p>
-              <p class="bold">З повагою mr.Carpet</p>
+              <p>
+                Є питання? Подзвоніть нам
+                <a href="tel:+380963988875" class="color_gold">+380 96 398 88 75</a>
+                або подивіться всі
+                <a href="{% url 'contacts' %}" class="color_gold">контакти</a>.
+              </p>
             </div>
           </div>
         </div>

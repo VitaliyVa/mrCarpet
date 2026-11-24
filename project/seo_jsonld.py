@@ -10,6 +10,7 @@ from typing import Any
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from project.free_shipping import HANDLING_DAYS, RETURN_DAYS, TRANSIT_DAYS
 from project.seo_urls import absolute_site_url, canonical_url
 from project.text_encoding import fix_utf8_mojibake
 
@@ -21,8 +22,8 @@ ORG_LOCALITY = "Ланівці"
 ORG_REGION = "Тернопільська область"
 ORG_COUNTRY = "UA"
 
-# Consumer return window (matches /refund/ copy: 14 days)
-MERCHANT_RETURN_DAYS = 14
+# Consumer return window (matches /refund/ copy, see project.free_shipping)
+MERCHANT_RETURN_DAYS = RETURN_DAYS
 # Rolling price validity for Merchant listings (non-sale catalog price)
 PRICE_VALID_DAYS = 90
 
@@ -67,21 +68,15 @@ def offer_shipping_details(price=None) -> dict[str, Any] | None:
     Merchant Center compares this with its own shipping settings and the
     checkout, so a blanket "0" is a mismatch that gets items disapproved.
     """
-    rate = 0
     try:
-        from project.free_shipping import get_shop_settings
+        from project.free_shipping import shipping_rate
 
-        settings = get_shop_settings()
-        threshold = int(settings.free_shipping_threshold or 0)
-        free = bool(settings.free_shipping_enabled) and (
-            price is None or (threshold > 0 and float(price) >= threshold)
-        )
-        if not free:
-            rate = int(settings.delivery_from_price or 0)
-            if not rate:
-                return None
+        rate = shipping_rate(price)
     except Exception:
-        pass
+        # Unknown settings: claim nothing rather than a free delivery.
+        return None
+    if rate is None:
+        return None
 
     return {
         "@type": "OfferShippingDetails",
@@ -98,14 +93,14 @@ def offer_shipping_details(price=None) -> dict[str, Any] | None:
             "@type": "ShippingDeliveryTime",
             "handlingTime": {
                 "@type": "QuantitativeValue",
-                "minValue": 0,
-                "maxValue": 2,
+                "minValue": HANDLING_DAYS[0],
+                "maxValue": HANDLING_DAYS[1],
                 "unitCode": "DAY",
             },
             "transitTime": {
                 "@type": "QuantitativeValue",
-                "minValue": 1,
-                "maxValue": 5,
+                "minValue": TRANSIT_DAYS[0],
+                "maxValue": TRANSIT_DAYS[1],
                 "unitCode": "DAY",
             },
         },
@@ -697,22 +692,30 @@ def faq_graph(qa_items: list[tuple[str, str]]) -> dict[str, Any]:
 
 
 def _delivery_faq_answer() -> str:
+    """Same facts as /delivery/ and the Offer shippingDetails."""
     try:
-        from project.free_shipping import get_shop_settings
+        from project.free_shipping import delivery_terms
 
-        settings = get_shop_settings()
-        if settings.free_shipping_enabled:
-            return (
-                f"Доставляємо Новою Поштою по Україні. Безкоштовна доставка від "
-                f"{settings.free_shipping_threshold} грн "
-                "(умови можуть уточнюватись на сторінці «Доставка і оплата»)."
-            )
+        terms = delivery_terms()
     except Exception:
-        pass
-    return (
-        "Доставляємо Новою Поштою по Україні. "
-        "Усі деталі є на сторінці «Доставка і оплата»."
+        return (
+            "Доставляємо Новою Поштою по всій Україні. "
+            "Усі деталі є на сторінці «Доставка і оплата»."
+        )
+    parts = ["Доставляємо Новою Поштою по всій Україні."]
+    if terms["free_enabled"]:
+        parts.append(f"Від {terms['threshold']} грн доставка безкоштовна.")
+        cheaper = "Якщо замовлення дешевше, доставку оплачуєте ви за тарифами Нової Пошти"
+    else:
+        cheaper = "Доставку оплачуєте ви за тарифами Нової Пошти"
+    if terms["from_price"]:
+        cheaper += f", від {terms['from_price']} грн"
+    parts.append(cheaper + ".")
+    parts.append(
+        f"Відправляємо {terms['handling_text']}, у дорозі посилка "
+        f"{terms['transit_text']}."
     )
+    return " ".join(parts)
 
 
 def get_faq_items() -> list[tuple[str, str]]:
@@ -741,13 +744,16 @@ def get_faq_items() -> list[tuple[str, str]]:
         ),
         (
             "Як оплатити замовлення?",
-            "Можна оплатити онлайн через LiqPay на сайті або іншими способами, "
-            "які є при оформленні. Усі деталі є на сторінці «Доставка і оплата».",
+            "Можна оплатити при отриманні у відділенні Нової Пошти або онлайн "
+            "карткою через LiqPay. За оплату при отриманні Нова Пошта бере свою "
+            "комісію. Усі деталі є на сторінці «Доставка і оплата».",
         ),
         (
             "Чи можна повернути килим?",
-            "Так, за умовами повернення на сайті. Збережіть вигляд килима і чек. "
-            "Як саме повернути, написано на сторінці «Повернення».",
+            f"Так, протягом {MERCHANT_RETURN_DAYS} днів, не рахуючи дня покупки. "
+            "Килим має бути новий, з ярликами і в цілому пакуванні, і збережіть чек. "
+            "Повернути можна Новою Поштою. Килими, зроблені на замовлення під ваш "
+            "розмір, не повертаються. Як саме повернути, написано на сторінці «Повернення».",
         ),
     ]
 
