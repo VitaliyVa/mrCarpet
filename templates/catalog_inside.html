@@ -1,5 +1,5 @@
 {% extends '_base.html' %}
-{% load catalog_filters thumbnails %}
+{% load catalog_filters thumbnails l10n %}
 {% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -35,7 +35,15 @@
     .catalog_inside_filter { position: fixed; top: 58px; align-self: initial; height: 100%; }
   }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
+{% comment %} noUiSlider only styles the price slider in the filter panel, which
+   the slider script fills in after DOMContentLoaded anyway. A plain
+   stylesheet link to a third host held the first paint of every category
+   page, so it is fetched early (preload) and applied when it arrives.
+   No crossorigin on preconnect: the link and script below are no-cors
+   requests and would not reuse a CORS connection. {% endcomment %}
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" /></noscript>
 {% endblock styles %}{% block content %}
 <section class="catalog_inside first_section">
     <div class="container">
@@ -116,15 +124,15 @@
                             <div class="price-range">
                                 <div class="price-inputs">
                                     <input type="number" id="price_min_input" name="price_min" 
-                                           min="{{ available_filters.price_range.min_price }}" 
-                                           max="{{ available_filters.price_range.max_price }}" 
-                                           value="{{ current_filters.price_min|default:available_filters.price_range.min_price }}"
+                                           min="{{ available_filters.price_range.min_price|unlocalize }}" 
+                                           max="{{ available_filters.price_range.max_price|unlocalize }}" 
+                                           value="{{ current_filters.price_min|default:available_filters.price_range.min_price|unlocalize }}"
                                            placeholder="Від" />
                                     <span class="price-separator">—</span>
                                     <input type="number" id="price_max_input" name="price_max" 
-                                           min="{{ available_filters.price_range.min_price }}" 
-                                           max="{{ available_filters.price_range.max_price }}" 
-                                           value="{{ current_filters.price_max|default:available_filters.price_range.max_price }}"
+                                           min="{{ available_filters.price_range.min_price|unlocalize }}" 
+                                           max="{{ available_filters.price_range.max_price|unlocalize }}" 
+                                           value="{{ current_filters.price_max|default:available_filters.price_range.max_price|unlocalize }}"
                                            placeholder="До" />
                                 </div>
                                 <div id="price-slider"></div>
@@ -284,8 +292,12 @@
     </div>
 </section>
 {% endblock content %}{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
-<script src="/static/source/pages/catalog_inside/index.js?v={{ static_v }}"></script>
+{% comment %} Both deferred: they still run in this order, after parsing and before
+   DOMContentLoaded, which is where the inline code below calls
+   noUiSlider.create. Nothing at the top level of the inline script uses
+   noUiSlider or the bundle. {% endcomment %}
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js" defer></script>
+<script src="/static/source/pages/catalog_inside/index.js?v={{ static_v }}" defer></script>
 <script>
 // Ініціалізація фільтрів без автоматичного submit
 document.addEventListener('DOMContentLoaded', function() {
@@ -302,7 +314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const priceMinInput = document.getElementById('price_min_input');
         const priceMaxInput = document.getElementById('price_max_input');
         
-        if (priceSlider && priceMinInput && priceMaxInput) {
+        // window.noUiSlider is missing only if the CDN failed; the number inputs still work.
+        if (priceSlider && priceMinInput && priceMaxInput && window.noUiSlider) {
             const minPrice = Number(priceMinInput.getAttribute('min')) || 0;
             const maxPrice = Number(priceMaxInput.getAttribute('max')) || 10000;
             const currentMin = Number(priceMinInput.value) || minPrice;
