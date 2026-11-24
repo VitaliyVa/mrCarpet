@@ -181,3 +181,55 @@ def get_filter_counts(products_queryset, current_filters=None):
     counts['specifications'] = spec_counts
     
     return counts
+
+def is_country_category(category) -> bool:
+    """«Українські» / «Турецькі»: where the rug is made, not where it goes."""
+    from project.merchant_feed import COUNTRY_CATEGORIES
+
+    return (getattr(category, "title", "") or "").strip() in COUNTRY_CATEGORIES
+
+
+def primary_category(product):
+    """The most specific category of a product, or None.
+
+    A room/purpose category («Для ванни», «Під двері», «В кухню», ...) wins over
+    a country one («Українські», «Турецькі»): that is what a shopper searches
+    for, and it matches `feed_product_type` in the Merchant feed. Ties go to the
+    lowest pk, the same order `categories.first()` used before. Reads
+    `categories.all()`, so a prefetch is reused instead of a new query.
+    """
+    cats = sorted(product.categories.all(), key=lambda c: c.pk)
+    if not cats:
+        return None
+    rooms = [c for c in cats if not is_country_category(c)]
+    return (rooms or cats)[0]
+
+
+RELATED_AUTO_LIMIT = 8
+
+
+def auto_related_products(product, category=None, exclude=(), limit=RELATED_AUTO_LIMIT):
+    """«Схожі товари» when none were picked by hand.
+
+    In-stock products of the same primary category, never the product itself,
+    newest first. Products in `exclude` (pks, e.g. the colour/shape siblings
+    already linked above) go to the end instead of being dropped, so a small
+    category still fills the slider.
+    """
+    from .models import Product
+
+    if category is None:
+        category = primary_category(product)
+    if category is None:
+        return []
+    exclude = set(exclude)
+    candidates = list(
+        Product.objects.filter(categories=category, total_quantity__gt=0)
+        .exclude(pk=product.pk)
+        .select_related("active_color")
+        .prefetch_related("product_attr__size")
+        .distinct()[: limit + len(exclude)]
+    )
+    fresh = [p for p in candidates if p.pk not in exclude]
+    seen = [p for p in candidates if p.pk in exclude]
+    return (fresh + seen)[:limit]

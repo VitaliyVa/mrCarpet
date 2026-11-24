@@ -246,14 +246,13 @@
     <div class="bread-crumbs">
       <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      {% with category=product.categories.first %}
-      {% if category %}
-      <a href="{% url 'categorie' category.slug %}" class="color_black_sub">{{ category.title }}</a>
-      {% else %}
+      {# breadcrumb_category: room/purpose category first (see catalog.utils.primary_category); same chain as the BreadcrumbList JSON-LD #}
       <a href="{% url 'catalog' %}" class="color_black_sub">Каталог</a>
-      {% endif %}
-      {% endwith %}
       <span class="color_black_sub">/</span>
+      {% if breadcrumb_category %}
+      <a href="{% url 'categorie' breadcrumb_category.slug %}" class="color_black_sub">{{ breadcrumb_category.title }}</a>
+      <span class="color_black_sub">/</span>
+      {% endif %}
       <a href="{{ product.get_absolute_url }}" class="color_gold">{{ product.title }}</a>
     </div>
 
@@ -602,7 +601,7 @@
                     class="characteristic-value"
                     data-spec-name="{{ spec.specification.title }}"
                     data-spec-value="{{ spec.spec_value.title }}"
-                    data-category-slug="{% if product.categories.first %}{{ product.categories.first.slug }}{% endif %}"
+                    data-category-slug="{% if breadcrumb_category %}{{ breadcrumb_category.slug }}{% endif %}"
                   >{{ spec.spec_value }}</dd>
                 </div>
                 {% endif %}
@@ -799,7 +798,8 @@
 </section>
 
 {% include 'includes/product_variants_links.html' %}
-{% with related=product.related_products.all %}
+{# related_products: hand-picked RelatedProduct rows, else same-category in-stock products (catalog.views._related_products) #}
+{% with related=related_products %}
 {% if related %}
 <section class="catalog_slider">
   <div class="container">
@@ -820,11 +820,11 @@
           {% for related_product in related %}
           <div
             class="slider_item cart_item swiper-slide"
-            data-product-id="{{ related_product.product.get_default_size_attr.id }}"
-            data-catalog-product-id="{{ related_product.product.id }}"
-            data-product-title="{{ related_product.product.title }}"
+            data-product-id="{{ related_product.get_default_size_attr.id }}"
+            data-catalog-product-id="{{ related_product.id }}"
+            data-product-title="{{ related_product.title }}"
           >
-            {% include 'includes/products.html' with product=related_product.product %}
+            {% include 'includes/products.html' with product=related_product %}
           </div>
           {% endfor %}
         </div>
