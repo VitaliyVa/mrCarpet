@@ -139,6 +139,14 @@ class RelatedProductsTests(_CatalogFixture):
         self.assertIn("Схожі товари, які вам можуть сподобатися", html)
         self.assertIn(f'href="{related[0].get_absolute_url()}"', html)
 
+    def test_variant_siblings_go_last_not_dropped(self):
+        from catalog.utils import auto_related_products
+
+        sibling = self.bath_others[-1]
+        related = auto_related_products(self.isadora, exclude={sibling.pk}, limit=20)
+        self.assertEqual(related[-1], sibling)
+        self.assertEqual(len(related), len(self.bath_others))
+
     def test_manual_related_wins(self):
         from catalog.models import RelatedProduct
 

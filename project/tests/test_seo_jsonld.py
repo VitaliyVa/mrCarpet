@@ -425,5 +425,16 @@ class TitleColourTests(SimpleTestCase):
         no_title_colour = SimpleNamespace(
             title="Килим Estera MR-452", active_color=SimpleNamespace(title="Срібний")
         )
-        self.assertEqual(color_label(no_title_colour), "Срібний")
+        self.assertEqual(color_label(no_title_colour), "срібний")
         self.assertEqual(color_label(SimpleNamespace(title="Килим X", active_color=None)), "")
+        two = SimpleNamespace(title="Килим фіолетово-ліловий для ванни isadora", active_color=None)
+        self.assertEqual(color_label(two), "фіолетово-ліловий")
+
+        from catalog.services.product_variants import VariantLink
+
+        def link(shape, color):
+            return VariantLink(product=None, url="/", title="T", shape=shape, color=color, same_shape=False)
+
+        self.assertEqual(link("", "сірий").label, "Сірий")
+        self.assertEqual(link("Овальний", "срібний").label, "Овальний, срібний")
+        self.assertEqual(link("", "").label, "T")
