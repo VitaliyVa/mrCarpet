@@ -1,6 +1,6 @@
 {% extends '_base.html' %}
 {% load catalog_filters %}
-{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock title %}
+{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %} — сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"
@@ -13,10 +13,12 @@
    learns the shop has none of what they searched for. It becomes
    indexable again the moment it holds a product. #}
 {% block robots %}{% if categorie and not categorie.products.exists %}<meta name="robots" content="noindex, follow" />{% else %}{{ block.super }}{% endif %}{% endblock robots %}
-{% block canonical %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% endblock canonical %}
+{# Clean page N>1 is its own canonical; any filter/sort/search variant
+   (noindex via _base) points to the unfiltered listing's first page. #}
+{% block canonical %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock canonical %}
 {% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
-{% block og_url %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% endblock og_url %}
+{% block og_url %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock og_url %}
 {% block twitter_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
 {% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
 {% block structured_data %}
