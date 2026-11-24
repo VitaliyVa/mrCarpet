@@ -39,4 +39,25 @@
    The page-reload retry that used to live here went with it — it existed
    only to wait out the LiqPay callback race so the browser could fire the
    event. The callback is now where the event comes from. {% endcomment %}
+{% if gcr_optin %}
+{% comment %} Google Customer Reviews opt-in (project/customer_reviews.py). Only
+   rendered when the order has an email. Data goes through json_script so an
+   address can never break out of the script tag; platform.js loads async and
+   deferred, so the thank-you page paints first and the dialog follows. {% endcomment %}
+{{ gcr_optin|json_script:"gcr-optin-data" }}
+<script>
+  window.___gcfg = window.___gcfg || {};
+  window.___gcfg.lang = "uk";
+  window.renderOptIn = function () {
+    var el = document.getElementById("gcr-optin-data");
+    if (!el || !window.gapi) return;
+    var data;
+    try { data = JSON.parse(el.textContent); } catch (e) { return; }
+    window.gapi.load("surveyoptin", function () {
+      window.gapi.surveyoptin.render(data);
+    });
+  };
+</script>
+<script src="https://apis.google.com/js/platform.js?onload=renderOptIn" async defer></script>
+{% endif %}
 {% endblock scripts %}

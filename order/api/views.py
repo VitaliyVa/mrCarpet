@@ -135,6 +135,16 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                 else:
                     raise ValueError("Неправильний спосіб оплати.")
 
+            # /success/ reads it for the Google Customer Reviews opt-in. The
+            # session, not the URL: an order id in a public link would let
+            # anyone open the survey for someone else's purchase.
+            try:
+                from project.customer_reviews import remember_order
+
+                remember_order(request, order)
+            except Exception:
+                pass
+
             # Лист / Telegram у фоні після commit — API не чекає зовнішні сервіси
             if payment_type == Order.PAYMENT_CASH:
                 enqueue_order_confirmation_email(order.pk)
