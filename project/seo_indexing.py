@@ -19,6 +19,11 @@ ROBOTS_PROD_DISALLOW = (
     "/favorite/",
     "/favourites/",
     "/password_reset/",
+    # JSON-only endpoints (live search, AR model): no HTML to carry a
+    # noindex, so robots.txt is the only lever. Search *pages* (?q=) are
+    # deliberately NOT disallowed: they are noindex, follow and Google must
+    # be able to crawl them to see that.
+    "/catalog/api/",
 )
 
 

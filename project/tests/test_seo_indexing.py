@@ -33,3 +33,10 @@ class SeoIndexingSwitchTests(SimpleTestCase):
         self.assertIn("Disallow: /success/", lines)
         self.assertIn("Sitemap: https://mrcarpet24.com/sitemap.xml", lines)
         self.assertNotIn("Disallow: /", lines)
+
+    @override_settings(SEO_INDEXING_ENABLED=True)
+    def test_search_pages_are_not_disallowed(self):
+        """?q= pages are noindex, follow; a Disallow would hide that noindex."""
+        body = build_robots_txt()
+        self.assertNotIn("?q=", body)
+        self.assertIn("Disallow: /catalog/api/", body.splitlines())
