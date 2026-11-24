@@ -9,7 +9,7 @@
     {% block robots %}
     {% if seo_indexing_enabled %}
     {# ?q= search and filter/sort combos: follow links, keep out of the index #}
-    <meta name="robots" content="{% if seo_noindex_query %}noindex, follow{% else %}index, follow{% endif %}" />
+    <meta name="robots" content="{% if seo_noindex_query %}noindex, follow{% else %}index, follow, max-image-preview:large, max-snippet:-1{% endif %}" />
     {% else %}
     <meta name="robots" content="noindex, nofollow" />
     {% endif %}

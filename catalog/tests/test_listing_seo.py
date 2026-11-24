@@ -14,6 +14,8 @@ from django.test import TestCase, override_settings
 from catalog.models import Product, ProductAttribute, ProductCategory, Size
 
 SITE = "https://mrcarpet24.com"
+# Indexable pages also allow large image previews (Discover, Images).
+INDEX_ROBOTS = "index, follow, max-image-preview:large, max-snippet:-1"
 
 
 def _canonical(html):
@@ -71,7 +73,7 @@ class ListingSeoTests(TestCase):
         self.assertEqual(_canonical(html), f"{SITE}/catalog/")
         self.assertEqual(_og_url(html), f"{SITE}/catalog/")
         # one signal only: canonical, not noindex on top
-        self.assertEqual(_robots(html), "index, follow")
+        self.assertEqual(_robots(html), INDEX_ROBOTS)
 
     def test_catalog_page_param_does_not_split_it(self):
         """/catalog/ renders categories, not the paginated list."""
@@ -81,7 +83,7 @@ class ListingSeoTests(TestCase):
     def test_ad_click_stays_indexable_with_clean_canonical(self):
         url = "/catalog/collection/?gclid=abc&utm_source=google&utm_medium=cpc&fbclid=z"
         html = self.get(url)
-        self.assertEqual(_robots(html), "index, follow")
+        self.assertEqual(_robots(html), INDEX_ROBOTS)
         self.assertEqual(_canonical(html), f"{SITE}/catalog/collection/")
         cat_url = self.cat.get_absolute_url()
         html = self.get(cat_url + "?gclid=abc")
@@ -92,7 +94,7 @@ class ListingSeoTests(TestCase):
         html = self.get("/?gclid=abc&utm_campaign=launch")
         self.assertEqual(_canonical(html), f"{SITE}/")
         self.assertEqual(_og_url(html), f"{SITE}/")
-        self.assertEqual(_robots(html), "index, follow")
+        self.assertEqual(_robots(html), INDEX_ROBOTS)
 
     def test_page_one_has_no_page_param(self):
         html = self.get("/catalog/collection/?page=1")
@@ -101,14 +103,14 @@ class ListingSeoTests(TestCase):
 
     def test_page_two_is_self_canonical_with_unique_title(self):
         html = self.get("/catalog/collection/?page=2")
-        self.assertEqual(_robots(html), "index, follow")
+        self.assertEqual(_robots(html), INDEX_ROBOTS)
         self.assertEqual(_canonical(html), f"{SITE}/catalog/collection/?page=2")
         self.assertEqual(_og_url(html), f"{SITE}/catalog/collection/?page=2")
         self.assertIn("сторінка 2", _title(html))
 
         cat_url = self.cat.get_absolute_url()
         html = self.get(cat_url + "?page=2&utm_source=x")
-        self.assertEqual(_robots(html), "index, follow")
+        self.assertEqual(_robots(html), INDEX_ROBOTS)
         self.assertEqual(_canonical(html), f"{SITE}{cat_url}?page=2")
         self.assertIn("сторінка 2", _title(html))
 

@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from blog.models import Article
 from catalog.models import Product, ProductCategory
+from project.seo_jsonld import article_modified_at
 
 
 class StaticViewSitemap(Sitemap):
@@ -73,11 +74,13 @@ class ArticleSitemap(Sitemap):
         # instantly, so this listed half-written articles by construction.
         return (
             Article.objects.public()
-            .only("id", "slug", "updated")
+            .only("id", "slug", "updated", "published_at")
         )
 
     def lastmod(self, obj):
-        return obj.updated
+        # Scheduled articles are saved before they go live: lastmod is the
+        # later of updated and published_at, never a date before publication.
+        return article_modified_at(obj)
 
 
 sitemaps = {

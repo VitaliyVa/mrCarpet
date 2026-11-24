@@ -645,9 +645,26 @@ def article_graph(request, article) -> dict[str, Any]:
         # makes it look stale the day it appears.
         published = getattr(article, "published_at", None) or article.created
         data["datePublished"] = published.isoformat()
-    if article.updated:
-        data["dateModified"] = article.updated.isoformat()
+    # A scheduled article is saved (updated) before it goes live, so
+    # updated < published_at; Google reads a modified date earlier than the
+    # publish date as an error. Modified is never earlier than published.
+    modified = article_modified_at(article)
+    if modified:
+        data["dateModified"] = modified.isoformat()
     return data
+
+
+def article_modified_at(article):
+    """Latest of ``updated`` and ``published_at`` (None when both are empty).
+
+    Shared by Article JSON-LD, article:modified_time and the sitemap lastmod.
+    """
+    dates = [
+        d
+        for d in (getattr(article, "updated", None), getattr(article, "published_at", None))
+        if d
+    ]
+    return max(dates) if dates else None
 
 
 def faq_graph(qa_items: list[tuple[str, str]]) -> dict[str, Any]:

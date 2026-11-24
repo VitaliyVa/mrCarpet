@@ -33,6 +33,14 @@ def reading_time(article):
     return reading_minutes(getattr(article, "description", "") or "")
 
 
+@register.filter(name="article_modified")
+def article_modified(article):
+    """Modified date that is never earlier than the publish date (scheduled posts)."""
+    from project.seo_jsonld import article_modified_at
+
+    return article_modified_at(article)
+
+
 @register.filter(name="article_topic")
 def article_topic(article):
     return topic_for(getattr(article, "title", "") or "")

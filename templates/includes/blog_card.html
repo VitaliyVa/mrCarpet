@@ -1,12 +1,12 @@
-{% load blog_filters %}{% with topic=article|article_topic minutes=article|reading_time %}
+{% load blog_filters thumbnails %}{% with topic=article|article_topic minutes=article|reading_time %}
 <a href="{% url 'article' article.slug %}" class="bl-card{% if is_featured %} bl-card--featured{% endif %}">
   <div class="bl-card__media">
     {% if article.has_image %}
-    {% comment %}Cover markup kept in one place: swap the src for a thumbnail URL here once the thumbnail util lands.{% endcomment %}
+    {% comment %}Covers are 1.5k px uploads (some 2+ MB PNG): cards get resized WebP copies, never the original.{% endcomment %}
     {% if is_featured %}
-    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="760" height="507" sizes="(max-width: 720px) calc(100vw - 40px), 55vw" fetchpriority="high" decoding="async" />
+    {% with s480=article.image|thumb:480 s800=article.image|thumb:800 s1200=article.image|thumb:1200 %}<img src="{{ s800 }}" srcset="{{ s480 }} 480w, {{ s800 }} 800w, {{ s1200 }} 1200w" alt="{{ article.title }}" width="760" height="507" sizes="(max-width: 720px) calc(100vw - 40px), 55vw" fetchpriority="high" decoding="async" />{% endwith %}
     {% else %}
-    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="400" height="267" sizes="(max-width: 600px) calc(100vw - 40px), (max-width: 1024px) 45vw, 400px" loading="lazy" decoding="async" />
+    {% with s480=article.image|thumb:480 s800=article.image|thumb:800 %}<img src="{{ s480 }}" srcset="{{ s480 }} 480w, {{ s800 }} 800w" alt="{{ article.title }}" width="400" height="267" sizes="(max-width: 600px) calc(100vw - 40px), (max-width: 1024px) 45vw, 400px" loading="lazy" decoding="async" />{% endwith %}
     {% endif %}
     {% else %}
     <div class="bl-placeholder" aria-hidden="true">
