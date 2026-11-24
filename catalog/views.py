@@ -213,7 +213,9 @@ def _collection_meta_description(base_products) -> str:
     models_word = plural_uk_form(count, "модель,моделі,моделей")
     text = f"Усі килими mr.Carpet на одній сторінці: {count} {models_word}"
     if low:
-        text += f", ціни від {int(round(low))} грн"
+        # Floor, not round: "від 861" for a real 860.60 would be untrue.
+        # round(.., 2) first so float noise (849.9999) does not lose a hryvnia.
+        text += f", ціни від {int(round(low, 2))} грн"
     return text + ". Українські та турецькі виробники, доставка по всій Україні."
 
 

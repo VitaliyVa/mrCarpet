@@ -234,3 +234,17 @@ class SitePagesTests(TestCase):
         )[0]
         alts = re.findall(r'alt="(Килим 0[^"]*)"', slider)
         self.assertEqual(alts[:3], ["Килим 0", "Килим 0, фото 2", "Килим 0, фото 3"])
+
+
+class CollectionPriceFloorTests(TestCase):
+    def test_from_price_never_above_real_lowest(self):
+        from catalog.views import _collection_meta_description
+
+        size = Size.objects.create(title="0.8 x 1.5")
+        p = Product.objects.create(title="Килим floor", slug="kylym-audit-floor")
+        # 1001 * 0.67 = 670.67: "від 671" would be untrue
+        ProductAttribute.objects.create(
+            product=p, size=size, price=1001, discount=33, quantity=1
+        )
+        desc = _collection_meta_description(Product.objects.filter(pk=p.pk))
+        self.assertIn("1 модель, ціни від 670 грн", desc)
