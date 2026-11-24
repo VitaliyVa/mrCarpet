@@ -159,7 +159,7 @@ jobs:
         for i in $(seq 1 120); do
           if docker compose -f docker-compose.prod.yml exec -T web \
             python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/', headers={'Host': 'mrcarpet24.com'}), timeout=2)" \
-            >/dev/null 2>&1; then
+            </dev/null >/dev/null 2>&1; then
             echo "web ready (attempt $i)"
             break
           fi
@@ -180,12 +180,12 @@ jobs:
         fi
 
         echo "Collecting static files..."
-        docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
+        docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput </dev/null || true
         # thumbnails made before the 0644 fix were 0600 -> nginx 403; make all readable
-        docker compose -f docker-compose.prod.yml exec -T web sh -c 'chmod -R a+rX /app/media/thumbs 2>/dev/null' || true
+        docker compose -f docker-compose.prod.yml exec -T web sh -c 'chmod -R a+rX /app/media/thumbs 2>/dev/null' </dev/null || true
 
         echo "Running migrations..."
-        docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
+        docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput </dev/null || true
 
         echo "Applying nginx config..."
         if [ "$NGINX_CONFIG_OK" = "1" ]; then

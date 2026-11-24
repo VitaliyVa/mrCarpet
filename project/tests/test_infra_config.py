@@ -108,9 +108,13 @@ class DeployAppliesNginxConfigTests(SimpleTestCase):
         runs = [
             line.strip()
             for line in script.splitlines()
-            if "docker compose" in line and " run " in line and not line.strip().startswith("#")
+            if "docker compose" in line and (" run " in line or " exec " in line)
+            and not line.strip().startswith("#")
         ]
-        self.assertGreaterEqual(len(runs), 2)
+        # exec too: compose exec attaches stdin even with -T; the readiness
+        # loop's exec ate the rest of the script and every later step
+        # (nginx recreate, chmod, migrate) silently never ran (24.11.2026)
+        self.assertGreaterEqual(len(runs), 6)
         for line in runs:
             self.assertIn(" -T ", line)
             self.assertIn("</dev/null", line)
