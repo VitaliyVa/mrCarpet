@@ -72,7 +72,7 @@ class CanonicalQueryTests(SimpleTestCase):
             canonical_url(_req("/catalog/collection/?utm_source=x&page=3&gclid=y")),
             "https://mrcarpet24.com/catalog/collection/?page=3",
         )
-        self.assertEqual(canonical_query(_req("/x/?page=2")), "?page=2")
+        self.assertEqual(canonical_query(_req("/blog/?page=2")), "?page=2")
 
     def test_junk_page_values_are_dropped(self):
         for v in ("abc", "0", "-2", "", "1.5"):
@@ -119,3 +119,33 @@ class ProductSizeParamTests(TestCase):
     def test_size_on_listing_is_a_filter(self):
         from project.seo_urls import has_content_query
         self.assertTrue(has_content_query(self._req("/catalog/collection/?size=3")))
+
+
+@override_settings(SITE_URL="https://mrcarpet24.com")
+class PageParamOnlyOnPaginatedListingsTests(SimpleTestCase):
+    """/?page=2 or /about/?page=3 is the same page; canonical goes clean."""
+
+    def test_page_dropped_where_nothing_paginates(self):
+        for path in (
+            "/",
+            "/about/",
+            "/faq/",
+            "/catalog/",
+            "/catalog/product/x/",
+            "/blog/article/some-post/",
+        ):
+            req = _req(f"{path}?page=2")
+            self.assertEqual(canonical_query(req), "", path)
+            self.assertEqual(
+                canonical_url(req), f"https://mrcarpet24.com{path}", path
+            )
+            # Not a filter either: one signal (canonical), stays indexable.
+            self.assertFalse(has_content_query(req), path)
+
+    def test_page_kept_on_real_listings(self):
+        for path in (
+            "/blog/",
+            "/catalog/collection/",
+            "/catalog/categorie/turetski/",
+        ):
+            self.assertEqual(canonical_query(_req(f"{path}?page=3")), "?page=3", path)

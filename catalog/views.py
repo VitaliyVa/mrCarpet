@@ -195,6 +195,47 @@ def _apply_product_sort(products, sort_param):
     return products
 
 
+#: <title> of /catalog/collection/. "Вся колекція" said nothing a buyer types;
+#: the H1 and breadcrumbs keep the short menu label.
+COLLECTION_META_TITLE = "Купити килим: усі моделі з цінами і розмірами"
+COLLECTION_FALLBACK_DESCRIPTION = "Вся колекція килимів mr.Carpet. Доставка по Україні."
+
+
+def _collection_meta_description(base_products) -> str:
+    """
+    Description for /catalog/collection/ built from the live catalogue:
+    how many models and the lowest in-stock fixed-size price. Nothing is
+    hardcoded, so it stays true as the range changes.
+    """
+    from catalog.templatetags.catalog_filters import plural_uk_form
+
+    count = base_products.count()
+    if not count:
+        return COLLECTION_FALLBACK_DESCRIPTION
+    low = (
+        ProductAttribute.objects.filter(
+            product__in=base_products.values("pk"),
+            custom_attribute=False,
+            price__gt=0,
+            quantity__gt=0,
+        )
+        .annotate(
+            final_price=ExpressionWrapper(
+                F("price") * (1 - Coalesce(F("discount"), 0) / 100.0),
+                output_field=FloatField(),
+            )
+        )
+        .aggregate(low=Min("final_price"))["low"]
+    )
+    models_word = plural_uk_form(count, "модель,моделі,моделей")
+    text = f"Усі килими mr.Carpet на одній сторінці: {count} {models_word}"
+    if low:
+        # Floor, not round: "від 861" for a real 860.60 would be untrue.
+        # round(.., 2) first so float noise (849.9999) does not lose a hryvnia.
+        text += f", ціни від {int(round(low, 2))} грн"
+    return text + ". Українські та турецькі виробники, доставка по всій Україні."
+
+
 def all_collection(request):
     """Сторінка «Вся колекція» — усі товари з фільтрами (без прив'язки до категорії)."""
     from django.urls import reverse
@@ -233,6 +274,9 @@ def all_collection(request):
             "categorie": None,
             "is_collection": True,
             "collection_title": "Вся колекція",
+            "collection_h1": "Вся колекція килимів",
+            "collection_meta_title": COLLECTION_META_TITLE,
+            "collection_meta_description": _collection_meta_description(base_products),
             "products_count": products_count,
             "products": products,
             "available_filters": available_filters,

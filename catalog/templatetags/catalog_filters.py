@@ -75,7 +75,7 @@ def category_meta_description(categorie):
     if not phrase:
         return "Килими mr.Carpet. Доставка по Україні."
     return (
-        f"{phrase} — купити в інтернет-магазині mr.Carpet. "
+        f"{phrase}: купити в інтернет-магазині mr.Carpet. "
         f"Українські та турецькі виробники, доставка по всій Україні."
     )
 
@@ -88,3 +88,32 @@ def ga_item_id(attr):
     if attr is None:
         return ""
     return offer_id(attr.product_id, attr)
+
+
+def plural_uk_form(n, forms):
+    """
+    Ukrainian plural: 1 товар, 2-4 товари, 5+ товарів, 11-14 товарів.
+
+    `forms` is "one,few,many" ("товар,товари,товарів") or a 3-item sequence.
+    """
+    if isinstance(forms, str):
+        forms = [f.strip() for f in forms.split(",")]
+    one, few, many = forms
+    try:
+        n = abs(int(n))
+    except (TypeError, ValueError):
+        return many
+    if 11 <= n % 100 <= 14:
+        return many
+    last = n % 10
+    if last == 1:
+        return one
+    if 2 <= last <= 4:
+        return few
+    return many
+
+
+@register.filter
+def plural_uk(n, forms):
+    """{{ count }} {{ count|plural_uk:"товар,товари,товарів" }}"""
+    return plural_uk_form(n, forms)

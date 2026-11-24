@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% block title %}Блог | mr.Carpet{% endblock title %}
+{% block title %}Поради про килими: як вибрати і доглядати{% if page_obj.number > 1 %}, сторінка {{ page_obj.number }}{% endif %} | Блог mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"
@@ -13,9 +13,10 @@ article listed past the first nine. A topic view is only a filter over the
 same posts, so it points back at the full list.
 {% endcomment %}
 {% block canonical %}{{ site_url }}{% url 'blog' %}{% if not active_topic and page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}{% endblock canonical %}
-{% block og_title %}Блог | mr.Carpet{% endblock og_title %}
+{% block og_title %}Поради про килими: як вибрати і доглядати{% if page_obj.number > 1 %}, сторінка {{ page_obj.number }}{% endif %} | Блог mr.Carpet{% endblock og_title %}
 {% block og_description %}Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру.{% endblock og_description %}
-{% block og_url %}{{ site_url }}{% url 'blog' %}{% endblock og_url %}
+{% block twitter_title %}Поради про килими: як вибрати і доглядати{% if page_obj.number > 1 %}, сторінка {{ page_obj.number }}{% endif %} | Блог mr.Carpet{% endblock twitter_title %}
+{% block og_url %}{{ site_url }}{% url 'blog' %}{% if not active_topic and page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}{% endblock og_url %}
 {% block structured_data %}
 {{ block.super }}
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
