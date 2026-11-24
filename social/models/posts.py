@@ -11,6 +11,9 @@ from s_content.models import AbstractCreatedUpdated
 class SocialPost(AbstractCreatedUpdated):
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
+        #: Waiting for scheduled_at. Separate from QUEUED on purpose:
+        #: social_publish_worker publishes every QUEUED post at once.
+        SCHEDULED = "scheduled", "Scheduled"
         QUEUED = "queued", "Queued"
         PUBLISHING = "publishing", "Publishing"
         PUBLISHED = "published", "Published"
@@ -88,13 +91,39 @@ class SocialPost(AbstractCreatedUpdated):
     published_at = models.DateTimeField(null=True, blank=True)
     last_error = models.TextField(blank=True)
 
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=(
+            "Коли опублікувати (статус Scheduled). Планувальник перевіряє "
+            "кожні 5 хв. Час у формі за UTC."
+        ),
+    )
+    article = models.ForeignKey(
+        "blog.Article",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="social_posts",
+        help_text=(
+            "Анонс статті. Пост не вийде, поки сама стаття не стане "
+            "публічною, і веде на неї з UTM."
+        ),
+    )
+
     class Meta:
         ordering = ("-created",)
         verbose_name = "Social post"
         verbose_name_plural = "Social posts"
 
     def __str__(self) -> str:
-        label = self.product.title if self.product_id else f"#{self.pk}"
+        if self.product_id:
+            label = self.product.title
+        elif self.article_id:
+            label = self.article.title
+        else:
+            label = f"#{self.pk}"
         return f"SocialPost {self.pk}: {label} [{self.status}]"
 
     def caption_for(self, platform: str) -> str:

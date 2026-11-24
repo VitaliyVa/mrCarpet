@@ -105,7 +105,9 @@ class SocialPostAdmin(admin.ModelAdmin):
         "id",
         "media_kind",
         "product",
+        "article",
         "status",
+        "schedule_label",
         "targets",
         "ai_generated",
         "created",
@@ -119,11 +121,16 @@ class SocialPostAdmin(admin.ModelAdmin):
         "target_facebook",
         "target_tiktok",
     )
-    search_fields = ("caption", "product__title", "promo_code")
-    autocomplete_fields = ("product",)
+    search_fields = ("caption", "product__title", "article__title", "promo_code")
+    autocomplete_fields = ("product", "article")
     readonly_fields = ("status", "published_at", "last_error", "ai_generated", "created", "updated")
     inlines = [SocialPostImageInline, SocialDeliveryInline]
-    actions = ("action_publish", "action_generate_ai_draft")
+    actions = (
+        "action_publish",
+        "action_schedule",
+        "action_unschedule",
+        "action_generate_ai_draft",
+    )
 
     fieldsets = (
         (
@@ -132,15 +139,19 @@ class SocialPostAdmin(admin.ModelAdmin):
                 "fields": (
                     "media_kind",
                     "product",
+                    "article",
                     "video",
                     "cover",
                     "status",
+                    "scheduled_at",
                     "published_at",
                     "last_error",
                 ),
                 "description": (
                     "video: завантаж MP4. photos: додай зображення в inline Gallery "
-                    "(1 = single, 2–10 = carousel / slideshow)."
+                    "(1 = single, 2–10 = carousel / slideshow).<br>"
+                    "Запланувати: заповни scheduled_at (UTC) і дія «Запланувати» у списку. "
+                    "Пост зі статтею не вийде раніше, ніж стаття стане публічною."
                 ),
             },
         ),
@@ -196,6 +207,59 @@ class SocialPostAdmin(admin.ModelAdmin):
         if obj.target_tiktok:
             bits.append("TT")
         return ",".join(bits) or "—"
+
+    @admin.display(description="Заплановано", ordering="scheduled_at")
+    def schedule_label(self, obj: SocialPost) -> str:
+        if not obj.scheduled_at:
+            return "—"
+        from zoneinfo import ZoneInfo
+
+        moment = obj.scheduled_at.astimezone(ZoneInfo("Europe/Kyiv"))
+        text = f"{moment:%d.%m.%Y %H:%M}"
+        if obj.status == SocialPost.Status.SCHEDULED:
+            return f"Заплановано на {text}"
+        return text
+
+    @admin.action(description="Запланувати")
+    def action_schedule(self, request, queryset):
+        from social.services.scheduled import schedule_post
+
+        n = 0
+        for post in queryset:
+            if post.status not in (
+                SocialPost.Status.DRAFT,
+                SocialPost.Status.FAILED,
+                SocialPost.Status.SCHEDULED,
+            ):
+                self.message_user(
+                    request,
+                    f"Post #{post.pk}: статус {post.status}, планувати не можна",
+                    level=messages.ERROR,
+                )
+                continue
+            if not post.scheduled_at:
+                self.message_user(
+                    request,
+                    f"Post #{post.pk}: спершу заповни scheduled_at",
+                    level=messages.ERROR,
+                )
+                continue
+            err = validate_post_for_publish(post)
+            if err:
+                self.message_user(
+                    request, f"Post #{post.pk}: {err}", level=messages.ERROR
+                )
+                continue
+            schedule_post(post, post.scheduled_at)
+            n += 1
+        self.message_user(request, f"Заплановано: {n}")
+
+    @admin.action(description="Скасувати план")
+    def action_unschedule(self, request, queryset):
+        from social.services.scheduled import unschedule_post
+
+        n = sum(1 for post in queryset if unschedule_post(post))
+        self.message_user(request, f"Скасовано: {n}")
 
     @admin.action(description="Publish to selected platforms")
     def action_publish(self, request, queryset):
