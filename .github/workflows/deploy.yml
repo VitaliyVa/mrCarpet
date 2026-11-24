@@ -106,6 +106,22 @@ jobs:
           rm -f db.sqlite3-wal db.sqlite3-shm
         fi
 
+        # nginx reads config/mrcarpet.docker and config/nginx-main.conf through
+        # single-file bind mounts. git pull writes each file as a new inode and a
+        # running container keeps the old one, so `nginx -s reload` kept loading
+        # the stale file and repo changes never went live. Check the pulled files
+        # here, in a throwaway container with the same image and mounts (no ports
+        # published), before any `up` below gets a chance to recreate nginx.
+        # stdin from /dev/null: this script itself is stdin of the ssh session.
+        echo "Validating nginx config from the repo (nginx -t)..."
+        NGINX_CONFIG_OK=0
+        if docker compose -f docker-compose.prod.yml run --rm --no-deps -T nginx nginx -t </dev/null; then
+          NGINX_CONFIG_OK=1
+          echo "nginx config OK"
+        else
+          echo "ERROR: nginx -t failed on the pulled config. The running nginx is left as it is."
+        fi
+
         # Code is bind-mounted (.:/app), so the image only carries the OS
         # packages and Python deps. Rebuilding it on every deploy reinstalled
         # all of pip from scratch (the build cache is pruned after 48h) and kept
@@ -152,7 +168,12 @@ jobs:
         done
 
         echo "Starting remaining services..."
-        docker compose -f docker-compose.prod.yml up -d
+        if [ "$NGINX_CONFIG_OK" = "1" ]; then
+          docker compose -f docker-compose.prod.yml up -d
+        else
+          # never let compose recreate nginx onto a config that failed nginx -t
+          docker compose -f docker-compose.prod.yml up -d --no-recreate
+        fi
 
         echo "Collecting static files..."
         docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
@@ -162,10 +183,14 @@ jobs:
         echo "Running migrations..."
         docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true
 
-        echo "Reloading nginx..."
-        docker compose -f docker-compose.prod.yml up -d nginx
-        docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload \
-          || docker compose -f docker-compose.prod.yml restart nginx
+        echo "Applying nginx config..."
+        if [ "$NGINX_CONFIG_OK" = "1" ]; then
+          # Recreate, not reload: only a new container sees the new inodes.
+          # Costs about a second of refused connections.
+          docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate nginx
+        else
+          echo "ERROR: nginx not recreated, its config failed nginx -t (see above)."
+        fi
 
         echo "Healthcheck via public HTTPS (must be 200)..."
         OK=0
@@ -176,7 +201,11 @@ jobs:
             OK=1
             break
           fi
-          docker compose -f docker-compose.prod.yml restart nginx
+          # a restart remounts the files from disk, so never do it onto a
+          # config that failed nginx -t: that would take the site down
+          if [ "$NGINX_CONFIG_OK" = "1" ]; then
+            docker compose -f docker-compose.prod.yml restart nginx
+          fi
           sleep 3
         done
         if [ "$OK" != "1" ]; then
@@ -187,6 +216,10 @@ jobs:
           exit 1
         fi
 
+        echo "nginx headers (informational): one Cache-Control on bundles, favicon 200"
+        python3 -c 'import urllib.request as u; r=u.urlopen(u.Request("https://mrcarpet24.com/static/source/pages/index/index.js", method="HEAD"), timeout=10); print("bundle Cache-Control:", r.headers.get_all("Cache-Control")); r=u.urlopen(u.Request("https://mrcarpet24.com/favicon.ico", method="HEAD"), timeout=10); print("favicon.ico:", r.status, r.headers.get("Content-Type"))' \
+          || echo "header check failed (non-fatal)"
+
         echo "Final state:"
         docker compose -f docker-compose.prod.yml ps
 
@@ -196,6 +229,11 @@ jobs:
         # Build cache чиститься на початку деплою (див. Housekeeping).
         docker image prune -f
         df -h / | tail -1
+
+        if [ "$NGINX_CONFIG_OK" != "1" ]; then
+          echo "Deploy is live, but nginx still runs its OLD config: nginx -t failed on config/. Fix it and push again."
+          exit 1
+        fi
 
         echo "Deployment completed successfully!"
         EOF
