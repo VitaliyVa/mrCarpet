@@ -79,6 +79,9 @@ def _render(src_path: str, dst_path: str, width: int, quality: int) -> bool:
         try:
             with os.fdopen(fd, "wb") as fh:
                 img.save(fh, format="WEBP", quality=quality, method=4)
+            # mkstemp creates 0600; nginx reads media as another user, so a
+            # private file is served as 403 (broke every thumbnail on prod).
+            os.chmod(tmp, 0o644)
             os.replace(tmp, dst_path)  # atomic: concurrent workers never see half a file
         except BaseException:
             try:

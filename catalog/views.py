@@ -481,6 +481,10 @@ def product(request, slug):
     )
     context = {
         "product": product,
+        # only moderated reviews are public (the API accepts anonymous posts as PENDING)
+        "approved_reviews": list(
+            product.reviews.filter(status="approved").order_by("-created")
+        ),
         "selected_size_attr": selected_attr,
         "images": images,
         **_variant_links_context(product),

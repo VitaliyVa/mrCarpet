@@ -184,3 +184,28 @@ class StaffAlertTests(ReviewFactoryMixin, TestCase):
         self.assertIn("опубліковано", text)
         self.assertIn("Переглянути", text)
         self.assertNotIn("Схвалити", text)
+
+
+class ProductPageReviewsTests(ReviewFactoryMixin, TestCase):
+    """The PDP template must show only moderated reviews (it used reviews.all)."""
+
+    def setUp(self):
+        self.product = self._product()
+
+    def test_pending_and_rejected_reviews_are_not_on_the_page(self):
+        ProductReview.objects.create(product=self.product, name="Спамер", rating=1, content="купуйте тут")
+        ProductReview.objects.create(
+            product=self.product, name="Відхилена", rating=1, content="погано",
+            status=ProductReview.Status.REJECTED,
+        )
+        html = self.client.get(self.product.get_absolute_url()).content.decode()
+        self.assertNotIn("Спамер", html)
+        self.assertNotIn("Відхилена", html)
+
+    def test_approved_review_is_on_the_page(self):
+        ProductReview.objects.create(
+            product=self.product, name="Оксана", rating=5, content="Гарний килим",
+            status=ProductReview.Status.APPROVED,
+        )
+        html = self.client.get(self.product.get_absolute_url()).content.decode()
+        self.assertIn("Гарний килим", html)

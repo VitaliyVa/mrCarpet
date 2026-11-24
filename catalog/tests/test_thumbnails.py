@@ -40,6 +40,13 @@ class ThumbnailUrlTests(SimpleTestCase):
         self.assertEqual(thumbnail_url("articles/cover.png", 400), url)
         self.assertEqual(os.stat(out).st_mtime, mtime)
 
+    def test_thumbnail_is_world_readable(self):
+        # nginx serves media as another user: a 0600 file (mkstemp default) is a 403
+        _write(os.path.join(self.root, "products", "rug.png"))
+        thumbnail_url("products/rug.png", 240)
+        out = os.path.join(self.root, "thumbs", "w240", "products", "rug.webp")
+        self.assertEqual(os.stat(out).st_mode & 0o044, 0o044)
+
     def test_missing_file_falls_back_to_original(self):
         self.assertEqual(thumbnail_url("products/nope.webp", 240), "/media/products/nope.webp")
 

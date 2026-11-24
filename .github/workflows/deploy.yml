@@ -156,6 +156,8 @@ jobs:
 
         echo "Collecting static files..."
         docker compose -f docker-compose.prod.yml exec -T web python manage.py collectstatic --noinput || true
+        # thumbnails made before the 0644 fix were 0600 -> nginx 403; make all readable
+        docker compose -f docker-compose.prod.yml exec -T web sh -c 'chmod -R a+rX /app/media/thumbs 2>/dev/null' || true
 
         echo "Running migrations..."
         docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput || true

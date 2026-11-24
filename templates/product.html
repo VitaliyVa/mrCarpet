@@ -624,7 +624,7 @@
               <!-- When there are reviews -->
 
               <div class="product_reviews__items">
-                {% for review in product.reviews.all %}
+                {% for review in approved_reviews %}
                 <div class="product_review">
                   <div class="product_review__info flex">
                     <div class="product_review__title medium">
@@ -758,7 +758,7 @@
               </div>
 
               <!-- if there are no reviews -->
-              {% if not product.reviews.all %}
+              {% if not approved_reviews %}
               <div class="product_reviews__no-items">
                 <p>Немає відгуків про цей товар.</p>
               
