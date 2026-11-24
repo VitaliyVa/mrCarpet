@@ -20,7 +20,13 @@ from xml.sax.saxutils import escape
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from project.merchant_feed import format_size
+from project.merchant_feed import (
+    feed_products,
+    format_size,
+    product_color,
+    product_description,
+    product_specs,
+)
 from project.seo_jsonld import ORG_NAME
 from project.seo_urls import absolute_site_url
 from project.text_encoding import fix_utf8_mojibake
@@ -58,9 +64,9 @@ def build_offers(products) -> list[dict]:
         images = _image_urls(product)
         if not images:
             continue
-        description = _text(
-            product.meta_description or product.description or product.title, 3000
-        )
+        description = product_description(product, 3000)
+        specs = product_specs(product)
+        color = product_color(product, specs)
         link = absolute_site_url(product.get_absolute_url())
         categories = list(product.categories.all())
         category_id = CATEGORY_ROOT_ID + categories[0].pk if categories else CATEGORY_ROOT_ID
@@ -86,7 +92,8 @@ def build_offers(products) -> list[dict]:
                 "pictures": images,
                 "params": [p for p in [
                     ("Розмір", size),
-                    ("Колір", (product.active_color.title if product.active_color else "")),
+                    ("Колір", color),
+                    *((n, v) for n, v in specs if n.lower() not in ("розмір", "колір")),
                 ] if p[1]],
             })
     return offers
@@ -132,13 +139,9 @@ def render_feed(categories: list[dict], offers: list[dict]) -> str:
 
 
 def build_feed() -> str:
-    from catalog.models import Product, ProductCategory
+    from catalog.models import ProductCategory
 
-    products = (
-        Product.objects.all()
-        .select_related("active_color")
-        .prefetch_related("categories", "images")
-    )
+    products = feed_products()
     categories = build_categories(ProductCategory.objects.all())
     offers = build_offers(products)
     return render_feed(categories, offers)
