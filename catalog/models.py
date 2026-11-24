@@ -270,6 +270,20 @@ class ProductCategory(AbstractMetaTags, AbstractTitleSlug):
     image = models.ImageField(
         verbose_name="Зображення", max_length=512, blank=True, upload_to="categories"
     )
+    # Unique category copy (audit 24.11.2026: category pages were bare grids).
+    # Shown on page 1 only, so paginated pages do not repeat it.
+    intro = models.TextField(
+        verbose_name="Вступ під заголовком", blank=True, default="",
+        help_text="1-2 короткі речення під H1. Без HTML.",
+    )
+    body = models.TextField(
+        verbose_name="Текст під товарами", blank=True, default="",
+        help_text="120-250 слів, HTML: <p>, <ul><li>, <a>. Тільки факти з каталогу.",
+    )
+    faq = models.JSONField(
+        verbose_name="Питання і відповіді", blank=True, default=list,
+        help_text='Список: [{"q": "Питання?", "a": "Відповідь."}]',
+    )
 
     class Meta:
         verbose_name = "Категорія"

@@ -75,6 +75,10 @@ class ProductCategoryAdmin(admin.ModelAdmin):
         ('Основне', {
             'fields': ('title', 'image'),
         }),
+        ('Текст на сторінці', {
+            'fields': ('intro', 'body', 'faq'),
+            'description': 'Показується тільки на першій сторінці категорії.',
+        }),
         ('SEO', {
             'fields': ('meta_title', 'meta_description', 'meta_keys'),
             'description': (

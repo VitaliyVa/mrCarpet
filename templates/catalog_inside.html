@@ -34,6 +34,18 @@
   @media (max-width: 828px) {
     .catalog_inside_filter { position: fixed; top: 58px; align-self: initial; height: 100%; }
   }
+  .catalog_inside-top { flex-wrap: wrap; }
+  .catalog_intro { flex-basis: 100%; order: 3; margin: 8px 0 0; max-width: 760px; color: #5f564f; font-size: 16px; line-height: 1.55; }
+  .catalog_seo_text { max-width: 820px; margin: 48px 0 8px; color: #2f2a26; font-size: 16px; line-height: 1.65; }
+  .catalog_seo_text__body p { margin: 0 0 12px; }
+  .catalog_seo_text__body ul { margin: 0 0 12px 20px; padding: 0; list-style: disc; }
+  .catalog_seo_text__body li { margin: 0 0 6px; }
+  .catalog_seo_text__body a { color: #a0643a; text-decoration: underline; }
+  .catalog_seo_text__title { font-size: 22px; margin: 28px 0 12px; }
+  .catalog_seo_text__faq details { border-top: 1px solid #e8e0d8; padding: 12px 0; }
+  .catalog_seo_text__faq details:last-child { border-bottom: 1px solid #e8e0d8; }
+  .catalog_seo_text__faq summary { cursor: pointer; font-weight: 600; }
+  .catalog_seo_text__faq p { margin: 8px 0 0; }
 </style>
 {% comment %} noUiSlider only styles the price slider in the filter panel, which
    the slider script fills in after DOMContentLoaded anyway. A plain
@@ -65,6 +77,8 @@
                 </h1>
                 <span>{% if categorie %}{% with n=categorie.products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}{% else %}{{ products_count }} {{ products_count|plural_uk:"товар,товари,товарів" }}{% endif %}</span>
             </div>
+
+            {% if categorie and categorie.intro and products.number == 1 %}<p class="catalog_intro">{{ categorie.intro }}</p>{% endif %}
 
             <button class="catalog_inside_filter-btn">
                 <img src="/static/utils/assets/filters.svg" alt="filters" />
@@ -264,6 +278,20 @@
             {% endif %}
         </div>
         {% endif %}
+
+        {% if categorie and products.number == 1 %}{% if categorie.body or categorie.faq %}
+        <section class="catalog_seo_text" aria-label="Про категорію">
+          {% if categorie.body %}<div class="catalog_seo_text__body">{{ categorie.body|safe }}</div>{% endif %}
+          {% if categorie.faq %}
+          <h2 class="catalog_seo_text__title">Часті питання</h2>
+          <div class="catalog_seo_text__faq">
+            {% for item in categorie.faq %}{% if item.q and item.a %}
+            <details><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>
+            {% endif %}{% endfor %}
+          </div>
+          {% endif %}
+        </section>
+        {% endif %}{% endif %}
 
         {% if seo_guides %}
         <aside class="catalog_seo_guides">
