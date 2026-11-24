@@ -246,6 +246,28 @@ def parse_title(title: str) -> dict:
     return parsed
 
 
+def strip_title_colors(title: str) -> str:
+    """The title without the colour words `parse_title` finds in it
+    ('Килим овальний сірий Mira 24031' -> 'Килим овальний Mira 24031').
+    Titles that do not start with a rug noun are returned unchanged."""
+    words = _clean(title).split()
+    if not words or words[0].lower() not in _NOUNS:
+        return " ".join(words)
+    kept = [words[0]]
+    i = 1
+    while i < len(words):
+        word = words[i]
+        nxt = words[i + 1] if i + 1 < len(words) else ""
+        if is_color_word(word):
+            i += 1
+        elif nxt and _color_parts(word, last=False) and is_color_word(nxt):
+            i += 2  # 'фіолетово білий'
+        else:
+            kept.append(word)
+            i += 1
+    return " ".join(kept)
+
+
 def feed_title(product, size: str, specs=None, color: str = "") -> str:
     """'Килим <тип> <Модель> <колір> <розмір>', ≤150 chars."""
     parsed = parse_title(product.title)

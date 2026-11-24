@@ -239,6 +239,13 @@ def _product_group_name(product) -> str:
     if group and (group.name or "").strip():
         return group.name.strip()
     title = (product.title or "").strip()
+    from project.merchant_feed import strip_title_colors
+
+    # Colour words named in the title ("Килим овальний сірий Mira 24031"):
+    # the group spans colours, so its name must not carry one of them.
+    stripped = strip_title_colors(title)
+    if len(stripped.split()) > 1 and stripped != title:
+        return stripped
     color = _product_color(product)
     if color:
         for sep in (f" ({color})", f" — {color}", f" - {color}", f" {color}"):
@@ -358,7 +365,10 @@ def _product_details(request, product) -> dict[str, Any]:
             for r in reviews[:20]
         ]
 
+    from project.merchant_feed import _clean as _feed_clean, product_color
+
     spec_color = None
+    specs: list[tuple[str, str]] = []  # cleaned like merchant_feed.product_specs
     for row in product.product_specs.select_related(
         "specification", "spec_value"
     ).all():
@@ -368,6 +378,7 @@ def _product_details(request, product) -> dict[str, Any]:
         value = (row.spec_value.title or "").strip()
         if not name or not value:
             continue
+        specs.append((_feed_clean(name), _feed_clean(value)))
         data.setdefault("additionalProperty", []).append(
             {
                 "@type": "PropertyValue",
@@ -383,7 +394,10 @@ def _product_details(request, product) -> dict[str, Any]:
         ):
             spec_color = value
 
-    color = _product_color(product) or spec_color
+    # Same colour as the Merchant feed item (title colours, then active_color,
+    # then the colour spec), so schema and feed never disagree. Local import:
+    # merchant_feed imports this module. No colour known, no `color` key.
+    color = product_color(product, specs) or spec_color
     if color:
         data["color"] = color
     return data

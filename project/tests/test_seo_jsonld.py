@@ -90,6 +90,36 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
         self.request = RequestFactory().get("/catalog/product/test-blue/")
         self.request.META["HTTP_HOST"] = "testserver"
 
+    def test_color_matches_merchant_feed(self):
+        """Title colour beats a wrong active_color (grey ModernGK506 marked
+        «Синій» on the live site), so JSON-LD and the feed agree."""
+        from project.merchant_feed import product_color, product_specs
+
+        product = _product(
+            title="Килим овальний сірий ModernGK506 O",
+            active_color=SimpleNamespace(title="Синій"),
+        )
+        data = product_graph(self.request, product)
+        self.assertEqual(data["color"], "сірий")
+        self.assertEqual(data["color"], product_color(product, product_specs(product)))
+
+    def test_color_falls_back_to_active_color_then_omitted(self):
+        product = _product(title="Килим Estera beige", active_color=SimpleNamespace(title="Бежевий"))
+        self.assertEqual(product_graph(self.request, product)["color"], "Бежевий")
+
+        product = _product(title="Килим Estera beige", active_color=None)
+        self.assertNotIn("color", product_graph(self.request, product))
+
+    def test_group_name_drops_title_colour(self):
+        from project.seo_jsonld import _product_group_name
+
+        product = _product(
+            title="Килим овальний сірий Mira 24031.619 O",
+            color_group=SimpleNamespace(pk=3, name=""),
+            active_color=SimpleNamespace(title="Синій"),
+        )
+        self.assertEqual(_product_group_name(product), "Килим овальний Mira 24031.619 O")
+
     def test_organization_has_return_policy(self):
         org = organization_graph(self.request)
         policy = org["hasMerchantReturnPolicy"]
@@ -108,7 +138,8 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
         # Same id as the Merchant feed item (<product.pk>-<attr.pk>).
         self.assertEqual(data["sku"], "61-301")
         self.assertEqual(data["brand"]["name"], ORG_NAME)
-        self.assertEqual(data["color"], "Синій")
+        # Colour from the title, exactly as the Merchant feed sends it.
+        self.assertEqual(data["color"], "синій")
         offers = data["offers"]
         self.assertEqual(offers["@type"], "Offer")
         self.assertIn("priceValidUntil", offers)
@@ -173,7 +204,7 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
         current, other = data["hasVariant"]
         self.assertEqual(current["sku"], "61-301")
         self.assertEqual(current["inProductGroupWithID"], "cg-7")
-        self.assertEqual(current["color"], "Синій")
+        self.assertEqual(current["color"], "синій")
         self.assertEqual(current["offers"]["@type"], "Offer")
         # Other colour page: url-only reference, never an offer-less Product
         # (those were invalid Product snippet items).
@@ -368,3 +399,42 @@ class ProductVariantsPageTests(TestCase):
         self.assertEqual(node["@type"], "Product")
         self.assertEqual(node["offers"]["price"], 900)
         self.assertTrue(node["offers"]["url"].endswith(f"?size={attr.pk}"))
+
+
+class TitleColourTests(SimpleTestCase):
+    def test_strip_title_colors(self):
+        from project.merchant_feed import strip_title_colors
+
+        self.assertEqual(
+            strip_title_colors("Килим овальний сірий Mira 24031.619 O"),
+            "Килим овальний Mira 24031.619 O",
+        )
+        self.assertEqual(
+            strip_title_colors("Килим фіолетово білий для ванни isadora"),
+            "Килим для ванни isadora",
+        )
+        self.assertEqual(strip_title_colors("Estera beige"), "Estera beige")
+
+    def test_variant_label_prefers_title_colour(self):
+        from catalog.services.product_variants import color_label
+
+        wrong = SimpleNamespace(
+            title="Килим прямокутний сірий ModernGK506", active_color=SimpleNamespace(title="Жовтий")
+        )
+        self.assertEqual(color_label(wrong), "сірий")
+        no_title_colour = SimpleNamespace(
+            title="Килим Estera MR-452", active_color=SimpleNamespace(title="Срібний")
+        )
+        self.assertEqual(color_label(no_title_colour), "срібний")
+        self.assertEqual(color_label(SimpleNamespace(title="Килим X", active_color=None)), "")
+        two = SimpleNamespace(title="Килим фіолетово-ліловий для ванни isadora", active_color=None)
+        self.assertEqual(color_label(two), "фіолетово-ліловий")
+
+        from catalog.services.product_variants import VariantLink
+
+        def link(shape, color):
+            return VariantLink(product=None, url="/", title="T", shape=shape, color=color, same_shape=False)
+
+        self.assertEqual(link("", "сірий").label, "Сірий")
+        self.assertEqual(link("Овальний", "срібний").label, "Овальний, срібний")
+        self.assertEqual(link("", "").label, "T")

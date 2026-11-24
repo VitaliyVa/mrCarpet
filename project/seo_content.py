@@ -20,14 +20,39 @@ def product_tldr(product) -> str:
     return f"{cut}…"
 
 
-def get_seo_guides(limit: int = 3):
-    """Latest blog articles for category/PDP cross-links (empty if none)."""
+def get_seo_guides(category=None, limit: int = 3):
+    """Public blog articles for the «Корисні статті» block (empty if none).
+
+    With a category: articles about it first, i.e. those whose blog topic
+    points at the category page (`ArticleTopic.target_path`) or whose text
+    links to it, newest first; the rest of the places go to the newest public
+    articles. Without one (the whole collection): the newest articles.
+    """
+    from django.db.models import Q
+
     from blog.models import Article
 
-    return list(
-        Article.objects.public()
-        .order_by("-published_at", "-created", "-pk")
-        .only(
-            "id", "title", "slug", "description", "image", "meta_description"
-        )[:limit]
+    fields = ("id", "title", "slug", "description", "image", "meta_description")
+    order = ("-published_at", "-created", "-pk")
+    public = Article.objects.public()
+
+    matched = []
+    path = category.get_absolute_url() if category is not None else ""
+    if path:
+        matched = list(
+            public.filter(
+                Q(topics__target_path__in=(path, path.rstrip("/")))
+                | Q(description__contains=path)
+            )
+            .distinct()
+            .order_by(*order)
+            .only(*fields)[:limit]
+        )
+    if len(matched) >= limit:
+        return matched
+    rest = (
+        public.exclude(pk__in=[a.pk for a in matched])
+        .order_by(*order)
+        .only(*fields)[: limit - len(matched)]
     )
+    return matched + list(rest)

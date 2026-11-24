@@ -1,3 +1,5 @@
+import re
+
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.shortcuts import get_object_or_404, render
 
@@ -105,6 +107,33 @@ def related_articles(article, limit=RELATED_COUNT):
     return (same + rest)[:limit]
 
 
+#: A shop category link inside article HTML (relative or absolute).
+_CATEGORY_LINK_RE = re.compile(r"/catalog/categorie/([\w-]+)/")
+
+
+def catalog_cta_url(article) -> str:
+    """Where «Перейти в каталог» under an article leads.
+
+    The first shop category the article text links to (that is what the
+    article is about), else the category its blog topic targets, else the
+    whole catalog. Only categories that exist, so the button never 404s.
+    """
+    from catalog.models import ProductCategory
+
+    slugs = _CATEGORY_LINK_RE.findall(article.description or "")
+    if article.pk:
+        for path in article.topics.values_list("target_path", flat=True):
+            slugs += _CATEGORY_LINK_RE.findall(f"{path or ''}/")
+    if slugs:
+        found = {
+            c.slug: c for c in ProductCategory.objects.filter(slug__in=set(slugs))
+        }
+        for slug in slugs:
+            if slug in found:
+                return found[slug].get_absolute_url()
+    return "/catalog/"
+
+
 def post(request, slug):
     from django.urls import reverse
 
@@ -131,6 +160,7 @@ def post(request, slug):
             "article": article,
             "is_preview": is_preview,
             "related": related_articles(article),
+            "catalog_cta_url": catalog_cta_url(article),
             "article_jsonld": (
                 "" if is_preview else dumps_jsonld(article_graph(request, article))
             ),

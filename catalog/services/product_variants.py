@@ -81,8 +81,19 @@ def shape_phrase(label: str) -> str:
 
 
 def color_label(product) -> str:
+    """Colour words from the title first (what the shopper reads and what the
+    Merchant feed sends), the admin's active_color only when the title has
+    none: on the live site active_color was wrong on several rugs
+    (a grey ModernGK506 marked "Синій"). Always lower case, as title colours
+    are, so chips read alike whichever source a sibling's colour came from
+    ("Овальний, сірий" next to "Прямокутний, срібний", not "..., Срібний")."""
+    from project.merchant_feed import parse_title
+
+    colors = parse_title(getattr(product, "title", "") or "")["colors"]
+    if colors:
+        return "/".join(colors[:3])
     color = getattr(product, "active_color", None)
-    return (color.title or "").strip() if color else ""
+    return (color.title or "").strip().lower() if color else ""
 
 
 @dataclass
@@ -98,7 +109,10 @@ class VariantLink:
     @property
     def label(self) -> str:
         parts = [p for p in (self.shape, self.color) if p]
-        return ", ".join(parts) if parts else self.title
+        if not parts:
+            return self.title
+        text = ", ".join(parts)
+        return text[:1].upper() + text[1:]  # colour alone: "Сірий", not "сірий"
 
 
 def sibling_products(product, limit: int = 12):

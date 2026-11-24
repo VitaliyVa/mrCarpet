@@ -15,7 +15,12 @@ from .models import (
     ProductAttribute,
     Size, ProductImage,
 )
-from .utils import get_available_filters, get_filter_counts
+from .utils import (
+    auto_related_products,
+    get_available_filters,
+    get_filter_counts,
+    primary_category,
+)
 
 
 def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
@@ -35,6 +40,7 @@ def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     if isinstance(price, Decimal):
         price = float(price)
     category = product.categories.first()
+    room = primary_category(product)
     # Same item shape as cart lines (project/ga4_ecommerce.py) so GA4 joins
     # view_item → add_to_cart → purchase on item_id + item_variant.
     variant = ""
@@ -45,6 +51,13 @@ def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
         "item_name": product.title,
         "item_brand": "mr.Carpet",
         "item_category": category.title if category else "",
+        # item_category stays as before (cart lines and old GA4 reports use
+        # it); the room/purpose category goes to the next level when it differs.
+        **(
+            {"item_category2": room.title}
+            if room is not None and category is not None and room.pk != category.pk
+            else {}
+        ),
         "item_variant": variant,
         "price": round(float(price), 2),
         "quantity": 1,
@@ -130,7 +143,7 @@ def catalog_detail(request, slug):
             "available_filters": available_filters,
             "current_filters": request.GET,
             "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
-            "seo_guides": get_seo_guides(),
+            "seo_guides": get_seo_guides(categorie),
         },
     )
 
@@ -447,6 +460,31 @@ def _selected_size_attr(request, product: Product):
     return product.get_default_size_attr()
 
 
+def _related_products(product, category, variant_ctx) -> list:
+    """Products for «Схожі товари»: the hand-picked ones, else automatic.
+
+    Hand-picked RelatedProduct rows always win. Without them the slider used
+    to vanish, and most product pages linked to no other product at all.
+    Like the variant block, a failure here must not take the page down.
+    """
+    manual = [
+        rp.product
+        for rp in product.related_products.select_related("product").order_by("pk")
+    ]
+    if manual:
+        return manual
+    try:
+        siblings = {link.product.pk for link in variant_ctx.get("variant_links", [])}
+        return auto_related_products(product, category=category, exclude=siblings)
+    except Exception:  # pragma: no cover - defensive
+        import logging
+
+        logging.getLogger(__name__).exception(
+            "auto related products failed for product %s", product.pk
+        )
+        return []
+
+
 def product(request, slug):
     from django.urls import reverse
 
@@ -459,12 +497,12 @@ def product(request, slug):
     product = get_object_or_404(Product, slug=slug)
     images = ProductImage.objects.filter(product=product).order_by("sort_order", "id")
 
-    category = product.categories.first()
-    crumbs = [("Головна", "/")]
+    # Room/purpose category first («Для ванни» over «Турецькі»), same chain as
+    # the category page: Головна > Каталог > категорія > товар.
+    category = primary_category(product)
+    crumbs = [("Головна", "/"), ("Каталог", reverse("catalog"))]
     if category:
         crumbs.append((category.title, category.get_absolute_url()))
-    else:
-        crumbs.append(("Каталог", reverse("catalog")))
     crumbs.append((product.title, product.get_absolute_url()))
 
     selected_attr = _selected_size_attr(request, product)
@@ -479,15 +517,18 @@ def product(request, slug):
         images=images,
         selected_attr=selected_attr if explicit_size else None,
     )
+    variant_ctx = _variant_links_context(product)
     context = {
         "product": product,
+        "breadcrumb_category": category,
+        "related_products": _related_products(product, category, variant_ctx),
         # only moderated reviews are public (the API accepts anonymous posts as PENDING)
         "approved_reviews": list(
             product.reviews.filter(status="approved").order_by("-created")
         ),
         "selected_size_attr": selected_attr,
         "images": images,
-        **_variant_links_context(product),
+        **variant_ctx,
         "ar_ready": product.ar_status == Product.AR_STATUS_READY
         and bool(product.ar_texture),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
