@@ -1,0 +1,291 @@
+{% comment %}
+  Analytics core, inline in <head> on every page (also when GA is off).
+
+  window.mrTrack(name, params) / window.mrTrackEcommerce(name, payload) are the
+  only way page code talks to GA4 / GTM. They:
+    • are safe without GA (local/dev): events go to window.mrAnalyticsLog only;
+    • strip personal data (keys like email/phone/name, e-mails and phone-like
+      digit runs inside strings) and cut strings to GA4's 100 characters;
+    • in gtag mode call gtag('event'), in GTM mode push the GTM shape;
+    • with {beforeUnload: true} park the event in sessionStorage when gtag.js
+      has not loaded yet (a click that navigates away), and replay it on the
+      next page, so fast clicks are not lost.
+  Also here, so they cover the whole page life and pages without a bundle:
+  js_error (window.onerror + unhandledrejection, deduped, max 5 per page)
+  and web vitals (LCP, CLS, INP from PerformanceObserver, one web_vitals event
+  per metric when the page is hidden).
+  The client never sends `purchase`: it goes server-side (project/ga4_mp.py).
+{% endcomment %}
+<script>
+(function (w, d) {
+  var mode = w.__mrAnalyticsMode || "off";
+  var loaded = false;
+  var log = (w.mrAnalyticsLog = w.mrAnalyticsLog || []);
+  w.dataLayer = w.dataLayer || [];
+  // No-op guard: inline template code may call gtag() on a page without GA.
+  if (typeof w.gtag !== "function") w.gtag = function () {};
+
+  var PII_KEY = /^(e?mail|email_address|user_email|phone|phone_number|tel|telephone|name|first_name|last_name|surname|full_name|address|street|city|password|message|comment)$/i;
+  var EMAIL_RE = /[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}/gi;
+  var PHONE_RE = /\+?\d[\d\s().-]{7,}\d/g;
+
+  function scrub(text) {
+    return String(text)
+      .replace(EMAIL_RE, "[email]")
+      .replace(PHONE_RE, function (m) {
+        // A UA phone has 10+ digits (0XX… or 380…); prices and sizes have fewer.
+        return m.replace(/\D/g, "").length >= 10 ? "[phone]" : m;
+      });
+  }
+
+  function clean(value, depth) {
+    if (value == null) return value;
+    if (typeof value === "string") return scrub(value).slice(0, 100);
+    if (typeof value === "number") return isFinite(value) ? value : 0;
+    if (typeof value === "boolean") return value;
+    if (depth > 2) return undefined;
+    if (Array.isArray(value)) {
+      var arr = [];
+      for (var i = 0; i < value.length && i < 50; i++) arr.push(clean(value[i], depth + 1));
+      return arr;
+    }
+    if (typeof value === "object") {
+      var out = {};
+      for (var k in value) {
+        if (!Object.prototype.hasOwnProperty.call(value, k) || PII_KEY.test(k)) continue;
+        var v = clean(value[k], depth + 1);
+        if (v !== undefined) out[k] = v;
+      }
+      return out;
+    }
+    return undefined;
+  }
+
+  function send(name, params, ecommerce) {
+    log.push({ event: name, params: params, t: Date.now() });
+    if (log.length > 200) log.shift();
+    if (w.__mrAnalyticsDebug) try { console.debug("[analytics]", name, params); } catch (e) {}
+    if (mode === "gtag") {
+      w.gtag("event", name, params);
+    } else if (mode === "gtm") {
+      if (ecommerce) {
+        w.dataLayer.push({ ecommerce: null });
+        var rest = {};
+        for (var k in params) if (k !== "items" && k !== "currency" && k !== "value") rest[k] = params[k];
+        rest.event = name;
+        rest.ecommerce = { currency: params.currency, value: params.value, items: params.items };
+        w.dataLayer.push(rest);
+      } else {
+        var flat = { event: name };
+        for (var j in params) flat[j] = params[j];
+        w.dataLayer.push(flat);
+      }
+    }
+  }
+
+  var PENDING_KEY = "mr_ga_pending";
+  function park(name, params, ecommerce) {
+    try {
+      var list = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "[]");
+      if (list.length < 10) list.push([name, params, ecommerce ? 1 : 0, Date.now()]);
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  function replayParked() {
+    var list;
+    try {
+      list = JSON.parse(sessionStorage.getItem(PENDING_KEY) || "[]");
+      sessionStorage.removeItem(PENDING_KEY);
+    } catch (e) {
+      return;
+    }
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i];
+      // Stale (tab restored next day) or malformed: drop it.
+      if (!p || !p[0] || Date.now() - (p[3] || 0) > 10 * 60 * 1000) continue;
+      send(p[0], p[1] || {}, !!p[2]);
+    }
+  }
+
+  function track(name, params, opts) {
+    if (!name) return;
+    var safe = clean(params || {}, 0) || {};
+    var ecommerce = !!(opts && opts.ecommerce);
+    if (opts && opts.beforeUnload && mode !== "off" && !isLoaded()) {
+      if (park(name, safe, ecommerce)) return;
+    }
+    send(name, safe, ecommerce);
+  }
+
+  function isLoaded() {
+    return loaded || !!w.google_tag_manager;
+  }
+
+  function trackEcommerce(name, payload, opts) {
+    var p = {};
+    payload = payload || {};
+    for (var k in payload) p[k] = payload[k];
+    p.currency = p.currency || "UAH";
+    if (p.value != null) {
+      var v = Number(p.value);
+      p.value = isFinite(v) ? Math.round(v * 100) / 100 : 0;
+    }
+    if (!Array.isArray(p.items)) p.items = [];
+    var o = { ecommerce: true };
+    if (opts) for (var j in opts) o[j] = opts[j];
+    track(name, p, o);
+  }
+
+  var onceKeys = {};
+  // Once per page view (not per session): a second cart visit is a real visit.
+  function once(key) {
+    if (onceKeys[key]) return false;
+    onceKeys[key] = true;
+    return true;
+  }
+
+  w.mrTrack = track;
+  w.mrTrackEcommerce = trackEcommerce;
+  w.mrTrackOnce = once;
+  w.mrScrub = scrub;
+  w.mrAnalyticsReady = function () {
+    loaded = true;
+  };
+  replayParked();
+
+  // ---- js_error ---------------------------------------------------------
+  var errSeen = {};
+  var errCount = 0;
+  function reportError(message, source, line, kind) {
+    if (errCount >= 5) return;
+    var msg = String(message || "").replace(/\s+/g, " ").trim();
+    if (!msg || /^(Uncaught )?Script error\.?$/i.test(msg)) return; // cross-origin, no detail
+    var src = String(source || "");
+    if (/^(chrome|moz|safari|safari-web)-extension:/i.test(src)) return;
+    src = src.replace(/[?#].*$/, "").replace(location.origin, "");
+    var key = msg + "|" + src + "|" + (line || 0);
+    if (errSeen[key]) return;
+    errSeen[key] = 1;
+    errCount++;
+    track("js_error", {
+      error_message: msg,
+      error_source: src.slice(-100),
+      error_line: Number(line) || 0,
+      error_kind: kind,
+      non_interaction: true
+    });
+  }
+  w.addEventListener("error", function (e) {
+    // Failed <img>/<script> loads bubble here too (no message): skip them.
+    if (e && e.target && e.target !== w && e.target.nodeType === 1) return;
+    reportError(e && (e.message || (e.error && e.error.message)), e && e.filename, e && e.lineno, "error");
+  }, true);
+  w.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    var msg = r && r.message ? r.message : typeof r === "string" ? r : r ? String(r) : "unhandled rejection";
+    var src = "";
+    if (r && r.stack) {
+      var m = String(r.stack).match(/(https?:\/\/[^\s)]+?):(\d+):\d+/);
+      if (m) src = m[1];
+    }
+    reportError(msg, src, 0, "promise");
+  });
+
+  // ---- web vitals (LCP, CLS, INP) --------------------------------------
+  var PO = w.PerformanceObserver;
+  var types = (PO && PO.supportedEntryTypes) || [];
+  if (PO && types.length) {
+    var vitalsSent = {};
+    var startedHidden = d.visibilityState === "hidden";
+    var lcp = null;
+    var cls = 0, clsSession = 0, clsFirst = 0, clsLast = 0, clsSeen = false;
+    var interactions = {};
+    var LIMITS = { LCP: [2500, 4000], CLS: [0.1, 0.25], INP: [200, 500] };
+    var observe = function (type, cb, extra) {
+      if (types.indexOf(type) < 0) return null;
+      try {
+        var po = new PO(function (list) { cb(list.getEntries()); });
+        var opts = { type: type, buffered: true };
+        if (extra) for (var k in extra) opts[k] = extra[k];
+        po.observe(opts);
+        return po;
+      } catch (e) {
+        return null;
+      }
+    };
+    var lcpPo = observe("largest-contentful-paint", function (entries) {
+      var last = entries[entries.length - 1];
+      if (last) lcp = last.renderTime || last.loadTime || last.startTime;
+    });
+    // LCP stops at the first input: a later, bigger paint is not "loading".
+    var stopLcp = function () {
+      if (lcpPo) { try { lcpPo.takeRecords(); lcpPo.disconnect(); } catch (e) {} lcpPo = null; }
+    };
+    ["keydown", "pointerdown"].forEach(function (t) {
+      w.addEventListener(t, stopLcp, { once: true, capture: true, passive: true });
+    });
+    observe("layout-shift", function (entries) {
+      clsSeen = true;
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        if (e.hadRecentInput) continue;
+        if (clsSession && e.startTime - clsLast < 1000 && e.startTime - clsFirst < 5000) {
+          clsSession += e.value;
+        } else {
+          clsSession = e.value;
+          clsFirst = e.startTime;
+        }
+        clsLast = e.startTime;
+        if (clsSession > cls) cls = clsSession;
+      }
+    });
+    var onEvents = function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        if (!e.interactionId) continue;
+        var prev = interactions[e.interactionId] || 0;
+        if (e.duration > prev) interactions[e.interactionId] = e.duration;
+      }
+    };
+    observe("event", onEvents, { durationThreshold: 40 });
+    observe("first-input", onEvents);
+
+    var rating = function (name, v) {
+      var t = LIMITS[name];
+      return v <= t[0] ? "good" : v <= t[1] ? "needs-improvement" : "poor";
+    };
+    var sendVital = function (name, v) {
+      if (vitalsSent[name] || v == null || !isFinite(v)) return;
+      vitalsSent[name] = true;
+      track("web_vitals", {
+        metric_name: name,
+        metric_value: name === "CLS" ? Math.round(v * 10000) / 10000 : Math.round(v),
+        // GA4 sums `value`: CLS is scaled by 1000 so it stays an integer.
+        value: Math.round(name === "CLS" ? v * 1000 : v),
+        metric_rating: rating(name, v),
+        non_interaction: true
+      });
+    };
+    var flushVitals = function () {
+      if (lcpPo) { try { var rest = lcpPo.takeRecords(); if (rest.length) { var l = rest[rest.length - 1]; lcp = l.renderTime || l.loadTime || l.startTime; } } catch (e) {} }
+      if (!startedHidden && lcp != null) sendVital("LCP", lcp);
+      if (clsSeen || types.indexOf("layout-shift") >= 0) sendVital("CLS", cls);
+      var durations = [];
+      for (var id in interactions) durations.push(interactions[id]);
+      if (durations.length) {
+        durations.sort(function (a, b) { return b - a; });
+        var count = (performance && performance.interactionCount) || durations.length;
+        // INP = worst interaction, ignoring one outlier per 50 interactions.
+        sendVital("INP", durations[Math.min(durations.length - 1, Math.floor(count / 50))]);
+      }
+    };
+    d.addEventListener("visibilitychange", function () {
+      if (d.visibilityState === "hidden") flushVitals();
+    }, true);
+    w.addEventListener("pagehide", flushVitals, true);
+  }
+})(window, document);
+</script>

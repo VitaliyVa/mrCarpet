@@ -1,9 +1,41 @@
 {% if google_site_verification %}
 <meta name="google-site-verification" content="{{ google_site_verification }}" />
 {% endif %}
+{% comment %}
+  page_type goes with every event (set in config), so any report can be cut by
+  home / catalog / product / article / cart / checkout without regexes.
+  Tokens in a URL (newsletter unsubscribe, password reset) and personal
+  query params never reach GA: page_location is rewritten before config.
+{% endcomment %}
+<script>
+  window.__mrAnalyticsMode = "{% if gtm_container_id %}gtm{% elif ga4_measurement_id %}gtag{% else %}off{% endif %}";
+  window.__mrPageType = (function (p, forced) {
+    if (forced) return forced;
+    if (p === "/") return "home";
+    if (/^\/catalog\/product\//.test(p)) return "product";
+    if (/^\/catalog\/favourites/.test(p)) return "favourites";
+    if (/^\/catalog\//.test(p)) return "catalog";
+    if (/^\/blog\/article\//.test(p)) return "article";
+    if (/^\/blog\//.test(p)) return "blog";
+    if (/^\/cart\//.test(p)) return "cart";
+    if (/^\/checkout\//.test(p)) return "checkout";
+    if (/^\/(success|payment)\//.test(p)) return "order";
+    return "other";
+  })(location.pathname, "{{ analytics_page_type|default:''|escapejs }}");
+  window.__mrSafeLocation = (function (l) {
+    var path = l.pathname
+      .replace(/^\/unsubscribe\/[^/]+\//, "/unsubscribe/token/")
+      .replace(/^\/password-reset-confirm\/.+$/, "/password-reset-confirm/");
+    var q = (l.search || "").replace(/^\?/, "").split("&").filter(function (kv) {
+      return kv && !/^(e?mail|phone|tel|name|token|uid|key|code)=/i.test(kv);
+    }).join("&");
+    return l.origin + path + (q ? "?" + q : "");
+  })(location);
+</script>
 {% if gtm_container_id %}
 <script>
   window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ page_type: window.__mrPageType });
 </script>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -21,7 +53,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', '{{ ga4_measurement_id|escapejs }}'{% if ga4_user_id %}, {'user_id': '{{ ga4_user_id|escapejs }}'}{% endif %});
+  gtag('config', '{{ ga4_measurement_id|escapejs }}', {
+    page_type: window.__mrPageType,
+    page_location: window.__mrSafeLocation{% if ga4_user_id %},
+    user_id: '{{ ga4_user_id|escapejs }}'{% endif %}
+  });
   (function () {
     var loaded = false;
     function load() {
@@ -30,6 +66,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       var s = document.createElement('script');
       s.async = true;
       s.src = 'https://www.googletagmanager.com/gtag/js?id={{ ga4_measurement_id|urlencode }}';
+      s.onload = function () { if (window.mrAnalyticsReady) window.mrAnalyticsReady(); };
       document.head.appendChild(s);
     }
     ['scroll', 'pointerdown', 'touchstart', 'keydown'].forEach(function (t) {
@@ -44,3 +81,4 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   })();
 </script>
 {% endif %}
+{% include "includes/analytics_core.html" %}

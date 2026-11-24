@@ -816,7 +816,7 @@
         </a>
       </div>
       <div class="swiper blog-swiper catalog-swiper">
-        <div class="slider__block swiper-wrapper">
+        <div class="slider__block swiper-wrapper" data-ga-list-id="related_products" data-ga-list-name="Схожі товари">
           {% for related_product in related %}
           <div
             class="slider_item cart_item swiper-slide"
@@ -964,32 +964,18 @@
 
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/product/index.js?v={{ static_v }}"></script>
-{% if analytics_enabled and analytics_view_item %}
+{% if analytics_view_item %}
+{# JSON, not template numbers: the uk locale prints 1999.5 as "1999,5", a JS syntax error. #}
+{{ analytics_view_item|json_script:"ga4-view-item" }}
 <script>
 (function () {
-  var item = {
-    item_id: "{{ analytics_view_item.item_id|escapejs }}",
-    item_name: "{{ analytics_view_item.item_name|escapejs }}",
-    item_brand: "{{ analytics_view_item.item_brand|escapejs }}",
-    item_category: "{{ analytics_view_item.item_category|escapejs }}",
-    price: {{ analytics_view_item.price }},
-    quantity: 1
-  };
-  var value = {{ analytics_view_item.price }};
-  var currency = "{{ analytics_view_item.currency|escapejs }}";
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ ecommerce: null });
-  window.dataLayer.push({
-    event: "view_item",
-    ecommerce: { currency: currency, value: value, items: [item] }
-  });
-  if (typeof gtag === "function") {
-    gtag("event", "view_item", {
-      currency: currency,
-      value: value,
-      items: [item]
-    });
-  }
+  var el = document.getElementById("ga4-view-item");
+  if (!el || !window.mrTrackEcommerce) return;
+  var item;
+  try { item = JSON.parse(el.textContent); } catch (e) { return; }
+  var currency = item.currency || "UAH";
+  delete item.currency;
+  window.mrTrackEcommerce("view_item", { currency: currency, value: item.price, items: [item] });
 })();
 </script>
 {% endif %}

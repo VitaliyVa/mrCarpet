@@ -7,6 +7,24 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>404 — Сторінку не знайдено | mr.Carpet</title>
     <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
+    {% include 'includes/analytics_head.html' with analytics_page_type="not_found" %}
+    <script>
+      // Which dead links people actually hit: path (no query, it may carry
+      // anything) and where they came from (host only for other sites).
+      (function () {
+        var ref = document.referrer || "";
+        var from = "";
+        try {
+          var u = new URL(ref);
+          from = u.origin === location.origin ? u.pathname : u.hostname;
+        } catch (e) {}
+        window.mrTrack && window.mrTrack("page_not_found", {
+          page_path: location.pathname,
+          referrer: from || "(direct)",
+          non_interaction: true
+        });
+      })();
+    </script>
     <link rel="stylesheet" href="/static/development/main.css?v=20261124a" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }

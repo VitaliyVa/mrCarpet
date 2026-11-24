@@ -35,12 +35,19 @@ def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     if isinstance(price, Decimal):
         price = float(price)
     category = product.categories.first()
+    # Same item shape as cart lines (project/ga4_ecommerce.py) so GA4 joins
+    # view_item → add_to_cart → purchase on item_id + item_variant.
+    variant = ""
+    if not attr.custom_attribute and getattr(attr, "size", None):
+        variant = str(attr.size)
     return {
         "item_id": str(product.pk),
         "item_name": product.title,
         "item_brand": "mr.Carpet",
         "item_category": category.title if category else "",
-        "price": price,
+        "item_variant": variant,
+        "price": round(float(price), 2),
+        "quantity": 1,
         "currency": "UAH",
     }
 
