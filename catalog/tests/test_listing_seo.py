@@ -68,12 +68,15 @@ class ListingSeoTests(TestCase):
         self.assertEqual(_robots(html), "noindex, follow")
         self.assertEqual(_canonical(html), f"{SITE}/catalog/collection/")
 
-    def test_stock_canonicalizes_to_catalog(self):
+    def test_empty_stock_is_its_own_noindex_page(self):
+        """/catalog/stock/ no longer copies /catalog/: with no discount it is
+        an empty state, noindex, with its own canonical (catalog/tests/
+        test_promotions.py covers the listing)."""
         html = self.get("/catalog/stock/")
-        self.assertEqual(_canonical(html), f"{SITE}/catalog/")
-        self.assertEqual(_og_url(html), f"{SITE}/catalog/")
-        # one signal only: canonical, not noindex on top
-        self.assertEqual(_robots(html), INDEX_ROBOTS)
+        self.assertEqual(_canonical(html), f"{SITE}/catalog/stock/")
+        self.assertEqual(_og_url(html), f"{SITE}/catalog/stock/")
+        self.assertEqual(_robots(html), "noindex, follow")
+        self.assertIn("Зараз акцій немає", html)
 
     def test_catalog_page_param_does_not_split_it(self):
         """/catalog/ renders categories, not the paginated list."""

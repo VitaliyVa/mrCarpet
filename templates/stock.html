@@ -1,0 +1,99 @@
+{% extends '_base.html' %}
+{% load thumbnails catalog_filters %}
+{% block title %}Акції на килими: знижки на те, що є в наявності{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
+{% block meta %}
+<meta
+  name="description"
+  content="{% if products_count %}Килими зі знижкою, які є в наявності: {{ products_count }} {{ products_count|plural_uk:'модель,моделі,моделей' }}. Доставка по всій Україні.{% else %}Акції mr.Carpet на килими. Зараз знижок немає, подивіться килими за категоріями. Доставка по всій Україні.{% endif %}"
+/>
+{% endblock meta %}
+{% comment %} Empty (no discounted size in stock): a page with nothing on it is not
+   worth an index entry. Links are still followed. {% endcomment %}
+{% block robots %}{% if not products_count %}<meta name="robots" content="noindex, follow" />{% else %}{{ block.super }}{% endif %}{% endblock robots %}
+{% block og_title %}Акції на килими | mr.Carpet{% endblock og_title %}
+{% block twitter_title %}Акції на килими | mr.Carpet{% endblock twitter_title %}
+{% block structured_data %}
+{{ block.super }}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock structured_data %}
+{% block styles %}
+<link rel="stylesheet" href="/static/source/pages/catalog_inside/index.css?v={{ static_v }}" />
+<style>
+  .stock_intro { margin: 8px 0 0; max-width: 760px; color: #5f564f; font-size: 16px; line-height: 1.55; }
+  .stock_intro p { margin: 0 0 6px; }
+  .stock_page .catalog_inside__content { margin-top: 32px; }
+  .stock_page .cart_item_wrapper { width: 100%; }
+  .stock_empty { max-width: 640px; margin: 40px auto 24px; text-align: center; }
+  .stock_empty .catalog__empty-text { margin-bottom: 24px; }
+  .stock_empty__cats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0 0 28px; padding: 0; list-style: none; }
+  .stock_empty__cats a { display: inline-block; padding: 10px 18px; border: 1px solid #a46c46; border-radius: 8px; color: #a46c46; text-decoration: none; }
+  .stock_empty__cats a:hover { background: #a46c46; color: #fff; }
+  .stock_empty__note { margin: 20px 0 0; color: #89817c; font-size: 15px; }
+</style>
+{% endblock styles %}{% block content %}
+<section class="catalog_inside stock_page first_section">
+  <div class="container">
+    <div class="bread-crumbs">
+      <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+      <span class="color_black_sub">/</span>
+      <a href="{% url 'stock' %}" class="color_gold">Акції</a>
+    </div>
+    <div class="catalog_inside-top">
+      <div class="title">
+        <h1 class="catalog_inside__title">Акції на килими</h1>
+        {% if products_count %}<span>{{ products_count }} {{ products_count|plural_uk:"товар,товари,товарів" }}</span>{% endif %}
+      </div>
+    </div>
+
+    {% if products_count %}
+    <div class="stock_intro">
+      <p>Тут килими зі знижкою, які є в наявності. На картці вже ціна зі знижкою, а стара ціна поруч.</p>
+      {% if sale_end %}<p>Акція діє до {{ sale_end|date:"j E" }}.</p>{% endif %}
+      {% if shop_settings and shop_settings.free_shipping_enabled %}<p>Доставка безкоштовна від {{ shop_settings.free_shipping_threshold }} грн.</p>{% endif %}
+    </div>
+    <div class="catalog_inside__content">
+      <div class="catalog_section_bottom cart_item_wrapper" data-ga-list-id="stock" data-ga-list-name="Акції" data-ga-page="{{ products.number|default:1 }}" data-ga-results="{{ products_count }}">
+        {% for product in products %}
+        <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
+          {% include 'includes/products.html' %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if products.has_other_pages %}
+    <div class="pagination">
+      {% if products.has_previous %}<a href="?page={{ products.previous_page_number }}">Назад</a>{% endif %}
+      {% for num in products.paginator.page_range %}
+        {% if products.number == num %}
+          <a href="#" class="active">{{ num }}</a>
+        {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if products.has_next %}<a href="?page={{ products.next_page_number }}">Далі</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="catalog__empty stock_empty">
+      <h2 class="catalog__empty-title">Зараз акцій немає</h2>
+      <p class="catalog__empty-text">Знижки в нас бувають, тож загляньте трохи згодом. А поки подивіться килими за категоріями:</p>
+      {% if categories %}
+      <ul class="stock_empty__cats">
+        {% for category in categories %}
+        <li><a href="{{ category.get_absolute_url }}">{{ category.title }}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <a href="{% url 'all_collection' %}" class="catalog__empty-btn btn-gold">Дивитись усі килими</a>
+      {% if shop_settings and shop_settings.free_shipping_enabled %}
+      <p class="stock_empty__note">До речі, доставка безкоштовна від {{ shop_settings.free_shipping_threshold }} грн.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock content %}{% block scripts %}
+<script src="/static/source/pages/catalog_inside/index.js?v={{ static_v }}" defer></script>
+{% endblock scripts %}

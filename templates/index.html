@@ -94,6 +94,7 @@
 </section>
 <!-- /.catalog_slider -->
 
+{% if sale_products %}{# running main sale only (project/views.py) #}
 <section class="catalog_slider">
   <div class="container">
     <div class="slider__wrapper">
@@ -133,6 +134,7 @@
   </div>
   <!-- /.container -->
 </section>
+{% endif %}
 <!-- /.catalog_slider -->
 
 <section class="blog-section catalog_slider">

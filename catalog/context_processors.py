@@ -1,6 +1,7 @@
 from .models import Favourite, ProductCategory, Product, FavouriteProducts
 from django.db.models import Count
 
+from .promotions import has_promo
 from .utils import get_favourite_readonly
 
 
@@ -21,6 +22,9 @@ def context(request):
         'favourites': f_products,
         'categories': categories,
         'search_products': products,
+        # A callable: the template calls it only where it is used (the
+        # header), and the answer is cached for a few minutes.
+        'has_promo': has_promo,
     }
     # if request.user.is_authenticated:
     #     try:

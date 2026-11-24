@@ -24,11 +24,13 @@
               >Про магазин</a
             >
           </li>
+          {% if has_promo %}{# only while something is really discounted (catalog/promotions.py) #}
           <li>
             <a class="header_top_panel_nav_link small color_black" href="{% url 'stock' %}"
               >Акції</a
             >
           </li>
+          {% endif %}
           <li>
             <a
               class="header_top_panel_nav_link small color_black"
@@ -487,7 +489,7 @@
           <a href="{% url 'about' %}" class="header_info_link small color_white"
             >Про компанію</a
           >
-          <a href="{% url 'stock' %}" class="header_info_link small color_white">Акції</a>
+          {% if has_promo %}<a href="{% url 'stock' %}" class="header_info_link small color_white">Акції</a>{% endif %}
           <a href="{% url 'blog' %}" class="header_info_link small color_white">Блог</a>
           <a href="{% url 'faq' %}" class="header_info_link small color_white"
             >Питання / Відповідь</a

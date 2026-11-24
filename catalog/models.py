@@ -496,11 +496,10 @@ class ProductAttribute(models.Model):
             return self.price
 
     def set_discount(self):
-        for prod in self.product.product_attr.all():
-            if prod.discount:
-                return True
-            else:
-                return False
+        # Any size with a discount. This used to look at the first size only
+        # (return inside the loop), so a discount on the second size never
+        # set the flag the search dropdown's «Акція» badge reads.
+        return any(prod.discount for prod in self.product.product_attr.all())
 
     def save(self, *args, **kwargs):
         discount = super().save(*args, **kwargs)

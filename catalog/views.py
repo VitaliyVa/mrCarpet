@@ -2,11 +2,12 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Min, Q, Case, When, Value, IntegerField, F, ExpressionWrapper, FloatField
+from django.db.models import Min, Q, Case, When, Value, IntegerField, F, ExpressionWrapper, FloatField, Prefetch
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 
 from .filters import ProductFilter
+from .ordering import diversified, has_explicit_sort
 from .models import (
     Product,
     Favourite,
@@ -116,6 +117,9 @@ def catalog_detail(request, slug):
     # Застосовуємо фільтри
     filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
+    if not has_explicit_sort(request.GET):
+        # Mixed default order: one batch of one kind must not fill page 1.
+        products = diversified(products)
     
     # Доступні фільтри (фасети) — з базового набору категорії, щоб вибір одного
     # значення фасета не ховав інші його значення
@@ -253,6 +257,8 @@ def all_collection(request):
     # Фільтри
     filter_set = ProductFilter(request.GET, products)
     products = filter_set.qs
+    if not has_explicit_sort(request.GET):
+        products = diversified(products)
 
     # Доступні фільтри (фасети) — рахуємо з базового набору, щоб вибір одного
     # значення фасета не ховав інші його значення
@@ -741,20 +747,55 @@ def product_ar_glb(request, slug):
 
 
 def stock(request):
-    products = Product.objects.filter(has_discount=True)
-    
-    # Пагінація
-    paginator = Paginator(products, 12)  # 12 товарів на сторінку
-    page = request.GET.get('page')
-    
+    """«Акції»: only products with a real discount on a size that is in stock.
+
+    It used to render catalog.html, which ignores `products`, so the page
+    showed the plain category list under the title «Каталог килимів»
+    while nothing was discounted (audit 24.11.2026, T7). With no discount
+    today the page says so kindly, links to the categories, and is noindex:
+    an empty listing is nothing Google should keep.
+    """
+    from django.urls import reverse
+
+    from catalog.models import ProductSale
+    from catalog.promotions import discounted_in_stock_products
+    from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
+
+    product_attrs = Prefetch(
+        "product_attr",
+        queryset=ProductAttribute.objects.select_related("size").order_by("sort_order", "id"),
+    )
+    products = discounted_in_stock_products().prefetch_related(product_attrs)
+    paginator = Paginator(products, 12)
     try:
-        products = paginator.page(page)
+        page = paginator.page(request.GET.get("page"))
     except PageNotAnInteger:
-        products = paginator.page(1)
+        page = paginator.page(1)
     except EmptyPage:
-        products = paginator.page(paginator.num_pages)
-    
-    return render(request, "catalog.html", {"products": products})
+        page = paginator.page(paginator.num_pages)
+
+    sale = None
+    if paginator.count:
+        from django.utils import timezone
+
+        sale = (
+            ProductSale.objects.filter(main_sale=True, date_end__gt=timezone.now())
+            .order_by("date_end")
+            .first()
+        )
+    return render(
+        request,
+        "stock.html",
+        {
+            "products": page,
+            "products_count": paginator.count,
+            "sale_end": sale.date_end if sale else None,
+            "breadcrumb_jsonld": dumps_jsonld(
+                breadcrumb_graph(request, [("Головна", "/"), ("Акції", reverse("stock"))])
+            ),
+        },
+    )
+
 
 def _review_invite_context(request) -> dict:
     """

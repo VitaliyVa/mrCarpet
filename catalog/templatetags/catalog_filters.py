@@ -131,3 +131,11 @@ def plural_uk_form(n, forms):
 def plural_uk(n, forms):
     """{{ count }} {{ count|plural_uk:"товар,товари,товарів" }}"""
     return plural_uk_form(n, forms)
+
+
+@register.filter
+def mixed_order(products):
+    """Default listing order (catalog/ordering.py) for a template preview."""
+    from catalog.ordering import diversified
+
+    return diversified(products)

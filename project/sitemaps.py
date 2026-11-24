@@ -30,7 +30,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = "weekly"
 
     def items(self):
-        return [
+        items = [
             "index",
             "catalog",
             "all_collection",
@@ -43,6 +43,12 @@ class StaticViewSitemap(Sitemap):
             "policy",
             "blog",
         ]
+        # «Акції» only while something is discounted: empty, it is noindex.
+        from catalog.promotions import discounted_in_stock_products
+
+        if discounted_in_stock_products().exists():
+            items.append("stock")
+        return items
 
     def location(self, item):
         return reverse(item)
