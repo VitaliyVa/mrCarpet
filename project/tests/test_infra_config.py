@@ -101,6 +101,20 @@ class DeployAppliesNginxConfigTests(SimpleTestCase):
         self.assertIn('if [ "$NGINX_CONFIG_OK" != "1" ]; then', tail)
         self.assertIn("exit 1", tail)
 
+    def test_compose_run_never_reads_the_script_from_stdin(self):
+        """The script is ssh's stdin; an interactive `compose run` would eat
+        the rest of it and the deploy would silently stop there."""
+        script = self.script.replace("\\\n", " ")
+        runs = [
+            line.strip()
+            for line in script.splitlines()
+            if "docker compose" in line and " run " in line and not line.strip().startswith("#")
+        ]
+        self.assertGreaterEqual(len(runs), 2)
+        for line in runs:
+            self.assertIn(" -T ", line)
+            self.assertIn("</dev/null", line)
+
 
 class NginxConfigTests(SimpleTestCase):
     def setUp(self):

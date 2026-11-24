@@ -66,9 +66,11 @@ jobs:
           if command -v sqlite3 >/dev/null 2>&1; then
             sqlite3 db.sqlite3 "PRAGMA wal_checkpoint(TRUNCATE);" || true
           else
-            docker compose -f docker-compose.prod.yml run --rm --no-deps web \
+            # -T and </dev/null: compose run would otherwise read the rest of
+            # this script (it is the ssh session's stdin) as its own input
+            docker compose -f docker-compose.prod.yml run --rm --no-deps -T web \
               python -c "import sqlite3; c=sqlite3.connect('/app/db.sqlite3'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()" \
-              || true
+              </dev/null || true
           fi
           docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
             sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && cp /app/db.sqlite3 /tmp/mrcarpet_db_live_${TS}.sqlite3 && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS} /tmp/mrcarpet_db_live_${TS}.sqlite3"
