@@ -4,18 +4,20 @@
 {% block meta %}
 <meta
   name="description"
-  content="{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}"
+  content="{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }}. Блог mr.Carpet.{% endif %}"
 />
 {% if article.meta_keys %}<meta name="keywords" content="{{ article.meta_keys }}" />{% endif %}
+{% with published=article.published_at|default:article.created %}{% if published %}<meta property="article:published_time" content="{{ published|date:'c' }}" />{% endif %}{% endwith %}
+{% if article.updated %}<meta property="article:modified_time" content="{{ article.updated|date:'c' }}" />{% endif %}
 {% endblock meta %}
 {% block canonical %}{{ site_url }}{{ article.get_absolute_url }}{% endblock canonical %}
 {% block og_type %}article{% endblock og_type %}
 {% block og_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock og_title %}
-{% block og_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock og_description %}
+{% block og_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }}. Блог mr.Carpet.{% endif %}{% endblock og_description %}
 {% block og_url %}{{ site_url }}{{ article.get_absolute_url }}{% endblock og_url %}
 {% block og_image %}{% if article.has_image %}<meta property="og:image" content="{{ site_url }}{{ article.image.url }}" />{% endif %}{% endblock og_image %}
 {% block twitter_title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock twitter_title %}
-{% block twitter_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }} — блог mr.Carpet.{% endif %}{% endblock twitter_description %}
+{% block twitter_description %}{% if article.meta_description %}{{ article.meta_description }}{% elif article.description %}{{ article.description|striptags|truncatechars:160 }}{% else %}{{ article.title }}. Блог mr.Carpet.{% endif %}{% endblock twitter_description %}
 {% block twitter_image %}{% if article.has_image %}<meta name="twitter:image" content="{{ site_url }}{{ article.image.url }}" />{% endif %}{% endblock twitter_image %}
 {% block structured_data %}
 {{ block.super }}
@@ -25,7 +27,9 @@
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog_inside/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
-<section class="blog-inside first_section">
+{% article_parts article as parts %}
+{% with topic=article|article_topic date=article.published_at|default:article.created %}
+<article class="blog-inside bl-article first_section">
     <div class="container">
         <div class="bread-crumbs">
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
@@ -34,84 +38,82 @@
             <span class="color_black_sub">/</span>
             <a href="{% url 'article' article.slug %}" class="color_gold">{{ article.title }}</a>
             <a href="{% url 'blog' %}" class="bread-crumbs__mob">
-                <img src="/static/utils/assets/chevron-left.svg" alt="chevron-left" />
+                <img src="/static/utils/assets/chevron-left.svg" alt="" width="16" height="16" />
                 <span>Назад до блогу</span>
             </a>
         </div>
 
-        <div class="blog-inside__center">
-            <div class="blog-inside__block">
-                <div class="blog-inside__block-img">
-                {% if article.has_image %}
-                    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="820" height="400" fetchpriority="high" decoding="async" />
-                    {% else %}
-                    <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="820" height="400" fetchpriority="high" decoding="async" />
-                    {% endif %}
+        <header class="bl-hero{% if not article.has_image %} bl-hero--no-image{% endif %}">
+            <div class="bl-hero__text">
+                <a class="bl-chip" href="{% url 'blog' %}?tema={{ topic.slug }}" rel="nofollow">{{ topic.emoji }} {{ topic.label }}</a>
+                <h1 class="bl-hero__title">{{ article.title }}</h1>
+                <div class="bl-meta">
+                    {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
+                    <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
+                    {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
                 </div>
-                <div class="blog-inside__block-info">
-                    <h1 class="blog-inside__block-title color_black bold">
-                        {{ article.title }}
-                    </h1>
-                    <div class="blog-inside__block-text article-body">
-                        {{ article.description|article_body }}
+            </div>
+            {% if article.has_image %}
+            <figure class="bl-hero__media">
+                <img src="{{ article.image.url }}" alt="{{ article.title }}" width="1200" height="800" fetchpriority="high" decoding="async" />
+            </figure>
+            {% endif %}
+        </header>
+
+        <div class="bl-article__layout">
+            <div class="bl-article__main">
+                {% if parts.toc|length > 1 %}
+                <details class="bl-toc bl-toc--inline">
+                    <summary class="bl-toc__title">Зміст статті</summary>
+                    <ol class="bl-toc__list">
+                        {% for item in parts.toc %}<li><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}
+                    </ol>
+                </details>
+                {% endif %}
+
+                <div class="blog-inside__block-text article-body">
+                    {{ parts.body }}
+                </div>
+
+                {% include "includes/blog_share.html" %}
+            </div>
+
+            <aside class="bl-article__aside">
+                <div class="bl-article__sticky">
+                    {% if parts.toc|length > 1 %}
+                    <nav class="bl-toc bl-toc--side" aria-label="Зміст статті">
+                        <p class="bl-toc__title">Зміст статті</p>
+                        <ol class="bl-toc__list">
+                            {% for item in parts.toc %}<li><a href="#{{ item.id }}" data-toc-link="{{ item.id }}">{{ item.text }}</a></li>{% endfor %}
+                        </ol>
+                    </nav>
+                    {% endif %}
+                    <div class="bl-aside-cta">
+                        <p class="bl-aside-cta__emoji" aria-hidden="true">🛋️</p>
+                        <p class="bl-aside-cta__title">Шукаєте свій килим?</p>
+                        <p class="bl-aside-cta__text">У каталозі зручно фільтрувати за розміром, кольором і кімнатою.</p>
+                        <a href="/catalog/" class="bl-button bl-button--full">Перейти в каталог</a>
                     </div>
                 </div>
-            </div>
-
-            <div class="blog-inside__sidebar">
-                <h3 class="blog-inside__sidebar-title color_black bold">
-                    Читайте також
-                </h3>
-                <div class="blog-inside__sidebar-items">
-                    {% for article in articles %}
-                    <a href="{% url 'article' article.slug %}" class="blog_item">
-                        <div class="blog_item_img">
-                            {% if article.has_image %}
-                            <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                            {% else %}
-                            <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                            {% endif %}
-                        </div>
-                        <div class="blog_item_info">
-                            <p class="blog_item_title">{{ article.title }}</p>
-                            <p class="blog_item_text">
-                                {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
-                            </p>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="blog-inside__swiper swiper blog-swiper catalog-swiper">
-                <h3 class="blog-inside__swiper-title color_black bold">
-                    Читайте також
-                </h3>
-                <div class="blog slider__block swiper-wrapper">
-                    {% for article in articles %}
-                    <a href="{% url 'article' article.slug %}" class="blog_item slider_item swiper-slide">
-                        <div class="blog_item_img">
-                            {% if article.has_image %}
-                            <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                            {% else %}
-                            <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                            {% endif %}
-                        </div>
-                        <div class="blog_item_info">
-                            <p class="blog_item_title">{{ article.title }}</p>
-                            <p class="blog_item_text">
-                                {{ article.meta_description|default:article.description|striptags|truncatechars:120 }}
-                            </p>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-                <div class="swiper-button swiper-button-next"></div>
-                <div class="swiper-button swiper-button-prev"></div>
-            </div>
+            </aside>
         </div>
+
+        {% if related %}
+        <section class="bl-related" aria-labelledby="bl-related-title">
+            <div class="bl-related__head">
+                <h2 class="bl-related__title" id="bl-related-title">Читайте також</h2>
+                <a href="{% url 'blog' %}" class="bl-related__all">Усі статті →</a>
+            </div>
+            <div class="bl-grid bl-grid--related">
+                {% for item in related %}
+                {% include "includes/blog_card.html" with article=item is_featured=False heading="h3" compact=True %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
     </div>
-</section>
+</article>
+{% endwith %}
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/blog_inside/index.js?v={{ static_v }}"></script>
 {% endblock scripts %}
