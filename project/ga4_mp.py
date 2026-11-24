@@ -93,7 +93,10 @@ def client_id_for_order(order, request=None) -> str:
 
 
 def _mp_payload_from_purchase(
-    purchase: dict, client_id: str, session_id: str | None = None
+    purchase: dict,
+    client_id: str,
+    session_id: str | None = None,
+    event_name: str = "purchase",
 ) -> dict:
     params: dict[str, Any] = {
         "currency": purchase.get("currency") or "UAH",
@@ -129,7 +132,7 @@ def _mp_payload_from_purchase(
         params["items"] = items
     return {
         "client_id": client_id,
-        "events": [{"name": "purchase", "params": params}],
+        "events": [{"name": event_name, "params": params}],
     }
 
 
@@ -139,8 +142,13 @@ def send_mp_purchase(
     client_id: str,
     session_id: str | None = None,
     debug: bool = False,
+    event_name: str = "purchase",
 ) -> bool:
-    """POST purchase to MP. Returns True on HTTP 2xx (debug also checks validation)."""
+    """POST purchase to MP. Returns True on HTTP 2xx (debug also checks validation).
+
+    `event_name` lets the same ecommerce payload go out as `order_placed`
+    (cash on delivery at checkout, not a sale yet).
+    """
     if not mp_configured():
         logger.info("[ga4-mp] skip: GA4_MEASUREMENT_ID / GA4_API_SECRET not set")
         return False
@@ -153,7 +161,7 @@ def send_mp_purchase(
         {"measurement_id": _measurement_id(), "api_secret": _api_secret()}
     )
     url = f"{MP_DEBUG if debug else MP_COLLECT}?{qs}"
-    body = _mp_payload_from_purchase(purchase, client_id, session_id)
+    body = _mp_payload_from_purchase(purchase, client_id, session_id, event_name)
     try:
         resp = requests.post(url, json=body, timeout=MP_TIMEOUT)
         if debug:
@@ -166,7 +174,7 @@ def send_mp_purchase(
             print(f"[ga4-mp] validation OK tx={tid}")
             return True
         if 200 <= resp.status_code < 300:
-            print(f"[ga4-mp] purchase sent tx={tid} status={resp.status_code}")
+            print(f"[ga4-mp] {event_name} sent tx={tid} status={resp.status_code}")
             return True
         logger.warning(
             "[ga4-mp] HTTP %s body=%s", resp.status_code, (resp.text or "")[:300]
@@ -199,14 +207,16 @@ def send_order_purchase_mp(
         logger.info("[ga4-mp] skip order=%s: вже відправлено раніше", oid)
         return False
 
-    from project.ga4_ecommerce import order_allows_purchase_event, purchase_payload
+    from project.ga4_ecommerce import order_purchase_is_due, purchase_payload
 
-    if not order_allows_purchase_event(order) and not force:
+    if not order_purchase_is_due(order) and not force:
         logger.warning(
-            "[ga4-mp] skip order=%s: статус '%s' не дає права на purchase "
-            "(потрібен new/paid/shipped/completed)",
+            "[ga4-mp] skip order=%s: статус '%s' (оплата %s) ще не продаж "
+            "(картка: paid/shipped/completed; готівка: paid/completed, "
+            "див. ADS_COD_PURCHASE_STAGE)",
             oid,
             getattr(order, "status", None),
+            getattr(order, "payment_type", None),
         )
         return False
 
@@ -240,13 +250,63 @@ def send_order_purchase_mp(
     return ok
 
 
+def send_order_placed_mp(order, request=None, *, session_id: str | None = None) -> bool:
+    """Cash on delivery at checkout: `order_placed`, not `purchase`.
+
+    The parcel may never be picked up, so this is not revenue yet. Same
+    ecommerce payload as purchase, so GA4 reports still see every order; the
+    real `purchase` follows when the order becomes paid / completed
+    (order/signals.py). Keep `order_placed` out of Ads bidding (observation
+    or not imported at all).
+    """
+    oid = getattr(order, "pk", None)
+    if not mp_configured():
+        logger.warning("[ga4-mp] skip order_placed order=%s: MP не налаштовано", oid)
+        return False
+    cart = getattr(order, "cart", None)
+    if cart is None:
+        logger.warning("[ga4-mp] skip order_placed order=%s: немає кошика", oid)
+        return False
+
+    from project.ga4_ecommerce import purchase_payload
+
+    try:
+        payload = purchase_payload(order, cart)
+    except Exception as exc:
+        logger.exception("[ga4-mp] order_placed payload failed: %s", exc)
+        return False
+    sid = (
+        session_id
+        or session_id_from_request(request)
+        or (getattr(order, "ga4_session_id", "") or None)
+    )
+    return send_mp_purchase(
+        payload,
+        client_id=client_id_for_order(order, request=request),
+        session_id=sid,
+        event_name="order_placed",
+    )
+
+
+def enqueue_order_placed_mp(
+    order_id: int,
+    client_id: str | None = None,
+    session_id: str | None = None,
+) -> None:
+    """Fire `order_placed` after DB commit (non-blocking)."""
+    _enqueue(order_id, client_id, session_id, send_order_placed_mp)
+
+
 def enqueue_order_purchase_mp(
     order_id: int,
     client_id: str | None = None,
     session_id: str | None = None,
 ) -> None:
     """Fire MP purchase after DB commit (non-blocking)."""
+    _enqueue(order_id, client_id, session_id, send_order_purchase_mp)
 
+
+def _enqueue(order_id, client_id, session_id, sender) -> None:
     def _after_commit():
         close_old_connections()
         try:
@@ -264,7 +324,7 @@ def enqueue_order_purchase_mp(
                 COOKIES = {"_ga": f"GA1.1.{client_id}"} if client_id else {}
 
             req = _Req() if client_id else None
-            send_order_purchase_mp(order, request=req, session_id=session_id)
+            sender(order, request=req, session_id=session_id)
         except Exception as exc:
             logger.exception("[ga4-mp] enqueue failed: %s", exc)
             print(f"[ga4-mp] enqueue FAILED: {exc}")

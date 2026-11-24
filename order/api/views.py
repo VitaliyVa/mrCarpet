@@ -152,8 +152,11 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             # landing under "Прямі / невідомі" instead of the source that
             # actually brought the buyer.
             try:
+                from project.ad_attribution import order_fields_from_request
+                from project.ga4_ecommerce import cod_purchase_stage
                 from project.ga4_mp import (
                     client_id_from_ga_cookie,
+                    enqueue_order_placed_mp,
                     enqueue_order_purchase_mp,
                     session_id_from_request,
                 )
@@ -165,13 +168,27 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                     ids["ga4_client_id"] = cid
                 if sid:
                     ids["ga4_session_id"] = sid
+                # Ad click (gclid/gbraid/wbraid) and utm_* from the landing,
+                # kept for the Google Ads offline upload of paid orders.
+                try:
+                    ids.update(order_fields_from_request(request))
+                except Exception:
+                    pass
                 if ids:
                     Order.objects.filter(pk=order.pk).update(**ids)
 
+                # Cash on delivery is not a sale until the parcel is picked
+                # up: by default checkout sends `order_placed` and the
+                # `purchase` follows on paid/completed (order/signals.py).
                 if payment_type == Order.PAYMENT_CASH:
-                    enqueue_order_purchase_mp(
-                        order.pk, client_id=cid, session_id=sid
-                    )
+                    if cod_purchase_stage() == "order":
+                        enqueue_order_purchase_mp(
+                            order.pk, client_id=cid, session_id=sid
+                        )
+                    else:
+                        enqueue_order_placed_mp(
+                            order.pk, client_id=cid, session_id=sid
+                        )
             except Exception:
                 pass
 

@@ -1,7 +1,28 @@
+import io
+
 from django.contrib import admin
+from django.db.models import Q
+from django.http import HttpResponse
+from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import Order, PromoCodeRedemption
+
+
+class AdClickFilter(admin.SimpleListFilter):
+    title = "Клік з Google Ads"
+    parameter_name = "ad_click"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Є"), ("no", "Немає"))
+
+    def queryset(self, request, queryset):
+        has_click = ~Q(gclid="") | ~Q(gbraid="") | ~Q(wbraid="")
+        if self.value() == "yes":
+            return queryset.filter(has_click)
+        if self.value() == "no":
+            return queryset.exclude(has_click)
+        return queryset
 
 
 @admin.register(Order)
@@ -24,10 +45,13 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "payment_type",
         "free_shipping",
+        AdClickFilter,
+        "utm_source",
         "promocode",
         "city",
         "created",
     )
+    actions = ("export_ads_conversions",)
     search_fields = (
         "order_number",
         "name",
@@ -38,6 +62,7 @@ class OrderAdmin(admin.ModelAdmin):
         "address",
         "promocode_code",
         "promocode__code",
+        "gclid",
     )
     date_hierarchy = "created"
     ordering = ("-created",)
@@ -48,6 +73,14 @@ class OrderAdmin(admin.ModelAdmin):
         "updated",
         "promocode_code",
         "promocode_discount",
+        "gclid",
+        "gbraid",
+        "wbraid",
+        "ad_click_at",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "ga4_mp_sent",
     )
     list_select_related = ("promocode",)
 
@@ -96,7 +129,44 @@ class OrderAdmin(admin.ModelAdmin):
                 ),
             },
         ),
+        (
+            "Реклама: звідки прийшов покупець",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "gclid",
+                    "gbraid",
+                    "wbraid",
+                    "ad_click_at",
+                    "utm_source",
+                    "utm_medium",
+                    "utm_campaign",
+                    "ga4_mp_sent",
+                ),
+                "description": (
+                    "Заповнюється сам при оформленні. gclid потрібен, щоб "
+                    "завантажити оплачене замовлення в Google Ads як конверсію "
+                    "(дія «Вивантажити для Google Ads» у списку або команда "
+                    "export_ads_conversions). Для оплати при отриманні покупка "
+                    "йде в GA4 лише після статусу «Оплачено» чи «Виконано»."
+                ),
+            },
+        ),
     )
+
+    @admin.action(description="Вивантажити для Google Ads (CSV, лише оплачені з gclid)")
+    def export_ads_conversions(self, request, queryset):
+        from .ads_conversions import conversion_rows, write_csv
+
+        rows = conversion_rows(queryset, with_braid=False)
+        buf = io.StringIO()
+        write_csv(buf, rows)
+        stamp = timezone.now().strftime("%Y%m%d-%H%M")
+        response = HttpResponse(buf.getvalue(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            f'attachment; filename="ads-conversions-{stamp}.csv"'
+        )
+        return response
 
     @admin.display(description="Клієнт", ordering="name")
     def customer(self, obj):
