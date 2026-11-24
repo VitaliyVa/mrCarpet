@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% load blog_filters tz %}
+{% load blog_filters thumbnails tz %}
 {% block robots %}{% if is_preview %}{% include 'includes/robots_noindex.html' %}{% else %}{{ block.super }}{% endif %}{% endblock robots %}
 {% block title %}{{ article.meta_title|default:article.title }} | mr.Carpet{% endblock title %}
 {% block meta %}
@@ -9,7 +9,7 @@
 />
 {% if article.meta_keys %}<meta name="keywords" content="{{ article.meta_keys }}" />{% endif %}
 {% with published=article.published_at|default:article.created %}{% if published %}<meta property="article:published_time" content="{{ published|date:'c' }}" />{% endif %}{% endwith %}
-{% if article.updated %}<meta property="article:modified_time" content="{{ article.updated|date:'c' }}" />{% endif %}
+{% with modified=article|article_modified %}{% if modified %}<meta property="article:modified_time" content="{{ modified|date:'c' }}" />{% endif %}{% endwith %}
 {% endblock meta %}
 {% block canonical %}{{ site_url }}{{ article.get_absolute_url }}{% endblock canonical %}
 {% block og_type %}article{% endblock og_type %}
@@ -71,7 +71,8 @@
 
                 {% if article.has_image %}
                 <figure class="bl-hero__media">
-                    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />
+                    {% comment %}Resized WebP, not the 1.5k px upload. sizes also sets the shown width (CSS width:auto), so it matches the old look. Fixed 3:2 box: reading image.width opened the file on every render.{% endcomment %}
+                    {% with s480=article.image|thumb:480 s800=article.image|thumb:800 s1200=article.image|thumb:1200 %}<img src="{{ s800 }}" srcset="{{ s480 }} 480w, {{ s800 }} 800w, {{ s1200 }} 1200w" sizes="(max-width: 800px) calc(100vw - 40px), 860px" alt="{{ article.title }}" width="1200" height="800" fetchpriority="high" decoding="async" />{% endwith %}
                 </figure>
                 {% endif %}
 
@@ -106,7 +107,7 @@
                     <p class="bl-aside__title">Схожі статті</p>
                     {% for item in related %}
                     <a class="bl-aside-related__item" href="{% url 'article' item.slug %}">
-                        {% if item.has_image %}<img src="{{ item.image.url }}" alt="" width="96" height="72" loading="lazy" decoding="async">{% else %}<span class="bl-aside-related__noimg" aria-hidden="true">{{ item|article_topic_emoji }}</span>{% endif %}
+                        {% if item.has_image %}<img src="{{ item.image|thumb:240 }}" alt="" width="96" height="72" loading="lazy" decoding="async">{% else %}<span class="bl-aside-related__noimg" aria-hidden="true">{{ item|article_topic_emoji }}</span>{% endif %}
                         <span class="bl-aside-related__title">{{ item.title }}</span>
                     </a>
                     {% endfor %}
