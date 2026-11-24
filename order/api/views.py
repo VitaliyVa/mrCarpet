@@ -155,14 +155,23 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
                 from project.ga4_mp import (
                     client_id_from_ga_cookie,
                     enqueue_order_purchase_mp,
+                    session_id_from_request,
                 )
 
                 cid = client_id_from_ga_cookie(request.COOKIES.get("_ga"))
+                sid = session_id_from_request(request)
+                ids = {}
                 if cid:
-                    Order.objects.filter(pk=order.pk).update(ga4_client_id=cid)
+                    ids["ga4_client_id"] = cid
+                if sid:
+                    ids["ga4_session_id"] = sid
+                if ids:
+                    Order.objects.filter(pk=order.pk).update(**ids)
 
                 if payment_type == Order.PAYMENT_CASH:
-                    enqueue_order_purchase_mp(order.pk, client_id=cid)
+                    enqueue_order_purchase_mp(
+                        order.pk, client_id=cid, session_id=sid
+                    )
             except Exception:
                 pass
 

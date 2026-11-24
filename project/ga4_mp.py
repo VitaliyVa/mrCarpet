@@ -41,6 +41,47 @@ def client_id_from_ga_cookie(cookie_value: str | None) -> str | None:
     return None
 
 
+def session_cookie_name() -> str:
+    """GA4 keeps the session in `_ga_<measurement id without "G-">`."""
+    mid = _measurement_id()
+    if mid.upper().startswith("G-"):
+        mid = mid[2:]
+    return f"_ga_{mid}" if mid else ""
+
+
+def session_id_from_ga4_cookie(cookie_value: str | None) -> str | None:
+    """Pull the session id out of the `_ga_<ID>` cookie.
+
+    Two formats are in the wild:
+      GS1.1.1732456789.3.1.1732457000.0.0.0   → 1732456789
+      GS2.1.s1732456789$o3$g1$t1732457000$j60$l0$h0 → 1732456789
+    """
+    if not cookie_value:
+        return None
+    parts = str(cookie_value).strip().split(".")
+    if len(parts) < 3:
+        return None
+    head = parts[0].upper()
+    if head == "GS1":
+        sid = parts[2]
+    elif head.startswith("GS"):
+        first = parts[2].split("$", 1)[0]
+        sid = first[1:] if first[:1].lower() == "s" else ""
+    else:
+        return None
+    return sid if sid.isdigit() else None
+
+
+def session_id_from_request(request) -> str | None:
+    name = session_cookie_name()
+    if request is None or not name:
+        return None
+    try:
+        return session_id_from_ga4_cookie(request.COOKIES.get(name))
+    except Exception:
+        return None
+
+
 def client_id_for_order(order, request=None) -> str:
     if request is not None:
         cid = client_id_from_ga_cookie(request.COOKIES.get("_ga"))
@@ -51,14 +92,21 @@ def client_id_for_order(order, request=None) -> str:
     return f"{int(digest[:8], 16)}.{int(digest[8:16], 16)}"
 
 
-def _mp_payload_from_purchase(purchase: dict, client_id: str) -> dict:
+def _mp_payload_from_purchase(
+    purchase: dict, client_id: str, session_id: str | None = None
+) -> dict:
     params: dict[str, Any] = {
         "currency": purchase.get("currency") or "UAH",
         "transaction_id": str(purchase.get("transaction_id") or ""),
         "value": float(purchase.get("value") or 0),
         "engagement_time_msec": 1,
-        "session_id": str(purchase.get("transaction_id") or "")[-10:],
     }
+    # Only the buyer's real GA4 session ties the sale to the source that
+    # brought them. This used to be a slice of the order number: GA4 saw a
+    # session it had never met and filed every sale under "Unassigned",
+    # which leaves ad platforms nothing to optimise against.
+    if session_id:
+        params["session_id"] = str(session_id)
     if purchase.get("shipping") is not None:
         params["shipping"] = float(purchase["shipping"] or 0)
     if purchase.get("payment_type"):
@@ -89,6 +137,7 @@ def send_mp_purchase(
     purchase: dict,
     *,
     client_id: str,
+    session_id: str | None = None,
     debug: bool = False,
 ) -> bool:
     """POST purchase to MP. Returns True on HTTP 2xx (debug also checks validation)."""
@@ -104,7 +153,7 @@ def send_mp_purchase(
         {"measurement_id": _measurement_id(), "api_secret": _api_secret()}
     )
     url = f"{MP_DEBUG if debug else MP_COLLECT}?{qs}"
-    body = _mp_payload_from_purchase(purchase, client_id)
+    body = _mp_payload_from_purchase(purchase, client_id, session_id)
     try:
         resp = requests.post(url, json=body, timeout=MP_TIMEOUT)
         if debug:
@@ -130,7 +179,13 @@ def send_mp_purchase(
         return False
 
 
-def send_order_purchase_mp(order, request=None, *, force: bool = False) -> bool:
+def send_order_purchase_mp(
+    order,
+    request=None,
+    *,
+    session_id: str | None = None,
+    force: bool = False,
+) -> bool:
     """Build payload from order.cart and send once (dedupe via ga4_mp_sent).
 
     Кожна відмова логується: без цього неможливо зрозуміти, чому покупка
@@ -167,7 +222,14 @@ def send_order_purchase_mp(order, request=None, *, force: bool = False) -> bool:
         return False
 
     client_id = client_id_for_order(order, request=request)
-    ok = send_mp_purchase(purchase, client_id=client_id, debug=False)
+    sid = (
+        session_id
+        or session_id_from_request(request)
+        or (getattr(order, "ga4_session_id", "") or None)
+    )
+    ok = send_mp_purchase(
+        purchase, client_id=client_id, session_id=sid, debug=False
+    )
     if ok and hasattr(order, "ga4_mp_sent"):
         try:
             type(order).objects.filter(pk=order.pk, ga4_mp_sent=False).update(
@@ -178,7 +240,11 @@ def send_order_purchase_mp(order, request=None, *, force: bool = False) -> bool:
     return ok
 
 
-def enqueue_order_purchase_mp(order_id: int, client_id: str | None = None) -> None:
+def enqueue_order_purchase_mp(
+    order_id: int,
+    client_id: str | None = None,
+    session_id: str | None = None,
+) -> None:
     """Fire MP purchase after DB commit (non-blocking)."""
 
     def _after_commit():
@@ -198,7 +264,7 @@ def enqueue_order_purchase_mp(order_id: int, client_id: str | None = None) -> No
                 COOKIES = {"_ga": f"GA1.1.{client_id}"} if client_id else {}
 
             req = _Req() if client_id else None
-            send_order_purchase_mp(order, request=req)
+            send_order_purchase_mp(order, request=req, session_id=session_id)
         except Exception as exc:
             logger.exception("[ga4-mp] enqueue failed: %s", exc)
             print(f"[ga4-mp] enqueue FAILED: {exc}")

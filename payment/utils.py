@@ -194,6 +194,10 @@ def create_payment(request, response):
         # The only purchase event for card payments. The client_id was stored
         # at checkout — passing it is what keeps the sale attributed to the
         # session that produced it rather than to a synthetic visitor.
-        enqueue_order_purchase_mp(order.pk, client_id=order.ga4_client_id or None)
+        enqueue_order_purchase_mp(
+            order.pk,
+            client_id=order.ga4_client_id or None,
+            session_id=order.ga4_session_id or None,
+        )
 
     return payment

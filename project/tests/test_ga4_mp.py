@@ -9,9 +9,13 @@ from unittest.mock import patch
 from django.test import override_settings
 
 from project.ga4_mp import (
+    _mp_payload_from_purchase,
     client_id_from_ga_cookie,
     mp_configured,
     send_mp_purchase,
+    session_cookie_name,
+    session_id_from_ga4_cookie,
+    session_id_from_request,
 )
 
 
@@ -109,8 +113,8 @@ class CardAttributionTests(TestCase):
         from payment import utils
 
         source = inspect.getsource(utils)
-        self.assertIn("enqueue_order_purchase_mp(order.pk, client_id=", source)
-        self.assertIn("ga4_client_id", source)
+        self.assertIn("client_id=order.ga4_client_id", source)
+        self.assertIn("session_id=order.ga4_session_id", source)
 
     def test_checkout_stores_the_client_id_for_both_payment_types(self):
         import inspect
@@ -119,7 +123,7 @@ class CardAttributionTests(TestCase):
 
         source = inspect.getsource(views)
         captured = source.index("cid = client_id_from_ga_cookie")
-        stored = source.index("ga4_client_id=cid")
+        stored = source.index('ids["ga4_client_id"] = cid')
         self.assertLess(captured, stored)
 
         # The whole point: nothing may gate the store on payment type.
@@ -132,3 +136,46 @@ class CardAttributionTests(TestCase):
             "storing the client_id must not be inside the cash-only branch, "
             "otherwise card orders never get one",
         )
+
+
+class SessionAttributionTests(TestCase):
+    """
+    A purchase must carry the buyer's real GA4 session id.
+
+    It used to send the last ten digits of the order number. GA4 could not
+    match that to any session and filed every sale under "Unassigned".
+    """
+
+    def test_parses_gs1_cookie(self):
+        self.assertEqual(
+            session_id_from_ga4_cookie("GS1.1.1732456789.3.1.1732457000.0.0.0"),
+            "1732456789",
+        )
+
+    def test_parses_gs2_cookie(self):
+        self.assertEqual(
+            session_id_from_ga4_cookie(
+                "GS2.1.s1732456789$o3$g1$t1732457000$j60$l0$h0"
+            ),
+            "1732456789",
+        )
+
+    def test_rejects_garbage(self):
+        for bad in (None, "", "GA1.1.1.2", "GS2.1.x123", "GS1.1.abc.1"):
+            self.assertIsNone(session_id_from_ga4_cookie(bad))
+
+    @override_settings(GA4_MEASUREMENT_ID="G-L7819RN5QC")
+    def test_cookie_name_and_request(self):
+        self.assertEqual(session_cookie_name(), "_ga_L7819RN5QC")
+        req = SimpleNamespace(COOKIES={"_ga_L7819RN5QC": "GS2.1.s1700000000$o1"})
+        self.assertEqual(session_id_from_request(req), "1700000000")
+        self.assertIsNone(session_id_from_request(None))
+
+    def test_payload_uses_real_session_only(self):
+        purchase = {"transaction_id": "MC-000123456789", "value": 1}
+        with_sid = _mp_payload_from_purchase(purchase, "1.2", "1700000000")
+        self.assertEqual(
+            with_sid["events"][0]["params"]["session_id"], "1700000000"
+        )
+        without = _mp_payload_from_purchase(purchase, "1.2", None)
+        self.assertNotIn("session_id", without["events"][0]["params"])

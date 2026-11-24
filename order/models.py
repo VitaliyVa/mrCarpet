@@ -163,6 +163,17 @@ class Order(AbstractCreatedUpdated):
             "прив'язалась до сесії, з якої людина прийшла."
         ),
     )
+    ga4_session_id = models.CharField(
+        verbose_name="GA4 session_id",
+        max_length=32,
+        blank=True,
+        default="",
+        editable=False,
+        help_text=(
+            "Значення з куки _ga_<ID> на момент оформлення. Без нього GA4 "
+            "кладе покупку в «Unassigned», а не в джерело, що привело покупця."
+        ),
+    )
 
     class Meta:
         verbose_name = "Замовлення"
