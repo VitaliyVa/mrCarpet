@@ -226,9 +226,21 @@ $bl-line: #ece5dc;
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
 
+    // Fixed frame: a tall (portrait) cover used to stretch the whole card
+    // to its own height. The photo fills the frame and is centred instead.
     .bl-card__media {
-      aspect-ratio: auto;
-      min-height: 360px;
+      position: relative;
+      aspect-ratio: 3 / 2;
+      min-height: 0;
+
+      img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
     }
 
     .bl-card__body {
@@ -264,9 +276,6 @@ $bl-line: #ece5dc;
     &--featured {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 
-      .bl-card__media {
-        min-height: 300px;
-      }
 
       .bl-card__body {
         padding: 28px;
