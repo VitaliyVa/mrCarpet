@@ -7,12 +7,15 @@ import equals from "validator/lib/equals";
 
 const validator = { isEmail, isNumeric, isStrongPassword, equals };
 import "./index.scss";
+import { trackFormError } from "../../../utils/analytics";
 
 export default function validation(validation_btn) {
   // validation_btn - кнопка форми яка відправляє дані
 
   // змінна для зберігання помилок
   let count_error = 0;
+  // типи полів з помилкою (для аналітики: лише назви, без значень)
+  const failed_types = [];
 
   // змінна де зберігаються всі типи інпутів з текстом помилки та перевірками
   let input_type = {
@@ -199,6 +202,7 @@ export default function validation(validation_btn) {
         validation_btn.removeAttribute("disabled");
       } else {
         count_error += 1;
+        failed_types.push(element.name || type);
 
         create_error(container, input_type[type].error.ua);
         validation_btn.setAttribute("disabled", "");
@@ -239,6 +243,12 @@ export default function validation(validation_btn) {
   if (count_error == 0) {
     return true;
   } else {
+    if (validation_btn) {
+      const formName =
+        validation_btn.dataset.formName ||
+        String(validation_btn.className || "form").split(" ")[0].replace(/-btn$|_btn$/, "");
+      trackFormError(formName, failed_types);
+    }
     return false;
   }
 

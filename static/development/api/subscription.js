@@ -23,10 +23,8 @@ export const subscribeToNewsletter = async (email) => {
     const payload = response?.data || {};
     // Уже підписаний — все одно віддаємо промокод у модалку
     if (payload.welcome_promocode) {
-      trackEvent("generate_lead", {
-        lead_type: "newsletter",
-        method: "already_subscribed",
-      });
+      // Not a new lead: the address was already on the list.
+      trackEvent("newsletter_already_subscribed", {});
       return {
         ...payload,
         already_subscribed: true,

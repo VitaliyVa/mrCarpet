@@ -1,7 +1,7 @@
 import { instance } from "./instance";
 import { showSuccess, showError } from "../utils/notifications";
 import { updateCountBadge } from "../utils/updateCountBadge";
-import { trackEcommerce, CURRENCY } from "../utils/analytics";
+import { trackEcommerce, itemsValue, CURRENCY } from "../utils/analytics";
 
 export const addToFavorite = async (productId, onSucces, analyticsMeta) => {
   try {
@@ -22,6 +22,7 @@ export const addToFavorite = async (productId, onSucces, analyticsMeta) => {
     if (item.item_id) {
       trackEcommerce("add_to_wishlist", {
         currency: CURRENCY,
+        value: itemsValue([item]),
         items: [item],
       });
     }
@@ -57,6 +58,7 @@ export const removeFromFavorite = async (productId, onSucces, analyticsMeta) => 
     if (item.item_id) {
       trackEcommerce("remove_from_wishlist", {
         currency: CURRENCY,
+        value: itemsValue([item]),
         items: [item],
       });
     }

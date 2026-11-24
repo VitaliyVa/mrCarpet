@@ -13,7 +13,7 @@ export const sendContactForm = async (values) => {
     trackEvent("generate_lead", {
       lead_type: "contact_form",
       method: "contact",
-    });
+    }, { beforeUnload: true });
     showSuccess("Повідомлення успішно відправлено!");
     setTimeout(() => window.location.reload(), 1500);
 

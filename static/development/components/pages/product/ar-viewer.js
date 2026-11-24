@@ -1,6 +1,17 @@
 /**
  * Product 3D / AR modal — lazy-loads model-viewer only on open.
  */
+import { trackEvent } from "../../../utils/analytics";
+
+function trackAr(name, extra = {}) {
+  const root = document.querySelector(".product[data-catalog-product-id]");
+  trackEvent(name, {
+    item_id: root?.dataset.catalogProductId || "",
+    size_label: getActiveSizeLabel() || "",
+    ...extra,
+  });
+}
+
 const MODEL_VIEWER_SRC =
   "https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
 
@@ -655,6 +666,7 @@ function ensureModelViewer() {
 }
 
 async function launchAr() {
+  trackAr("ar_launch");
   hideQr();
   setStatus("");
   const mv = ensureModelViewer();
@@ -755,6 +767,7 @@ async function openModal(opts = {}) {
 
   modal.hidden = false;
   document.body.classList.add("product-ar-modal-open");
+  trackAr("ar_open", { trigger: opts.ar ? "link" : "button" });
   setLoading(true);
   setStatus("");
   hideQr();
@@ -777,6 +790,7 @@ async function openModal(opts = {}) {
     autoArRequested = Boolean(opts.ar);
     await loadSizeIntoViewer(sizeLabel);
   } catch (err) {
+    trackAr("ar_error", { error_message: String(err?.message || err) });
     setStatus(err.message || String(err), true);
     setLoading(false);
   }
