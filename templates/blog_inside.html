@@ -30,7 +30,7 @@
 {% endblock styles %}{% block content %}
 {% article_parts article as parts %}
 {% with topic=article|article_topic date=article.published_at|default:article.created %}
-<article class="blog-inside bl-article first_section">
+<article class="blog-inside bl-article first_section" data-article-slug="{{ article.slug }}">
     <div class="container">
         {% if is_preview %}
         <p class="bl-preview-note" style="margin:0 0 16px;padding:10px 14px;border-radius:10px;background:#f6f1ea;color:#2f2a26;font-size:15px;">

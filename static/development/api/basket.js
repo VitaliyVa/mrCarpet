@@ -39,8 +39,6 @@ export const addToBasket = async (product, onSucces, analyticsMeta) => {
         value: itemsValue([safeItem]),
         items: [safeItem],
       });
-    } else if (typeof console !== "undefined" && console.warn) {
-      console.warn("[ga4] add_to_cart skipped: empty item_id", product);
     }
 
     showSuccess(data?.message || "Товар додано в кошик");

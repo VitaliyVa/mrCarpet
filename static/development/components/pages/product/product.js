@@ -1,6 +1,6 @@
 import { addToBasket } from "../../../api/basket";
 import { addToFavorite, removeFromFavorite } from "../../../api/favorites";
-import { itemFromProductEl } from "../../../utils/analytics";
+import { itemFromProductEl, parseMoney } from "../../../utils/analytics";
 import { minus, plus } from "../../module/shop_scripts/basket_action";
 import { instance } from "../../../api/instance";
 import Choices from "choices.js";
@@ -237,6 +237,15 @@ document.addEventListener("click", async ({ target }) => {
     const analyticsItem = itemFromProductEl(product, {
       quantity: basketData.quantity,
     });
+    if (basketData.length && customSizeBlock) {
+      // Cut-to-length rug: the shown price is per m², the line is width × length.
+      const widthM = parseMoney(
+        customSizeBlock.querySelector(".custom-size-width-select")?.value
+      );
+      analyticsItem.price =
+        Math.round(analyticsItem.price * widthM * basketData.length * 100) / 100;
+      analyticsItem.item_variant = `${basketData.length}м`;
+    }
     const basketProduct = await addToBasket(basketData, null, analyticsItem);
 
     console.log(basketProduct);

@@ -7,6 +7,33 @@ const searchBodyResults = searchBody?.querySelector(".header__search-items");
 
 let searchTimer = null;
 let lastTrackedQuery = "";
+let commitTimer = null;
+let pendingSearch = null;
+
+// Results are a product list for select_item (GA4 list attribution).
+if (searchBodyResults) {
+  searchBodyResults.dataset.gaListId = "live_search";
+  searchBodyResults.dataset.gaListName = "Пошук у шапці";
+}
+
+/**
+ * One `search` per query the visitor settled on, not one per keystroke:
+ * sent after 1.5 s without typing, on a result click or when leaving the field.
+ * results_count = 0 is the "searched and found nothing" signal.
+ */
+function commitSearch() {
+  clearTimeout(commitTimer);
+  if (!pendingSearch) return;
+  const { query, count } = pendingSearch;
+  pendingSearch = null;
+  if (query === lastTrackedQuery) return;
+  lastTrackedQuery = query;
+  trackEvent("search", {
+    search_term: query.slice(0, 100),
+    results_count: count,
+    search_type: "live",
+  });
+}
 
 /** Escape text for safe use inside HTML attribute/text contexts. */
 function escapeHtml(value) {
@@ -86,16 +113,17 @@ const onSearch = async () => {
 
   renderSearchResults(findedProducts);
 
-  if (query.length >= 2 && query !== lastTrackedQuery) {
-    lastTrackedQuery = query;
-    trackEvent("search", {
-      search_term: query.slice(0, 100),
-      results_count: findedProducts.length,
-    });
+  if (query.length >= 2) {
+    pendingSearch = { query, count: findedProducts.length };
+    clearTimeout(commitTimer);
+    commitTimer = setTimeout(commitSearch, 1500);
   }
 };
 
 if (searchInput) {
+  searchInput.addEventListener("blur", commitSearch);
+  searchBodyResults?.addEventListener("pointerdown", commitSearch, true);
+  window.addEventListener("pagehide", commitSearch);
   searchInput.addEventListener("input", () => {
     searchBody?.classList.add("active");
     clearTimeout(searchTimer);

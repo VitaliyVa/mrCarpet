@@ -2,6 +2,11 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { getNovaPostData } from "./nova-post";
 import { showSuccess, showError } from "./notification";
+import {
+  paymentTypeFromInput,
+  trackCheckoutSubmit,
+  trackFormError,
+} from "../../../utils/analytics";
 
 function getScrollTarget(field) {
   if (!field) return null;
@@ -66,26 +71,31 @@ function validateOrderForm() {
 
   const checks = [
     {
+      key: "city",
       field: cityInput,
       invalid: () => !cityInput?.value.trim(),
       message: "Будь ласка, оберіть місто",
     },
     {
+      key: "warehouse",
       field: warehouseSelect,
       invalid: () => !warehouseSelect?.value,
       message: "Будь ласка, оберіть відділення",
     },
     {
+      key: "name",
       field: nameInput,
       invalid: () => !nameInput?.value.trim(),
       message: "Будь ласка, введіть ваше ім'я",
     },
     {
+      key: "email",
       field: emailInput,
       invalid: () => !isValidEmail(emailInput?.value.trim() || ""),
       message: "Будь ласка, введіть коректний email",
     },
     {
+      key: "phone",
       field: phoneInput,
       invalid: () => {
         const phoneValue = phoneInput?.value.replace(/\D/g, "") || "";
@@ -96,16 +106,20 @@ function validateOrderForm() {
   ];
 
   let firstInvalid = null;
+  const invalidKeys = [];
 
-  checks.forEach(({ field, invalid, message }) => {
+  checks.forEach(({ key, field, invalid, message }) => {
     if (!field || !invalid()) return;
     setFieldError(field, message);
+    invalidKeys.push(key);
     if (!firstInvalid) {
       firstInvalid = field;
     }
   });
 
   if (firstInvalid) {
+    // Which fields stop people at checkout (names only, never the values).
+    trackFormError("checkout", invalidKeys);
     scrollToField(firstInvalid);
     return false;
   }
@@ -248,6 +262,7 @@ export async function submitOrder() {
     warehouseTitle.toLowerCase() === cityName.toLowerCase()
   ) {
     showError("Оберіть відділення Нової Пошти");
+    trackFormError("checkout", ["warehouse"]);
     scrollToField(document.getElementById("nova-post-warehouse-select"));
     return;
   }
@@ -270,6 +285,8 @@ export async function submitOrder() {
     payment_type: paymentType,
     promocode: localStorage.getItem("applied_promocode") || "",
   };
+
+  trackCheckoutSubmit(paymentTypeFromInput(paymentMethod));
 
   // Показуємо індикатор завантаження
   const submitBtn = document.querySelector(".basket__to-order-btn");
@@ -329,6 +346,11 @@ export async function submitOrder() {
     // Обробляємо помилки валідації від сервера
     if (error.response && error.response.data) {
       const serverErrors = error.response.data;
+      trackFormError(
+        "checkout_server",
+        typeof serverErrors === "object" ? Object.keys(serverErrors) : ["unknown"],
+        { http_status: error.response.status || 0 }
+      );
       
       // Показуємо помилки від сервера
       if (serverErrors.name) {
@@ -351,6 +373,7 @@ export async function submitOrder() {
         showError(serverErrors.error || serverErrors.detail);
       }
     } else {
+      trackFormError("checkout_server", ["network"]);
       showError("Виникла помилка при оформленні замовлення. Спробуйте ще раз.");
     }
     

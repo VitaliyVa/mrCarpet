@@ -200,6 +200,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       closeModal();
       const data = err?.response?.data;
+      window.mrAnalytics?.trackFormError?.(
+        "stock_inquiry",
+        data && typeof data === "object" ? Object.keys(data) : ["network"]
+      );
       showError(
         data?.message ||
           data?.email?.[0] ||

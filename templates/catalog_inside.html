@@ -206,7 +206,7 @@
                     </button>
                 </div>
             </div>
-            <div class="catalog_section_bottom cart_item_wrapper{% if not products %} empty-catalog{% endif %}">
+            <div class="catalog_section_bottom cart_item_wrapper{% if not products %} empty-catalog{% endif %}"{% if categorie %} data-ga-list-id="category_{{ categorie.slug }}" data-ga-list-name="Категорія: {{ categorie.title }}" data-ga-item-category="{{ categorie.title }}"{% else %} data-ga-list-id="collection" data-ga-list-name="{{ collection_title|default:'Вся колекція' }}"{% endif %} data-ga-page="{{ products.number|default:1 }}" data-ga-results="{{ products.paginator.count|default:0 }}">
 
                 {% if products %}
                 {% for product in products %}
@@ -334,6 +334,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 isUpdatingFromSlider = true;
                 priceMinInput.value = Math.round(values[0]);
                 priceMaxInput.value = Math.round(values[1]);
+                // Lets the bundle's filter_use see a slider move (input listener above ignores it).
+                priceMinInput.dispatchEvent(new Event('change', { bubbles: true }));
                 setTimeout(() => { isUpdatingFromSlider = false; }, 10);
             });
             
@@ -404,11 +406,17 @@ function applyFilters() {
     if (form) {
         try {
             const params = new URLSearchParams(new FormData(form));
-            if (window.mrAnalytics && typeof window.mrAnalytics.trackEvent === 'function') {
-                window.mrAnalytics.trackEvent('filter_apply', {
-                    filter_params: params.toString().slice(0, 200),
-                    item_list_id: window.location.pathname,
+            if (window.mrTrack) {
+                var names = [];
+                params.forEach(function (v, k) {
+                    if (v !== '' && names.indexOf(k) < 0) names.push(k);
                 });
+                window.mrTrack('filter_apply', {
+                    filter_names: names.join(','),
+                    filter_count: names.length,
+                    filter_params: decodeURIComponent(params.toString()).slice(0, 100),
+                    item_list_id: window.location.pathname,
+                }, { beforeUnload: true });
             }
         } catch (e) {}
         form.submit();
@@ -420,7 +428,14 @@ function applyFilters() {
 // Функція для встановлення сортування (працює одразу)
 function setSort(sortValue) {
     const urlParams = new URLSearchParams(window.location.search);
-    
+    if (window.mrTrack) {
+        window.mrTrack('sort_change', {
+            sort_value: sortValue || 'default',
+            sort_previous: urlParams.get('sort') || 'default',
+            item_list_id: window.location.pathname,
+        }, { beforeUnload: true });
+    }
+
     if (sortValue) {
         urlParams.set('sort', sortValue);
     } else {
@@ -474,6 +489,9 @@ function resetFilters() {
         if (priceMaxLabel) priceMaxLabel.textContent = priceMax.value + ' грн';
     }
     
+    if (window.mrTrack) {
+        window.mrTrack('filter_reset', { item_list_id: window.location.pathname }, { beforeUnload: true });
+    }
     // Перенаправляємо на чисту сторінку каталогу
     const currentUrl = window.location.pathname;
     window.location.href = currentUrl;

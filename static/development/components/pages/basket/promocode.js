@@ -1,6 +1,7 @@
 import "./promocode.scss";
 import { instance } from "../../../api/instance";
 import { showSuccess, showError } from "./notification";
+import { trackEvent } from "../../../utils/analytics";
 import { goToNewsletterSubscribe } from "../../common_components/footer/subscription";
 
 function positionPromoTip(anchor, tooltip) {
@@ -152,7 +153,13 @@ function initPromoTip() {
 }
 
 // Функціональність для промокоду
+let promocodeBound = false;
+
 export function initPromocode() {
+  // Both basket/index.js and basket/checkout.js call this from one bundle:
+  // two click listeners sent every code twice (two requests, two toasts).
+  if (promocodeBound) return;
+  promocodeBound = true;
   console.log("initPromocode called"); // Логування
   initPromoTip();
 
@@ -201,6 +208,13 @@ export function initPromocode() {
             // Зберігаємо промокод в localStorage для подальшого використання
             localStorage.setItem('applied_promocode', promocode);
             
+            trackEvent("promo_applied", {
+              coupon: promocode.toUpperCase().slice(0, 40),
+              discount: Number(data.discount_amount) || 0,
+              discount_percent: Number(data.discount_percent) || 0,
+              page_type: window.__mrPageType || "",
+            });
+
             // Змінюємо вигляд кнопки
             promocodeButton.textContent = "Застосовано";
             promocodeButton.classList.add("applied");
@@ -211,6 +225,11 @@ export function initPromocode() {
           
           // Показуємо повідомлення про помилку
           const errorMessage = response?.data?.error || "Помилка при перевірці промокоду";
+          // Not the typed text: a wrong "code" is often a phone or a name.
+          trackEvent("promo_failed", {
+            reason: String(errorMessage).slice(0, 100),
+            http_status: response?.status || 0,
+          });
           showError(errorMessage);
           
           // Повертаємо кнопку в початковий стан

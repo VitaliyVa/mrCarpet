@@ -7,7 +7,12 @@ import {
   plus,
 } from "../../module/shop_scripts/basket_action";
 import { initPromocode, restorePromocode } from "./promocode";
-import { itemFromProductEl, parseMoney } from "../../../utils/analytics";
+import {
+  itemFromProductEl,
+  itemsValue,
+  parseMoney,
+  trackEcommerce,
+} from "../../../utils/analytics";
 
 console.log("Basket index.js loaded"); // Логування
 
@@ -32,7 +37,31 @@ document.addEventListener("click", ({ target }) => {
       if (basketProduct) {
         // Використовуємо total_price з серіалізатора, який вже містить правильну ціну
         productTotalPrice.textContent = basketProduct.total_price;
+        trackQuantityChange(basketProduct);
       }
+    };
+
+    // Quantity +/- in the cart is add_to_cart / remove_from_cart for the
+    // difference, priced per unit from the server line total.
+    const trackQuantityChange = (basketProduct) => {
+      const before = Number(product.dataset.quantity) || 1;
+      const after = Number(basketProduct.quantity) || before;
+      const lineTotal = parseMoney(basketProduct.total_price);
+      product.dataset.quantity = String(after);
+      product.dataset.price = String(lineTotal);
+      const diff = after - before;
+      if (!diff) return;
+      const unit = after ? lineTotal / after : 0;
+      const item = itemFromProductEl(product, {
+        quantity: Math.abs(diff),
+        price: unit,
+        item_variant: product.dataset.itemVariant || "",
+      });
+      if (!item?.item_id) return;
+      trackEcommerce(diff > 0 ? "add_to_cart" : "remove_from_cart", {
+        value: itemsValue([item]),
+        items: [item],
+      });
     };
 
     if (deleteButton) {

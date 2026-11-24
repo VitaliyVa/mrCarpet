@@ -1,6 +1,17 @@
 import { instance } from "./instance";
 import { showLoader, hideLoader } from "../components/module/form_action";
 import { showSuccess, showError } from "../utils/notifications";
+import { trackEvent, trackFormError } from "../utils/analytics";
+
+/** DRF error keys = field names (never the values). */
+function errorFields(error) {
+  const data = error?.response?.data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const keys = Object.keys(data);
+    if (keys.length) return keys;
+  }
+  return [error?.response ? `http_${error.response.status}` : "network"];
+}
 
 function extractErrorMessage(error, fallback = "Сталася помилка") {
   const data = error?.response?.data;
@@ -62,12 +73,14 @@ export const loginUser = async (values) => {
     const { data } = await instance.post("/users/user_login/", values);
 
     hideLoader();
+    trackEvent("login", { method: "email" }, { beforeUnload: true });
     closeAuthModal(".login-modal");
     window.location.reload();
 
     return data;
   } catch (error) {
     hideLoader();
+    trackFormError("login", errorFields(error));
     showError(
       translateAuthMessage(extractErrorMessage(error, "Помилка авторизації"))
     );
@@ -81,6 +94,7 @@ export const registerUser = async (values) => {
     const { data } = await instance.post("/users/register/", values);
 
     hideLoader();
+    trackEvent("sign_up", { method: "email" }, { beforeUnload: true });
     closeAuthModal(".register-modal");
     showSuccess("Реєстрація успішна!");
     setTimeout(() => window.location.reload(), 1200);
@@ -88,6 +102,7 @@ export const registerUser = async (values) => {
     return data;
   } catch (error) {
     hideLoader();
+    trackFormError("register", errorFields(error));
     showError(
       translateAuthMessage(extractErrorMessage(error, "Помилка реєстрації"))
     );

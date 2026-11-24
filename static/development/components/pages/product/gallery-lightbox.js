@@ -1,6 +1,7 @@
 import PhotoSwipeLightbox from "photoswipe/dist/photoswipe-lightbox.esm.js";
 import PhotoSwipe from "photoswipe/dist/photoswipe.esm.js";
 import "photoswipe/dist/photoswipe.css";
+import { trackEvent } from "../../../utils/analytics";
 
 function getMainImageSlides() {
   return Array.from(
@@ -150,6 +151,13 @@ export function initProductGalleryLightbox(mainSwiper) {
 
     lightbox.options.dataSource = dataSource;
     lightbox.loadAndOpen(index);
+
+    const product = document.querySelector(".product[data-catalog-product-id]");
+    trackEvent("gallery_open", {
+      item_id: product?.dataset.catalogProductId || "",
+      image_index: index,
+      image_count: dataSource.length,
+    });
   };
 
   galleryRoot.addEventListener("click", (event) => {

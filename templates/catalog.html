@@ -50,7 +50,7 @@
         />
       </div>
     </div>
-    <div class="catalog_section_bottom cart_item_wrapper">
+    <div class="catalog_section_bottom cart_item_wrapper" data-ga-list-id="catalog_{{ category.slug }}" data-ga-list-name="Каталог: {{ category.title }}" data-ga-item-category="{{ category.title }}">
       {% comment %} Preview only: every category used to render all of its products here
          (~590 KB of HTML, 300+ images). The category page has the full list. {% endcomment %}
       {% for product in category.products.all|slice:":8" %}

@@ -174,7 +174,7 @@
 </section>
 {% endblock content %}{% block scripts %}
 <script src="/static/source/pages/basket/index.js?v={{ static_v }}"></script>
-<script src="/static/development/pages/promocode.js?v={{ static_v }}"></script>
+{# development/pages/promocode.js used to load here as a classic script: it starts with `import`, so it only threw a SyntaxError on every cart view. The bundle's promocode.js does the work. #}
 {% with ga4_event_name="view_cart" %}
 {% include "includes/ga4_cart_event.html" %}
 {% endwith %}

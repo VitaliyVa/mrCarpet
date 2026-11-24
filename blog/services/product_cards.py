@@ -77,13 +77,16 @@ def build_card(product) -> dict | None:
 
     sized = [a for a in attrs if not a.custom_attribute and a.price]
     in_stock = any(a.in_stock for a in attrs)
+    variant = ""
 
     if sized:
         # Cheapest size someone can buy now; fall back to all sizes when
         # nothing is in stock so the card still says what it costs.
         pool = [a for a in sized if a.in_stock] or sized
         cheapest = min(pool, key=lambda a: a.get_total_price())
-        price = _format_price(cheapest.get_total_price())
+        price_value = cheapest.get_total_price()
+        variant = str(cheapest.size) if getattr(cheapest, "size_id", None) else ""
+        price = _format_price(price_value)
         unit = "грн"
         old_price = _format_price(cheapest.price) if cheapest.discount else ""
         discount = max((a.discount or 0) for a in pool)
@@ -95,14 +98,23 @@ def build_card(product) -> dict | None:
         custom = next((a for a in attrs if a.custom_attribute and a.custom_price), None)
         if custom is None:
             return None
-        price = _format_price(custom.custom_price)
+        price_value = custom.custom_price
+        price = _format_price(price_value)
         unit = "грн/м²"
         old_price = ""
         discount = 0
         discount_upto = False
         from_label = True
 
+    try:
+        ga_price = round(float(price_value), 2)
+    except (TypeError, ValueError):
+        ga_price = 0.0
     return {
+        # GA4 item fields (same shape as project/ga4_ecommerce.py).
+        "id": product.pk,
+        "ga_price": f"{ga_price:.2f}",
+        "ga_variant": variant,
         "title": product.title,
         "url": product.get_absolute_url(),
         "image": _image_url(product),
@@ -123,7 +135,9 @@ def cards_for(slugs: list[str]) -> list[dict]:
 
     found = {
         p.slug: p
-        for p in Product.objects.filter(slug__in=slugs).prefetch_related("product_attr")
+        for p in Product.objects.filter(slug__in=slugs).prefetch_related(
+            "product_attr", "product_attr__size"
+        )
     }
     cards = []
     for slug in slugs:  # keep the author's order

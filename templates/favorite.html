@@ -28,7 +28,7 @@
       </a>
     </div>
 
-    <div class="favorite__items cart_item_wrapper" style="{% if favourites|length == 0 %}display: none;{% endif %}">
+    <div class="favorite__items cart_item_wrapper" data-ga-list-id="favourites" data-ga-list-name="Обране" style="{% if favourites|length == 0 %}display: none;{% endif %}">
       {% for product in favourites %}
       <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
         {% include 'includes/products.html' %}
