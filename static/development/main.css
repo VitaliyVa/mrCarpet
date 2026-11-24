@@ -3,7 +3,8 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("../utils/fonts/FuturaPT-Bold.ttf") format("truetype");
+  src: url("../utils/fonts/FuturaPT-Bold.woff2") format("woff2"),
+    url("../utils/fonts/FuturaPT-Bold.ttf") format("truetype");
 }
 
 @font-face {
@@ -11,7 +12,8 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("../utils/fonts/FuturaPT-Medium.ttf") format("truetype");
+  src: url("../utils/fonts/FuturaPT-Medium.woff2") format("woff2"),
+    url("../utils/fonts/FuturaPT-Medium.ttf") format("truetype");
 }
 
 @font-face {
@@ -19,5 +21,6 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../utils/fonts/FuturaPT-Book.ttf") format("truetype");
+  src: url("../utils/fonts/FuturaPT-Book.woff2") format("woff2"),
+    url("../utils/fonts/FuturaPT-Book.ttf") format("truetype");
 }
