@@ -1,3 +1,6 @@
+{% load thumbnails %}
+{% comment %} Menu pictures carry data-defer-src: they sit in opacity:0 dropdowns that lazy-loading
+   still counts as on screen, so _base.html swaps them in after load / first interaction. {% endcomment %}
 <header class="header">
   <div class="container">
     <div class="header_top_panel__block">
@@ -116,8 +119,9 @@
                 >
                 <span class="header_bottom_panel_catalog_content_item_img">
                   <img
-                    src="/static/utils/assets/catalog_item/all-collection.webp"
-                    alt="Вся колекція"
+                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                    data-defer-src="/static/utils/assets/catalog_item/all-collection.webp"
+                    alt=""
                     width="80"
                     height="80"
                     loading="lazy"
@@ -137,8 +141,9 @@
                 >
                 <span class="header_bottom_panel_catalog_content_item_img">
                   <img
-                    src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
-                    alt="{{ category.title }}"
+                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                    data-defer-src="{% if category.image %}{{ category.image|thumb:240 }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+                    alt=""
                     width="80"
                     height="80"
                     loading="lazy"
@@ -444,8 +449,9 @@
             >
             <span class="catalog_item_img">
               <img
-                src="/static/utils/assets/catalog_item/all-collection.webp"
-                alt="Вся колекція"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                data-defer-src="/static/utils/assets/catalog_item/all-collection.webp"
+                alt=""
                 width="280"
                 height="280"
                 loading="lazy"
@@ -463,8 +469,9 @@
             >
             <span class="catalog_item_img">
               <img
-                src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
-                alt="{{ category.title }}"
+                src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                data-defer-src="{% if category.image %}{{ category.image|thumb:240 }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+                alt=""
                 width="280"
                 height="280"
                 loading="lazy"

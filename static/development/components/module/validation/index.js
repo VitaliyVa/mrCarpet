@@ -1,4 +1,11 @@
-import validator from "validator";
+// Per-function imports: `import validator from "validator"` pulled the whole
+// library (~100 KB minified) into every page bundle for four checks.
+import isEmail from "validator/lib/isEmail";
+import isNumeric from "validator/lib/isNumeric";
+import isStrongPassword from "validator/lib/isStrongPassword";
+import equals from "validator/lib/equals";
+
+const validator = { isEmail, isNumeric, isStrongPassword, equals };
 import "./index.scss";
 
 export default function validation(validation_btn) {

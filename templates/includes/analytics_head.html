@@ -11,11 +11,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','{{ gtm_container_id|escapejs }}');</script>
 {% elif ga4_measurement_id %}
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ ga4_measurement_id|urlencode }}"></script>
+{% comment %}
+  gtag.js (~180 KB, ~200 ms of main-thread work on a mid phone) is fetched
+  after window load — or at once on the first scroll/tap/key — so it stops
+  competing with the LCP image and CSS. gtag() calls made before that are
+  queued in dataLayer and replayed by the library, page start time included.
+{% endcomment %}
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', '{{ ga4_measurement_id|escapejs }}'{% if ga4_user_id %}, {'user_id': '{{ ga4_user_id|escapejs }}'}{% endif %});
+  (function () {
+    var loaded = false;
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id={{ ga4_measurement_id|urlencode }}';
+      document.head.appendChild(s);
+    }
+    ['scroll', 'pointerdown', 'touchstart', 'keydown'].forEach(function (t) {
+      window.addEventListener(t, load, { once: true, passive: true });
+    });
+    function later() {
+      if (window.requestIdleCallback) requestIdleCallback(load, { timeout: 1500 });
+      else setTimeout(load, 1);
+    }
+    if (document.readyState === 'complete') later();
+    else window.addEventListener('load', later, { once: true });
+  })();
 </script>
 {% endif %}

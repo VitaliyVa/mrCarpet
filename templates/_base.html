@@ -49,7 +49,18 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16.png" media="(prefers-color-scheme: light)" />
     <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/utils/assets/apple-touch-icon.png" />
-    <link rel="stylesheet" href="/static/development/main.css" />
+    {% comment %} Fonts inline instead of main.css: one render-blocking request fewer, and
+       WOFF2 subsets (Latin + Cyrillic, ~18 KB) instead of ~100 KB TTFs. {% endcomment %}
+    {% comment %} Preloaded (54 KB total) so they land before first paint: a late swap
+       reflowed <main> (CLS ~0.02) once the CSS stopped holding paint back. {% endcomment %}
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Book.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Bold.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face{font-family:"Futura PT Bold";font-style:normal;font-weight:700;font-display:swap;src:url("/static/utils/fonts/FuturaPT-Bold.woff2") format("woff2"),url("/static/utils/fonts/FuturaPT-Bold.ttf") format("truetype")}
+      @font-face{font-family:"Futura PT Medium";font-style:normal;font-weight:500;font-display:swap;src:url("/static/utils/fonts/FuturaPT-Medium.woff2") format("woff2"),url("/static/utils/fonts/FuturaPT-Medium.ttf") format("truetype")}
+      @font-face{font-family:"Futura PT Book";font-style:normal;font-weight:400;font-display:swap;src:url("/static/utils/fonts/FuturaPT-Book.woff2") format("woff2"),url("/static/utils/fonts/FuturaPT-Book.ttf") format("truetype")}
+    </style>
     {% block styles %}<link rel="stylesheet" href="/static/source/pages/index/index.css?v={{ static_v }}" />{% endblock styles %}
     {% block structured_data %}
     {% if organization_jsonld %}
@@ -95,6 +106,54 @@
     {% include 'includes/welcome_promo_modal.html' %}
     {% include 'includes/stock_inquiry_modal.html' %}
 
+    {% comment %}
+      Pictures marked data-defer-src / data-defer-srcset are real content that
+      is not on screen at first paint, yet loading="lazy" still fetches it:
+      header menu art sits in opacity:0 dropdowns (~1 MB of category images)
+      and product slides 2+ sit just right of the viewport inside the swiper.
+      All of it used to compete with the LCP image. Swap them in once the page
+      has loaded, or straight away on the first touch / hover / key press.
+      window.mrcLoadDeferredImages() is also called by the product lightbox.
+    {% endcomment %}
+    <script>
+    (function () {
+      var done = false;
+      function refreshSwiper() {
+        var el = this.closest && this.closest(".swiper");
+        if (el && el.swiper && typeof el.swiper.updateAutoHeight === "function") {
+          el.swiper.updateAutoHeight(0);
+        }
+      }
+      function swap() {
+        if (done) return;
+        done = true;
+        var imgs = document.querySelectorAll("img[data-defer-src]");
+        for (var i = 0; i < imgs.length; i++) {
+          var img = imgs[i];
+          img.addEventListener("load", refreshSwiper, { once: true });
+          var srcset = img.getAttribute("data-defer-srcset");
+          if (srcset) img.setAttribute("srcset", srcset);
+          img.src = img.getAttribute("data-defer-src");
+          img.removeAttribute("data-defer-src");
+          img.removeAttribute("data-defer-srcset");
+        }
+      }
+      window.mrcLoadDeferredImages = swap;
+      // The LCP image often paints after window load, so give it a head start
+      // of ~1 s before these start sharing the connection with it.
+      function later() {
+        setTimeout(function () {
+          if (window.requestIdleCallback) requestIdleCallback(swap, { timeout: 2000 });
+          else swap();
+        }, 1000);
+      }
+      ["pointerdown", "touchstart", "keydown", "mouseover"].forEach(function (t) {
+        document.addEventListener(t, swap, { once: true, passive: true, capture: true });
+      });
+      if (document.readyState === "complete") later();
+      else window.addEventListener("load", later, { once: true });
+    })();
+    </script>
     {% block scripts %}{% endblock scripts %}
 </body>
 

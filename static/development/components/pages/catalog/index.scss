@@ -155,3 +155,10 @@
     }
   }
 }
+
+/* "Дивитись всі" under each category preview on /catalog/ (list capped at 8) */
+.catalog_section_more {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 8px;
+}

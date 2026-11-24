@@ -92,7 +92,7 @@
         }
 
         .accordion__title {
-          color: #a46c46;
+          color: #9c6540; // a11y: #a46c46 on white is 4.36:1, below WCAG AA
         }
 
         &::after {

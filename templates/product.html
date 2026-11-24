@@ -1,4 +1,5 @@
 {% extends '_base.html' %}
+{% load thumbnails %}
 {% block title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -184,11 +185,11 @@
                     class="input-transparent validation_input"
                     name="name"
                     type="text"
-                    {# Not `review_name|default:user.first_name`: as a filter
+                    {% comment %} Not `review_name|default:user.first_name`: as a filter
                        argument, user.first_name on AnonymousUser raises
                        instead of resolving to "", which 500s every product
                        page for logged-out visitors. Standalone it is
-                       swallowed, hence the if/else. #}
+                       swallowed, hence the if/else. {% endcomment %}
                     value="{% if review_name %}{{ review_name }}{% else %}{{ user.first_name }}{% endif %}"
                     data-type="name"
                     placeholder="Ім’я"
@@ -205,13 +206,13 @@
                   ></textarea>
                 </div>
 
-                {# Carried, not asked for. getFormFields collects every
+                {% comment %} Carried, not asked for. getFormFields collects every
                    .input-transparent by name, so these ride along with the
                    form the compiled bundle already submits. The email is what
                    lets the review be marked a verified purchase; the token
                    says which order it came from. Both are empty for a visitor
                    who arrived without an invitation, and the form still
-                   works. #}
+                   works. {% endcomment %}
                 <input
                   type="hidden"
                   class="input-transparent"
@@ -265,12 +266,12 @@
             {% if images %}
             {% for image in images %}
             <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}">
-              <img src="{{ image.image.url }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}" width="120" height="120" loading="lazy" decoding="async" />
+              <img src="{{ image.image|thumb:240 }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}" width="120" height="120" loading="lazy" decoding="async" />
             </div>
             {% endfor %}
             {% else %}
             <div class="swiper-slide">
-              <img src="{{ product.image.url }}" alt="{{ product.title }}" width="120" height="120" loading="lazy" decoding="async" />
+              <img src="{{ product.image|thumb:240 }}" alt="{{ product.title }}" width="120" height="120" loading="lazy" decoding="async" />
             </div>
             {% endif %}
             {% if ar_ready %}
@@ -313,8 +314,17 @@
                   </span>
                 </div>
                 {% endif %}
+                {% comment %} srcset: phones get a 480–800 px WebP instead of the full upload; the lightbox opens data-full-src.
+                   Slides 2+ are off screen: data-defer-* is swapped in after load (see _base.html). {% endcomment %}
+                {% with s480=image.image|thumb:480 s640=image.image|thumb:640 s800=image.image|thumb:800 s1200=image.image|thumb:1200 %}
                 <img
-                  src="{{ image.image.url }}"
+                  {% if forloop.first %}src="{{ s640 }}"
+                  srcset="{{ s480 }} 480w, {{ s640 }} 640w, {{ s800 }} 800w, {{ s1200 }} 1200w"
+                  {% else %}src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                  data-defer-src="{{ s640 }}"
+                  data-defer-srcset="{{ s480 }} 480w, {{ s640 }} 640w, {{ s800 }} 800w, {{ s1200 }} 1200w"
+                  {% endif %}sizes="(max-width: 720px) 92vw, 624px"
+                  data-full-src="{{ image.image.url }}"
                   alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}"
                   width="800"
                   height="800"
@@ -323,6 +333,7 @@
                   role="button"
                   aria-label="Відкрити фото галерею"
                 />
+                {% endwith %}
               </div>
             </div>
             {% endfor %}
@@ -330,7 +341,10 @@
             <div class="swiper-slide">
               <div class="product-slide__media">
                 <img
-                  src="{{ product.image.url }}"
+                  src="{{ product.image|thumb:800 }}"
+                  srcset="{{ product.image|thumb:480 }} 480w, {{ product.image|thumb:800 }} 800w"
+                  sizes="(max-width: 720px) 92vw, 624px"
+                  data-full-src="{{ product.image.url }}"
                   alt="{{ product.title }}"
                   width="800"
                   height="800"
@@ -493,17 +507,23 @@
             <div class="counter">
               <button
                 class="counter__minus-btn"
+                type="button"
+                aria-label="Зменшити кількість"
               >
-                <img src="/static/utils/assets/minus.svg" alt="minus"/>
+                <img src="/static/utils/assets/minus.svg" alt="" aria-hidden="true"/>
               </button>
               <input
                 class="counter__value"
                 value="1"
+                inputmode="numeric"
+                aria-label="Кількість"
               />
               <button
                 class="counter__plus-btn"
+                type="button"
+                aria-label="Збільшити кількість"
               >
-              <img src="/static/utils/assets/plus.svg" alt="plus"/>
+              <img src="/static/utils/assets/plus.svg" alt="" aria-hidden="true"/>
               </button>
             </div>
             {% if shop_settings and shop_settings.free_shipping_enabled %}
@@ -537,7 +557,7 @@
               <span class="product-ar-open-mobile__short" aria-hidden="true">3D</span>
             </button>
             {% endif %}
-            <button class="product_favourite-btn btn {% if product in favourites %}active{% endif %}">
+            <button type="button" class="product_favourite-btn btn {% if product in favourites %}active{% endif %}" aria-label="Додати у вибране">
               <svg
                 width="24"
                 height="24"

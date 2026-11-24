@@ -1,5 +1,5 @@
 {% extends '_base.html' %}
-{% load catalog_filters %}
+{% load catalog_filters thumbnails %}
 {% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -265,7 +265,7 @@
               <a href="{{ g.get_absolute_url }}" class="catalog_seo_guides__card">
                 <div class="catalog_seo_guides__image">
                   {% if g.has_image %}
-                  <img src="{{ g.image.url }}" alt="{{ g.title }}" width="376" height="170" loading="lazy" decoding="async" />
+                  <img src="{{ g.image|thumb:480 }}" srcset="{{ g.image|thumb:480 }} 480w, {{ g.image|thumb:800 }} 800w" sizes="(max-width: 1024px) 90vw, 376px" alt="{{ g.title }}" width="376" height="170" loading="lazy" decoding="async" />
                   {% else %}
                   <img src="/static/utils/assets/blog/img.png" alt="{{ g.title }}" width="376" height="170" loading="lazy" decoding="async" />
                   {% endif %}

@@ -336,7 +336,7 @@
 
       a,
       button {
-        color: #a46c46;
+        color: #9c6540; // a11y: 4.8:1 on white (#a46c46 was 4.36)
         transition: all 0.25s;
 
         &:hover {
@@ -484,6 +484,22 @@
   }
 }
 
+// a11y: white on #a46c46 is 4.36:1; a touch darker gold passes AA (4.8:1).
+.product__btn .add-to-cart.btn-gold {
+  background: #9c6540;
+  border-color: #9c6540;
+
+  &:hover {
+    background: transparent;
+    color: #9c6540;
+  }
+
+  &:disabled:hover {
+    background: #9c6540;
+    color: #fff;
+  }
+}
+
 .product-ar-open-mobile {
   display: none;
 
@@ -502,7 +518,7 @@
     border: 1px solid #a46c46;
     border-radius: 8px;
     background: #fff;
-    color: #a46c46;
+    color: #9c6540; // a11y contrast
     font-family: "Futura PT Medium", sans-serif;
     font-size: 16px;
     line-height: 21px;

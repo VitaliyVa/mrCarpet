@@ -1,4 +1,5 @@
 {% extends '_base.html' %}
+{% load thumbnails %}
 {% block title %}Каталог килимів | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -22,12 +23,13 @@
   <div class="catalog_section">
     <div class="catalog_section_top">
       <div class="catalog_section_top_img catalog_section_top_img-left">
+        {# The first section's picture is the mobile LCP: load it eagerly. #}
         <img
-          src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+          src="{% if category.image %}{{ category.image|thumb:480 }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
           alt="{{ category.title }}"
           width="400"
           height="400"
-          loading="lazy"
+          {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
           decoding="async"
         />
       </div>
@@ -39,7 +41,7 @@
       </div>
       <div class="catalog_section_top_img catalog_section_top_img-right">
         <img
-          src="{% if category.image %}{{ category.image.url }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
+          src="{% if category.image %}{{ category.image|thumb:480 }}{% else %}/static/utils/assets/catalog_item/catalog_item-1.png{% endif %}"
           alt="{{ category.title }}"
           width="400"
           height="400"
@@ -49,12 +51,19 @@
       </div>
     </div>
     <div class="catalog_section_bottom cart_item_wrapper">
-      {% for product in category.products.all %}
+      {% comment %} Preview only: every category used to render all of its products here
+         (~590 KB of HTML, 300+ images). The category page has the full list. {% endcomment %}
+      {% for product in category.products.all|slice:":8" %}
       <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
         {% include 'includes/products.html' %}
       </div>
       {% endfor %}
     </div>
+    {% if category.products.count > 8 %}
+    <div class="catalog_section_more">
+      <a href="{{ category.get_absolute_url }}" class="info_for_product_btn medium color_gold">Дивитись всі</a>
+    </div>
+    {% endif %}
   </div>
   {% endfor %}
 </section>
