@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 from django.conf import settings
@@ -40,6 +41,18 @@ def google_review_url() -> str | None:
 # search (`q`) are combinations of the same products, and ad/analytics
 # params (gclid, utm_*, ...) are the same page with a tracking tail.
 CANONICAL_KEEP_PARAMS = ("page",)
+
+# The only listings that really paginate. Anywhere else `?page=N` shows the
+# same content as the clean URL (/?page=2, /about/?page=3, an article), so
+# its canonical must point at the clean URL instead of minting a duplicate.
+# A regex, not a prefix: "/blog/" as a prefix would also cover articles.
+PAGINATED_PATH_RE = re.compile(
+    r"^/(?:blog/|catalog/collection/|catalog/categorie/[^/]+/)$"
+)
+
+
+def is_paginated_path(path: str) -> bool:
+    return bool(PAGINATED_PATH_RE.match(path or ""))
 
 # Params that say who sent the visitor, not what the page shows. They never
 # make a page noindex: an ad landing (?gclid=...) or a Merchant Center link
@@ -128,12 +141,15 @@ def has_content_query(request) -> bool:
 def canonical_query(request) -> str:
     """
     Query string to append to a canonical: "?page=N" for N > 1 on an
-    otherwise clean URL, else "". A filtered/sorted/search URL points to the
+    otherwise clean URL of a paginated listing (see PAGINATED_PATH_RE),
+    else "". A filtered/sorted/search URL points to the
     unfiltered listing's first page (its page 2 is not the clean page 2).
     """
     if has_content_query(request):
         return ""
-    _, items = _split_full_path(request)
+    path, items = _split_full_path(request)
+    if not is_paginated_path(path):
+        return ""
     page = None
     for k, v in items:
         if k == "page":
