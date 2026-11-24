@@ -34,6 +34,13 @@ logger = logging.getLogger(__name__)
 #: nothing.
 MIN_REVIEW_CHARS = 10
 
+#: Reviews one address may post in an hour without an invitation token. The
+#: form is open to every visitor, so this is the brake on a script filling
+#: the moderation queue. Counted from the stored rows rather than a cache, so
+#: it holds across gunicorn workers and restarts. A real buyer with a token
+#: is never limited: one order can hold several rugs.
+REVIEWS_PER_IP_PER_HOUR = 5
+
 
 class FavouriteProductPermission(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -168,12 +175,24 @@ class ProductReviewViewSet(ModelViewSet):
         data["status"] = ProductReview.Status.PENDING
         data["verified_purchase"] = False
 
+        ip = _client_ip(request)
+        if not request.user.is_staff and _too_many_reviews(ip, token=token):
+            return Response(
+                {
+                    "message": (
+                        "Ви вже залишили кілька відгуків. "
+                        "Спробуйте, будь ласка, трохи пізніше."
+                    )
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save(
             status=ProductReview.Status.PENDING,
             verified_purchase=False,
-            ip_address=_client_ip(request),
+            ip_address=ip,
         )
 
         verified = _mark_verified_purchase(review, token=token)
@@ -196,9 +215,13 @@ class ProductReviewViewSet(ModelViewSet):
         # The submitter is told what happened, not shown the stored row:
         # echoing the record back would leak the moderation state and the
         # email of a review that is not public yet.
+        # `published` lets the page decide what to do next: reload to show a
+        # live review, or just close the form for one that waits for a check
+        # (a reload would only make it look lost).
         return Response(
             {
                 "ok": True,
+                "published": verified,
                 "message": (
                     "Дякуємо! Ваш відгук опубліковано."
                     if verified
@@ -321,8 +344,37 @@ class SaleProductsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Gene
 
 def _client_ip(request) -> str | None:
     """Left-most X-Forwarded-For entry, since nginx sits in front."""
+    import ipaddress
+
     forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
-    return forwarded or request.META.get("REMOTE_ADDR") or None
+    # The header is client-supplied. Junk in it must not reach the
+    # GenericIPAddressField (the save would fail), and must not dodge the
+    # rate limit either, so it falls back to the socket address.
+    for raw in (forwarded, request.META.get("REMOTE_ADDR") or ""):
+        try:
+            return str(ipaddress.ip_address(raw))
+        except ValueError:
+            continue
+    return None
+
+
+def _too_many_reviews(ip, *, token: str = "") -> bool:
+    """True when this address already posted its hourly share of reviews."""
+    if not ip:
+        return False
+    if token:
+        try:
+            from order.review_request import read_token
+
+            if read_token(token):
+                return False
+        except Exception:
+            pass
+    from django.utils import timezone
+
+    since = timezone.now() - timezone.timedelta(hours=1)
+    recent = ProductReview.objects.filter(ip_address=ip, created__gte=since).count()
+    return recent >= REVIEWS_PER_IP_PER_HOUR
 
 
 def _mark_verified_purchase(review, *, token: str = "") -> bool:

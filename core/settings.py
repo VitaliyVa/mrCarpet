@@ -53,6 +53,11 @@ SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
 # reviews", or the Place ID Finder (developers.google.com/maps/documentation/places/web-service/place-id).
 GOOGLE_PLACE_ID = config("GOOGLE_PLACE_ID", default="")
 
+# Merchant Center account id for the Google Customer Reviews opt-in on
+# /success/ (project/customer_reviews.py). Set to an empty string to turn the
+# opt-in off without a deploy of code.
+GOOGLE_MERCHANT_ID = config("GOOGLE_MERCHANT_ID", default="5860587323")
+
 # Analytics / measurement (Phase 9). Empty = scripts not injected.
 # Example: GA4_MEASUREMENT_ID=G-XXXXXXXXXX
 # Prefer GTM_CONTAINER_ID=GTM-XXXXXXX if you manage tags in GTM (then skip raw GA4 id).

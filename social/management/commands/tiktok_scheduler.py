@@ -121,10 +121,12 @@ def _generate():
 
 
 def _send_review_requests():
-    from order.review_request import send_due
+    from order.review_request import ask_staff_due, send_due
 
     sent = send_due()
-    return f"review invites: {sent}"
+    # Phone-only orders: the staff chat gets a ready message to forward.
+    asked = ask_staff_due()
+    return f"review invites: {sent}, staff nudges: {asked}"
 
 
 def _collect_metrics():

@@ -805,37 +805,23 @@
       
               </div>
 
-              <!-- if there are no reviews -->
+              {% comment %} The form is open to everyone, signed in or not, and the
+                 button shows whether or not the product already has reviews.
+                 Asking a buyer to register first lost nearly every review: the
+                 API has always taken anonymous posts, and those wait for a human
+                 (status PENDING) unless an invitation token proves the purchase,
+                 so moderation is unchanged. {% endcomment %}
               {% if not approved_reviews %}
               <div class="product_reviews__no-items">
-                <p>Немає відгуків про цей товар.</p>
-              
-
-                <!-- if unauthorized -->
-
-                {% if not user.is_authenticated %}
-                <p>
-                  Будь ласка <button class="modal_open" href="#" data-href="login-modal" >авторизуйтеся</button> 
-                  або
-                  <button class="modal_open" href="#" data-href="register-modal">зареєструйтеся</button>, 
-                  щоб залишити відгук.
-                </p>
-                {% else %}
-                <!-- if authorized  -->
-                <button class="modal_open" data-href="review-write-modal">
-                  Залишити відгук про товар
-                </button>
-                {% endif %}
+                <p>Про цей товар ще немає відгуків. Розкажіть першими, як він вам.</p>
               </div>
               {% endif %}
 
-
-              <!-- When there are reviews, the user is authorized and has not yet added a review -->
-              <!-- <div class="product_reviews__add-review">
-                <button class="modal_open" data-href="review-write-modal">
+              <div class="product_reviews__add-review">
+                <button type="button" class="modal_open" data-href="review-write-modal">
                   Залишити відгук про товар
                 </button>
-              </div> -->
+              </div>
 
             </div>
           </span>

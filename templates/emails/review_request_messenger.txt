@@ -1,0 +1,17 @@
+{% autoescape off %}⭐ Попросіть відгук: замовлення №{{ order.order_number|default:order.pk }}
+У замовленні немає email, тому лист з проханням про відгук не піде.
+Клієнт: {{ customer|default:"без імені" }}, тел. {{ phone }}
+
+Текст, який можна переслати у Viber чи Telegram:
+
+Добрий день! Це mr.Carpet. Килим уже кілька днів у вас вдома, тож хочемо спитати: як він вам?
+Кілька ваших слів допоможуть іншим покупцям з вибором, а нам стати ще кращими.
+{% for item in items %}
+{{ item.title }}
+{{ item.url }}
+{% endfor %}{% if google_review_url %}
+Або залишіть відгук у Google, якщо вам так зручніше:
+{{ google_review_url }}
+{% endif %}
+Дякуємо, що обрали нас!
+{% endautoescape %}

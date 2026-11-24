@@ -191,7 +191,15 @@ def success(request):
         session.pop("ga4_purchase", None)
         session.pop("ga4_purchase_retry", None)
 
-    return render(request, "success.html", {})
+    from project.customer_reviews import pop_optin
+
+    try:
+        gcr_optin = pop_optin(request)
+    except Exception:
+        # A thank-you page must never fail over an optional widget.
+        gcr_optin = None
+
+    return render(request, "success.html", {"gcr_optin": gcr_optin})
 
 def google_merchant_feed(request):
     """Product feed for Google Merchant Center (scheduled fetch)."""
