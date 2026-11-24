@@ -393,6 +393,37 @@ def favourites(request):
     return render(request, "favorite.html")
 
 
+def _variant_links_context(product) -> dict:
+    """Links to the other shapes and colours of this model (server-rendered).
+
+    A failure here must never take the product page down with it: the block
+    is a help for Google and shoppers, the page is the sale.
+    """
+    from catalog.services.product_variants import (
+        shape_label,
+        shape_phrase,
+        variant_links,
+    )
+
+    try:
+        links = variant_links(product)
+        own_shape = shape_label(product)
+    except Exception:  # pragma: no cover - defensive
+        import logging
+
+        logging.getLogger(__name__).exception(
+            "variant links failed for product %s", product.pk
+        )
+        return {"variant_links": []}
+    return {
+        "variant_links": links,
+        "variant_own_shape_phrase": shape_phrase(own_shape),
+        "variant_has_other_shapes": any(
+            link.shape and link.shape != own_shape for link in links
+        ),
+    }
+
+
 def _selected_size_attr(request, product: Product):
     """Size from `?size=<ProductAttribute.pk>` (Merchant feed variant links),
     else the default one. Only fixed sizes of this product are accepted;
@@ -429,12 +460,23 @@ def product(request, slug):
         crumbs.append(("Каталог", reverse("catalog")))
     crumbs.append((product.title, product.get_absolute_url()))
 
-    product_ld = product_graph(request, product, images=images)
     selected_attr = _selected_size_attr(request, product)
+    # Only an explicit `?size=` narrows the JSON-LD to one Offer; the bare
+    # URL keeps every size (the default size is a UI choice, not a variant).
+    explicit_size = selected_attr is not None and (
+        (request.GET.get("size") or "").strip() == str(selected_attr.pk)
+    )
+    product_ld = product_graph(
+        request,
+        product,
+        images=images,
+        selected_attr=selected_attr if explicit_size else None,
+    )
     context = {
         "product": product,
         "selected_size_attr": selected_attr,
         "images": images,
+        **_variant_links_context(product),
         "ar_ready": product.ar_status == Product.AR_STATUS_READY
         and bool(product.ar_texture),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),

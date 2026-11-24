@@ -1,0 +1,52 @@
+{% comment %}
+  Other shapes and colours of the same model, as plain links.
+
+  Server-rendered on purpose: the oval twins of rectangular rugs were only
+  reachable through deep catalog pagination, and Google left them in
+  "Discovered, not indexed". Every sibling now gets a link, with its shape
+  and colour in the anchor text, from a page Google already crawls.
+  Context: variant_links, variant_own_shape_phrase, variant_has_other_shapes
+  (catalog.views._variant_links_context).
+{% endcomment %}
+{% if variant_links %}
+<section class="product-variants-links" aria-labelledby="product-variants-links-title">
+  <style>
+    .product-variants-links { padding: 32px 0 8px; }
+    .product-variants-links__title { font-size: 22px; line-height: 1.3; margin: 0 0 8px; }
+    .product-variants-links__intro { margin: 0 0 20px; color: #6b6b6b; font-size: 15px; line-height: 1.5; max-width: 720px; }
+    .product-variants-links__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+    .product-variants-links__item a { display: flex; flex-direction: column; gap: 8px; color: inherit; text-decoration: none; }
+    .product-variants-links__img { width: 100%; aspect-ratio: 365 / 420; object-fit: cover; background: #f4f1ec; border-radius: 4px; display: block; }
+    .product-variants-links__label { font-weight: 600; font-size: 15px; }
+    .product-variants-links__name { font-size: 13px; color: #6b6b6b; line-height: 1.4; }
+    .product-variants-links__price { font-size: 14px; color: #a46c46; }
+    .product-variants-links__item a:hover .product-variants-links__label,
+    .product-variants-links__item a:focus-visible .product-variants-links__label { text-decoration: underline; }
+    @media (max-width: 600px) {
+      .product-variants-links__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .product-variants-links__title { font-size: 19px; }
+    }
+  </style>
+  <div class="container">
+    <h2 class="product-variants-links__title medium color_black" id="product-variants-links-title">Інші форми та кольори цієї моделі</h2>
+    <p class="product-variants-links__intro">
+      {% if variant_own_shape_phrase %}Цей килим {{ variant_own_shape_phrase }}. {% endif %}{% if variant_has_other_shapes %}Така ж модель є й іншої форми.{% else %}Така ж модель є й в інших кольорах.{% endif %}
+      Подивіться, що краще пасує до вашої кімнати.
+    </p>
+    <ul class="product-variants-links__list">
+      {% for link in variant_links %}
+      <li class="product-variants-links__item">
+        <a href="{{ link.url }}">
+          {% if link.product.image %}
+          <img class="product-variants-links__img" src="{{ link.product.image.url }}" alt="{{ link.title }}" width="365" height="420" loading="lazy" decoding="async" />
+          {% endif %}
+          <span class="product-variants-links__label">{{ link.label }}</span>
+          <span class="product-variants-links__name">{{ link.title }}</span>
+          {% if link.price %}<span class="product-variants-links__price">від {{ link.price }} грн</span>{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
