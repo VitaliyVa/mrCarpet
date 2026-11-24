@@ -5,10 +5,13 @@
  * window.mrTrack / window.mrTrackEcommerce pick gtag or GTM, scrub personal
  * data and are no-ops without GA. Everything here goes through them.
  *
- * Item format is the server one (project/ga4_ecommerce.py): item_id = catalog
+ * Item format is the server one (project/ga4_ecommerce.py): item_id = the
+ * Merchant feed g:id of the size, "<Product.pk>-<ProductAttribute.pk>"
+ * (project/merchant_feed.offer_id, rendered as data-ga-item-id on size chips,
+ * cart rows and cards; bare Product.pk for cut-to-length), item_group_id =
  * Product.pk, item_brand "mr.Carpet", item_variant = size, price = UAH unit
  * price, currency UAH on the event. Same keys everywhere, so GA4 joins
- * list → view → cart → purchase.
+ * list → view → cart → purchase and Google Ads joins items to the feed.
  *
  * `purchase` is NEVER sent from the browser: it goes server-side via the
  * Measurement Protocol (project/ga4_mp.py). A client one doubled revenue.
@@ -72,7 +75,14 @@ export function itemFromProductEl(el, overrides = {}) {
   const categoryHost = el.closest("[data-ga-item-category]");
 
   const base = {
-    item_id: String(el.dataset.catalogProductId || el.dataset.productId || ""),
+    item_id: String(
+      el.dataset.gaItemId ||
+        activeSize?.dataset.gaItemId ||
+        el.dataset.catalogProductId ||
+        el.dataset.productId ||
+        ""
+    ),
+    item_group_id: String(el.dataset.catalogProductId || ""),
     item_name: el.dataset.productTitle || "",
     item_brand: BRAND,
     item_category:
@@ -95,6 +105,7 @@ export function itemFromProductEl(el, overrides = {}) {
   merged.price = Number.isFinite(price) ? Math.round(price * 100) / 100 : 0;
   if (!merged.item_category) delete merged.item_category;
   if (!merged.item_variant) delete merged.item_variant;
+  if (!merged.item_group_id) delete merged.item_group_id;
   return merged;
 }
 
@@ -272,7 +283,7 @@ function bindCtaClicks() {
   document.addEventListener("click", (e) => {
     // Not add-to-cart (has add_to_cart) and not the checkout submit (checkout_submit).
     const cta = e.target.closest(
-      ".basket__confirm-order-btn a, .basket__empty-btn, .success__back-to-main-btn a"
+      ".basket__confirm-order-btn a, .basket__empty-btn, .success__back-to-main-btn a, .checkout-notification__action"
     );
     if (!cta) return;
     const label =

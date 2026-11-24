@@ -33,6 +33,10 @@ from project.seo_urls import absolute_site_url
 from project.text_encoding import fix_utf8_mojibake
 
 MAX_ADDITIONAL_IMAGES = 10
+# Shortest width Google treats as a large product image; smaller main images
+# are swapped for a big gallery photo (see _image_urls).
+MIN_MAIN_IMAGE_WIDTH = 800
+_IMAGE_WIDTHS: dict[str, int] = {}
 MAX_TITLE = 150
 MAX_DESCRIPTION = 5000
 SIZE_PARAM = "size"
@@ -309,6 +313,26 @@ def product_color(product, specs) -> str:
 # --- feed -------------------------------------------------------------------
 
 
+def offer_id(product, attr=None) -> str:
+    """Feed `g:id` of one sellable size: `<product.pk>-<attr.pk>`.
+
+    The single source of the id for the feed and every GA4 ecommerce item
+    (view_item, cart lines, server-side purchase, page cards), so Google Ads
+    cart data and dynamic remarketing can join GA4 items to Merchant offers.
+    Cut-to-length (custom) and unpriced sizes are not in the feed, so they
+    keep the bare product pk. `product` may be a Product or its pk.
+    """
+    product_pk = getattr(product, "pk", product)
+    if (
+        attr is not None
+        and not getattr(attr, "custom_attribute", False)
+        and getattr(attr, "price", None)
+        and getattr(attr, "pk", None) is not None
+    ):
+        return f"{product_pk}-{attr.pk}"
+    return str(product_pk)
+
+
 def _tag(name: str, value) -> str:
     if value is None or value == "":
         return ""
@@ -318,15 +342,51 @@ def _tag(name: str, value) -> str:
     return f"<g:{name}>{escape(str(value))}</g:{name}>"
 
 
+def _image_width(field) -> int:
+    """Pixel width of a stored image (0 when unknown); read once per file name."""
+    name = getattr(field, "name", "") or ""
+    if not name:
+        return 0
+    if name in _IMAGE_WIDTHS:
+        return _IMAGE_WIDTHS[name]
+    try:
+        width = int(field.width or 0)
+    except Exception:  # missing file or unreadable image: keep the old order
+        return 0
+    _IMAGE_WIDTHS[name] = width
+    return width
+
+
 def _image_urls(product) -> list[str]:
-    urls = []
     # products/default.png is the upload placeholder: Google flags it as a
     # generic image and disapproves the item, so it never becomes image_link.
-    if product.image and not product.image.name.endswith("default.png"):
-        urls.append(absolute_site_url(product.image.url))
-    for img in sorted(product.images.all(), key=lambda i: (i.sort_order, i.pk)):
-        if img.image:
-            urls.append(absolute_site_url(img.image.url))
+    card = product.image
+    if not card or card.name.endswith("default.png"):
+        card = None
+    # AI interior illustrations (is_ai) stay on the PDP only: Merchant Center
+    # wants generated images labelled and rejects ones that misrepresent the
+    # product, so they never go to the feed.
+    gallery = [
+        img.image
+        for img in sorted(product.images.all(), key=lambda i: (i.sort_order, i.pk))
+        if img.image and not getattr(img, "is_ai", False)
+    ]
+    fields = ([card] if card is not None else []) + gallery
+    # The catalog card image is resized to 500px; Shopping tiles look soft
+    # under 800px. Use the first large gallery photo (PDP order) as image_link
+    # and keep the card image right after it as an additional image.
+    if fields and _image_width(fields[0]) < MIN_MAIN_IMAGE_WIDTH:
+        big = next(
+            (f for f in gallery if f is not fields[0] and _image_width(f) >= MIN_MAIN_IMAGE_WIDTH),
+            None,
+        )
+        if big is not None:
+            fields = [big] + [f for f in fields if f is not big]
+    urls: list[str] = []
+    for field in fields:
+        url = absolute_site_url(field.url)
+        if url not in urls:
+            urls.append(url)
     return urls
 
 
@@ -425,7 +485,7 @@ def build_items(products) -> list[dict]:
             shape = product_shape(product, specs, size)
             total = attr.get_total_price()
             item = {
-                "id": f"{product.pk}-{attr.pk}",
+                "id": offer_id(product, attr),
                 "item_group_id": str(product.pk),
                 "title": feed_title(product, size, specs, color),
                 "description": description_with_facts(description, size, color, material),

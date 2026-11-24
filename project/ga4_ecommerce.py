@@ -5,6 +5,8 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any
 
+from project.merchant_feed import offer_id
+
 # Statuses where client may emit `purchase` (not unpaid / cancelled).
 PURCHASE_ELIGIBLE_STATUSES = frozenset(
     {
@@ -43,7 +45,9 @@ def cart_product_to_item(cart_product, index: int = 0) -> dict:
         variant = f"{cart_product.length}м"
 
     return {
-        "item_id": str(product.pk),
+        # Same id as the Merchant feed g:id, so Ads cart data can join it.
+        "item_id": offer_id(product, attr),
+        "item_group_id": str(product.pk),
         "item_name": product.title or "",
         "item_brand": "mr.Carpet",
         "item_category": category.title if category else "",

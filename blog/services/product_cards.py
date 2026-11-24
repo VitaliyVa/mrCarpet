@@ -19,6 +19,8 @@ import re
 
 from django.template.loader import render_to_string
 
+from project.merchant_feed import offer_id
+
 #: Cards per block. A fifth card wraps onto a lonely second row on desktop.
 MAX_PRODUCTS = 4
 
@@ -78,6 +80,7 @@ def build_card(product) -> dict | None:
     sized = [a for a in attrs if not a.custom_attribute and a.price]
     in_stock = any(a.in_stock for a in attrs)
     variant = ""
+    ga_attr = None
 
     if sized:
         # Cheapest size someone can buy now; fall back to all sizes when
@@ -86,6 +89,7 @@ def build_card(product) -> dict | None:
         cheapest = min(pool, key=lambda a: a.get_total_price())
         price_value = cheapest.get_total_price()
         variant = str(cheapest.size) if getattr(cheapest, "size_id", None) else ""
+        ga_attr = cheapest
         price = _format_price(price_value)
         unit = "грн"
         old_price = _format_price(cheapest.price) if cheapest.discount else ""
@@ -115,6 +119,8 @@ def build_card(product) -> dict | None:
         "id": product.pk,
         "ga_price": f"{ga_price:.2f}",
         "ga_variant": variant,
+        # Merchant feed g:id of the size the card prices (bare pk otherwise).
+        "ga_item_id": offer_id(product, ga_attr),
         "title": product.title,
         "url": product.get_absolute_url(),
         "image": _image_url(product),

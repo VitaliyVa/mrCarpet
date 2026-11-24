@@ -38,6 +38,25 @@
     color: #453f3a;
   }
 
+  // "Оформити замовлення" after add-to-cart (api/basket.js withCheckoutLink).
+  &__action {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    background: #a46c46;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover,
+    &:focus {
+      background: #8a5a3a;
+      color: #fff;
+    }
+  }
+
   &__close {
     flex-shrink: 0;
     width: 24px;

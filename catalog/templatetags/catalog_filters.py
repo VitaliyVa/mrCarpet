@@ -78,3 +78,13 @@ def category_meta_description(categorie):
         f"{phrase} — купити в інтернет-магазині mr.Carpet. "
         f"Українські та турецькі виробники, доставка по всій Україні."
     )
+
+
+@register.filter
+def ga_item_id(attr):
+    """GA4 item_id of a ProductAttribute = Merchant feed g:id (merchant_feed.offer_id)."""
+    from project.merchant_feed import offer_id
+
+    if attr is None:
+        return ""
+    return offer_id(attr.product_id, attr)
