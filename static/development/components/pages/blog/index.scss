@@ -227,3 +227,30 @@ $bl-line: #ece5dc;
     }
   }
 }
+
+// Compact top bar: the H1 and topic filters on one line, the first
+// article starts right under it.
+.bl-list__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin: 18px 0 24px;
+
+  .bl-chips {
+    margin-bottom: 0;
+  }
+}
+
+.bl-list__h1 {
+  margin: 0;
+  color: $bl-ink;
+  font-family: "Futura PT Bold", sans-serif;
+  font-size: 30px;
+  line-height: 1.2;
+
+  @media (max-width: 720px) {
+    font-size: 24px;
+  }
+}

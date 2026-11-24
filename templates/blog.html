@@ -31,20 +31,18 @@ same posts, so it points back at the full list.
             <a href="{% url 'blog' %}" class="color_gold">Блог</a>
         </div>
 
-        <header class="bl-list__head">
-            <p class="bl-eyebrow">Блог mr.Carpet</p>
-            <h1 class="bl-list__title">Поради про килими, які справді допомагають</h1>
-            <p class="bl-list__lead">Пишемо просто і по ділу: як вибрати килим під свою кімнату, доглядати за ним і зробити дім затишнішим.</p>
+        {% comment %}Compact top: H1 and topic filters in one line, then the first article right away (owner asked for no big intro).{% endcomment %}
+        <header class="bl-list__bar">
+            <h1 class="bl-list__h1">Блог mr.Carpet</h1>
+            {% if topic_chips %}
+            <nav class="bl-chips" aria-label="Теми блогу">
+                <a href="{% url 'blog' %}" class="bl-chips__item{% if not active_topic %} is-active{% endif %}"{% if not active_topic %} aria-current="page"{% endif %}>Усі статті <span class="bl-chips__count">{{ total_count }}</span></a>
+                {% for chip in topic_chips %}
+                <a href="{% url 'blog' %}?tema={{ chip.topic.slug }}" class="bl-chips__item{% if active_topic.slug == chip.topic.slug %} is-active{% endif %}"{% if active_topic.slug == chip.topic.slug %} aria-current="page"{% endif %} rel="nofollow">{{ chip.topic.emoji }} {{ chip.topic.label }} <span class="bl-chips__count">{{ chip.count }}</span></a>
+                {% endfor %}
+            </nav>
+            {% endif %}
         </header>
-
-        {% if topic_chips %}
-        <nav class="bl-chips" aria-label="Теми блогу">
-            <a href="{% url 'blog' %}" class="bl-chips__item{% if not active_topic %} is-active{% endif %}"{% if not active_topic %} aria-current="page"{% endif %}>Усі статті <span class="bl-chips__count">{{ total_count }}</span></a>
-            {% for chip in topic_chips %}
-            <a href="{% url 'blog' %}?tema={{ chip.topic.slug }}" class="bl-chips__item{% if active_topic.slug == chip.topic.slug %} is-active{% endif %}"{% if active_topic.slug == chip.topic.slug %} aria-current="page"{% endif %} rel="nofollow">{{ chip.topic.emoji }} {{ chip.topic.label }} <span class="bl-chips__count">{{ chip.count }}</span></a>
-            {% endfor %}
-        </nav>
-        {% endif %}
 
         {% if featured %}
         <div class="bl-featured">
