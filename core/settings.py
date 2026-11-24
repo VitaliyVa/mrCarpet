@@ -60,6 +60,11 @@ GA4_MEASUREMENT_ID = config("GA4_MEASUREMENT_ID", default="")
 GTM_CONTAINER_ID = config("GTM_CONTAINER_ID", default="")
 # Measurement Protocol API secret (server-only). Create in GA4 → Data stream → MP secrets.
 GA4_API_SECRET = config("GA4_API_SECRET", default="")
+# When a cash-on-delivery order counts as a GA4 `purchase` (the event Google
+# Ads imports and bids on). "delivery": when the order becomes paid or
+# completed, so parcels nobody picks up never reach bidding; at creation the
+# server sends `order_placed` instead. "order": old behaviour, purchase at once.
+ADS_COD_PURCHASE_STAGE = config("ADS_COD_PURCHASE_STAGE", default="delivery")
 # Data API (Telegram analytics reports). Property ID = digits only.
 GA4_PROPERTY_ID = config("GA4_PROPERTY_ID", default="")
 # Full service-account JSON as a single env string (preferred on prod).
@@ -150,6 +155,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # gclid / gbraid / wbraid / utm_* from the landing URL (Ads offline conversions).
+    'project.ad_attribution.AdAttributionMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'

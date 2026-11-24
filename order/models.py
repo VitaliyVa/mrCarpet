@@ -174,6 +174,57 @@ class Order(AbstractCreatedUpdated):
             "кладе покупку в «Unassigned», а не в джерело, що привело покупця."
         ),
     )
+    # Ad click that brought the buyer (project/ad_attribution.py). Kept so a
+    # paid order can be uploaded to Google Ads as an offline conversion.
+    gclid = models.CharField(
+        verbose_name="Google Ads gclid",
+        max_length=255,
+        blank=True,
+        default="",
+        editable=False,
+        db_index=True,
+    )
+    gbraid = models.CharField(
+        verbose_name="Google Ads gbraid",
+        max_length=255,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    wbraid = models.CharField(
+        verbose_name="Google Ads wbraid",
+        max_length=255,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    ad_click_at = models.DateTimeField(
+        verbose_name="Час кліку по рекламі",
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    utm_source = models.CharField(
+        verbose_name="utm_source",
+        max_length=150,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    utm_medium = models.CharField(
+        verbose_name="utm_medium",
+        max_length=150,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    utm_campaign = models.CharField(
+        verbose_name="utm_campaign",
+        max_length=150,
+        blank=True,
+        default="",
+        editable=False,
+    )
 
     class Meta:
         verbose_name = "Замовлення"
