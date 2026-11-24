@@ -1,4 +1,5 @@
 {% extends '_base.html' %}
+{% load thumbnails %}
 {% block title %}Килими від українських та турецьких виробників | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -153,13 +154,13 @@
         <a href="{{ post.get_absolute_url }}" class="blog_item">
           <div class="blog_item_img">
             {% if post.has_image %}
-            <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
+            <img src="{{ post.image|thumb:480 }}" srcset="{{ post.image|thumb:480 }} 480w, {{ post.image|thumb:800 }} 800w" sizes="(max-width: 1024px) 90vw, 376px" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
             {% else %}
             <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
             {% endif %}
           </div>
           <div class="blog_item_info">
-            <h4 class="blog_item_title">{{ post.title }}</h4>
+            <h3 class="blog_item_title">{{ post.title }}</h3>
             <p class="blog_item_text">
               {{ post.meta_description|default:post.description|striptags|truncatechars:120 }}
             </p>
@@ -174,13 +175,13 @@
           <a href="{{ post.get_absolute_url }}" class="blog_item slider_item swiper-slide">
             <div class="blog_item_img">
               {% if post.has_image %}
-              <img src="{{ post.image.url }}" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
+              <img src="{{ post.image|thumb:480 }}" srcset="{{ post.image|thumb:480 }} 480w, {{ post.image|thumb:800 }} 800w" sizes="(max-width: 1024px) 90vw, 376px" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
               {% else %}
               <img src="/static/utils/assets/blog/img.png" alt="{{ post.title }}" width="376" height="230" loading="lazy" decoding="async" />
               {% endif %}
             </div>
             <div class="blog_item_info">
-              <h4 class="blog_item_title">{{ post.title }}</h4>
+              <h3 class="blog_item_title">{{ post.title }}</h3>
               <p class="blog_item_text">
                 {{ post.meta_description|default:post.description|striptags|truncatechars:120 }}
               </p>

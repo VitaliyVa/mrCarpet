@@ -1,3 +1,4 @@
+{% load thumbnails %}
 {% with default_attr=product.get_default_size_attr %}
 
 {% if product.is_novelty %}
@@ -6,8 +7,10 @@
 <div class="cart_item-top">
   <a href="{{ product.get_absolute_url }}">
     <div class="cart_item_img">
+        {# Card is ~45vw on phones, 365px on desktop: serve a WebP that size, not the upload. #}
         <img
-          src="{{ product.image.url }}"
+          src="{{ product.image|thumb:480 }}"
+          srcset="{{ product.image|thumb:240 }} 240w, {{ product.image|thumb:320 }} 320w, {{ product.image|thumb:480 }} 480w"
           alt="{{ product.title }}"
           width="365"
           height="420"

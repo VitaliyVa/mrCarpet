@@ -19,7 +19,9 @@ function getMiniImageSlides() {
 }
 
 function readImageSize(img) {
-  if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+  // > 1: slides 2+ start as a 1x1 placeholder GIF until _base.html swaps
+  // their data-defer-src in, and that size must not reach PhotoSwipe.
+  if (img.naturalWidth > 1 && img.naturalHeight > 1) {
     return Promise.resolve({
       width: img.naturalWidth,
       height: img.naturalHeight,
@@ -52,10 +54,19 @@ async function buildDataSource() {
     if (!img || !img.src) continue;
 
     const { width, height } = await readImageSize(img);
+    // The slide shows a srcset WebP (≤1200 px); the lightbox opens the original
+    // upload. Only the aspect ratio of the slide is trusted, so scale the
+    // declared size up to roughly the original's — it caps the zoom level.
+    const fullSrc = img.dataset.fullSrc || "";
+    const shown = img.currentSrc || img.src;
+    const scale =
+      fullSrc && fullSrc !== shown
+        ? Math.max(1, 1600 / Math.max(width, height, 1))
+        : 1;
     items.push({
-      src: img.currentSrc || img.src,
-      width,
-      height,
+      src: fullSrc || shown,
+      width: Math.round(width * scale),
+      height: Math.round(height * scale),
       alt: img.alt || "",
       element: img,
     });
@@ -88,16 +99,24 @@ export function initProductGalleryLightbox(mainSwiper) {
 
   let dataSourcePromise = null;
 
+  const hasDeferredImages = () =>
+    !!galleryRoot.querySelector("img[data-defer-src]");
+
   const getDataSource = () => {
     if (!dataSourcePromise) {
+      // Opening the gallery needs every slide's real picture.
+      if (hasDeferredImages() && typeof window.mrcLoadDeferredImages === "function") {
+        window.mrcLoadDeferredImages();
+      }
       dataSourcePromise = buildDataSource();
     }
     return dataSourcePromise;
   };
 
-  // Warm cache after first paint — images usually already in DOM
+  // Warm cache after first paint — unless slides are still deferred: forcing
+  // them in here would undo the deferral (they load after window load).
   requestAnimationFrame(() => {
-    getDataSource();
+    if (!hasDeferredImages()) getDataSource();
   });
 
   const lightbox = new PhotoSwipeLightbox({

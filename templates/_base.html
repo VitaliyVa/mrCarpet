@@ -48,8 +48,13 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/utils/assets/favicon-16x16.png" media="(prefers-color-scheme: light)" />
     <link rel="icon" href="/static/utils/assets/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/utils/assets/apple-touch-icon.png" />
-    {# Fonts inline instead of main.css: one render-blocking request fewer, and
-       WOFF2 subsets (Latin + Cyrillic, ~18 KB) instead of ~100 KB TTFs. #}
+    {% comment %} Fonts inline instead of main.css: one render-blocking request fewer, and
+       WOFF2 subsets (Latin + Cyrillic, ~18 KB) instead of ~100 KB TTFs. {% endcomment %}
+    {% comment %} Preloaded (54 KB total) so they land before first paint: a late swap
+       reflowed <main> (CLS ~0.02) once the CSS stopped holding paint back. {% endcomment %}
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Book.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/static/utils/fonts/FuturaPT-Bold.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       @font-face{font-family:"Futura PT Bold";font-style:normal;font-weight:700;font-display:swap;src:url("/static/utils/fonts/FuturaPT-Bold.woff2") format("woff2"),url("/static/utils/fonts/FuturaPT-Bold.ttf") format("truetype")}
       @font-face{font-family:"Futura PT Medium";font-style:normal;font-weight:500;font-display:swap;src:url("/static/utils/fonts/FuturaPT-Medium.woff2") format("woff2"),url("/static/utils/fonts/FuturaPT-Medium.ttf") format("truetype")}
@@ -133,9 +138,13 @@
         }
       }
       window.mrcLoadDeferredImages = swap;
+      // The LCP image often paints after window load, so give it a head start
+      // of ~1 s before these start sharing the connection with it.
       function later() {
-        if (window.requestIdleCallback) requestIdleCallback(swap, { timeout: 2000 });
-        else setTimeout(swap, 300);
+        setTimeout(function () {
+          if (window.requestIdleCallback) requestIdleCallback(swap, { timeout: 2000 });
+          else swap();
+        }, 1000);
       }
       ["pointerdown", "touchstart", "keydown", "mouseover"].forEach(function (t) {
         document.addEventListener(t, swap, { once: true, passive: true, capture: true });
