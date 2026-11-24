@@ -1,20 +1,21 @@
-{% extends '_base.html' %}
+{% extends '_base.html' %}{% load catalog_filters %}
 {% block title %}Про магазин | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"
-  content="Про mr.Carpet: килими від українських та турецьких виробників. Контакти та історія магазину."
+  content="mr.Carpet: магазин килимів з міста Ланівці на Тернопільщині. Українські та турецькі килими, доставка Новою Поштою по всій Україні, повернення {{ shop_terms.return_days_text|default:'14 днів' }}."
 />
 {% endblock meta %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/about/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
+{% comment %} Facts only from the site itself: address (ORG_* / footer), categories, materials (FAQ), delivery and return terms (shop_terms). No invented history or claims. {% endcomment %}
 <section class="banner first_section">
   <div class="container">
     <div class="bread-crumbs">
-      <a href="#" class="color_black_sub">Головна</a>
+      <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
       <span class="color_black_sub">/</span>
-      <a href="#" class="color_gold">Про магазин</a>
+      <a href="{% url 'about' %}" class="color_gold">Про магазин</a>
     </div>
   </div>
 
@@ -23,9 +24,9 @@
       <div class="banner__center-inner-wrapper">
         <div class="banner__center-left">
           <h1 class="banner__title color_white small">
-            mr.Carpet —
+            mr.Carpet:
             <br />
-            зроблено з любов'ю!
+            килими з любов'ю з Ланівців
           </h1>
         </div>
         <div class="banner__center-right">
@@ -45,42 +46,49 @@
 <section class="repair">
   <div class="repair__container container">
     <h2 class="repair__title about-title">
-      Даємо нове життя старому ремеслу.
+      Хто ми і що продаємо
     </h2>
 
     <div class="repair__items">
       <div class="repair__carpet-block">
-        <p class="repair__carpet-block-description about-text">
-          mr.Carpet є провідним постачальником якісних килимів для будь-яких
-          інтер'єрів. Ми пропонуємо великий вибір килимів з різноманітними
-          дизайнами, кольорами та матеріалами. Наші килими виготовляються з
-          високоякісних матеріалів, що забезпечує їх довговічність та
-          зносостійкість.
-        </p>
+        <div class="repair__carpet-block-description about-text">
+          <p>
+            mr.Carpet це магазин килимів у місті Ланівці на Тернопільщині.
+            Наша адреса: вул. Незалежності 5а. А купити у нас килим можна з
+            будь-якого куточка України.
+          </p>
+          <p>
+            У нас українські та турецькі килими.{% if models_count %} Зараз у
+            каталозі {{ models_count }} {{ models_count|plural_uk:"модель,моделі,моделей" }}.{% endif %}
+            Майже всі вони з поліпропілену, є кілька моделей з поліестеру і з
+            гуми. Точний склад, розміри і ціну кожного килима видно на його
+            сторінці.
+          </p>
+        </div>
 
         <div class="repair__carpet-block-img">
-          <img src="/static/utils/assets/about/carpet-1.jpg" alt="carpet" width="640" height="480" loading="lazy" decoding="async" />
+          <img src="/static/utils/assets/about/carpet-1.jpg" alt="Килим у кімнаті" width="640" height="480" loading="lazy" decoding="async" />
         </div>
       </div>
 
       <div class="repair__carpet-block">
         <div class="repair__carpet-block-description about-text">
           <p>
-            Наша компанія працює з кращими виробниками килимів у світі, що
-            дозволяє нам завжди мати в наявності нові моделі та колекції. Ми
-            прагнемо задовольнити потреби наших клієнтів та зробити їх
-            домівки більш комфортними та затишними.
+            Більшість моделей є в кількох розмірах, від маленьких килимків до
+            великих килимів на всю кімнату. Деякі килими можна зробити під
+            ваш розмір. А на сторінках частини килимів є кнопка «Дивитись у
+            3D», щоб приміряти килим у себе вдома.
           </p>
           <p>
-            Наша команда складається з досвідчених фахівців, які знають усе
-            про килими та допоможуть вам знайти ідеальний варіант для вашого
-            інтер'єру. Ми завжди готові надати професійну консультацію та
-            пораду щодо вибору килима.
+            Не знаєте, що обрати? Подзвоніть нам
+            <a href="tel:+380963988875" class="color_gold">+380 96 398 88 75</a>,
+            і ми підкажемо. Усі способи зв'язку є на сторінці
+            <a href="{% url 'contacts' %}" class="color_gold">«Контакти»</a>.
           </p>
         </div>
 
         <div class="repair__carpet-block-img">
-          <img src="/static/utils/assets/about/carpet-2.jpg" alt="carpet" width="640" height="480" loading="lazy" decoding="async" />
+          <img src="/static/utils/assets/about/carpet-2.jpg" alt="Килим біля дивана" width="640" height="480" loading="lazy" decoding="async" />
         </div>
       </div>
     </div>
@@ -89,14 +97,21 @@
 <section class="our-mission">
   <div class="our-mission__container container">
     <div class="our-mission__info">
-      <h2 class="our-mission__title about-title">Наша місія.</h2>
-      <p class="our-mission__description about-text">
-        Наша місія - забезпечити нашим клієнтам якісні та естетичні килими
-        за доступними цінами. Ми прагнемо створити максимально комфортні
-        умови для наших клієнтів та забезпечити їх задоволення від нашої
-        продукції. Замовляйте килими у нас та насолоджуйтеся комфортом та
-        затишком у своєму будинку!
-      </p>
+      <h2 class="our-mission__title about-title">Доставка, оплата і повернення</h2>
+      <div class="our-mission__description about-text">
+        <p>
+          Відправляємо килими Новою Поштою по всій
+          Україні.{% if shop_terms.free_enabled %} Від {{ shop_terms.threshold }} грн доставка
+          безкоштовна.{% endif %} Платите при отриманні у відділенні або онлайн
+          карткою.
+        </p>
+        <p>
+          Якщо килим не підійшов, його можна повернути протягом
+          {{ shop_terms.return_days_text|default:"14 днів" }}. Усі умови на
+          сторінках <a href="{% url 'delivery' %}" class="color_gold">«Доставка і оплата»</a>
+          і <a href="{% url 'refund' %}" class="color_gold">«Повернення»</a>.
+        </p>
+      </div>
     </div>
 
     <div class="our-mission__bottom">

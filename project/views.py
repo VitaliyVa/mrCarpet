@@ -42,7 +42,9 @@ def index(request):
 
 
 def about(request):
-    return render(request, 'about.html')
+    # Live number, like the collection page description: stays true as the
+    # range changes. Every product page is a model the shop sells.
+    return render(request, 'about.html', {"models_count": Product.objects.count()})
 
 
 def checkout(request):
@@ -55,6 +57,46 @@ def checkout(request):
 
 def delivery(request):
     return render(request, 'delivery.html')
+
+
+def _maps_url() -> str:
+    """Google Maps link for the shop: its Business Profile once
+    GOOGLE_PLACE_ID is set, else a search for the street address."""
+    from urllib.parse import urlencode
+
+    from django.conf import settings
+
+    from project.seo_jsonld import ORG_LOCALITY, ORG_NAME, ORG_STREET
+
+    params = {"api": "1", "query": f"{ORG_NAME}, {ORG_STREET}, {ORG_LOCALITY}"}
+    place_id = (getattr(settings, "GOOGLE_PLACE_ID", "") or "").strip()
+    if place_id:
+        params["query_place_id"] = place_id
+    return "https://www.google.com/maps/search/?" + urlencode(params)
+
+
+def contacts(request):
+    """Contacts page: the same NAP as the Organization JSON-LD (ORG_*)."""
+    from project.seo_jsonld import (
+        ORG_EMAIL,
+        ORG_LOCALITY,
+        ORG_PHONE,
+        ORG_REGION,
+        ORG_STREET,
+    )
+
+    phone = ORG_PHONE  # +380963988875
+    contact = {
+        "phone": phone,
+        # "+380 96 398 88 75", as in the header and footer
+        "phone_display": f"{phone[:4]} {phone[4:6]} {phone[6:9]} {phone[9:11]} {phone[11:]}",
+        "email": ORG_EMAIL,
+        "street": ORG_STREET,
+        "locality": ORG_LOCALITY,
+        "region": ORG_REGION.replace("область", "обл."),
+        "maps_url": _maps_url(),
+    }
+    return render(request, "contacts.html", {"contact": contact})
 
 
 def faq(request):

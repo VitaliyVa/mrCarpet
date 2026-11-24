@@ -1,4 +1,4 @@
-from project.free_shipping import get_shop_settings
+from project.free_shipping import delivery_terms, get_shop_settings
 from project.seo_analytics import analytics_context, analytics_user_id
 from project.seo_indexing import is_indexing_enabled
 from project.seo_jsonld import dumps_jsonld, organization_graph, website_graph
@@ -30,9 +30,14 @@ def seo_jsonld(request):
 
 
 def shop_settings(request):
-    """Singleton shop options (free shipping threshold, etc.)."""
+    """Singleton shop options (free shipping threshold, etc.) and the
+    delivery / return terms derived from them (`shop_terms`)."""
     try:
         settings = get_shop_settings()
     except Exception:
-        return {"shop_settings": None}
-    return {"shop_settings": settings}
+        return {"shop_settings": None, "shop_terms": None}
+    try:
+        terms = delivery_terms(settings)
+    except Exception:
+        terms = None
+    return {"shop_settings": settings, "shop_terms": terms}

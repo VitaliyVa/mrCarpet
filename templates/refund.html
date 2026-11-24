@@ -3,12 +3,13 @@
 {% block meta %}
 <meta
   name="description"
-  content="Умови повернення та обміну товарів у mr.Carpet. Як повернути килим і отримати кошти."
+  content="Повернення килима в mr.Carpet: {{ shop_terms.return_days_text|default:'14 днів' }}, Новою Поштою або в магазині в Ланівцях. Умови і як отримати гроші назад."
 />
 {% endblock meta %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/refund/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
+{% comment %} Return days come from project.free_shipping.RETURN_DAYS (shop_terms), the same value as MerchantReturnPolicy in the JSON-LD (ReturnByMail, buyer pays the return delivery). {% endcomment %}
 <section class="refund first_section">
   <div class="container">
     <div class="bread-crumbs">
@@ -17,50 +18,7 @@
       <a href="{% url 'refund' %}" class="color_gold">Повернення</a>
     </div>
     <div class="terms-and-policies">
-      <div class="terms-and-policies__sidebar nav-sidebar">
-        <ul class="nav-sidebar__items">
-          <li>
-            <!-- active item has a "color_gold" class  -->
-            <a href="{% url 'delivery' %}" class="color_black">
-              <span>Доставка і оплата</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'refund' %}" class="color_gold">
-              <span>Повернення</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'terms' %}" class="color_black">
-              <span>Умови і положення</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-
-          <li>
-            <a href="{% url 'policy' %}" class="color_black">
-              <span>Політика конфіденційності</span>
-              <img
-                src="/static/utils/assets/chevron-right.svg"
-                alt="chevron-right"
-              />
-            </a>
-          </li>
-        </ul>
-      </div>
+      {% include 'includes/policy_sidebar.html' with active='refund' %}
 
       <div class="terms-and-policies__content">
         <div class="title">
@@ -68,49 +26,88 @@
         </div>
 
         <div class="terms-and-policies__items">
-          <div class="terms-and-policies__block-item">
+          <div class="terms-and-policies__block-item" id="merchant-return-policy">
             <div class="terms-and-policies__block-item-text">
-              <p>
-                Повернення товару здійснюється відповідно до Закону України
-                «Про захист прав споживачів».
+              <p class="bold">
+                Килим можна повернути протягом
+                {{ shop_terms.return_days_text|default:"14 днів" }}, не
+                рахуючи дня покупки.
               </p>
               <p>
-                У період 14 днів, не рахуючи дня покупки, можна оформити
-                повернення товару на умовах:
+                Повертаємо за Законом України «Про захист прав споживачів».
+                Килим приймемо назад, якщо:
               </p>
-              <p>Товар не був у експлуатації;</p>
-              <p>Збережені всі пломби і ярлики;</p>
-              <p>Цілісність комплекту та пакування не порушена;</p>
-              <p>Збережено документ, який підтверджує оплату.</p>
+              <ul>
+                <li>ним не користувались;</li>
+                <li>на ньому лишились усі ярлики і пломби;</li>
+                <li>пакування і комплект цілі;</li>
+                <li>у вас є чек або інший документ про оплату.</li>
+              </ul>
+              <p>
+                Килими, які ми зробили на замовлення під ваш розмір, не
+                повертаються і не обмінюються.
+              </p>
             </div>
           </div>
 
-          <div class="terms-and-policies__block-item">
+          <div class="terms-and-policies__block-item" id="return-by-post">
             <h3 class="terms-and-policies__block-item-title color_gold">
-              Для повернення товару Вам необхідно:
+              Як повернути Новою Поштою
             </h3>
             <div class="terms-and-policies__block-item-text">
               <ol>
                 <li>
-                  Звернутися до менеджерів, надати документ, що підтверджує
-                  оплату, товар і документ, що засвідчує особу;
+                  Подзвоніть нам
+                  <a href="tel:+380963988875" class="color_gold">+380 96 398 88 75</a>
+                  або напишіть на
+                  <a href="mailto:mr.carpet.shop@gmail.com" class="color_gold">mr.carpet.shop@gmail.com</a>.
+                  Скажіть номер замовлення і що хочете повернути.
                 </li>
-                <li>Заповнити заяву на повернення;</li>
-                <li>Після огляду товару здійснюється повернення коштів;</li>
+                <li>Ми підкажемо, куди відправити килим.</li>
                 <li>
-                  При оплаті за товар банківською картою, при поверненні
-                  товару обов'язкова наявність карти, з якої була проведена
-                  оплата;
-                </li>
-                <li>
-                  Період отримання грошових коштів згідно чинного
-                  законодавства.
+                  Запакуйте килим і відправте його Новою Поштою. Доставку назад
+                  оплачує покупець. Якщо килим з браком або ми щось наплутали,
+                  доставку оплачуємо ми.
                 </li>
                 <li>
-                  Товар вироблений за індивідуальним замовленням клієнта
-                  поверненню та обміну не підлягає.
+                  Коли килим приїде, ми його оглянемо і повернемо вам гроші.
                 </li>
               </ol>
+            </div>
+          </div>
+
+          <div class="terms-and-policies__block-item" id="return-in-store">
+            <h3 class="terms-and-policies__block-item-title color_gold">
+              Як повернути в магазині
+            </h3>
+            <div class="terms-and-policies__block-item-text">
+              <p>
+                Можна принести килим у наш магазин: Тернопільська обл.,
+                м. Ланівці, вул. Незалежності 5а. Візьміть із собою килим,
+                документ про оплату і паспорт чи інший документ, що посвідчує
+                особу. На місці заповните коротку
+                заяву на повернення.
+              </p>
+            </div>
+          </div>
+
+          <div class="terms-and-policies__block-item" id="refund-money">
+            <h3 class="terms-and-policies__block-item-title color_gold">
+              Як повертаємо гроші
+            </h3>
+            <div class="terms-and-policies__block-item-text">
+              <p>
+                Гроші повертаємо після огляду килима, у строки, які встановлює
+                закон.
+              </p>
+              <p>
+                Якщо платили карткою, гроші повернемо на ту саму картку. Тому
+                тримайте її під рукою.
+              </p>
+              <p>
+                Є питання? Усі способи зв'язатися з нами є на сторінці
+                <a href="{% url 'contacts' %}" class="color_gold">«Контакти»</a>.
+              </p>
             </div>
           </div>
         </div>

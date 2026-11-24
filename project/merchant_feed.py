@@ -15,7 +15,9 @@ Facts only from the DB, nothing generated:
   active_color / specs as fallback); material, pattern and `product_detail`
   come from ProductSpecification rows (same rows as the PDP `<dl>` and the
   JSON-LD `additionalProperty`);
-- product_length / product_width come from the size label.
+- product_length / product_width come from the size label;
+- `shipping` (Nova Poshta, free from the ShopSettings threshold, handling and
+  transit days) comes from project.free_shipping, same as the JSON-LD.
 Custom-size attributes (price per m², no fixed price) are skipped.
 """
 
@@ -460,8 +462,47 @@ def _details(specs: list[tuple[str, str]], shape: str) -> list[dict]:
     ]
 
 
+def _shop_settings_or_none():
+    try:
+        from project.free_shipping import get_shop_settings
+
+        return get_shop_settings()
+    except Exception:
+        return None
+
+
+def item_shipping(price, settings) -> dict | str:
+    """`g:shipping` for one variant: Nova Poshta, free from the ShopSettings
+    threshold, else the carrier "from" tariff. Same numbers and days as the
+    JSON-LD shippingDetails (project.seo_jsonld.offer_shipping_details) and
+    the /delivery/ page. "" (tag left out) when settings are unknown."""
+    from project.free_shipping import (
+        HANDLING_DAYS,
+        SHIPPING_CARRIER,
+        SHIPPING_COUNTRY,
+        TRANSIT_DAYS,
+        shipping_rate,
+    )
+
+    if settings is None:
+        return ""
+    rate = shipping_rate(price, settings)
+    if rate is None:
+        return ""
+    return {
+        "country": SHIPPING_COUNTRY,
+        "service": SHIPPING_CARRIER,
+        "price": _money(rate),
+        "min_handling_time": HANDLING_DAYS[0],
+        "max_handling_time": HANDLING_DAYS[1],
+        "min_transit_time": TRANSIT_DAYS[0],
+        "max_transit_time": TRANSIT_DAYS[1],
+    }
+
+
 def build_items(products) -> list[dict]:
     items: list[dict] = []
+    shop_settings = _shop_settings_or_none()
     for product in products:
         images = _image_urls(product)
         if not images:
@@ -495,6 +536,9 @@ def build_items(products) -> list[dict]:
                 "availability": "in_stock" if (attr.quantity or 0) > 0 else "out_of_stock",
                 "price": _money(attr.price),
                 "sale_price": _money(total) if attr.discount and total != attr.price else "",
+                "shipping": item_shipping(
+                    total if total is not None else attr.price, shop_settings
+                ),
                 "condition": "new",
                 "brand": ORG_NAME,
                 "identifier_exists": "no",

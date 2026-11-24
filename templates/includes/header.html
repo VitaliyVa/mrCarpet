@@ -44,12 +44,11 @@
             >
           </li>
           <li>
-            <button
-              class="header_top_panel_nav_link small color_black modal_open"
-              data-href="contacts-modal"
+            <a
+              class="header_top_panel_nav_link small color_black"
+              href="{% url 'contacts' %}"
+              >Контакти</a
             >
-              Контакти
-            </button>
           </li>
         </ul>
       </nav>
@@ -756,6 +755,9 @@
 
               <p class="contacts-modal__description color_gold">
                 Зв'яжіться з нами для уточнення всіх питань, що Вас цікавлять.
+              </p>
+              <p class="contacts-modal__all-link">
+                <a href="{% url 'contacts' %}" class="color_black_sub" style="text-decoration: underline">Усі контакти і години роботи</a>
               </p>
             </div>
 

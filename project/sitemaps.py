@@ -19,6 +19,7 @@ class StaticViewSitemap(Sitemap):
             "all_collection",
             "about",
             "delivery",
+            "contacts",
             "faq",
             "refund",
             "terms",

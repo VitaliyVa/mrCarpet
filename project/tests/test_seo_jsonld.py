@@ -132,8 +132,16 @@ class SeoJsonLdPhase7Tests(SimpleTestCase):
         self.assertEqual(len(org["sameAs"]), 4)
 
     def test_single_product_merchant_fields(self):
+        from unittest import mock
+
         product = _product()
-        data = product_graph(self.request, product)
+        shop = SimpleNamespace(
+            free_shipping_enabled=True, free_shipping_threshold=1499, delivery_from_price=90
+        )
+        # No DB here: shippingDetails needs ShopSettings (unknown settings
+        # claim nothing rather than a free delivery).
+        with mock.patch("project.free_shipping.get_shop_settings", return_value=shop):
+            data = product_graph(self.request, product)
         self.assertEqual(data["@type"], "Product")
         # Same id as the Merchant feed item (<product.pk>-<attr.pk>).
         self.assertEqual(data["sku"], "61-301")
