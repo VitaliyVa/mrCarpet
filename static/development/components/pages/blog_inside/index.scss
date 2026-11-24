@@ -55,19 +55,12 @@ $bl-header-offset: 110px;
 
 // ---------------------------------------------------------------- hero
 
-// Desktop: text left, photo right, so the hero fills the page width
-// instead of leaving a blank strip on the right. The photo keeps its own
-// proportions: forcing 16:7 cut the top and bottom off every cover.
+// Title block on top across the page; the cover photo opens the main
+// column and the contents sit to its right (owner's layout, 2026-11-24).
+// The photo keeps its own proportions: forcing 16:7 cut every cover.
 .bl-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 56px;
-  align-items: center;
+  max-width: 980px;
   margin-top: 28px;
-
-  &__text {
-    max-width: 640px;
-  }
 
   &__title {
     margin: 16px 0 0;
@@ -80,7 +73,7 @@ $bl-header-offset: 110px;
 
   &__media {
     overflow: hidden;
-    margin: 0;
+    margin: 0 0 36px;
     border-radius: 18px;
     background: $bl-sand;
 
@@ -91,26 +84,7 @@ $bl-header-offset: 110px;
     }
   }
 
-  &--no-image {
-    display: block;
-    padding: 36px 40px;
-    border-radius: 18px;
-    background:
-      repeating-linear-gradient(45deg, rgba(164, 108, 70, 0.05) 0 12px, transparent 12px 24px),
-      $bl-sand;
-  }
-
   @media (max-width: 1100px) {
-    display: block;
-
-    &__text {
-      max-width: 880px;
-    }
-
-    &__media {
-      margin-top: 28px;
-    }
-
     &__title {
       font-size: 34px;
     }
@@ -126,12 +100,8 @@ $bl-header-offset: 110px;
     }
 
     &__media {
-      margin-top: 20px;
+      margin-bottom: 24px;
       border-radius: 14px;
-    }
-
-    &--no-image {
-      padding: 24px 20px;
     }
   }
 }
@@ -159,16 +129,19 @@ $bl-header-offset: 110px;
     grid-template-columns: minmax(0, 960px) 320px;
     gap: 72px;
     justify-content: space-between;
-    margin-top: 48px;
+    margin-top: 32px;
   }
 
   &__aside {
     position: relative;
   }
 
+  // Only the shopping block follows the reader; contents and related
+  // articles stay where they are (owner asked for a non-fixed contents).
   &__sticky {
     position: sticky;
     top: $bl-header-offset;
+    margin-top: 20px;
   }
 
   @media (max-width: 1100px) {
@@ -299,8 +272,132 @@ $bl-header-offset: 110px;
   }
 }
 
-.bl-aside-cta {
+.bl-aside__title {
+  margin-bottom: 12px;
+  color: $bl-ink;
+  font-family: "Futura PT Bold", sans-serif;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.bl-aside-related {
   margin-top: 20px;
+  padding: 20px 18px;
+  border: 1px solid $bl-sand;
+  border-radius: 14px;
+
+  &__item {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    color: $bl-ink;
+    text-decoration: none;
+
+    & + & {
+      border-top: 1px solid $bl-sand;
+    }
+
+    img,
+    .bl-aside-related__noimg {
+      width: 72px;
+      height: 54px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: $bl-sand;
+    }
+
+    .bl-aside-related__noimg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    &:hover .bl-aside-related__title {
+      color: $bl-brown;
+    }
+  }
+
+  &__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    transition: color 0.2s ease;
+  }
+}
+
+.bl-mini-products {
+  padding: 20px 18px;
+  border: 1px solid $bl-sand;
+  border-radius: 14px;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    color: $bl-ink;
+    text-decoration: none;
+
+    &:hover .bl-mini-products__title {
+      color: $bl-brown;
+    }
+
+    &.is-oos img {
+      filter: grayscale(0.4);
+      opacity: 0.7;
+    }
+  }
+
+  &__media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid $bl-sand;
+    border-radius: 8px;
+    background: #fff;
+    aspect-ratio: 7 / 8;
+
+    img {
+      width: 100%;
+      height: 100%;
+      padding: 6px;
+      // whole rug visible, ovals included
+      object-fit: contain;
+    }
+  }
+
+  &__price {
+    margin-top: 6px;
+    color: $bl-brown;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &__title {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-top: 2px;
+    font-size: 12.5px;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    transition: color 0.2s ease;
+  }
+}
+
+.bl-aside-cta {
+  margin-top: 14px;
   padding: 24px 22px;
   border-radius: 14px;
   background: $bl-sand;
@@ -1487,6 +1584,13 @@ $bl-header-offset: 110px;
 
 .bl-related {
   margin-top: 72px;
+
+  // On desktop the sidebar already lists related articles.
+  &--bottom {
+    @media (min-width: 1101px) {
+      display: none;
+    }
+  }
 
   &__head {
     display: flex;

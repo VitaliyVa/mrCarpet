@@ -43,25 +43,25 @@
             </a>
         </div>
 
-        <header class="bl-hero{% if not article.has_image %} bl-hero--no-image{% endif %}">
-            <div class="bl-hero__text">
-                <a class="bl-chip" href="{% url 'blog' %}?tema={{ topic.slug }}" rel="nofollow">{{ topic.emoji }} {{ topic.label }}</a>
-                <h1 class="bl-hero__title">{{ article.title }}</h1>
-                <div class="bl-meta">
-                    {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
-                    <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
-                    {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
-                </div>
+        <header class="bl-hero">
+            <a class="bl-chip" href="{% url 'blog' %}?tema={{ topic.slug }}" rel="nofollow">{{ topic.emoji }} {{ topic.label }}</a>
+            <h1 class="bl-hero__title">{{ article.title }}</h1>
+            <div class="bl-meta">
+                {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
+                <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
+                {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
             </div>
-            {% if article.has_image %}
-            <figure class="bl-hero__media">
-                <img src="{{ article.image.url }}" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />
-            </figure>
-            {% endif %}
         </header>
 
+        {% article_products article as mini_cards %}
         <div class="bl-article__layout">
             <div class="bl-article__main">
+                {% if article.has_image %}
+                <figure class="bl-hero__media">
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />
+                </figure>
+                {% endif %}
+
                 {% if parts.toc|length > 1 %}
                 <details class="bl-toc bl-toc--inline">
                     <summary class="bl-toc__title">Зміст статті</summary>
@@ -79,15 +79,29 @@
             </div>
 
             <aside class="bl-article__aside">
+                {% if parts.toc|length > 1 %}
+                <nav class="bl-toc bl-toc--side" aria-label="Зміст статті">
+                    <p class="bl-toc__title">Зміст статті</p>
+                    <ol class="bl-toc__list">
+                        {% for item in parts.toc %}<li><a href="#{{ item.id }}" data-toc-link="{{ item.id }}">{{ item.text }}</a></li>{% endfor %}
+                    </ol>
+                </nav>
+                {% endif %}
+
+                {% if related %}
+                <div class="bl-aside-related">
+                    <p class="bl-aside__title">Схожі статті</p>
+                    {% for item in related %}
+                    <a class="bl-aside-related__item" href="{% url 'article' item.slug %}">
+                        {% if item.has_image %}<img src="{{ item.image.url }}" alt="" width="96" height="72" loading="lazy" decoding="async">{% else %}<span class="bl-aside-related__noimg" aria-hidden="true">{{ item|article_topic_emoji }}</span>{% endif %}
+                        <span class="bl-aside-related__title">{{ item.title }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <div class="bl-article__sticky">
-                    {% if parts.toc|length > 1 %}
-                    <nav class="bl-toc bl-toc--side" aria-label="Зміст статті">
-                        <p class="bl-toc__title">Зміст статті</p>
-                        <ol class="bl-toc__list">
-                            {% for item in parts.toc %}<li><a href="#{{ item.id }}" data-toc-link="{{ item.id }}">{{ item.text }}</a></li>{% endfor %}
-                        </ol>
-                    </nav>
-                    {% endif %}
+                    {% if mini_cards %}{% include "includes/blog_products_mini.html" with cards=mini_cards %}{% endif %}
                     <div class="bl-aside-cta">
                         <p class="bl-aside-cta__emoji" aria-hidden="true">🛋️</p>
                         <p class="bl-aside-cta__title">Шукаєте свій килим?</p>
@@ -99,7 +113,7 @@
         </div>
 
         {% if related %}
-        <section class="bl-related" aria-labelledby="bl-related-title">
+        <section class="bl-related bl-related--bottom" aria-labelledby="bl-related-title">
             <div class="bl-related__head">
                 <h2 class="bl-related__title" id="bl-related-title">Читайте також</h2>
                 <a href="{% url 'blog' %}" class="bl-related__all">Усі статті →</a>

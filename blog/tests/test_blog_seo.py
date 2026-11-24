@@ -473,3 +473,19 @@ class ArticleTypographyTests(TestCase):
             self.assertIn(marker, scss)
         for marker in ("counter-reset:step", "border-left:3px solid #a46c46"):
             self.assertIn(marker, css)
+
+
+class SidebarProductCardsTests(TestCase):
+    def test_collects_products_from_all_blocks_once_in_order(self):
+        from unittest.mock import patch
+        from blog.services import product_cards as pc
+
+        html = ('<div class="blog-products" data-products="a,b"></div><p>x</p>'
+                '<div class="blog-products" data-products="b,c,d,e"></div>')
+        with patch.object(pc, "cards_for", side_effect=lambda slugs: [{"slug": s} for s in slugs]):
+            cards = pc.article_product_cards(html, limit=4)
+        self.assertEqual([c["slug"] for c in cards], ["a", "b", "c", "d"])
+
+    def test_no_blocks_no_cards(self):
+        from blog.services.product_cards import article_product_cards
+        self.assertEqual(article_product_cards("<p>hi</p>"), [])

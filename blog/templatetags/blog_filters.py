@@ -52,3 +52,20 @@ def uk_minutes(value):
     else:
         word = "хвилин"
     return f"{n} {word}"
+
+
+@register.simple_tag
+def article_products(article, limit=4):
+    """Mini cards for the products this article recommends (sidebar)."""
+    from blog.services.product_cards import article_product_cards
+
+    return article_product_cards(getattr(article, "description", "") or "", int(limit))
+
+
+
+@register.filter
+def article_topic_emoji(article):
+    topic = article_topic(article)
+    if isinstance(topic, dict):
+        return topic.get("emoji", "📝")
+    return getattr(topic, "emoji", "📝")

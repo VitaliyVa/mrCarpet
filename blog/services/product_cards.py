@@ -146,3 +146,20 @@ def expand_product_blocks(html: str) -> str:
     if not html or "blog-products" not in html:
         return html
     return PLACEHOLDER_RE.sub(lambda m: render_block(parse_slugs(m.group(1))), html)
+
+
+ANY_PRODUCTS_RE = re.compile(r'data-products="([^"]*)"')
+
+
+def article_product_cards(html: str | None, limit: int = MAX_PRODUCTS) -> list[dict]:
+    """Cards for every product an article recommends inline, deduplicated,
+    in reading order, at most `limit`. Feeds the sidebar mini cards so the
+    reader can reach the recommended rugs without scrolling back."""
+    slugs: list[str] = []
+    for m in ANY_PRODUCTS_RE.finditer(html or ""):
+        for slug in parse_slugs(m.group(1)):
+            if slug not in slugs:
+                slugs.append(slug)
+    candidates = cards_for(slugs[: limit * 2])
+    return candidates[:limit]
+
