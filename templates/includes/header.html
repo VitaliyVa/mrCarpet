@@ -485,28 +485,35 @@
       <div class="header_info__block">
         <div class="header_info_left">
           <div class="header_info_title medium color_white">Для покупця</div>
-          <a href="#" class="header_info_link small color_white"
+          <a href="{% url 'about' %}" class="header_info_link small color_white"
             >Про компанію</a
           >
           <a href="{% url 'stock' %}" class="header_info_link small color_white">Акції</a>
-          <a href="#" class="header_info_link small color_white">Блог</a>
-          <a href="#" class="header_info_link small color_white"
+          <a href="{% url 'blog' %}" class="header_info_link small color_white">Блог</a>
+          <a href="{% url 'faq' %}" class="header_info_link small color_white"
             >Питання / Відповідь</a
           >
-          <a href="#" class="header_info_link small color_white">Контакти</a>
+          <button
+            type="button"
+            class="header_info_link small color_white modal_open"
+            data-href="contacts-modal"
+            style="background: none; border: 0; padding: 0; text-align: left; cursor: pointer"
+          >
+            Контакти
+          </button>
         </div>
         <div class="header_info_right">
           <div class="header_info_title medium color_white">
             Інтернет-магазин
           </div>
-          <a href="#" class="header_info_link small color_white"
+          <a href="{% url 'delivery' %}" class="header_info_link small color_white"
             >Доставка і оплата</a
           >
-          <a href="#" class="header_info_link small color_white">Повернення</a>
-          <a href="#" class="header_info_link small color_white"
+          <a href="{% url 'refund' %}" class="header_info_link small color_white">Повернення</a>
+          <a href="{% url 'terms' %}" class="header_info_link small color_white"
             >Умови і положення</a
           >
-          <a href="#" class="header_info_link small color_white"
+          <a href="{% url 'policy' %}" class="header_info_link small color_white"
             >Політика конфіденційності</a
           >
         </div>
@@ -709,9 +716,9 @@
                   Натиснувши кнопку «Створити обліковий запис», Ви приймаєте
                   умови
                 </p>
-                <a href="#">Політики конфіденційності</a>
+                <a href="{% url 'policy' %}" target="_blank" rel="noopener">Політики конфіденційності</a>
                 <span>,</span>
-                <a href="#"> Правила та умови використання сайту</a>
+                <a href="{% url 'terms' %}" target="_blank" rel="noopener"> Правила та умови використання сайту</a>
               </div>
             </form>
 
