@@ -17,11 +17,12 @@ from .models import (
 from .utils import get_available_filters, get_filter_counts
 
 
-def _analytics_view_item_payload(product: Product) -> dict | None:
+def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     """GA4/GTM ecommerce view_item payload (None when price unknown)."""
     from decimal import Decimal
 
-    attr = product.product_attr.order_by("sort_order", "pk").first()
+    if attr is None:
+        attr = product.product_attr.order_by("sort_order", "pk").first()
     if not attr:
         return None
     if attr.custom_attribute:
@@ -391,6 +392,22 @@ def favourites(request):
     return render(request, "favorite.html")
 
 
+def _selected_size_attr(request, product: Product):
+    """Size from `?size=<ProductAttribute.pk>` (Merchant feed variant links),
+    else the default one. Only fixed sizes of this product are accepted;
+    anything else falls back silently, so a stale feed link never breaks."""
+    raw = (request.GET.get("size") or "").strip()
+    if raw.isdigit():
+        attr = (
+            product.product_attr.filter(pk=int(raw), custom_attribute=False)
+            .select_related("size")
+            .first()
+        )
+        if attr is not None:
+            return attr
+    return product.get_default_size_attr()
+
+
 def product(request, slug):
     from django.urls import reverse
 
@@ -412,13 +429,15 @@ def product(request, slug):
     crumbs.append((product.title, product.get_absolute_url()))
 
     product_ld = product_graph(request, product, images=images)
+    selected_attr = _selected_size_attr(request, product)
     context = {
         "product": product,
+        "selected_size_attr": selected_attr,
         "images": images,
         "ar_ready": product.ar_status == Product.AR_STATUS_READY
         and bool(product.ar_texture),
         "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
-        "analytics_view_item": _analytics_view_item_payload(product),
+        "analytics_view_item": _analytics_view_item_payload(product, selected_attr),
         **_review_invite_context(request),
     }
     if product_ld:
