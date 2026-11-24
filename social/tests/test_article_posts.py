@@ -150,6 +150,12 @@ SPEC = {
 
 
 class SchedulePostTests(MediaTestCase):
+    def setUp(self):
+        super().setUp()
+        # The 2026-11 data migration schedules real article posts in the test
+        # DB too; these tests count posts, so start from an empty table.
+        SocialPost.objects.all().delete()
+
     def test_creates_scheduled_photo_post(self):
         from social.services.article_post import schedule_article_post
 
