@@ -22,6 +22,8 @@ def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     """GA4/GTM ecommerce view_item payload (None when price unknown)."""
     from decimal import Decimal
 
+    from project.merchant_feed import offer_id
+
     if attr is None:
         attr = product.product_attr.order_by("sort_order", "pk").first()
     if not attr:
@@ -41,7 +43,9 @@ def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     if not attr.custom_attribute and getattr(attr, "size", None):
         variant = str(attr.size)
     return {
-        "item_id": str(product.pk),
+        # Merchant feed g:id of this size (bare pk for cut-to-length).
+        "item_id": offer_id(product, attr),
+        "item_group_id": str(product.pk),
         "item_name": product.title,
         "item_brand": "mr.Carpet",
         "item_category": category.title if category else "",

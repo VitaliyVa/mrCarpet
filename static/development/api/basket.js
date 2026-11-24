@@ -9,6 +9,14 @@ import {
   CURRENCY,
 } from "../utils/analytics";
 
+// The next step right in the toast: on a phone the header cart icon is easy
+// to miss, and a toast with no link leaves people on the product page.
+const CHECKOUT_PATH = "/checkout/";
+export const withCheckoutLink = (message) => {
+  if (window.location.pathname.indexOf(CHECKOUT_PATH) === 0) return message;
+  return `${message} <a href="${CHECKOUT_PATH}" class="checkout-notification__action">Оформити замовлення</a>`;
+};
+
 export const addToBasket = async (product, onSucces, analyticsMeta) => {
   try {
     const { data } = await instance.post("/cart-products/", product);
@@ -41,7 +49,7 @@ export const addToBasket = async (product, onSucces, analyticsMeta) => {
       });
     }
 
-    showSuccess(data?.message || "Товар додано в кошик");
+    showSuccess(withCheckoutLink(data?.message || "Товар додано в кошик"));
 
     return data;
   } catch (error) {

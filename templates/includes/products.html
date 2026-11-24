@@ -1,4 +1,4 @@
-{% load thumbnails %}
+{% load thumbnails catalog_filters %}
 {% with default_attr=product.get_default_size_attr %}
 
 {% if product.is_novelty %}
@@ -115,6 +115,7 @@
   {% if not attr.custom_attribute %}
   <div
     data-item="{{ attr.id }}"
+    data-ga-item-id="{{ attr|ga_item_id }}"
     data-qty="{{ attr.quantity }}"
     data-in-stock="{% if attr.in_stock %}1{% else %}0{% endif %}"
     data-size="{{ attr.size }}"

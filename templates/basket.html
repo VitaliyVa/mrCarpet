@@ -1,4 +1,4 @@
-{% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
+{% extends '_base.html' %}{% load catalog_filters %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/basket/index.css?v={{ static_v }}" />
 <link rel="stylesheet" href="/static/development/pages/promocode.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
@@ -38,6 +38,7 @@
                         class="basket_item"
                         data-item-id="{{cart_product.id}}"
                         data-catalog-product-id="{{ cart_product.product_attr.product.id }}"
+                        data-ga-item-id="{{ cart_product.product_attr|ga_item_id }}"
                         data-product-title="{{ cart_product.product_attr.product.title }}"
                         data-quantity="{{ cart_product.quantity }}"
                         data-price="{{ cart_product.cart_product_total_price }}"
@@ -148,7 +149,7 @@
                     </div>
 
                     <button class="basket__confirm-order-btn basket_right_btn">
-                        <a href="{% url 'checkout' %}" class="btn-gold">Замовлення підтверджую</a>
+                        <a href="{% url 'checkout' %}" class="btn-gold">Оформити замовлення</a>
                     </button>
 
                     <div class="basket__calculate-info color_black_sub font-size-14">

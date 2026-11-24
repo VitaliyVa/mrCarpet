@@ -1,6 +1,6 @@
 <div class="blog-products blog-products--{{ cards|length }}" data-ga-list-id="blog_article" data-ga-list-name="Товари в статті">
   {% for card in cards %}
-  <a class="blog-products__card{% if not card.in_stock %} is-oos{% endif %}" href="{{ card.url }}"{% if card.id %} data-catalog-product-id="{{ card.id }}" data-product-title="{{ card.title }}" data-price="{{ card.ga_price }}" data-item-variant="{{ card.ga_variant }}"{% endif %}>
+  <a class="blog-products__card{% if not card.in_stock %} is-oos{% endif %}" href="{{ card.url }}"{% if card.id %} data-catalog-product-id="{{ card.id }}" data-ga-item-id="{{ card.ga_item_id }}" data-product-title="{{ card.title }}" data-price="{{ card.ga_price }}" data-item-variant="{{ card.ga_variant }}"{% endif %}>
     <span class="blog-products__media">
       {% if card.image %}
       <img src="{{ card.image }}" alt="{{ card.title }}" width="365" height="420" sizes="(max-width: 600px) 45vw, 220px" loading="lazy" decoding="async">

@@ -110,7 +110,9 @@
                                                     id="nova-post-name"
                                                     class="input-transparent"
                                                     name="name"
-                                                    placeholder="Ваше ім'я"
+                                                    placeholder="Ім'я та прізвище отримувача"
+                                                    autocomplete="name"
+                                                    aria-label="Ім'я та прізвище отримувача"
                                             />
                                             <input
                                                     id="nova-post-email"
@@ -119,12 +121,18 @@
                                                     name="email"
                                                     placeholder="Email для підтвердження замовлення"
                                                     autocomplete="email"
+                                                    inputmode="email"
+                                                    aria-label="Email"
                                             />
                                             <input
                                                     id="nova-post-phone"
                                                     class="input-transparent"
+                                                    type="tel"
                                                     name="phone"
                                                     placeholder="+380 XX XXX XX XX"
+                                                    inputmode="tel"
+                                                    autocomplete="tel"
+                                                    aria-label="Телефон"
                                             />
                                         </div>
                                     </div>
@@ -471,7 +479,7 @@
                     </div>
 
                     <button class="basket__to-order-btn basket_right_btn btn-gold">
-                        Перейти до оформлення
+                        Підтвердити замовлення
                     </button>
 
                     <div class="basket__calculate-info color_black_sub font-size-14">

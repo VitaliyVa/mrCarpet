@@ -86,7 +86,7 @@ function validateOrderForm() {
       key: "name",
       field: nameInput,
       invalid: () => !nameInput?.value.trim(),
-      message: "Будь ласка, введіть ваше ім'я",
+      message: "Будь ласка, введіть ім'я та прізвище",
     },
     {
       key: "email",

@@ -1,5 +1,5 @@
 {% extends '_base.html' %}
-{% load thumbnails %}
+{% load thumbnails catalog_filters %}
 {% block title %}{{ product.meta_title|default:product.title }} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
@@ -448,6 +448,7 @@
             {% if not attr.custom_attribute %}
             <div
               data-item="{{ attr.id }}"
+              data-ga-item-id="{{ attr|ga_item_id }}"
               data-qty="{{ attr.quantity }}"
               data-in-stock="{% if attr.in_stock %}1{% else %}0{% endif %}"
               data-size="{{ attr.size }}"
@@ -537,7 +538,7 @@
               class="add-to-cart btn-gold"
               {% if default_attr and not default_attr.in_stock %}hidden{% endif %}
             >
-              Добавити до кошика
+              Додати в кошик
             </button>
             <button
               type="button"
