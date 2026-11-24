@@ -239,7 +239,8 @@ class BlogCoverThumbnailTests(TestCase):
         self.assertIn('src="/media/thumbs/w800/articles/test-cover.webp"', hero)
         self.assertIn("1200w", hero)
         self.assertIn('sizes="(max-width: 800px) calc(100vw - 40px), 860px"', hero)
-        self.assertIn('width="1200" height="800"', hero)
+        # Real cover size, so the box keeps the photo's proportions before load.
+        self.assertIn('width="1536" height="1024"', hero)
         # Related aside: small copies, not the 1.5k px upload.
         self.assertIn('src="/media/thumbs/w240/articles/test-cover.webp"', html)
         # Social previews keep the original (WebP previews are flaky in messengers).
@@ -247,6 +248,22 @@ class BlogCoverThumbnailTests(TestCase):
         self.assertTrue(og.endswith("/media/" + self.COVER), og)
         tw = re.search(r'<meta name="twitter:image" content="([^"]*)"', html).group(1)
         self.assertTrue(tw.endswith("/media/" + self.COVER), tw)
+
+    def test_portrait_cover_keeps_its_proportions(self):
+        """Portrait covers (1067x1600) must not get a 3:2 box: on mobile the
+        hero is width:100% with no max-height, so a wrong ratio shifts the page
+        when the photo loads."""
+        from PIL import Image
+
+        name = "articles/tall-cover.webp"
+        Image.new("RGB", (1067, 1600), (150, 110, 80)).save(
+            os.path.join(self.media, name), format="WEBP"
+        )
+        Article.objects.filter(pk=self.first.pk).update(image=name)
+        html = self.client.get(self.first.get_absolute_url()).content.decode()
+        hero = [t for t in self._imgs(html) if 'fetchpriority="high"' in t][0]
+        self.assertIn('width="1067" height="1600"', hero)
+        self.assertIn('src="/media/thumbs/w800/articles/tall-cover.webp"', hero)
 
     def test_unreadable_thumbnail_falls_back_to_original(self):
         """A broken upload still shows a picture instead of an empty slot."""

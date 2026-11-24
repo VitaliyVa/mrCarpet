@@ -71,8 +71,8 @@
 
                 {% if article.has_image %}
                 <figure class="bl-hero__media">
-                    {% comment %}Resized WebP, not the 1.5k px upload. sizes also sets the shown width (CSS width:auto), so it matches the old look. Fixed 3:2 box: reading image.width opened the file on every render.{% endcomment %}
-                    {% with s480=article.image|thumb:480 s800=article.image|thumb:800 s1200=article.image|thumb:1200 %}<img src="{{ s800 }}" srcset="{{ s480 }} 480w, {{ s800 }} 800w, {{ s1200 }} 1200w" sizes="(max-width: 800px) calc(100vw - 40px), 860px" alt="{{ article.title }}" width="1200" height="800" fetchpriority="high" decoding="async" />{% endwith %}
+                    {% comment %}Resized WebP, not the 1.5k px upload. sizes also sets the shown width (CSS width:auto), so it matches the old look. width/height stay the real cover size: about a third of covers are portrait, and a fixed 3:2 box made them jump on mobile (width:100%, no max-height) once loaded.{% endcomment %}
+                    {% with s480=article.image|thumb:480 s800=article.image|thumb:800 s1200=article.image|thumb:1200 %}<img src="{{ s800 }}" srcset="{{ s480 }} 480w, {{ s800 }} 800w, {{ s1200 }} 1200w" sizes="(max-width: 800px) calc(100vw - 40px), 860px" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />{% endwith %}
                 </figure>
                 {% endif %}
 
