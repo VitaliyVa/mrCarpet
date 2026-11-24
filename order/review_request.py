@@ -108,8 +108,101 @@ def due_orders(*, now=None, delay_days: int = DELAY_DAYS):
             completed_at__lte=now - timezone.timedelta(days=delay_days),
         )
         .exclude(email="")
+        # Placeholder addresses never reach anyone. They go to the staff
+        # route below instead of coming due, and failing, every single day.
+        .exclude(email__iendswith="@temp.com")
         .select_related("cart")
     )
+
+
+#: Past this, a nudge to message the buyer by hand comes out of the blue for
+#: both sides, and the link's token is closer to expiring. Also stops the
+#: first run from flooding the staff chat with every old phone-only order.
+STAFF_NUDGE_MAX_AGE_DAYS = 45
+
+
+def due_orders_without_email(*, now=None, delay_days: int = DELAY_DAYS):
+    """
+    The same orders as `due_orders`, but the ones a letter cannot reach.
+
+    There is no customer channel besides email in this code (no SMS, and a
+    Telegram bot cannot write first to a phone number), so these go to the
+    staff chat as a ready message to forward in Viber or Telegram by hand.
+    """
+    from django.db.models import Q
+
+    from order.models import Order
+
+    now = now or timezone.now()
+    return (
+        Order.objects.filter(
+            status=Order.STATUS_COMPLETED,
+            review_request_sent_at__isnull=True,
+            completed_at__isnull=False,
+            completed_at__lte=now - timezone.timedelta(days=delay_days),
+            completed_at__gte=now - timezone.timedelta(days=STAFF_NUDGE_MAX_AGE_DAYS),
+        )
+        .filter(Q(email="") | Q(email__iendswith="@temp.com"))
+        .select_related("cart")
+    )
+
+
+def build_staff_nudge(order) -> str | None:
+    """Staff chat text with the buyer's phone and a message ready to forward."""
+    products = products_in(order)
+    if not products:
+        return None
+    items = [
+        {"title": p.title, "url": review_url(order, p)} for p in products[:4]
+    ]
+    return render_to_string(
+        "emails/review_request_messenger.txt",
+        {
+            "order": order,
+            "customer": f"{order.name or ''} {order.surname or ''}".strip(),
+            "phone": (order.phone or "").strip(),
+            "items": items,
+            "google_review_url": google_review_url(),
+        },
+    ).strip()
+
+
+def ask_staff_for(order) -> bool:
+    """
+    Hand a phone-only order to staff so they can ask for the review by hand.
+
+    Marked only when the staff chat accepted the message: a failed send costs
+    nothing to retry, since the buyer is not contacted by this step. With no
+    phone and no items there is nothing anyone can do, so it is marked and
+    dropped.
+    """
+    text = build_staff_nudge(order) if (order.phone or "").strip() else None
+    if not text:
+        type(order).objects.filter(pk=order.pk).update(
+            review_request_sent_at=timezone.now()
+        )
+        return False
+
+    from social.services.comment_notify import notify_staff_text
+
+    result = notify_staff_text(text) or {}
+    if not result.get("ok"):
+        return False
+    type(order).objects.filter(pk=order.pk).update(
+        review_request_sent_at=timezone.now()
+    )
+    return True
+
+
+def ask_staff_due(*, limit: int = 20, now=None) -> int:
+    asked = 0
+    for order in due_orders_without_email(now=now)[:limit]:
+        try:
+            if ask_staff_for(order):
+                asked += 1
+        except Exception:
+            logger.exception("staff review nudge failed for order %s", order.pk)
+    return asked
 
 
 def build_email(order) -> tuple[str, str, str] | None:

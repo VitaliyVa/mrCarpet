@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from .models import Order, PromoCodeRedemption
 
@@ -48,6 +48,8 @@ class OrderAdmin(admin.ModelAdmin):
         "updated",
         "promocode_code",
         "promocode_discount",
+        "review_request_sent_at",
+        "review_links",
     )
     list_select_related = ("promocode",)
 
@@ -96,7 +98,38 @@ class OrderAdmin(admin.ModelAdmin):
                 ),
             },
         ),
+        (
+            "Відгук",
+            {
+                "fields": ("review_request_sent_at", "review_links"),
+                "description": (
+                    "Посилання відкриває форму відгуку вже з іменем покупця, "
+                    "і відгук одразу публікується як перевірена покупка. "
+                    "Для замовлень без email його можна переслати у Viber чи Telegram."
+                ),
+            },
+        ),
     )
+
+    @admin.display(description="Посилання для відгуку")
+    def review_links(self, obj):
+        if not obj or not obj.pk or obj.status not in (
+            Order.STATUS_SHIPPED,
+            Order.STATUS_COMPLETED,
+        ):
+            return "З'явиться, коли замовлення буде відправлене."
+        from order.review_request import products_in, review_url
+
+        products = products_in(obj)
+        if not products:
+            return "У замовленні немає товарів."
+        return format_html_join(
+            "",
+            '<div style="margin-bottom:6px"><b>{}</b><br>'
+            '<input type="text" readonly value="{}" style="width:100%;max-width:640px" '
+            'onclick="this.select()"></div>',
+            ((p.title, review_url(obj, p)) for p in products),
+        )
 
     @admin.display(description="Клієнт", ordering="name")
     def customer(self, obj):
