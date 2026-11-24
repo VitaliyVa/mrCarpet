@@ -11,6 +11,10 @@ from django.test import TestCase
 
 from project.merchant_feed import (
     build_items,
+    description_with_facts,
+    feed_product_type,
+    price_band,
+    size_class,
     feed_products,
     feed_title,
     format_size,
@@ -23,6 +27,34 @@ from project.merchant_feed import (
 )
 
 G = "{http://base.google.com/ns/1.0}"
+
+
+class AdsLabelTests(PlainTestCase):
+    def test_product_type_hierarchy(self):
+        cats = [SimpleNamespace(title="Для ванни"), SimpleNamespace(title="Турецькі")]
+        self.assertEqual(feed_product_type(cats), "Килими > Турецькі > Для ванни")
+        self.assertEqual(feed_product_type([SimpleNamespace(title="Українські")]), "Килими > Українські")
+        self.assertEqual(feed_product_type([]), "")
+
+    def test_price_band(self):
+        self.assertEqual(price_band(450), "до 500 грн")
+        self.assertEqual(price_band(500), "500-999 грн")
+        self.assertEqual(price_band("1999.00"), "1000-2499 грн")
+        self.assertEqual(price_band(2500), "від 2500 грн")
+
+    def test_size_class(self):
+        self.assertEqual(size_class((60, 100)), "малий")
+        self.assertEqual(size_class((160, 230)), "середній")
+        self.assertEqual(size_class((200, 300)), "великий")
+        self.assertEqual(size_class(None), "")
+
+    def test_description_facts_line(self):
+        text = description_with_facts("Гарний килим.", "60x100 см", "сірий/білий", "Поліпропілен")
+        self.assertEqual(text, "Гарний килим.\n\nРозмір: 60x100 см. Колір: сірий, білий. Матеріал: поліпропілен.")
+        self.assertEqual(description_with_facts("Опис", "", "", ""), "Опис")
+        long = description_with_facts("я" * 6000, "60x100 см", "", "")
+        self.assertLessEqual(len(long), 5000)
+        self.assertTrue(long.endswith("Розмір: 60x100 см."))
 
 
 class FormatSizeTests(PlainTestCase):

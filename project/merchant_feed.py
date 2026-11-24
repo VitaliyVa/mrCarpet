@@ -312,6 +312,58 @@ def variant_link(product, attr) -> str:
     return absolute_site_url(f"{product.get_absolute_url()}?{SIZE_PARAM}={attr.pk}")
 
 
+COUNTRY_CATEGORIES = ("Українські", "Турецькі")
+PRICE_BANDS = ((500, "до 500 грн"), (1000, "500-999 грн"), (2500, "1000-2499 грн"))
+SIZE_CLASSES = ((1.0, "малий"), (4.0, "середній"))
+
+
+def feed_product_type(categories) -> str:
+    """`Килими > <country> > <room>` from shop categories (Ads can split by it)."""
+    titles = [c.title.strip() for c in categories if (c.title or "").strip()]
+    if not titles:
+        return ""
+    countries = [t for t in titles if t in COUNTRY_CATEGORIES]
+    rooms = [t for t in titles if t not in COUNTRY_CATEGORIES]
+    return " > ".join(["Килими", *countries[:1], *rooms[:1]])
+
+
+def price_band(price) -> str:
+    value = Decimal(str(price or 0))
+    for limit, label in PRICE_BANDS:
+        if value < limit:
+            return label
+    return "від 2500 грн"
+
+
+def size_class(dims) -> str:
+    if not dims:
+        return ""
+    area = dims[0] * dims[1] / 10000
+    for limit, label in SIZE_CLASSES:
+        if area < limit:
+            return label
+    return "великий"
+
+
+def description_with_facts(description: str, size: str, color: str, material: str) -> str:
+    """Append a short facts line (size/color/material from the DB) so Google
+    can match descriptive queries; skipped facts are simply left out."""
+    facts = []
+    if size:
+        facts.append(f"Розмір: {size}.")
+    if color:
+        facts.append(f"Колір: {color.replace('/', ', ')}.")
+    if material:
+        facts.append(f"Матеріал: {material.lower()}.")
+    if not facts:
+        return description
+    line = " ".join(facts)
+    if not description:
+        return line
+    room = MAX_DESCRIPTION - len(line) - 2
+    return f"{description[:room].rstrip()}\n\n{line}"
+
+
 def _details(specs: list[tuple[str, str]], shape: str) -> list[dict]:
     rows = list(specs)
     if shape and not _spec(specs, "форма"):
@@ -339,7 +391,7 @@ def build_items(products) -> list[dict]:
         pattern = _spec(specs, "малюн", "візерун", "орнамент", "дизайн", "принт")[:100]
         highlights = [f"{n}: {v}"[:150] for n, v in specs][:10]
         categories = list(product.categories.all())
-        product_type = categories[0].title if categories else ""
+        product_type = feed_product_type(categories)
         google_category = _google_product_category(product)
 
         attrs = sorted(product.product_attr.all(), key=lambda a: (a.sort_order, a.pk))
@@ -354,7 +406,7 @@ def build_items(products) -> list[dict]:
                 "id": f"{product.pk}-{attr.pk}",
                 "item_group_id": str(product.pk),
                 "title": feed_title(product, size, specs, color),
-                "description": description,
+                "description": description_with_facts(description, size, color, material),
                 "link": variant_link(product, attr),
                 "image_link": images[0],
                 "additional_image_link": images[1 : 1 + MAX_ADDITIONAL_IMAGES],
@@ -375,6 +427,10 @@ def build_items(products) -> list[dict]:
                 "product_detail": _details(specs, shape),
                 # Google wants 2+ highlights; a single spec line is noise.
                 "product_highlight": highlights if len(highlights) >= 2 else [],
+                # Ads bidding splits: price band of the variant, size class, shape.
+                "custom_label_0": price_band(total),
+                "custom_label_1": size_class(dims),
+                "custom_label_2": shape.lower() if shape else "",
             }
             items.append(item)
     return items
