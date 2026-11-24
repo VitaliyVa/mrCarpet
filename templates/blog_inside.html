@@ -43,19 +43,18 @@
             </a>
         </div>
 
-        <header class="bl-hero">
-            <a class="bl-chip" href="{% url 'blog' %}?tema={{ topic.slug }}" rel="nofollow">{{ topic.emoji }} {{ topic.label }}</a>
-            <h1 class="bl-hero__title">{{ article.title }}</h1>
-            <div class="bl-meta">
-                {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
-                <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
-                {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
-            </div>
-        </header>
-
         {% article_products article as mini_cards %}
         <div class="bl-article__layout">
             <div class="bl-article__main">
+                <header class="bl-hero">
+                    <h1 class="bl-hero__title">{{ article.title }}</h1>
+                    <div class="bl-meta">
+                        {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
+                        <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
+                        {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
+                    </div>
+                </header>
+
                 {% if article.has_image %}
                 <figure class="bl-hero__media">
                     <img src="{{ article.image.url }}" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />
@@ -103,8 +102,12 @@
                 <div class="bl-article__sticky">
                     {% if mini_cards %}{% include "includes/blog_products_mini.html" with cards=mini_cards %}{% endif %}
                     <div class="bl-aside-cta">
-                        <p class="bl-aside-cta__emoji" aria-hidden="true">🛋️</p>
-                        <p class="bl-aside-cta__title">Шукаєте свій килим?</p>
+                        <div class="bl-aside-cta__head">
+                            <span class="bl-aside-cta__icon" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="2"/><path d="M6 9h7M6 12h7M6 15h4"/><circle cx="17.5" cy="15.5" r="3"/><path d="m19.7 17.7 1.8 1.8"/></svg>
+                            </span>
+                            <p class="bl-aside-cta__title">Шукаєте свій килим?</p>
+                        </div>
                         <p class="bl-aside-cta__text">У каталозі зручно фільтрувати за розміром, кольором і кімнатою.</p>
                         <a href="/catalog/" class="bl-button bl-button--full">Перейти в каталог</a>
                     </div>

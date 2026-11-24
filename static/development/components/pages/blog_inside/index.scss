@@ -59,11 +59,10 @@ $bl-header-offset: 110px;
 // column and the contents sit to its right (owner's layout, 2026-11-24).
 // The photo keeps its own proportions: forcing 16:7 cut every cover.
 .bl-hero {
-  max-width: 980px;
-  margin-top: 28px;
+  margin-bottom: 28px;
 
   &__title {
-    margin: 16px 0 0;
+    margin: 0;
     color: $bl-ink;
     font-family: "Futura PT Bold", sans-serif;
     font-size: 42px;
@@ -126,10 +125,11 @@ $bl-header-offset: 110px;
 .bl-article {
   &__layout {
     display: grid;
-    grid-template-columns: minmax(0, 960px) 320px;
-    gap: 72px;
-    justify-content: space-between;
-    margin-top: 32px;
+    // Main column takes everything the sidebar does not; the sidebar starts
+    // level with the title (the header lives inside the main column).
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 56px;
+    margin-top: 28px;
   }
 
   &__aside {
@@ -398,25 +398,42 @@ $bl-header-offset: 110px;
 
 .bl-aside-cta {
   margin-top: 14px;
-  padding: 24px 22px;
+  padding: 22px 20px 20px;
+  border: 1px solid rgba(164, 108, 70, 0.18);
   border-radius: 14px;
-  background: $bl-sand;
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(164, 108, 70, 0.12), transparent 60%),
+    $bl-sand;
 
-  &__emoji {
-    font-size: 30px;
-    line-height: 1;
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: $bl-brown;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(164, 108, 70, 0.28);
   }
 
   &__title {
-    margin-top: 12px;
+    margin: 0;
     color: $bl-ink;
     font-family: "Futura PT Bold", sans-serif;
-    font-size: 20px;
+    font-size: 19px;
     line-height: 1.25;
   }
 
   &__text {
-    margin: 8px 0 18px;
+    margin: 12px 0 16px;
     color: $bl-sub;
     font-size: 15px;
     line-height: 1.5;
