@@ -111,7 +111,7 @@ jobs:
         # all of pip from scratch (the build cache is pruned after 48h) and kept
         # the site down for ~7 minutes. Rebuild only when the image inputs
         # changed, or when the image is missing.
-        IMAGE_INPUTS=$(git diff --name-only "$OLD_HEAD" HEAD -- Dockerfile.prod requirements.txt requirements-ga4.txt docker-compose.prod.yml .dockerignore || echo "unknown")
+        IMAGE_INPUTS=$(git diff --name-only "$OLD_HEAD" HEAD -- Dockerfile.prod requirements.txt requirements-ga4.txt || echo "unknown")
         if [ -n "$IMAGE_INPUTS" ] || ! docker image inspect mrcarpet-web:latest >/dev/null 2>&1; then
           echo "Rebuilding containers (changed: ${IMAGE_INPUTS:-image missing})..."
           docker compose -f docker-compose.prod.yml build web tiktok-daily
