@@ -76,6 +76,9 @@ TRACKING_PARAMS = frozenset(
         "spm",
     }
 )
+PRODUCT_PATH_PREFIX = "/catalog/product/"
+PRODUCT_VARIANT_PARAMS = ("size",)
+
 TRACKING_PARAM_PREFIXES = ("utm_", "_ga", "_gl", "mc_", "pk_", "mtm_", "hsa_", "oly_")
 
 
@@ -107,9 +110,18 @@ def has_content_query(request) -> bool:
     (search `q`, filters, sort, anything unknown) — i.e. a page variant that
     must be `noindex, follow`. `page` and tracking params do not count.
     """
-    _, items = _split_full_path(request)
+    path, items = _split_full_path(request)
+    # On a product page `?size=<id>` only preselects one size of the same
+    # product (Merchant Center links every size variant this way). It is the
+    # same page, canonical already points to the clean URL, and a noindex on
+    # a Shopping landing would be a mixed signal. On listings `size` is a
+    # filter and still counts.
+    variant_keys = PRODUCT_VARIANT_PARAMS if path.startswith(PRODUCT_PATH_PREFIX) else ()
     return any(
-        k not in CANONICAL_KEEP_PARAMS and not is_tracking_param(k) for k, _ in items
+        k not in CANONICAL_KEEP_PARAMS
+        and k not in variant_keys
+        and not is_tracking_param(k)
+        for k, _ in items
     )
 
 

@@ -103,3 +103,19 @@ class CanonicalQueryTests(SimpleTestCase):
         self.assertTrue(is_tracking_param("GCLID"))
         self.assertFalse(is_tracking_param("q"))
         self.assertFalse(is_tracking_param("page"))
+
+
+class ProductSizeParamTests(TestCase):
+    def _req(self, url):
+        from django.test import RequestFactory
+        return RequestFactory().get(url)
+
+    def test_size_on_product_page_stays_indexable_and_clean(self):
+        from project.seo_urls import canonical_url, has_content_query
+        r = self._req("/catalog/product/foo/?size=482&gclid=x")
+        self.assertFalse(has_content_query(r))
+        self.assertTrue(canonical_url(r).endswith("/catalog/product/foo/"))
+
+    def test_size_on_listing_is_a_filter(self):
+        from project.seo_urls import has_content_query
+        self.assertTrue(has_content_query(self._req("/catalog/collection/?size=3")))
