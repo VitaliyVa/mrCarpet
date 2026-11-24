@@ -48,12 +48,20 @@
             <div class="bl-article__main">
                 <header class="bl-hero">
                     <h1 class="bl-hero__title">{{ article.title }}</h1>
+                    {% if article.meta_description %}<p class="bl-hero__dek">{{ article.meta_description }}</p>{% endif %}
                     <div class="bl-meta">
                         {% if date %}<time class="bl-meta__item" datetime="{{ date|date:'Y-m-d' }}">🗓 {{ date|date:"j E Y" }}</time>{% endif %}
                         <span class="bl-meta__item">⏱ {{ parts.minutes|uk_minutes }} читання</span>
                         {% if parts.toc|length > 1 %}<span class="bl-meta__item">📑 {{ parts.toc|length }} розділ{% if parts.toc|length < 5 %}и{% else %}ів{% endif %}</span>{% endif %}
                     </div>
                 </header>
+
+
+                {% if parts.lead %}
+                <div class="blog-inside__block-text article-body bl-lead">
+                    {{ parts.lead }}
+                </div>
+                {% endif %}
 
                 {% if article.has_image %}
                 <figure class="bl-hero__media">

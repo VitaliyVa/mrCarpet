@@ -143,13 +143,15 @@ class RenderTests(TestCase):
 
     def test_korotko_opener_gets_the_summary_box(self):
         parts = render_article("<p><strong>Коротко:</strong> так.</p><h2>Що?</h2>")
+        # split off as the lead so the page can show it above the cover
         self.assertTrue(
-            parts.body.startswith('<div class="bl-summary"><p><strong>Коротко:</strong>')
+            parts.lead.startswith('<div class="bl-summary"><p><strong>Коротко:</strong>')
         )
 
     def test_summary_is_not_wrapped_twice(self):
         html = '<div class="bl-summary"><p><strong>Коротко:</strong> так.</p></div>'
-        self.assertEqual(render_article(html).body.count("bl-summary"), 1)
+        parts = render_article(html)
+        self.assertEqual((parts.lead + parts.body).count("bl-summary"), 1)
 
     def test_bare_tables_get_a_scroller(self):
         body = render_article("<p>x</p><table><tr><td>1</td></tr></table>").body

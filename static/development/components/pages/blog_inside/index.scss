@@ -70,16 +70,31 @@ $bl-header-offset: 110px;
     line-height: 1.15;
   }
 
+  // Short standfirst under the title: says what the reader gets, like the
+  // one-line dek store blogs (Wayfair, Homes & Gardens) put above the fold.
+  &__dek {
+    max-width: 860px;
+    margin: 14px 0 0;
+    color: #5c554f;
+    font-size: 19px;
+    line-height: 1.55;
+  }
+
+  // Cover comes after the answer and is capped in height so the first
+  // screen shows title + summary, not just a photo. Never cropped: a tall
+  // image just gets narrower and sits centred.
   &__media {
-    overflow: hidden;
+    display: flex;
+    justify-content: center;
     margin: 0 0 36px;
-    border-radius: 18px;
-    background: $bl-sand;
 
     img {
       display: block;
-      width: 100%;
+      width: auto;
+      max-width: 100%;
       height: auto;
+      max-height: 480px;
+      border-radius: 18px;
     }
   }
 
@@ -98,9 +113,18 @@ $bl-header-offset: 110px;
       line-height: 1.2;
     }
 
+    &__dek {
+      font-size: 16px;
+    }
+
     &__media {
       margin-bottom: 24px;
-      border-radius: 14px;
+
+      img {
+        max-height: none;
+        width: 100%;
+        border-radius: 14px;
+      }
     }
   }
 }
@@ -1644,3 +1668,13 @@ $bl-header-offset: 110px;
     }
   }
 }
+
+// The «Коротко» box pulled up above the cover photo.
+.bl-lead {
+  margin-bottom: 28px;
+
+  .bl-summary {
+    margin-top: 0;
+  }
+}
+

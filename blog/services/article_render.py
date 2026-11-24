@@ -30,11 +30,17 @@ _SUMMARY_RE = re.compile(r"^\s*(<p>\s*<strong>\s*Коротко\s*:?\s*</strong>
 _TABLE_RE = re.compile(r"<table>.*?</table>", re.S)
 
 
+_LEAD_RE = re.compile(r'^\s*(<div class="bl-summary">.*?</div>)', re.S)
+
+
 @dataclass
 class RenderedArticle:
     body: SafeString
     toc: list[dict[str, str]] = field(default_factory=list)
     minutes: int = 1
+    #: The opening «Коротко» box, split off so the page can show the answer
+    #: on the first screen, above the cover photo. Empty when there is none.
+    lead: SafeString = field(default_factory=lambda: mark_safe(""))
 
 
 def reading_minutes(raw: str) -> int:
@@ -106,4 +112,10 @@ def render_article(raw: str | None) -> RenderedArticle:
     # must not be counted as reading or scanned for headings.
     minutes = reading_minutes(body)
     body = expand_product_blocks(body)
-    return RenderedArticle(body=mark_safe(body), toc=toc, minutes=minutes)
+    lead = ""
+    match = _LEAD_RE.match(body)
+    if match:
+        lead, body = match.group(1), body[match.end():]
+    return RenderedArticle(
+        body=mark_safe(body), toc=toc, minutes=minutes, lead=mark_safe(lead)
+    )

@@ -489,3 +489,17 @@ class SidebarProductCardsTests(TestCase):
     def test_no_blocks_no_cards(self):
         from blog.services.product_cards import article_product_cards
         self.assertEqual(article_product_cards("<p>hi</p>"), [])
+
+
+class LeadSplitTests(TestCase):
+    def test_summary_is_split_off_as_lead(self):
+        from blog.services.article_render import render_article
+        r = render_article("<p><strong>Коротко:</strong> так.</p><p>Далі текст.</p><h2>Розділ</h2><p>x</p>")
+        self.assertIn("bl-summary", r.lead)
+        self.assertNotIn("bl-summary", r.body)
+        self.assertIn("Далі текст", r.body)
+
+    def test_no_summary_no_lead(self):
+        from blog.services.article_render import render_article
+        r = render_article("<p>Просто текст.</p><h2>A</h2><p>b</p>")
+        self.assertEqual(str(r.lead), "")
