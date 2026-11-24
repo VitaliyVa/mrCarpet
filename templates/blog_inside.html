@@ -55,7 +55,7 @@
             </div>
             {% if article.has_image %}
             <figure class="bl-hero__media">
-                <img src="{{ article.image.url }}" alt="{{ article.title }}" width="1200" height="800" fetchpriority="high" decoding="async" />
+                <img src="{{ article.image.url }}" alt="{{ article.title }}" width="{{ article.image.width|default:1200 }}" height="{{ article.image.height|default:800 }}" fetchpriority="high" decoding="async" />
             </figure>
             {% endif %}
         </header>
