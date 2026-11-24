@@ -45,6 +45,25 @@ def _mark_seen(key: str) -> bool:
     return False
 
 
+def _already_alerted(platform: str, external_id: str) -> bool:
+    """DB check that works across gunicorn workers and redeploys.
+
+    _seen lives in one process only: with several workers a retried delivery
+    can land on another one and post the same staff alert twice.
+    """
+    if not external_id:
+        return False
+    try:
+        from social.models import SocialCommentReply
+
+        return SocialCommentReply.objects.filter(
+            platform=platform, external_comment_id=external_id
+        ).exists()
+    except Exception:
+        logger.exception("meta comment dedupe lookup failed")
+        return False
+
+
 def verify_signature(raw_body: bytes, signature_header: str) -> bool:
     """X-Hub-Signature-256: sha256=HMAC(app_secret, body).
 
@@ -171,7 +190,9 @@ def handle_meta_webhook(payload: dict) -> int:
 
             if not comment:
                 continue
-            if _mark_seen(dedupe_key):
+            if _mark_seen(dedupe_key) or _already_alerted(
+                comment.platform, comment.external_id
+            ):
                 logger.info("meta comment duplicate skipped: %s", dedupe_key)
                 continue
             if not staff_comments_configured():

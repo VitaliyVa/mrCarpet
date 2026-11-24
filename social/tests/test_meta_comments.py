@@ -117,6 +117,38 @@ class HandleWebhookTests(TestCase):
         self.assertEqual(sent, 0)
         mock_notify.assert_called_once()
 
+    @patch("social.services.meta_comments.notify_staff_comment", return_value={"ok": True})
+    @patch("social.services.meta_comments.staff_comments_configured", return_value=True)
+    def test_duplicate_on_another_worker_deduped_by_db(self, _cfg, mock_notify):
+        """gunicorn runs several processes: a retry can hit a worker whose
+        in-memory _seen is empty. The stored alert row still stops it."""
+        from social.models import SocialCommentReply
+
+        SocialCommentReply.objects.create(
+            platform="facebook",
+            external_comment_id=f"{PAGE_ID}_111",
+            alert_chat_id="-100",
+            alert_message_id="1",
+        )
+        meta_comments._seen.clear()
+        sent = handle_meta_webhook(_fb_payload())
+        self.assertEqual(sent, 0)
+        mock_notify.assert_not_called()
+
+    @patch("social.services.meta_comments.notify_staff_comment", return_value={"ok": True})
+    @patch("social.services.meta_comments.staff_comments_configured", return_value=True)
+    def test_alert_row_for_other_comment_does_not_block(self, _cfg, mock_notify):
+        from social.models import SocialCommentReply
+
+        SocialCommentReply.objects.create(
+            platform="facebook",
+            external_comment_id=f"{PAGE_ID}_999",
+            alert_chat_id="-100",
+            alert_message_id="1",
+        )
+        self.assertEqual(handle_meta_webhook(_fb_payload()), 1)
+        mock_notify.assert_called_once()
+
 
 class SignatureTests(TestCase):
     @override_settings(META_APP_SECRET="topsecret")
