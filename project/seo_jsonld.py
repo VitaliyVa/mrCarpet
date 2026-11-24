@@ -292,7 +292,27 @@ def _availability(in_stock: bool) -> str:
     return "https://schema.org/InStock" if in_stock else "https://schema.org/OutOfStock"
 
 
-def _single_offer(request, url: str, price, in_stock: bool) -> dict[str, Any]:
+def _list_price(attr) -> int | float | None:
+    """The crossed-out price of a discounted size, None without a real discount."""
+    from catalog.promotions import is_real_discount
+
+    if not is_real_discount(attr):
+        return None
+    return attr.price
+
+
+def _sale_end(product, rows) -> Any:
+    """End of the running sale, looked up only when some size is discounted."""
+    if not any(_list_price(attr) is not None for attr, _price, _stock in rows):
+        return None
+    from catalog.promotions import sale_end_for
+
+    return sale_end_for(product)
+
+
+def _single_offer(
+    request, url: str, price, in_stock: bool, attr=None, sale_end=None
+) -> dict[str, Any]:
     offer: dict[str, Any] = {
         "@type": "Offer",
         "url": url,
@@ -303,6 +323,20 @@ def _single_offer(request, url: str, price, in_stock: bool) -> dict[str, Any]:
         "seller": {"@type": "Organization", "name": ORG_NAME},
     }
     _attach_merchant_offer_fields(offer, request)
+    list_price = _list_price(attr)
+    if list_price is not None:
+        # Google shows the old price crossed out only when it is given as a
+        # StrikethroughPrice next to the (discounted) `price`.
+        offer["priceSpecification"] = {
+            "@type": "UnitPriceSpecification",
+            "priceType": "https://schema.org/StrikethroughPrice",
+            "price": list_price,
+            "priceCurrency": "UAH",
+        }
+        if sale_end is not None:
+            # The sale price holds until the sale ends (ProductSale.date_end,
+            # always in the future here, see catalog.promotions).
+            offer["priceValidUntil"] = timezone.localtime(sale_end).date().isoformat()
     return offer
 
 
@@ -436,8 +470,11 @@ def _build_product_node(
     if len(fixed) == 1:
         # One real size: one Offer, even if a per-m² custom size sits next to
         # it (mixing the two into an AggregateOffer made a fake price range).
-        _attr, price, in_stock = fixed[0]
-        offers = _single_offer(request, product_url, price, in_stock)
+        attr, price, in_stock = fixed[0]
+        offers = _single_offer(
+            request, product_url, price, in_stock,
+            attr=attr, sale_end=_sale_end(product, fixed),
+        )
         low = high = price
         prices = [price]
     else:
@@ -511,7 +548,10 @@ def _selected_size_node(request, product, images, row) -> dict[str, Any]:
         "name": f"{product.title} {size}".strip(),
         "sku": f"{product.pk}-{attr.pk}",
         "url": absolute_uri(request, product.get_absolute_url()),
-        "offers": _single_offer(request, _size_url(product, attr), price, in_stock),
+        "offers": _single_offer(
+            request, _size_url(product, attr), price, in_stock,
+            attr=attr, sale_end=_sale_end(product, [row]),
+        ),
     }
     if size:
         data["size"] = size
@@ -585,6 +625,7 @@ def product_graph(
         varies_by.append("https://schema.org/color")
 
     has_variant: list[dict[str, Any]] = []
+    sale_end = _sale_end(product, fixed)
     for attr, price, in_stock in fixed:
         size = _size_label(attr)
         # `?size=<attr.pk>` opens the page with this size chosen (see
@@ -596,7 +637,9 @@ def product_graph(
             "name": f"{product.title} {size}".strip(),
             "sku": f"{product.pk}-{attr.pk}",
             "inProductGroupWithID": group_id,
-            "offers": _single_offer(request, offer_url, price, in_stock),
+            "offers": _single_offer(
+                request, offer_url, price, in_stock, attr=attr, sale_end=sale_end
+            ),
         }
         if size:
             variant["size"] = size

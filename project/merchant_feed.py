@@ -460,7 +460,21 @@ def _details(specs: list[tuple[str, str]], shape: str) -> list[dict]:
     ]
 
 
+def sale_effective_date(window) -> str:
+    """`start/end` (ISO 8601, minutes, local offset) of a running sale."""
+    from django.utils import timezone
+
+    start, end = window
+    return "/".join(
+        timezone.localtime(moment).isoformat(timespec="minutes") for moment in (start, end)
+    )
+
+
 def build_items(products) -> list[dict]:
+    from catalog.promotions import active_sale_windows
+
+    # One query: the running sale (with an end date ahead) of every product.
+    sale_windows = active_sale_windows()
     items: list[dict] = []
     for product in products:
         images = _image_urls(product)
@@ -514,6 +528,14 @@ def build_items(products) -> list[dict]:
                 "custom_label_1": size_class(dims),
                 "custom_label_2": shape.lower() if shape else "",
             }
+            window = sale_windows.get(product.pk)
+            if item["sale_price"] and window:
+                # The discounted price is announced until the sale ends.
+                # Only a sale still running: after its end the discount stays
+                # on the size until an admin removes it, and an end date in
+                # the past would make Google charge `price` while the page
+                # still shows `sale_price`.
+                item["sale_price_effective_date"] = sale_effective_date(window)
             items.append(item)
     return items
 
