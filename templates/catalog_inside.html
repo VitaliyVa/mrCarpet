@@ -1,10 +1,10 @@
 {% extends '_base.html' %}
 {% load catalog_filters thumbnails %}
-{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %}{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
+{% block title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_meta_title|default:collection_title }}{% endif %}{% if products.number > 1 %}, сторінка {{ products.number }}{% endif %} | mr.Carpet{% endblock title %}
 {% block meta %}
 <meta
   name="description"
-  content="{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}"
+  content="{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}{{ collection_meta_description|default:"Вся колекція килимів mr.Carpet. Доставка по Україні." }}{% endif %}"
 />
 {% if categorie and categorie.meta_keys %}<meta name="keywords" content="{{ categorie.meta_keys }}" />{% endif %}
 {% endblock meta %}
@@ -16,12 +16,12 @@
 {% comment %} Clean page N>1 is its own canonical; any filter/sort/search variant
    (noindex via _base) points to the unfiltered listing's first page. {% endcomment %}
 {% block canonical %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock canonical %}
-{% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
-{% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet. Доставка по Україні.{% endif %}{% endblock og_description %}
+{% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_meta_title|default:collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
+{% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}{{ collection_meta_description|default:"Вся колекція килимів mr.Carpet. Доставка по Україні." }}{% endif %}{% endblock og_description %}
 {% block og_url %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock og_url %}
 {% block og_image %}{% if categorie and categorie.image %}<meta property="og:image" content="{{ site_url }}{{ categorie.image.url }}" />{% else %}{{ block.super }}{% endif %}{% endblock og_image %}
-{% block twitter_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
-{% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}Вся колекція килимів mr.Carpet.{% endif %}{% endblock twitter_description %}
+{% block twitter_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_meta_title|default:collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
+{% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}{{ collection_meta_description|default:"Вся колекція килимів mr.Carpet." }}{% endif %}{% endblock twitter_description %}
 {% block structured_data %}
 {{ block.super }}
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
@@ -43,6 +43,8 @@
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
             <span class="color_black_sub">/</span>
             {% if categorie %}
+            <a href="{% url 'catalog' %}" class="color_black_sub">Каталог</a>
+            <span class="color_black_sub">/</span>
             <a href="{% url 'categorie' categorie.slug %}" class="color_gold">{{ categorie.title }}</a>
             {% else %}
             <a href="{% url 'all_collection' %}" class="color_gold">{{ collection_title }}</a>
@@ -51,9 +53,9 @@
         <div class="catalog_inside-top">
             <div class="title">
                 <h1 class="catalog_inside__title">
-                    {% if categorie %}{{ categorie.title|category_phrase }}{% else %}{{ collection_title }}{% endif %}
+                    {% if categorie %}{{ categorie.title|category_phrase }}{% else %}{{ collection_h1|default:collection_title }}{% endif %}
                 </h1>
-                <span>{% if categorie %}{{ categorie.products.all|length }}{% else %}{{ products_count }}{% endif %} товари</span>
+                <span>{% if categorie %}{% with n=categorie.products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}{% else %}{{ products_count }} {{ products_count|plural_uk:"товар,товари,товарів" }}{% endif %}</span>
             </div>
 
             <button class="catalog_inside_filter-btn">

@@ -266,7 +266,7 @@
             {% if images %}
             {% for image in images %}
             <div class="swiper-slide{% if image.is_ai %} swiper-slide--ai{% endif %}">
-              <img src="{{ image.image|thumb:240 }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}" width="120" height="120" loading="lazy" decoding="async" />
+              <img src="{{ image.image|thumb:240 }}" alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% if not forloop.first %}, фото {{ forloop.counter }}{% endif %}{% endif %}" width="120" height="120" loading="lazy" decoding="async" />
             </div>
             {% endfor %}
             {% else %}
@@ -325,7 +325,7 @@
                   data-defer-srcset="{{ s480 }} 480w, {{ s640 }} 640w, {{ s800 }} 800w, {{ s1200 }} 1200w"
                   {% endif %}sizes="(max-width: 720px) 92vw, 624px"
                   data-full-src="{{ image.image.url }}"
-                  alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% endif %}"
+                  alt="{% if image.alt %}{{ image.alt }}{% else %}{{ product.title }}{% if not forloop.first %}, фото {{ forloop.counter }}{% endif %}{% endif %}"
                   width="800"
                   height="800"
                   {% if forloop.first %}fetchpriority="high" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %}
