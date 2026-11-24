@@ -215,6 +215,20 @@ class Product(AbstractCreatedUpdated, AbstractMetaTags, AbstractTitleSlug):
                 return attr
         return attrs[0]
 
+    def get_card_size_attr(self):
+        """Size a listing card opens on. A size landing (/catalog/rozmir/...)
+        pins the size the page is about in `_card_size_attr`; everywhere else
+        it is the default size."""
+        pinned = getattr(self, "_card_size_attr", None)
+        return pinned if pinned is not None else self.get_default_size_attr()
+
+    def get_card_url(self):
+        """Card link: the product page, opened on the pinned size if any
+        (`?size=` is the same page, its canonical stays the clean URL)."""
+        pinned = getattr(self, "_card_size_attr", None)
+        url = self.get_absolute_url()
+        return f"{url}?size={pinned.pk}" if pinned is not None else url
+
     @property
     def is_novelty(self) -> bool:
         """Бейдж «Новинка» на вітрині: is_new + вікно днів від created."""

@@ -15,10 +15,10 @@
 {% block robots %}{% if categorie and not categorie.products.exists %}<meta name="robots" content="noindex, follow" />{% else %}{{ block.super }}{% endif %}{% endblock robots %}
 {% comment %} Clean page N>1 is its own canonical; any filter/sort/search variant
    (noindex via _base) points to the unfiltered listing's first page. {% endcomment %}
-{% block canonical %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock canonical %}
+{% block canonical %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% elif size_landing %}{{ size_landing.url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock canonical %}
 {% block og_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_meta_title|default:collection_title }}{% endif %} | mr.Carpet{% endblock og_title %}
 {% block og_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}{{ collection_meta_description|default:"Вся колекція килимів mr.Carpet. Доставка по Україні." }}{% endif %}{% endblock og_description %}
-{% block og_url %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock og_url %}
+{% block og_url %}{% if categorie %}{{ site_url }}{{ categorie.get_absolute_url }}{% elif size_landing %}{{ size_landing.url }}{% else %}{{ site_url }}{% url 'all_collection' %}{% endif %}{% if not seo_noindex_query and products.number > 1 %}?page={{ products.number }}{% endif %}{% endblock og_url %}
 {% block og_image %}{% if categorie and categorie.image %}<meta property="og:image" content="{{ site_url }}{{ categorie.image.url }}" />{% else %}{{ block.super }}{% endif %}{% endblock og_image %}
 {% block twitter_title %}{% if categorie %}{% if categorie.meta_title %}{{ categorie.meta_title }}{% else %}{{ categorie.title|category_phrase }}{% endif %}{% else %}{{ collection_meta_title|default:collection_title }}{% endif %} | mr.Carpet{% endblock twitter_title %}
 {% block twitter_description %}{% if categorie %}{% if categorie.meta_description %}{{ categorie.meta_description }}{% else %}{{ categorie|category_meta_description }}{% endif %}{% else %}{{ collection_meta_description|default:"Вся колекція килимів mr.Carpet." }}{% endif %}{% endblock twitter_description %}
@@ -46,6 +46,16 @@
   .catalog_seo_text__faq details:last-child { border-bottom: 1px solid #e8e0d8; }
   .catalog_seo_text__faq summary { cursor: pointer; font-weight: 600; }
   .catalog_seo_text__faq p { margin: 8px 0 0; }
+  .size_chips { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin: 0 0 20px; }
+  .size_chips__title { color: #5f564f; font-size: 14px; white-space: nowrap; }
+  .size_chips__list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .size_chips__chip { display: inline-block; padding: 6px 12px; border: 1px solid #e0d6cc; border-radius: 999px; color: #2f2a26; font-size: 14px; line-height: 1.3; white-space: nowrap; text-decoration: none; transition: border-color .2s, color .2s; }
+  .size_chips__chip:hover, .size_chips__chip:focus-visible { border-color: #a0643a; color: #a0643a; }
+  @media (max-width: 600px) {
+    .size_chips { flex-wrap: nowrap; }
+    .size_chips__list { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
+    .size_chips__list::-webkit-scrollbar { display: none; }
+  }
 </style>
 {% comment %} noUiSlider only styles the price slider in the filter panel, which
    the slider script fills in after DOMContentLoaded anyway. A plain
@@ -66,6 +76,10 @@
             <a href="{% url 'catalog' %}" class="color_black_sub">Каталог</a>
             <span class="color_black_sub">/</span>
             <a href="{% url 'categorie' categorie.slug %}" class="color_gold">{{ categorie.title }}</a>
+            {% elif size_landing %}
+            <a href="{% url 'all_collection' %}" class="color_black_sub">Вся колекція</a>
+            <span class="color_black_sub">/</span>
+            <a href="{% url 'size_landing' size_landing.slug %}" class="color_gold">{{ collection_title }}</a>
             {% else %}
             <a href="{% url 'all_collection' %}" class="color_gold">{{ collection_title }}</a>
             {% endif %}
@@ -79,11 +93,25 @@
             </div>
 
             {% if categorie and categorie.intro and products.number == 1 %}<p class="catalog_intro">{{ categorie.intro }}</p>{% endif %}
+            {% if size_landing and size_landing.intro and products.number == 1 %}<p class="catalog_intro">{{ size_landing.intro }}</p>{% endif %}
 
             <button class="catalog_inside_filter-btn">
                 <img src="/static/utils/assets/filters.svg" alt="filters" />
             </button>
         </div>
+
+        {% comment %} Links to the size landings (/catalog/rozmir/<size>/): the only
+           indexable way into a size, the ?size= facet stays noindex. {% endcomment %}
+        {% if popular_sizes %}
+        <nav class="size_chips" aria-label="Популярні розміри">
+            <span class="size_chips__title">{% if size_landing %}Інші розміри:{% else %}Популярні розміри:{% endif %}</span>
+            <ul class="size_chips__list">
+                {% for chip in popular_sizes %}
+                <li><a href="{{ chip.url }}" class="size_chips__chip">{{ chip.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
 
         <div class="catalog_inside__content">
             <div class="catalog_inside_filter accordion_container">
@@ -158,7 +186,9 @@
                     {% endif %}
 
                     <!-- Розміри -->
-                    {% if available_filters.sizes %}
+                    {% comment %} Not on a size landing: every rug there already has that size,
+                       the facet would only offer "this size and also that one". {% endcomment %}
+                    {% if available_filters.sizes and not size_landing %}
                     <span class="catalog_inside_filter-body-item accordion accordion_content__block">
                         <a class="color_black accordion__title"> Розмір </a>
                         <span class="accordion_content content_column">
@@ -230,11 +260,11 @@
                     </button>
                 </div>
             </div>
-            <div class="catalog_section_bottom cart_item_wrapper{% if not products %} empty-catalog{% endif %}"{% if categorie %} data-ga-list-id="category_{{ categorie.slug }}" data-ga-list-name="Категорія: {{ categorie.title }}" data-ga-item-category="{{ categorie.title }}"{% else %} data-ga-list-id="collection" data-ga-list-name="{{ collection_title|default:'Вся колекція' }}"{% endif %} data-ga-page="{{ products.number|default:1 }}" data-ga-results="{{ products.paginator.count|default:0 }}">
+            <div class="catalog_section_bottom cart_item_wrapper{% if not products %} empty-catalog{% endif %}"{% if categorie %} data-ga-list-id="category_{{ categorie.slug }}" data-ga-list-name="Категорія: {{ categorie.title }}" data-ga-item-category="{{ categorie.title }}"{% elif size_landing %} data-ga-list-id="size_{{ size_landing.slug }}" data-ga-list-name="Розмір: {{ size_landing.label }}"{% else %} data-ga-list-id="collection" data-ga-list-name="{{ collection_title|default:'Вся колекція' }}"{% endif %} data-ga-page="{{ products.number|default:1 }}" data-ga-results="{{ products.paginator.count|default:0 }}">
 
                 {% if products %}
                 {% for product in products %}
-                <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
+                <div class="cart_item" data-product-id="{{ product.get_card_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
                     {% include 'includes/products.html' %}
                 </div>
                 {% endfor %}

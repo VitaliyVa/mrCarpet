@@ -15,6 +15,7 @@ from .models import (
     ProductAttribute,
     Size, ProductImage,
 )
+from .size_landings import popular_sizes
 from .utils import (
     auto_related_products,
     get_available_filters,
@@ -148,6 +149,7 @@ def catalog_detail(request, slug):
             "current_filters": request.GET,
             "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
             "seo_guides": get_seo_guides(categorie),
+            "popular_sizes": popular_sizes(base_products),
         },
     )
 
@@ -282,12 +284,113 @@ def all_collection(request):
             "available_filters": available_filters,
             "current_filters": request.GET,
             "seo_guides": get_seo_guides(),
+            "popular_sizes": popular_sizes(),
             "breadcrumb_jsonld": dumps_jsonld(
                 breadcrumb_graph(
                     request,
                     [
                         ("Головна", "/"),
                         ("Вся колекція", reverse("all_collection")),
+                    ],
+                )
+            ),
+        },
+    )
+
+
+def _pin_card_sizes(products, landing) -> None:
+    """Cards on a size landing open on that size: its price, its label
+    active, its attr in the cart button and the link (`?size=<attr.pk>`)."""
+    page = list(products.object_list)
+    if not page:
+        return
+    first = {}
+    for attr in (
+        landing.attrs()
+        .filter(product_id__in=[p.pk for p in page])
+        .select_related("size")
+        .order_by("sort_order", "pk")
+    ):
+        first.setdefault(attr.product_id, attr)
+    for product in page:
+        attr = first.get(product.pk)
+        if attr is not None:
+            product._card_size_attr = attr
+    products.object_list = page
+
+
+def size_landing(request, size):
+    """Indexable page for one popular size: /catalog/rozmir/160x230/.
+
+    Only sizes with at least size_landings.MIN_PRODUCTS different products in
+    stock have a page; any other size is a 404. A non canonical spelling
+    (230x160, a Cyrillic х, upper case) redirects to the one URL per size.
+    """
+    from django.http import Http404, HttpResponsePermanentRedirect
+    from django.urls import reverse
+
+    from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
+    from project.seo_urls import absolute_site_url
+
+    from . import size_landings as sl
+
+    slug = sl.parse_slug(size)
+    if slug is None:
+        raise Http404("Unknown size")
+    if slug != size:
+        url = sl.landing_url(slug)
+        query = request.META.get("QUERY_STRING", "")
+        return HttpResponsePermanentRedirect(f"{url}?{query}" if query else url)
+
+    landing = sl.get_landing(slug)
+    if landing is None:
+        raise Http404("Not enough products in this size")
+
+    base_products = Product.objects.filter(pk__in=landing.product_ids)
+    products = _apply_product_sort(base_products, request.GET.get("sort"))
+    products = ProductFilter(request.GET, products).qs
+    available_filters = get_available_filters(base_products, request.GET)
+    products_count = products.count()
+
+    paginator = Paginator(products, 12)
+    page = request.GET.get("page")
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    _pin_card_sizes(products, landing)
+
+    h1 = sl.landing_h1(landing)
+    return render(
+        request,
+        "catalog_inside.html",
+        {
+            "categorie": None,
+            "size_landing": {
+                "slug": landing.slug,
+                "label": landing.label,
+                "url": absolute_site_url(landing.path),
+                "intro": sl.landing_intro(landing),
+            },
+            "collection_title": h1,
+            "collection_h1": h1,
+            "collection_meta_title": sl.landing_meta_title(landing),
+            "collection_meta_description": sl.landing_meta_description(landing),
+            "products_count": products_count,
+            "products": products,
+            "available_filters": available_filters,
+            "current_filters": request.GET,
+            "seo_guides": sl.landing_guides(landing),
+            "popular_sizes": sl.popular_sizes(exclude=landing.slug),
+            "breadcrumb_jsonld": dumps_jsonld(
+                breadcrumb_graph(
+                    request,
+                    [
+                        ("Головна", "/"),
+                        ("Вся колекція", reverse("all_collection")),
+                        (h1, landing.path),
                     ],
                 )
             ),
