@@ -142,6 +142,35 @@ services:
     networks:
       - mrcarpet_network
 
+  content-scheduler:
+    # Every 5 minutes: publish scheduled social posts (blog announcements to
+    # IG + FB). Separate from tiktok-daily (paused) and ga4-weekly (sleeps a
+    # week). Publishing only hands Meta public /media URLs served by nginx;
+    # media_volume is mounted so a slide render run here lands there too.
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    user: "0:0"
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      - META_PAGE_ACCESS_TOKEN=${META_PAGE_ACCESS_TOKEN}
+      - META_PAGE_ID=${META_PAGE_ID}
+      - META_IG_USER_ID=${META_IG_USER_ID}
+      - META_GRAPH_VERSION=${META_GRAPH_VERSION:-v21.0}
+      # SECRET_KEY and the Telegram token come from the mounted /app/.env and
+      # the database; listing them here would inject empty values.
+      - TZ=Europe/Kyiv
+    command: python manage.py content_scheduler
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
   tiktok-daily:
     # Paused: normal deploys must not restart paid video generation.
     profiles: [social-automation]

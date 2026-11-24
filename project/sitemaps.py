@@ -72,7 +72,7 @@ class ArticleSitemap(Sitemap):
         # Drafts must not be advertised to Google. Saving used to publish
         # instantly, so this listed half-written articles by construction.
         return (
-            Article.objects.filter(status=Article.Status.PUBLISHED)
+            Article.objects.public()
             .only("id", "slug", "updated")
         )
 

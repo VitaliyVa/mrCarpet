@@ -26,7 +26,9 @@ def index(request):
     else:
         main_sale_date = None
         sale_products = []
-    posts = list(Article.objects.order_by("-id")[:12])
+    # Public only: this block listed drafts and would list scheduled articles
+    # days before their date.
+    posts = list(Article.objects.public().order_by("-id")[:12])
     return render(
         request,
         "index.html",

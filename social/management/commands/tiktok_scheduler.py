@@ -151,11 +151,28 @@ def _publish():
     from social.services.tiktok_publish import publish_pick
     from social.services.tiktok_rotation import todays_pick
 
+    # The 18:00 slot wins the tie with the tick, so a post scheduled for
+    # 18:00 sharp would otherwise wait for 18:10. Released first and guarded:
+    # a Meta outage must not cost the day its video.
+    scheduled = _release_scheduled()
+
     pick = todays_pick()
     if pick is None:
-        return "nothing prepared for today"
+        return " | ".join(p for p in ("nothing prepared for today", scheduled) if p)
     result = publish_pick(pick)
-    return f"pick #{pick.pk}: {result}"
+    return " | ".join(p for p in (f"pick #{pick.pk}: {result}", scheduled) if p)
+
+
+def _release_scheduled():
+    """Scheduled SocialPosts (article announcements). Never raises."""
+    try:
+        from social.services.scheduled import release_due_posts
+
+        lines = release_due_posts()
+    except Exception as exc:
+        logger.warning("scheduled posts release failed: %s", exc)
+        return f"scheduled posts failed: {exc}"
+    return f"scheduled: {'; '.join(lines)}" if lines else ""
 
 
 def _check_tokens():
@@ -205,7 +222,7 @@ def _poll_comments():
 
 
 def _tick():
-    """Ten-minute heartbeat: release due networks, poll comments on the hour."""
+    """Ten-minute heartbeat: release due networks and scheduled posts, poll comments on the hour."""
     parts = []
     try:
         released = _publish_due()
@@ -213,6 +230,10 @@ def _tick():
             parts.append(released)
     except Exception as exc:
         parts.append(f"publish_due failed: {exc}")
+
+    scheduled = _release_scheduled()
+    if scheduled:
+        parts.append(scheduled)
 
     if datetime.now(KYIV).minute < TICK_MINUTES:
         try:

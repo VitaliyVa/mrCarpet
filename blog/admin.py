@@ -10,11 +10,21 @@ from .models import Article, ArticleTopic
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     exclude = ["slug"]
-    list_display = ["title", "status", "published_at", "updated"]
+    list_display = ["title", "status", "visibility", "published_at", "updated"]
     list_filter = ["status"]
     search_fields = ["title", "meta_title"]
-    readonly_fields = ["published_at"]
     actions = ("publish_articles", "unpublish_articles")
+
+    @admin.display(description="На сайті", ordering="published_at")
+    def visibility(self, obj):
+        if obj.status != Article.Status.PUBLISHED:
+            return "Чернетка"
+        if obj.is_scheduled:
+            from zoneinfo import ZoneInfo
+
+            moment = obj.published_at.astimezone(ZoneInfo("Europe/Kyiv"))
+            return f"Заплановано на {moment:%d.%m.%Y %H:%M}"
+        return "Опубліковано"
 
     @admin.action(description="Опублікувати")
     def publish_articles(self, request, queryset):
@@ -44,7 +54,10 @@ class ArticleAdmin(admin.ModelAdmin):
                     "Після генерації відкриється форма для ручних правок. "
                     "~1–2 хв, не закривайте вкладку.<br><br>"
                     "<b>Нова стаття — завжди чернетка.</b> Її не видно на сайті "
-                    "й немає в sitemap, поки не поставите «Опубліковано»."
+                    "й немає в sitemap, поки не поставите «Опубліковано».<br>"
+                    "<b>Запланувати:</b> статус «Опубліковано» і дата публікації "
+                    "в майбутньому. До цього моменту статтю бачить лише персонал. "
+                    "Час у формі за UTC: від київського відніміть 2 години взимку, 3 влітку."
                 ),
             },
         ),
