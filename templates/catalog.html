@@ -45,17 +45,19 @@
       </div>
     </div>
     <div class="catalog_section_bottom cart_item_wrapper">
-      {# Preview only: every category used to render all of its products here
-         (~590 KB of HTML, 300+ images). The category page has the full list. #}
+      {% comment %} Preview only: every category used to render all of its products here
+         (~590 KB of HTML, 300+ images). The category page has the full list. {% endcomment %}
       {% for product in category.products.all|slice:":8" %}
       <div class="cart_item" data-product-id="{{ product.get_default_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
         {% include 'includes/products.html' %}
       </div>
       {% endfor %}
     </div>
+    {% if category.products.count > 8 %}
     <div class="catalog_section_more">
       <a href="{{ category.get_absolute_url }}" class="info_for_product_btn medium color_gold">Дивитись всі</a>
     </div>
+    {% endif %}
   </div>
   {% endfor %}
 </section>
