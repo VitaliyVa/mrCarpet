@@ -16,6 +16,7 @@ import "../components/module/form_action/index";
 import "../components/module/catalog_items/index";
 import "../components/module/catalog_slider/index";
 import "../components/module/blog_item/index";
+import "../components/module/blog_card/index";
 
 import "../utils/customMask";
 

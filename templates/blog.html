@@ -6,10 +6,13 @@
   content="Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру."
 />
 {% endblock meta %}
-{# Page 2+ is the same collection sliced differently, so each page is its own
-   canonical. Pointing them all at /blog/ would ask Google to drop every
-   article listed past the first nine. #}
-{% block canonical %}{{ site_url }}{% url 'blog' %}{% if page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}{% endblock canonical %}
+{% comment %}
+Page 2+ is the same collection sliced differently, so each page is its own
+canonical. Pointing them all at /blog/ would ask Google to drop every
+article listed past the first nine. A topic view is only a filter over the
+same posts, so it points back at the full list.
+{% endcomment %}
+{% block canonical %}{{ site_url }}{% url 'blog' %}{% if not active_topic and page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}{% endblock canonical %}
 {% block og_title %}Блог | mr.Carpet{% endblock og_title %}
 {% block og_description %}Блог mr.Carpet: поради щодо вибору килимів, новинки колекцій та ідеї для інтер'єру.{% endblock og_description %}
 {% block og_url %}{{ site_url }}{% url 'blog' %}{% endblock og_url %}
@@ -19,51 +22,71 @@
 {% endblock structured_data %}
 {% block styles %}
 <link rel="stylesheet" href="/static/source/pages/blog/index.css?v={{ static_v }}" />
-<link rel="stylesheet" href="/static/source/pages/blog/blog-fix.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
-<section class="blog-section first_section">
+<section class="bl-list first_section">
     <div class="container">
         <div class="bread-crumbs">
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
             <span class="color_black_sub">/</span>
             <a href="{% url 'blog' %}" class="color_gold">Блог</a>
         </div>
-        <div class="title">
-            <h1>Останнє з нашого блогу</h1>
-        </div>
 
-        <div class="blog blog__items">
-            {% for article in articles %}
-            <a href="{% url 'article' article.slug %}" class="blog_item">
-                <div class="blog_item_img">
-                {% if article.has_image %}
-                    <img src="{{ article.image.url }}" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                    {% else %}
-                    <img src="/static/utils/assets/blog/img.png" alt="{{ article.title }}" width="376" height="230" loading="lazy" decoding="async" />
-                    {% endif %}
-                </div>
-                <div class="blog_item_info">
-                    <h2 class="blog_item_title">{{ article.title }}</h2>
-                    <p class="blog_item_text">
-                        {{ article.meta_description|default:article.description|striptags|truncatechars:160 }}
-                    </p>
-                </div>
-            </a>
-            {% empty %}
-            <p class="color_black_sub">Незабаром тут з'являться статті про килими.</p>
+        <header class="bl-list__head">
+            <p class="bl-eyebrow">Блог mr.Carpet</p>
+            <h1 class="bl-list__title">Поради про килими, які справді допомагають</h1>
+            <p class="bl-list__lead">Пишемо просто і по ділу: як вибрати килим під свою кімнату, доглядати за ним і зробити дім затишнішим.</p>
+        </header>
+
+        {% if topic_chips %}
+        <nav class="bl-chips" aria-label="Теми блогу">
+            <a href="{% url 'blog' %}" class="bl-chips__item{% if not active_topic %} is-active{% endif %}"{% if not active_topic %} aria-current="page"{% endif %}>Усі статті <span class="bl-chips__count">{{ total_count }}</span></a>
+            {% for chip in topic_chips %}
+            <a href="{% url 'blog' %}?tema={{ chip.topic.slug }}" class="bl-chips__item{% if active_topic.slug == chip.topic.slug %} is-active{% endif %}"{% if active_topic.slug == chip.topic.slug %} aria-current="page"{% endif %} rel="nofollow">{{ chip.topic.emoji }} {{ chip.topic.label }} <span class="bl-chips__count">{{ chip.count }}</span></a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+
+        {% if featured %}
+        <div class="bl-featured">
+            {% include "includes/blog_card.html" with article=featured is_featured=True heading="h2" %}
+        </div>
+        {% endif %}
+
+        {% if cards %}
+        <div class="bl-grid">
+            {% for article in cards %}
+            {% include "includes/blog_card.html" with article=article is_featured=False heading="h2" %}
             {% endfor %}
         </div>
+        {% elif not featured %}
+        <div class="bl-empty">
+            <span class="bl-empty__emoji" aria-hidden="true">🧶</span>
+            <p class="bl-empty__title">Незабаром тут з'являться статті про килими.</p>
+            <p class="bl-empty__text">А поки можна зазирнути в каталог: там уже є з чого обрати.</p>
+            <a href="/catalog/" class="bl-button">Перейти в каталог</a>
+        </div>
+        {% endif %}
 
         {% if page_obj.has_other_pages %}
-        <nav class="blog__pagination" aria-label="Сторінки блогу">
+        <nav class="bl-pagination" aria-label="Сторінки блогу">
           {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}" rel="prev">← Новіші</a>
+          <a class="bl-pagination__link" href="?{% if active_topic %}tema={{ active_topic.slug }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" rel="prev">← Новіші</a>
           {% endif %}
-          <span>Сторінка {{ page_obj.number }} з {{ paginator.num_pages }}</span>
+          <span class="bl-pagination__status">Сторінка {{ page_obj.number }} з {{ paginator.num_pages }}</span>
           {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}" rel="next">Старіші →</a>
+          <a class="bl-pagination__link" href="?{% if active_topic %}tema={{ active_topic.slug }}&amp;{% endif %}page={{ page_obj.next_page_number }}" rel="next">Старіші →</a>
           {% endif %}
         </nav>
+        {% endif %}
+
+        {% if featured or cards %}
+        <aside class="bl-banner">
+            <div class="bl-banner__text">
+                <p class="bl-banner__title">Вже знаєте, який килим шукаєте?</p>
+                <p class="bl-banner__lead">Відфільтруйте каталог за розміром, кольором і кімнатою. Доставляємо по всій Україні.</p>
+            </div>
+            <a href="/catalog/" class="bl-button">Перейти в каталог</a>
+        </aside>
         {% endif %}
     </div>
 </section>

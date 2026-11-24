@@ -1,64 +1,229 @@
-.blog-section {
-  padding-bottom: 104px;
+$bl-ink: #2f2a26;
+$bl-sub: #6b635d;
+$bl-brown: #a46c46;
+$bl-brown-dark: #8a5535;
+$bl-sand: #f6f1ea;
+$bl-line: #ece5dc;
 
-  .title {
-    h1 {
-      margin: 4px 0 0;
-    }
+.bl-eyebrow {
+  margin: 0 0 10px;
+  color: $bl-brown-dark;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bl-list {
+  padding-bottom: 96px;
+
+  &__head {
+    max-width: 760px;
+    margin: 28px 0 28px;
   }
 
-  .blog {
-    &__items {
-      gap: 18px;
-      width: 100%;
-      margin-top: 52px;
-    }
+  &__title {
+    margin: 0;
+    color: $bl-ink;
+    font-family: "Futura PT Bold", sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+  }
 
-    .blog_item {
-      max-width: 376px;
-      width: 100%;
-      margin: 0;
-    }
+  &__lead {
+    margin-top: 14px;
+    color: $bl-sub;
+    font-size: 19px;
+    line-height: 1.55;
   }
 
   @media (max-width: 1024px) {
-    padding-bottom: 80px;
+    padding-bottom: 72px;
 
-    .blog {
-      &__items {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 24px 12px;
-        margin-top: 21px;
-      }
-
-      .blog_item {
-        max-width: none;
-      }
+    &__title {
+      font-size: 32px;
     }
   }
 
   @media (max-width: 828px) {
     padding-top: 70px;
-
-    .title {
-      h1 {
-        margin: 0;
-      }
-    }
   }
 
   @media (max-width: 720px) {
     padding-bottom: 48px;
+
+    &__head {
+      margin: 8px 0 20px;
+    }
+
+    &__title {
+      font-size: 27px;
+    }
+
+    &__lead {
+      margin-top: 10px;
+      font-size: 17px;
+    }
+  }
+}
+
+.bl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border: 1px solid $bl-line;
+    border-radius: 999px;
+    background: #fff;
+    color: $bl-ink;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 15px;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      border-color: $bl-brown;
+      color: $bl-brown-dark;
+    }
+
+    &.is-active {
+      border-color: $bl-brown;
+      background: $bl-brown;
+      color: #fff;
+
+      .bl-chips__count {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+      }
+    }
   }
 
-  @media (max-width: 550px) {
-    padding-bottom: 48px;
+  &__count {
+    min-width: 22px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: $bl-sand;
+    color: $bl-brown-dark;
+    font-size: 12px;
+    text-align: center;
+  }
 
-    .blog {
-      &__items {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-      }
+  // One swipeable row on phones instead of three wrapped lines of pills.
+  @media (max-width: 720px) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -20px 20px;
+    padding: 0 20px 4px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+.bl-featured {
+  margin-bottom: 28px;
+
+  @media (max-width: 720px) {
+    margin-bottom: 20px;
+  }
+}
+
+.bl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px;
+  border: 1px dashed #e2d6c8;
+  border-radius: 16px;
+  background: #fbf8f4;
+  text-align: center;
+
+  &__emoji {
+    font-size: 44px;
+  }
+
+  &__title {
+    margin-top: 12px;
+    color: $bl-ink;
+    font-family: "Futura PT Medium", sans-serif;
+    font-size: 22px;
+  }
+
+  &__text {
+    margin: 8px 0 22px;
+    color: $bl-sub;
+    font-size: 17px;
+  }
+}
+
+.bl-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 20px;
+  margin-top: 40px;
+  color: $bl-sub;
+  font-size: 16px;
+
+  &__link {
+    padding: 10px 18px;
+    border: 1px solid $bl-line;
+    border-radius: 999px;
+    color: $bl-brown-dark;
+    font-family: "Futura PT Medium", sans-serif;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: $bl-brown;
+    }
+  }
+}
+
+.bl-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 56px;
+  padding: 32px 40px;
+  border-radius: 16px;
+  background: $bl-sand;
+
+  &__title {
+    color: $bl-ink;
+    font-family: "Futura PT Bold", sans-serif;
+    font-size: 24px;
+    line-height: 1.25;
+  }
+
+  &__lead {
+    margin-top: 6px;
+    color: $bl-sub;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 40px;
+    padding: 24px 20px;
+
+    &__title {
+      font-size: 21px;
     }
   }
 }

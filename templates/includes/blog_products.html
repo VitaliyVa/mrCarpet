@@ -1,0 +1,23 @@
+<div class="blog-products blog-products--{{ cards|length }}">
+  {% for card in cards %}
+  <a class="blog-products__card{% if not card.in_stock %} is-oos{% endif %}" href="{{ card.url }}">
+    <span class="blog-products__media">
+      {% if card.image %}
+      <img src="{{ card.image }}" alt="{{ card.title }}" width="365" height="420" sizes="(max-width: 600px) 45vw, 220px" loading="lazy" decoding="async">
+      {% else %}
+      <span class="blog-products__noimg" aria-hidden="true">🧶</span>
+      {% endif %}
+      {% if card.discount and card.in_stock %}<span class="blog-products__badge">{% if card.discount_upto %}до {% endif %}−{{ card.discount }}%</span>{% endif %}
+      {% if not card.in_stock %}<span class="blog-products__oos"><span>Немає в наявності</span></span>{% endif %}
+    </span>
+    <span class="blog-products__body">
+      <span class="blog-products__price">
+        <span class="blog-products__now">{% if card.from_label %}від {% endif %}{{ card.price }} {{ card.unit }}</span>
+        {% if card.old_price and card.in_stock %}<span class="blog-products__old">{{ card.old_price }} грн</span>{% endif %}
+      </span>
+      <span class="blog-products__title">{{ card.title }}</span>
+      <span class="blog-products__more">{% if card.in_stock %}Дивитись{% else %}Дізнатись про наявність{% endif %} →</span>
+    </span>
+  </a>
+  {% endfor %}
+</div>

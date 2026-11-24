@@ -167,7 +167,8 @@ class ListPageTests(TestCase):
             image="articles/missing-cover.webp",
         )
         html = self.client.get(reverse("blog")).content.decode()
-        self.assertIn("/static/utils/assets/blog/img.png", html)
+        # A drawn placeholder instead of the same stock rug on every card.
+        self.assertIn("bl-placeholder", html)
         self.assertNotIn("missing-cover.webp", html)
 
 
