@@ -238,6 +238,11 @@ class SchedulePostTests(MediaTestCase):
 
 
 class ReleaseDuePostsTests(MediaTestCase):
+    def setUp(self):
+        super().setUp()
+        # data migrations seed real scheduled posts; once their time passes they are due
+        SocialPost.objects.all().delete()
+
     def _post(self, article=None, at=None, status=SocialPost.Status.SCHEDULED):
         return SocialPost.objects.create(
             media_kind=SocialPost.MediaKind.PHOTOS,
