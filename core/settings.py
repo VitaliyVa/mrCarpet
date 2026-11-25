@@ -58,6 +58,10 @@ GOOGLE_PLACE_ID = config("GOOGLE_PLACE_ID", default="")
 # opt-in off without a deploy of code.
 GOOGLE_MERCHANT_ID = config("GOOGLE_MERCHANT_ID", default="5860587323")
 
+# Rozetka feed (/feeds/rozetka.xml): site price * markup. Rozetka commission is
+# ~20%, so 1 / 0.8 = 1.25 keeps the net revenue of the site price.
+ROZETKA_PRICE_MARKUP = config("ROZETKA_PRICE_MARKUP", default="1.25")
+
 # Analytics / measurement (Phase 9). Empty = scripts not injected.
 # Example: GA4_MEASUREMENT_ID=G-XXXXXXXXXX
 # Prefer GTM_CONTAINER_ID=GTM-XXXXXXX if you manage tags in GTM (then skip raw GA4 id).

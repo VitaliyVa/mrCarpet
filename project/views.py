@@ -208,6 +208,13 @@ def google_merchant_feed(request):
     return HttpResponse(build_feed(), content_type="application/xml; charset=utf-8")
 
 
+def rozetka_feed(request):
+    """YML price list for Rozetka Marketplace (scheduled fetch)."""
+    from project.prom_feed import build_rozetka_feed
+
+    return HttpResponse(build_rozetka_feed(), content_type="application/xml; charset=utf-8")
+
+
 def robots_txt(request):
     """
     robots.txt gated by SEO_INDEXING_ENABLED (default False = full Disallow).

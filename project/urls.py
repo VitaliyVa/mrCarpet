@@ -24,6 +24,7 @@ urlpatterns = [
     path('success/', views.success, name='success'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('feeds/google-merchant.xml', views.google_merchant_feed, name='google_merchant_feed'),
+    path('feeds/rozetka.xml', views.rozetka_feed, name='rozetka_feed'),
     path(
         'google67459f697e641b7f.html',
         views.google_site_verification_file,
