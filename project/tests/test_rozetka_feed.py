@@ -58,6 +58,9 @@ class RozetkaHelpersTests(PlainTestCase):
             (ROZETKA_FALLBACK_VENDOR, True),
         )
         self.assertEqual(rozetka_vendor([]), ("mr.Carpet", True))
+        self.assertEqual(rozetka_vendor([], "Килим прямокутний Mira 24192/261"), ("Karat", False))
+        self.assertEqual(rozetka_vendor([], "Килим Flex 19197-91"), ("Karat", False))
+        self.assertEqual(rozetka_vendor([], "Килим La Rosa GK503"), ("mr.Carpet", True))
 
     def test_picture_url_percent_encoded(self):
         url = rozetka_picture_url("https://mrcarpet24.com/media/products/килим 1.jpg")

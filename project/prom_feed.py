@@ -208,12 +208,22 @@ def rozetka_offer_id(product, attr) -> str:
     return f"{product.pk}x{attr.pk}"
 
 
-def rozetka_vendor(specs: list[tuple[str, str]]) -> tuple[str, bool]:
-    """(vendor, is_fallback): brand from a «Бренд» / «Торгова марка» spec."""
+# Collections that other Rozetka sellers list under the brand Karat (Karat
+# Carpet, Ukraine). Checked on rozetka.com.ua 25.11.2026: Mira, Flex, Oksi,
+# Fashion, Fantasy, Lana all appear as «Килим Karat <collection>».
+KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana")
+
+
+def rozetka_vendor(specs: list[tuple[str, str]], title: str = "") -> tuple[str, bool]:
+    """(vendor, is_fallback): brand from a «Бренд» / «Торгова марка» spec,
+    else Karat for its known collections, else the shop's own label."""
     for name, value in specs:
         lower = name.lower()
         if value and any(k in lower for k in _VENDOR_SPEC_KEYS):
             return value[:ROZETKA_MAX_PARAM], False
+    words = set((title or "").lower().replace("/", " ").split())
+    if words & set(KARAT_COLLECTIONS):
+        return "Karat", False
     return ROZETKA_FALLBACK_VENDOR, True
 
 
@@ -300,7 +310,7 @@ def build_rozetka_offers(products) -> list[dict]:
         description = product_description(product, ROZETKA_MAX_DESCRIPTION)
         specs = product_specs(product)
         color = product_color(product, specs)
-        vendor, vendor_fallback = rozetka_vendor(specs)
+        vendor, vendor_fallback = rozetka_vendor(specs, product.title)
         categories = list(product.categories.all())
         category_id = rozetka_category_id(categories)
         country = _rozetka_country(specs, categories)
