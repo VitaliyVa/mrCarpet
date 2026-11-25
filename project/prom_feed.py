@@ -210,8 +210,8 @@ def rozetka_offer_id(product, attr) -> str:
 
 # Collections that other Rozetka sellers list under the brand Karat (Karat
 # Carpet, Ukraine). Checked on rozetka.com.ua 25.11.2026: Mira, Flex, Oksi,
-# Fashion, Fantasy, Lana all appear as «Килим Karat <collection>».
-KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana")
+# Fashion, Fantasy, Lana, Itea, Lotos, Cappuccino appear as «Килим Karat <collection>».
+KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea", "lotos", "cappuccino")
 
 
 def rozetka_vendor(specs: list[tuple[str, str]], title: str = "") -> tuple[str, bool]:
