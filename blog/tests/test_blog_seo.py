@@ -156,6 +156,8 @@ class ListPageTests(TestCase):
         self.assertTrue(first.has_next())
 
     def test_empty_blog_says_so(self):
+        # data migrations seed real articles; once their dates pass they are public
+        Article.objects.all().delete()
         html = self.client.get(reverse("blog")).content.decode()
         self.assertIn("Незабаром", html)
 
