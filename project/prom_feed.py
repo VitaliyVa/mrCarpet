@@ -47,7 +47,7 @@ from project.merchant_feed import (
     product_specs,
     variant_link,
 )
-from project.seo_jsonld import ORG_NAME
+from project.seo_jsonld import KARAT_COLLECTIONS, ORG_NAME, product_brand  # noqa: F401
 from project.seo_urls import absolute_site_url
 from project.text_encoding import fix_utf8_mojibake
 
@@ -181,7 +181,6 @@ ROZETKA_MAX_PICTURE_URL = 1999
 ROZETKA_MAX_DESCRIPTION = 3000
 ROZETKA_DEFAULT_MARKUP = "1.25"
 
-_VENDOR_SPEC_KEYS = ("бренд", "торгова марка", "торговельна марка", "торгова марк")
 _COUNTRY_BY_CATEGORY = {"Турецькі": "Туреччина", "Українські": "Україна"}
 _STANDARD_PARAMS = {"розмір", "колір", "форма", "країна-виробник товару"}
 _PICTURE_SAFE = ":/%?&=+~-._,;@!$'()*"
@@ -208,23 +207,10 @@ def rozetka_offer_id(product, attr) -> str:
     return f"{product.pk}x{attr.pk}"
 
 
-# Collections that other Rozetka sellers list under the brand Karat (Karat
-# Carpet, Ukraine). Checked on rozetka.com.ua 25.11.2026: Mira, Flex, Oksi,
-# Fashion, Fantasy, Lana, Itea, Lotos, Cappuccino appear as «Килим Karat <collection>».
-KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea", "lotos", "cappuccino", "kolibri")
-
-
 def rozetka_vendor(specs: list[tuple[str, str]], title: str = "") -> tuple[str, bool]:
-    """(vendor, is_fallback): brand from a «Бренд» / «Торгова марка» spec,
-    else Karat for its known collections, else the shop's own label."""
-    for name, value in specs:
-        lower = name.lower()
-        if value and any(k in lower for k in _VENDOR_SPEC_KEYS):
-            return value[:ROZETKA_MAX_PARAM], False
-    words = set((title or "").lower().replace("/", " ").split())
-    if words & set(KARAT_COLLECTIONS):
-        return "Karat", False
-    return ROZETKA_FALLBACK_VENDOR, True
+    """(vendor, is_fallback): same rule as Google (seo_jsonld.product_brand)."""
+    vendor, fallback = product_brand(title, specs)
+    return vendor[:ROZETKA_MAX_PARAM], fallback
 
 
 def rozetka_picture_url(url: str) -> str:

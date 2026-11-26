@@ -15,6 +15,26 @@ from project.seo_urls import absolute_site_url, canonical_url
 from project.text_encoding import fix_utf8_mojibake
 
 ORG_NAME = "mr.Carpet"
+
+# Collections sold elsewhere under the manufacturer brand Karat (Karat Carpet,
+# Ukraine). Checked on rozetka.com.ua 25.11.2026: Mira, Flex, Oksi, Fashion,
+# Fantasy, Lana, Itea, Lotos, Cappuccino, Kolibri appear as «Килим Karat <collection>».
+KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea", "lotos", "cappuccino", "kolibri")
+BRAND_SPEC_KEYS = ("бренд", "торгова марка", "торговельна марка", "торгова марк")
+
+
+def product_brand(title: str = "", specs=()) -> tuple[str, bool]:
+    """(brand, is_fallback): a «Бренд» / «Торгова марка» spec, else Karat for
+    its known collections, else the shop's own label (Google Merchant, JSON-LD
+    and the Rozetka feed all use this)."""
+    for name, value in specs or ():
+        lower = (name or "").lower()
+        if value and any(k in lower for k in BRAND_SPEC_KEYS):
+            return value, False
+    words = set((title or "").lower().replace("/", " ").split())
+    if words & set(KARAT_COLLECTIONS):
+        return "Karat", False
+    return ORG_NAME, True
 ORG_EMAIL = "mr.carpet.shop@gmail.com"
 ORG_PHONE = "+380963988875"
 ORG_STREET = "вул. Незалежності 5а"
@@ -350,6 +370,17 @@ def _single_offer(
     return offer
 
 
+def _brand_name(product) -> str:
+    """Same brand as the Google feed: lazy import, merchant_feed imports us."""
+    try:
+        from project.merchant_feed import product_specs
+
+        specs = product_specs(product)
+    except Exception:
+        specs = []
+    return product_brand(product.title, specs)[0][:70]
+
+
 def _product_details(request, product) -> dict[str, Any]:
     """Properties shared by every size of one product page.
 
@@ -363,7 +394,7 @@ def _product_details(request, product) -> dict[str, Any]:
     )[:5000]
     data: dict[str, Any] = {
         "description": description,
-        "brand": {"@type": "Brand", "name": ORG_NAME},
+        "brand": {"@type": "Brand", "name": _brand_name(product)},
         "category": _google_product_category(product),
     }
 

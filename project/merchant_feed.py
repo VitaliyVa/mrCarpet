@@ -5,7 +5,8 @@ One feed item per sellable size (ProductAttribute). Sizes of one product share
 catalog reads the same URL.
 
 Facts only from the DB, nothing generated:
-- brand is always mr.Carpet (own-label decision), no GTIN (`identifier_exists=no`);
+- brand: the manufacturer where known (a brand spec, Karat for its collections),
+  else mr.Carpet; no GTIN (`identifier_exists=no`);
 - no `mpn`: with `identifier_exists=no` an MPN contradicts the flag, and our
   pk is not a manufacturer part number;
 - id is stable `<product.pk>-<attr.pk>`; `link` carries `?size=<attr.pk>` so
@@ -30,7 +31,7 @@ from xml.sax.saxutils import escape
 
 from django.utils.html import strip_tags
 
-from project.seo_jsonld import ORG_NAME, _google_product_category, _product_color
+from project.seo_jsonld import ORG_NAME, _google_product_category, _product_color, product_brand
 from project.seo_urls import absolute_site_url
 from project.text_encoding import fix_utf8_mojibake
 
@@ -554,7 +555,7 @@ def build_items(products) -> list[dict]:
                     total if total is not None else attr.price, shop_settings
                 ),
                 "condition": "new",
-                "brand": ORG_NAME,
+                "brand": product_brand(product.title, specs)[0][:70],
                 "identifier_exists": "no",
                 "google_product_category": google_category,
                 "product_type": product_type,

@@ -446,3 +446,13 @@ class TitleColourTests(SimpleTestCase):
         self.assertEqual(link("", "сірий").label, "Сірий")
         self.assertEqual(link("Овальний", "срібний").label, "Овальний, срібний")
         self.assertEqual(link("", "").label, "T")
+
+
+class ProductBrandRuleTests(TestCase):
+    def test_karat_collections_and_fallback(self):
+        from project.seo_jsonld import product_brand
+
+        self.assertEqual(product_brand("Килим прямокутний Mira 24058/160 60x110 см"), ("Karat", False))
+        self.assertEqual(product_brand("Килим Kolibri 11001"), ("Karat", False))
+        self.assertEqual(product_brand("Килим La Rosa GK503"), ("mr.Carpet", True))
+        self.assertEqual(product_brand("Килим", [("Бренд", "Merinos")]), ("Merinos", False))
