@@ -19,6 +19,16 @@ What an imported order is:
 It deliberately sends no GA4 purchase and no ads conversion (those guard on
 Order.source), and no customer email.
 
+Cancellation: when Rozetka moves an imported order into status_group 3
+(cancelled / failed, e.g. the buyer did not pick the parcel up), the poll marks
+our Order "cancelled" and gives the stock back, exactly once: the status flip
+and the stock change happen in one transaction under select_for_update, and an
+order that is already "cancelled" (by an earlier poll or by a manager in the
+admin) is never touched again. The admin itself returns no stock on cancel
+(order/signals.py only releases the promo code), so there is no second path
+that could restore it twice. Only what import took is returned: see
+_stock_to_return for the oversold case.
+
 Offer id: our Rozetka feed uses f"{product.pk}x{attr.pk}" (project/prom_feed.py
 rozetka_offer_id) both as <offer id> and as <article>; the order carries it in
 purchases[].item.uploader_offer_id / price_offer_id / article.
@@ -48,6 +58,14 @@ logger = logging.getLogger(__name__)
 # only "status = new") so an order the manager already moved on in the Rozetka
 # cabinet before the next poll is still picked up.
 LOOKBACK_DAYS = 3
+
+# Cancellations of older orders (a parcel returned after a week) are found by a
+# second, cheap search: failed orders (`types=6`, documented in /orders/search)
+# whose status changed within this many days, whatever their creation date.
+CANCEL_LOOKBACK_DAYS = 3
+SEARCH_TYPES_FAILED = 6
+
+OVERSOLD_NOTE_RE = re.compile(r"^Недостатньо залишку: «(.*)» замовлено (\d+), було (\d+)$")
 
 OFFER_ID_RE = re.compile(r"^(\d+)x(\d+)$")
 MESSAGE_MAX = 1024
@@ -305,6 +323,145 @@ def create_order(data: dict):
     return order
 
 
+def _stock_to_return(order, cart_products) -> dict:
+    """{cart_product.pk: units to give back} for a cancelled imported order.
+
+    Mirrors what import took. Custom (cut-to-length) lines are skipped: import
+    creates them without a length, so neither Cart.apply_quantity nor the
+    clamped fallback took anything for them (and saving a custom attribute
+    would delete its cart lines, see ProductAttribute.save).
+
+    Oversold lines: when Rozetka sold more than we had, import took only what
+    was left and wrote «Недостатньо залишку: «title» замовлено N, було M» into
+    order.message. Giving back N would create stock that never existed, so a
+    line matched by (product title, ordered N) to such a note gets M back. Each
+    note is used once, in cart order, which is the order import wrote them in.
+    If a manager deleted that note, the full quantity is returned (documented
+    trade-off: no model field records the taken amount).
+    """
+    notes = []
+    for line in (order.message or "").splitlines():
+        match = OVERSOLD_NOTE_RE.match(line.strip())
+        if match:
+            notes.append((match.group(1), int(match.group(2)), int(match.group(3))))
+    result = {}
+    for cart_product in cart_products:
+        attr = cart_product.product_attr
+        if attr.custom_attribute:
+            continue
+        quantity = int(cart_product.quantity or 0)
+        for index, (title, ordered, available) in enumerate(notes):
+            if title == attr.product.title and ordered == quantity:
+                quantity = min(available, quantity)
+                del notes[index]
+                break
+        if quantity > 0:
+            result[cart_product.pk] = quantity
+    return result
+
+
+def cancel_order(rozetka_id: int):
+    """Mark an imported order cancelled and return its stock. Exactly once.
+
+    Returns (order, units_returned), or None when there is no such Rozetka
+    order or it is already cancelled.
+    """
+    from cart.models import CartProduct
+    from catalog.models import ProductAttribute
+    from order.models import Order
+
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .filter(source=Order.SOURCE_ROZETKA, rozetka_order_id=int(rozetka_id))
+            .first()
+        )
+        if order is None or order.status == Order.STATUS_CANCELLED:
+            return None
+        cart_products = list(
+            CartProduct.objects.filter(cart__order=order)
+            .select_related("product_attr__product")
+            .order_by("pk")
+        )
+        to_return = _stock_to_return(order, cart_products)
+        returned = 0
+        for cart_product in cart_products:
+            units = to_return.get(cart_product.pk)
+            if not units:
+                continue
+            attr = ProductAttribute.objects.select_for_update().get(pk=cart_product.product_attr_id)
+            attr.quantity = int(attr.quantity or 0) + units
+            attr.save(update_fields=["quantity"])
+            returned += units
+        order.status = Order.STATUS_CANCELLED
+        note = "Rozetka скасувала замовлення"
+        if returned:
+            note += ", залишок повернено"
+        order.message = "\n".join(p for p in (order.message, note) if p)[:MESSAGE_MAX]
+        order.save(update_fields=["status", "message", "updated"])
+    return order, returned
+
+
+def _notify_cancelled(order, returned: int) -> None:
+    """Short plain Telegram line (notify_order has no cancel event)."""
+    try:
+        from project import telegram_utils
+
+        if not telegram_utils._should_notify("order"):
+            return
+        number = order.order_number or order.rozetka_order_id
+        tail = "залишок повернено" if returned else "залишок не змінювався"
+        text = (
+            f"ROZETKA ❌ Замовлення №{number} скасовано, {tail}\n"
+            f"{telegram_utils.order_admin_absolute_url(order)}"
+        )
+        telegram_utils.send_telegram_message_async(text)
+    except Exception:
+        logger.exception("rozetka: telegram cancel notify failed for order %s", order.pk)
+
+
+def _handle_failed(data: dict, summary: dict) -> None:
+    """A status_group 3 order from Rozetka: cancel ours if we have one."""
+    result = cancel_order(int(data["id"]))
+    if result is None:
+        summary["skipped"] += 1
+        return
+    order, returned = result
+    summary["cancelled"] += 1
+    _notify_cancelled(order, returned)
+
+
+def _poll_late_cancellations(client, summary: dict, seen: set) -> None:
+    """Orders older than the created_from window that Rozetka failed lately.
+
+    Ids the main window already handled, unknown ids (never imported) and
+    orders already cancelled here are passed over silently.
+    """
+    from order.models import Order
+
+    since = (timezone.localtime() - timedelta(days=CANCEL_LOOKBACK_DAYS)).date()
+    for data in client.iter_orders(
+        types=SEARCH_TYPES_FAILED, status_updated_from=since.isoformat(), max_pages=5
+    ):
+        try:
+            if int(data.get("status_group") or 0) != STATUS_GROUP_FAILED:
+                continue
+            rozetka_id = int(data["id"])
+            if rozetka_id in seen:
+                continue
+            seen.add(rozetka_id)
+            pending = (
+                Order.objects.filter(source=Order.SOURCE_ROZETKA, rozetka_order_id=rozetka_id)
+                .exclude(status=Order.STATUS_CANCELLED)
+                .exists()
+            )
+            if pending:
+                _handle_failed(data, summary)
+        except Exception as exc:
+            logger.exception("rozetka: cancellation of order %s failed", data.get("id"))
+            summary["errors"].append(f"cancel {data.get('id')}: {exc}")
+
+
 def _notify(order) -> None:
     """Same Telegram message as a site order (format_order_message adds ROZETKA)."""
     try:
@@ -327,7 +484,7 @@ def _record(settings_pk, *, error: str) -> None:
 
 
 def import_new_orders(client: RozetkaClient | None = None, *, lookback_days: int = LOOKBACK_DAYS) -> dict:
-    """One poll. Returns {"created": n, "skipped": n, "errors": [...], "disabled": bool}.
+    """One poll. Returns {"created", "cancelled", "skipped": n, "errors": [...], "disabled": bool}.
 
     Never raises.
     """
@@ -335,7 +492,7 @@ def import_new_orders(client: RozetkaClient | None = None, *, lookback_days: int
 
     from .models import RozetkaSettings
 
-    summary = {"created": 0, "skipped": 0, "errors": [], "disabled": False}
+    summary = {"created": 0, "cancelled": 0, "skipped": 0, "errors": [], "disabled": False}
     close_old_connections()
     settings = None
     try:
@@ -346,10 +503,12 @@ def import_new_orders(client: RozetkaClient | None = None, *, lookback_days: int
 
         client = client or RozetkaClient(settings)
         since = (timezone.localtime() - timedelta(days=lookback_days)).date()
+        seen: set[int] = set()
         for data in client.iter_orders(created_from=since):
             try:
+                seen.add(int(data["id"]))
                 if int(data.get("status_group") or 0) == STATUS_GROUP_FAILED:
-                    summary["skipped"] += 1
+                    _handle_failed(data, summary)
                     continue
                 if Order.objects.filter(rozetka_order_id=int(data["id"])).exists():
                     summary["skipped"] += 1
@@ -367,6 +526,7 @@ def import_new_orders(client: RozetkaClient | None = None, *, lookback_days: int
             except Exception as exc:
                 logger.exception("rozetka: order %s import failed", data.get("id"))
                 summary["errors"].append(f"order {data.get('id')}: {exc}")
+        _poll_late_cancellations(client, summary, seen)
     except RozetkaError as exc:
         summary["errors"].append(str(exc))
     except Exception as exc:
