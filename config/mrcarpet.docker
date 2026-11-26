@@ -113,7 +113,23 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300;
-        proxy_connect_timeout 300;
+        # web sits on the same docker network: a healthy connect takes
+        # milliseconds. 300 s here kept shoppers on a spinner for 5 minutes
+        # whenever web was gone instead of showing the maintenance page.
+        proxy_connect_timeout 10;
         proxy_redirect off;
+        # Deploys stop web for a few seconds (DB backup, git pull, migrate).
+        # nginx's own 502/504 (web not resolvable, refused, timed out) become
+        # 503 + Retry-After so Googlebot and paid Shopping clicks see "come
+        # back soon", not a broken site. Upstream responses are untouched:
+        # proxy_intercept_errors stays off, Django's own pages pass through.
+        error_page 502 504 =503 /maintenance.html;
+    }
+
+    location = /maintenance.html {
+        internal;
+        root /usr/share/nginx/maintenance;
+        add_header Retry-After 60 always;
+        add_header Cache-Control "no-store" always;
     }
 }

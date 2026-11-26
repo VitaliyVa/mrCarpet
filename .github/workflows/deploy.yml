@@ -10,6 +10,13 @@ on:
       - '.gitignore'
       - 'README*'
 
+# One deploy at a time: two overlapping runs would stop/pull/restore the same
+# SQLite file and worktree. A newer push waits (and replaces an older waiting
+# run); a running deploy is never cancelled mid-way.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -49,7 +56,7 @@ jobs:
         ) || true
         # /tmp-копії БД належать root (їх пише alpine-контейнер) — чистимо ним же
         docker run --rm -v /tmp:/hosttmp alpine:latest sh -c \
-          'cd /hosttmp && ls -1t mrcarpet_db_live_*.sqlite3 2>/dev/null | tail -n +4 | xargs -r rm -f' \
+          'cd /hosttmp && ls -1t mrcarpet_db_live_*.sqlite3 2>/dev/null | tail -n +4 | xargs -r rm -f; rm -rf mrcarpet_next.*' \
           || true
         echo "Housekeeping: pruning docker build cache older than 48h..."
         docker builder prune -f --filter until=48h || true
@@ -58,87 +65,180 @@ jobs:
         # IMPORTANT: SQLite lives inside the git worktree (bind mount).
         # Never let git pull overwrite db.sqlite3 / WAL / SHM.
 
-        echo "Stopping web before DB backup + git pull..."
-        docker compose -f docker-compose.prod.yml stop web || true
-
-        echo "Checkpointing WAL into db.sqlite3, then backing up..."
-        if [ -f db.sqlite3 ]; then
-          if command -v sqlite3 >/dev/null 2>&1; then
-            sqlite3 db.sqlite3 "PRAGMA wal_checkpoint(TRUNCATE);" || true
-          else
-            # -T and </dev/null: compose run would otherwise read the rest of
-            # this script (it is the ssh session's stdin) as its own input
-            docker compose -f docker-compose.prod.yml run --rm --no-deps -T web \
-              python -c "import sqlite3; c=sqlite3.connect('/app/db.sqlite3'); c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.close()" \
-              </dev/null || true
+        # The site is down from `stop web` until gunicorn answers again, so
+        # everything that does not need web stopped runs BEFORE it: fetch,
+        # nginx -t of the incoming config, the image build, the list of
+        # untracked files that would block the merge. Only the DB backup, the
+        # pull and the DB restore stay inside the window.
+        WORK_DIR=$(mktemp -d /tmp/mrcarpet_next.XXXXXX)
+        NEXT_DIR="$WORK_DIR/src"
+        WEB_STOPPED=0
+        WEB_STARTED=0
+        on_exit() {
+          rc=$?
+          # A failure inside the window (pull refused, cp failed...) used to
+          # leave web stopped until someone noticed. Bring the stack back on
+          # whatever code is on disk; the DB is untouched or atomically
+          # restored, see below.
+          if [ "$WEB_STOPPED" = "1" ] && [ "$WEB_STARTED" = "0" ]; then
+            echo "Deploy aborted while web was stopped: starting web and daemons again..."
+            docker compose -f docker-compose.prod.yml up -d web ga4-weekly content-scheduler rozetka-poller </dev/null || true
           fi
-          docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
-            sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && cp /app/db.sqlite3 /tmp/mrcarpet_db_live_${TS}.sqlite3 && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS} /tmp/mrcarpet_db_live_${TS}.sqlite3"
-        fi
+          rm -rf "$WORK_DIR" 2>/dev/null || true
+          exit $rc
+        }
+        trap on_exit EXIT
 
-        echo "Resetting tracked worktree drift so git pull cannot abort..."
-        # DB/backups are untracked — safe. Never commit them.
         OLD_HEAD=$(git rev-parse HEAD)
+        echo "Fetching origin (site still up)..."
         git fetch origin
-        git checkout -- . || true
-        git clean -fd -- scripts || true
-
-        # scp/manual leftovers: untracked files that already exist in origin/main
-        # block `git pull` ("would be overwritten by merge"). Remove only those.
-        echo "Clearing untracked paths that would block merge from origin/main..."
-        git ls-tree -r --name-only origin/main | while IFS= read -r path; do
-          [ -e "$path" ] || continue
-          if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
-            continue
-          fi
-          case "$path" in
-            db.sqlite3|db.sqlite3-wal|db.sqlite3-shm) continue ;;
-          esac
-          rm -rf -- "$path"
-        done
-
-        echo "Pulling latest changes..."
-        git pull origin main
-
-        echo "Restoring live SQLite (git must not own prod data)..."
-        if [ -f "/tmp/mrcarpet_db_live_${TS}.sqlite3" ]; then
-          docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
-            sh -c "cp /tmp/mrcarpet_db_live_${TS}.sqlite3 /app/db.sqlite3 && chmod 666 /app/db.sqlite3 && rm -f /app/db.sqlite3-wal /app/db.sqlite3-shm"
-        else
-          rm -f db.sqlite3-wal db.sqlite3-shm
-        fi
+        NEW_HEAD=$(git rev-parse origin/main)
+        echo "Deploying $OLD_HEAD -> $NEW_HEAD"
+        mkdir -p "$NEXT_DIR"
+        git archive -o "$WORK_DIR/next.tar" "$NEW_HEAD"
+        tar -xf "$WORK_DIR/next.tar" -C "$NEXT_DIR"
 
         # nginx reads config/mrcarpet.docker and config/nginx-main.conf through
         # single-file bind mounts. git pull writes each file as a new inode and a
         # running container keeps the old one, so `nginx -s reload` kept loading
-        # the stale file and repo changes never went live. Check the pulled files
-        # here, in a throwaway container with the same image and mounts (no ports
-        # published), before any `up` below gets a chance to recreate nginx.
-        # stdin from /dev/null: this script itself is stdin of the ssh session.
-        echo "Validating nginx config from the repo (nginx -t)..."
+        # the stale file and repo changes never went live. Check the incoming
+        # files here, in a throwaway container with the same image and the same
+        # mounts as the compose nginx service (no ports published; a test keeps
+        # the two lists in sync), before any `up` below gets a chance to
+        # recreate nginx. stdin from /dev/null: this script is ssh's stdin.
+        echo "Validating nginx config of the incoming commit (nginx -t, site still up)..."
         NGINX_CONFIG_OK=0
-        if docker compose -f docker-compose.prod.yml run --rm --no-deps -T nginx nginx -t </dev/null; then
+        if docker run --rm \
+          -v "$NEXT_DIR/config/nginx-main.conf:/etc/nginx/nginx.conf:ro" \
+          -v "$NEXT_DIR/config/mrcarpet.docker:/etc/nginx/conf.d/default.conf:ro" \
+          -v "$PWD/config/certbot:/etc/letsencrypt:ro" \
+          -v "$PWD/config/certbot-www:/var/www/certbot:ro" \
+          -v "$NEXT_DIR/config/maintenance:/usr/share/nginx/maintenance:ro" \
+          nginx:latest nginx -t </dev/null; then
           NGINX_CONFIG_OK=1
           echo "nginx config OK"
         else
-          echo "ERROR: nginx -t failed on the pulled config. The running nginx is left as it is."
+          echo "ERROR: nginx -t failed on the incoming config. The running nginx is left as it is."
         fi
 
         # Code is bind-mounted (.:/app), so the image only carries the OS
         # packages and Python deps. Rebuilding it on every deploy reinstalled
         # all of pip from scratch (the build cache is pruned after 48h) and kept
         # the site down for ~7 minutes. Rebuild only when the image inputs
-        # changed, or when the image is missing.
-        IMAGE_INPUTS=$(git diff --name-only "$OLD_HEAD" HEAD -- Dockerfile.prod requirements.txt requirements-ga4.txt || echo "unknown")
+        # changed, or when the image is missing, and do it from a clean export
+        # of the incoming commit while the old containers keep serving. A
+        # failed build stops the deploy here, with the site still up.
+        IMAGE_FILES="Dockerfile.prod requirements.txt requirements-ga4.txt"
+        IMAGE_INPUTS=$(git diff --name-only "$OLD_HEAD" "$NEW_HEAD" -- $IMAGE_FILES || echo "unknown")
         if [ -n "$IMAGE_INPUTS" ] || ! docker image inspect mrcarpet-web:latest >/dev/null 2>&1; then
-          echo "Rebuilding containers (changed: ${IMAGE_INPUTS:-image missing})..."
-          docker compose -f docker-compose.prod.yml build web tiktok-daily
+          echo "Building images from the incoming commit, site still up (changed: ${IMAGE_INPUTS:-image missing})..."
+          # same compose project and .env, only the build context is swapped
+          printf 'services:\n  web:\n    build:\n      context: %s\n  tiktok-daily:\n    build:\n      context: %s\n' \
+            "$NEXT_DIR" "$NEXT_DIR" > "$WORK_DIR/build-override.yml"
+          docker compose -f docker-compose.prod.yml -f "$WORK_DIR/build-override.yml" build web tiktok-daily </dev/null
         else
           echo "Image inputs unchanged; skipping rebuild (code comes from the bind mount)."
         fi
 
+        # scp/manual leftovers: untracked files that already exist in the
+        # incoming tree block `git pull` ("would be overwritten by merge").
+        # List them now (one comm instead of a git call per file: ~1900 git
+        # processes used to run inside the window); remove them after stop.
+        git -c core.quotePath=false ls-tree -r --name-only "$NEW_HEAD" | LC_ALL=C sort > "$WORK_DIR/next.txt"
+        git -c core.quotePath=false ls-files | LC_ALL=C sort > "$WORK_DIR/tracked.txt"
+        LC_ALL=C comm -23 "$WORK_DIR/next.txt" "$WORK_DIR/tracked.txt" > "$WORK_DIR/blockers.txt"
+
+        # ---------------- site is down from here -----------------------------
+        # The daemons write the same SQLite file (Rozetka orders, social post
+        # status, weekly report). A write that lands after the snapshot below
+        # would be wiped by the restore after pull, so they stop too, in
+        # parallel with web; they are started again right after web.
+        echo "Stopping web and the DB-writing daemons for backup + git pull..."
+        WEB_STOPPED=1
+        for svc in ga4-weekly content-scheduler rozetka-poller; do
+          docker compose -f docker-compose.prod.yml stop "$svc" </dev/null &
+        done
+        docker compose -f docker-compose.prod.yml stop web || true
+        wait || true
+
+        echo "Checkpointing WAL into db.sqlite3, then backing up..."
+        CHECKPOINT_OK=0
+        if [ -f db.sqlite3 ]; then
+          if command -v sqlite3 >/dev/null 2>&1; then
+            # prints busy|log|checkpointed; busy=0 means everything is in db.sqlite3
+            case "$(sqlite3 db.sqlite3 "PRAGMA wal_checkpoint(TRUNCATE);" 2>&1)" in
+              0\|*) CHECKPOINT_OK=1 ;;
+            esac
+          else
+            # -T and </dev/null: compose run would otherwise read the rest of
+            # this script (it is the ssh session's stdin) as its own input
+            docker compose -f docker-compose.prod.yml run --rm --no-deps -T web \
+              python -c "import sqlite3; c=sqlite3.connect('/app/db.sqlite3'); r=c.execute('PRAGMA wal_checkpoint(TRUNCATE)').fetchone(); c.close(); raise SystemExit(r[0])" \
+              </dev/null && CHECKPOINT_OK=1 || true
+          fi
+          if [ "$CHECKPOINT_OK" = "1" ]; then
+            docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
+              sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && cp /app/db.sqlite3 /tmp/mrcarpet_db_live_${TS}.sqlite3 && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS} /tmp/mrcarpet_db_live_${TS}.sqlite3"
+          else
+            # Part of the data may still sit in the WAL: keep it next to the
+            # backup and do NOT restore over the live files after pull
+            # (restoring db.sqlite3 alone and deleting the WAL would lose it).
+            echo "WARNING: WAL checkpoint incomplete; backing up db + WAL, live DB will not be restored"
+            docker run --rm -v "$PWD":/app alpine:latest \
+              sh -c "cp /app/db.sqlite3 /app/backups/db.sqlite3.pre_deploy_${TS} && if [ -f /app/db.sqlite3-wal ]; then cp /app/db.sqlite3-wal /app/backups/db.sqlite3.pre_deploy_${TS}-wal; fi && chmod 644 /app/backups/db.sqlite3.pre_deploy_${TS}*"
+          fi
+        fi
+
+        echo "Resetting tracked worktree drift so git pull cannot abort..."
+        # DB/backups are untracked — safe. Never commit them.
+        git checkout -- . || true
+        git clean -fd -- scripts || true
+
+        echo "Clearing untracked paths that would block merge from origin/main..."
+        while IFS= read -r path; do
+          [ -e "$path" ] || continue
+          case "$path" in
+            db.sqlite3|db.sqlite3-wal|db.sqlite3-shm) continue ;;
+          esac
+          rm -rf -- "$path"
+        done < "$WORK_DIR/blockers.txt"
+
+        echo "Pulling latest changes..."
+        git pull origin main
+
+        echo "Restoring live SQLite (git must not own prod data)..."
+        if [ -f "/tmp/mrcarpet_db_live_${TS}.sqlite3" ]; then
+          # copy beside, then rename: a failed copy can never leave a
+          # half-written db.sqlite3 behind
+          docker run --rm -v "$PWD":/app -v /tmp:/tmp alpine:latest \
+            sh -c "cp /tmp/mrcarpet_db_live_${TS}.sqlite3 /app/.db_restore_tmp && chmod 666 /app/.db_restore_tmp && mv -f /app/.db_restore_tmp /app/db.sqlite3 && rm -f /app/db.sqlite3-wal /app/db.sqlite3-shm"
+        elif [ ! -f db.sqlite3 ]; then
+          # no DB at all: drop orphan sidecars (never when a WAL may hold data)
+          rm -f db.sqlite3-wal db.sqlite3-shm
+        fi
+
+        # Normally HEAD == NEW_HEAD. If a newer push landed between fetch and
+        # pull, or this run's compose file differs from the one on disk,
+        # re-check what was actually pulled with the real compose mounts.
+        PULLED_HEAD=$(git rev-parse HEAD)
+        if [ "$PULLED_HEAD" != "$NEW_HEAD" ] || ! git diff --quiet "$OLD_HEAD" "$PULLED_HEAD" -- docker-compose.prod.yml; then
+          echo "Re-validating nginx against the pulled compose file..."
+          NGINX_CONFIG_OK=0
+          if docker compose -f docker-compose.prod.yml run --rm --no-deps -T nginx nginx -t </dev/null; then
+            NGINX_CONFIG_OK=1
+            echo "nginx config OK"
+          else
+            echo "ERROR: nginx -t failed on the pulled config. The running nginx is left as it is."
+          fi
+        fi
+        if [ "$PULLED_HEAD" != "$NEW_HEAD" ] && [ -n "$(git diff --name-only "$NEW_HEAD" "$PULLED_HEAD" -- $IMAGE_FILES)" ]; then
+          echo "Pulled past the pre-built commit with new image inputs: rebuilding in place..."
+          docker compose -f docker-compose.prod.yml build web tiktok-daily </dev/null
+        fi
+
         echo "Starting web first..."
         docker compose -f docker-compose.prod.yml up -d web
+        WEB_STARTED=1
 
         # Фонові сервіси піднімаємо ДО healthcheck: якщо перевірка нижче
         # впаде і скрипт вийде з exit 1, планувальник тижневого звіту
@@ -156,15 +256,15 @@ jobs:
         # Host header обов'язковий: ALLOWED_HOSTS строгий, голий 127.0.0.1 дав би 400
         # up to ~6 min: web runs `migrate` before gunicorn, and a big content
         # migration (100 articles + carousel slides) took ~90 s on 24.11.2026
-        for i in $(seq 1 120); do
+        for i in $(seq 1 360); do
           if docker compose -f docker-compose.prod.yml exec -T web \
             python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/', headers={'Host': 'mrcarpet24.com'}), timeout=2)" \
             </dev/null >/dev/null 2>&1; then
             echo "web ready (attempt $i)"
             break
           fi
-          sleep 3
-          if [ "$i" -eq 120 ]; then
+          sleep 1
+          if [ "$i" -eq 360 ]; then
             echo "web failed to become ready"
             docker compose -f docker-compose.prod.yml logs web --tail 80
             exit 1
