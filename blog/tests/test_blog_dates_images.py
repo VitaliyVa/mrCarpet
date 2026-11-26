@@ -218,17 +218,17 @@ class BlogCoverThumbnailTests(TestCase):
         html = self.client.get(reverse("blog")).content.decode()
         self.assertEqual(self._original_in_img(html), [])
         featured = [t for t in self._imgs(html) if 'fetchpriority="high"' in t][0]
-        self.assertIn('src="/media/thumbs/w800/articles/test-cover.webp"', featured)
-        self.assertIn("/media/thumbs/w480/articles/test-cover.webp 480w", featured)
-        self.assertIn("/media/thumbs/w1200/articles/test-cover.webp 1200w", featured)
+        self.assertIn('src="/media/thumbs/v2/w800/articles/test-cover.webp"', featured)
+        self.assertIn("/media/thumbs/v2/w480/articles/test-cover.webp 480w", featured)
+        self.assertIn("/media/thumbs/v2/w1200/articles/test-cover.webp 1200w", featured)
         lazy = [t for t in self._imgs(html) if "test-cover" in t and 'loading="lazy"' in t]
         self.assertTrue(lazy)
         for tag in lazy:
-            self.assertIn('src="/media/thumbs/w480/articles/test-cover.webp"', tag)
-            self.assertIn("/media/thumbs/w800/articles/test-cover.webp 800w", tag)
+            self.assertIn('src="/media/thumbs/v2/w480/articles/test-cover.webp"', tag)
+            self.assertIn("/media/thumbs/v2/w800/articles/test-cover.webp 800w", tag)
         self.assertTrue(
             os.path.exists(
-                os.path.join(self.media, "thumbs", "w480", "articles", "test-cover.webp")
+                os.path.join(self.media, "thumbs", "v2", "w480", "articles", "test-cover.webp")
             )
         )
 
@@ -236,13 +236,13 @@ class BlogCoverThumbnailTests(TestCase):
         html = self.client.get(self.first.get_absolute_url()).content.decode()
         self.assertEqual(self._original_in_img(html), [])
         hero = [t for t in self._imgs(html) if 'fetchpriority="high"' in t][0]
-        self.assertIn('src="/media/thumbs/w800/articles/test-cover.webp"', hero)
+        self.assertIn('src="/media/thumbs/v2/w800/articles/test-cover.webp"', hero)
         self.assertIn("1200w", hero)
         self.assertIn('sizes="(max-width: 800px) calc(100vw - 40px), 860px"', hero)
         # Real cover size, so the box keeps the photo's proportions before load.
         self.assertIn('width="1536" height="1024"', hero)
         # Related aside: small copies, not the 1.5k px upload.
-        self.assertIn('src="/media/thumbs/w240/articles/test-cover.webp"', html)
+        self.assertIn('src="/media/thumbs/v2/w240/articles/test-cover.webp"', html)
         # Social previews keep the original (WebP previews are flaky in messengers).
         og = re.search(r'<meta property="og:image" content="([^"]*)"', html).group(1)
         self.assertTrue(og.endswith("/media/" + self.COVER), og)
@@ -263,7 +263,7 @@ class BlogCoverThumbnailTests(TestCase):
         html = self.client.get(self.first.get_absolute_url()).content.decode()
         hero = [t for t in self._imgs(html) if 'fetchpriority="high"' in t][0]
         self.assertIn('width="1067" height="1600"', hero)
-        self.assertIn('src="/media/thumbs/w800/articles/tall-cover.webp"', hero)
+        self.assertIn('src="/media/thumbs/v2/w800/articles/tall-cover.webp"', hero)
 
     def test_unreadable_thumbnail_falls_back_to_original(self):
         """A broken upload still shows a picture instead of an empty slot."""

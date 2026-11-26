@@ -5,7 +5,7 @@ Uploads under /media are full-size originals (product gallery shots up to
 into 120 px thumbnails and 376 px cards. ``thumbnail_url(field, width)``
 returns the URL of a WebP no wider than ``width`` and writes it on first use:
 
-    media/thumbs/w<width>/<original path without extension>.webp
+    media/thumbs/v<THUMBS_VERSION>/w<width>/<original path without extension>.webp
 
 so existing media on prod gets thumbnails without a management command, and
 deleting ``media/thumbs`` is always safe (they are rebuilt on demand).
@@ -27,7 +27,17 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 THUMBS_DIR = "thumbs"
-DEFAULT_QUALITY = 80
+# Bump when the encoding below changes. The version is part of the URL, so
+# browsers (media is cached 30 days) and the on-disk cache both pick up the
+# new files without anyone deleting media/thumbs by hand. Old versions are
+# never read again and can be removed at any time. Stays under thumbs/ so
+# the deploy's `chmod -R a+rX /app/media/thumbs` still covers it.
+#   v1 (no segment): quality 80, method 4
+#   v2: quality 72, method 6 (lighter files, slower encode, once per file)
+THUMBS_VERSION = 2
+DEFAULT_QUALITY = 72
+# WebP effort 0..6. 6 is the slowest and smallest; it runs once per file.
+WEBP_METHOD = 6
 # Pillow decodes the whole frame; refuse absurd inputs instead of eating RAM.
 MAX_SOURCE_PIXELS = 40_000_000
 
@@ -40,7 +50,7 @@ _MEMO_LIMIT = 20_000
 
 def _thumb_name(name: str, width: int) -> str:
     stem = str(PurePosixPath(name.replace("\\", "/")).with_suffix(""))
-    return f"{THUMBS_DIR}/w{width}/{stem}.webp"
+    return f"{THUMBS_DIR}/v{THUMBS_VERSION}/w{width}/{stem}.webp"
 
 
 def _media_url(name: str) -> str:
@@ -78,7 +88,7 @@ def _render(src_path: str, dst_path: str, width: int, quality: int) -> bool:
         fd, tmp = tempfile.mkstemp(suffix=".webp", dir=os.path.dirname(dst_path))
         try:
             with os.fdopen(fd, "wb") as fh:
-                img.save(fh, format="WEBP", quality=quality, method=4)
+                img.save(fh, format="WEBP", quality=quality, method=WEBP_METHOD)
             # mkstemp creates 0600; nginx reads media as another user, so a
             # private file is served as 403 (broke every thumbnail on prod).
             os.chmod(tmp, 0o644)

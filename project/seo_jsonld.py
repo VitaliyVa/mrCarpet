@@ -116,13 +116,23 @@ ORG_SAME_AS = (
 
 
 def organization_graph(request) -> dict[str, Any]:
+    """The shop as Organization + HomeGoodsStore (a LocalBusiness).
+
+    The store in Ланівці has a Google Business Profile, so the same entity
+    carries the street address and phone that /contacts/ shows. Opening
+    hours, geo and priceRange are left out on purpose: the site only states
+    when we answer messages, not when the store is open, and a guessed
+    value that disagrees with the Business Profile is worse than none.
+    """
     logo = absolute_uri(request, "/static/utils/assets/brand/mr-carpet-logo.png")
     return {
         "@context": "https://schema.org",
-        "@type": "Organization",
+        "@type": ["Organization", "HomeGoodsStore"],
+        "@id": absolute_uri(request, "/#organization"),
         "name": ORG_NAME,
         "url": absolute_uri(request, "/"),
         "logo": logo,
+        "image": logo,
         "email": ORG_EMAIL,
         "telephone": ORG_PHONE,
         "sameAs": list(ORG_SAME_AS),
@@ -265,6 +275,11 @@ def _image_urls(request, product, images=None) -> list[str]:
         if url:
             urls.append(url)
     for img in images or []:
+        # AI interior illustrations (is_ai) stay on the PDP gallery only,
+        # same rule as the Merchant feed: Google wants real product photos
+        # in structured data, and a mismatch with the feed hurts the listing.
+        if getattr(img, "is_ai", False):
+            continue
         field = getattr(img, "image", None)
         if field and not _is_placeholder_image(field):
             url = absolute_uri(request, field.url)

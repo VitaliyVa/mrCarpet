@@ -25,6 +25,46 @@ from .utils import (
 )
 
 
+def _paginate(request, items, per_page: int = 12):
+    """Page of ``items`` for ``?page=``; a page that does not exist is a 404.
+
+    No ``page`` (or an empty one) is page 1. ``?page=abc`` and ``?page=999``
+    used to fall back to page 1 / the last page with a 200 and a canonical
+    of their own, so Google saw endless duplicates of real pages.
+    """
+    from django.core.paginator import InvalidPage
+    from django.http import Http404
+
+    paginator = Paginator(items, per_page)
+    number = (request.GET.get("page") or "").strip() or 1
+    try:
+        return paginator.page(number)
+    except InvalidPage as exc:
+        raise Http404("No such page") from exc
+
+
+def _listing_og_image(page, category=None) -> str | None:
+    """og:image for a listing: the category picture, else the first real
+    product photo on the page. ``Product.image`` is the main shot, never an
+    AI interior (those live in ProductImage with is_ai), so it is safe to
+    share. None leaves the template on the logo."""
+    from project.seo_jsonld import _is_placeholder_image
+    from project.seo_urls import absolute_site_url
+
+    candidates = []
+    if category is not None:
+        candidates.append(getattr(category, "image", None))
+    candidates.extend(getattr(p, "image", None) for p in page.object_list)
+    for field in candidates:
+        if not field or _is_placeholder_image(field):
+            continue
+        try:
+            return absolute_site_url(field.url)
+        except Exception:
+            continue
+    return None
+
+
 def _analytics_view_item_payload(product: Product, attr=None) -> dict | None:
     """GA4/GTM ecommerce view_item payload (None when price unknown)."""
     from decimal import Decimal
@@ -126,16 +166,8 @@ def catalog_detail(request, slug):
     available_filters = get_available_filters(base_products, request.GET)
     
     # Пагінація
-    paginator = Paginator(products, 12)  # 12 товарів на сторінку
-    page = request.GET.get('page')
-    
-    try:
-        products = paginator.page(page)
-    except PageNotAnInteger:
-        products = paginator.page(1)
-    except EmptyPage:
-        products = paginator.page(paginator.num_pages)
-    
+    products = _paginate(request, products)
+
     from project.seo_jsonld import breadcrumb_graph, dumps_jsonld
 
     crumbs = [
@@ -154,6 +186,7 @@ def catalog_detail(request, slug):
             "breadcrumb_jsonld": dumps_jsonld(breadcrumb_graph(request, crumbs)),
             "seo_guides": get_seo_guides(categorie),
             "popular_sizes": popular_sizes(base_products),
+            "og_image_url": _listing_og_image(products, categorie),
         },
     )
 
@@ -266,14 +299,7 @@ def all_collection(request):
     products_count = products.count()
 
     # Пагінація
-    paginator = Paginator(products, 12)
-    page = request.GET.get('page')
-    try:
-        products = paginator.page(page)
-    except PageNotAnInteger:
-        products = paginator.page(1)
-    except EmptyPage:
-        products = paginator.page(paginator.num_pages)
+    products = _paginate(request, products)
 
     return render(
         request,
@@ -291,6 +317,7 @@ def all_collection(request):
             "current_filters": request.GET,
             "seo_guides": get_seo_guides(),
             "popular_sizes": popular_sizes(),
+            "og_image_url": _listing_og_image(products),
             "breadcrumb_jsonld": dumps_jsonld(
                 breadcrumb_graph(
                     request,
@@ -358,14 +385,7 @@ def size_landing(request, size):
     available_filters = get_available_filters(base_products, request.GET)
     products_count = products.count()
 
-    paginator = Paginator(products, 12)
-    page = request.GET.get("page")
-    try:
-        products = paginator.page(page)
-    except PageNotAnInteger:
-        products = paginator.page(1)
-    except EmptyPage:
-        products = paginator.page(paginator.num_pages)
+    products = _paginate(request, products)
     _pin_card_sizes(products, landing)
 
     h1 = sl.landing_h1(landing)
@@ -390,6 +410,7 @@ def size_landing(request, size):
             "current_filters": request.GET,
             "seo_guides": sl.landing_guides(landing),
             "popular_sizes": sl.popular_sizes(exclude=landing.slug),
+            "og_image_url": _listing_og_image(products),
             "breadcrumb_jsonld": dumps_jsonld(
                 breadcrumb_graph(
                     request,
@@ -766,13 +787,8 @@ def stock(request):
         queryset=ProductAttribute.objects.select_related("size").order_by("sort_order", "id"),
     )
     products = discounted_in_stock_products().prefetch_related(product_attrs)
-    paginator = Paginator(products, 12)
-    try:
-        page = paginator.page(request.GET.get("page"))
-    except PageNotAnInteger:
-        page = paginator.page(1)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
+    page = _paginate(request, products)
+    paginator = page.paginator
 
     sale = None
     if paginator.count:

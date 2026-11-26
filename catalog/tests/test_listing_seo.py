@@ -117,9 +117,10 @@ class ListingSeoTests(TestCase):
         self.assertEqual(_canonical(html), f"{SITE}{cat_url}?page=2")
         self.assertIn("сторінка 2", _title(html))
 
-    def test_out_of_range_page_uses_real_page_number(self):
-        html = self.get("/catalog/collection/?page=999")
-        self.assertEqual(_canonical(html), f"{SITE}/catalog/collection/?page=2")
+    def test_out_of_range_page_is_404(self):
+        # It used to show the last page under its own URL: endless duplicates.
+        resp = self.client.get("/catalog/collection/?page=999")
+        self.assertEqual(resp.status_code, 404)
 
     def test_filter_and_sort_are_noindex_pointing_to_unfiltered(self):
         cat_url = self.cat.get_absolute_url()
