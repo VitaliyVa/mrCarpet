@@ -505,3 +505,14 @@ class LeadSplitTests(TestCase):
         from blog.services.article_render import render_article
         r = render_article("<p>Просто текст.</p><h2>A</h2><p>b</p>")
         self.assertEqual(str(r.lead), "")
+
+
+class BlogPaginationNotFoundTests(TestCase):
+    def test_invalid_pages_are_404(self):
+        for page in ("999", "abc", "0"):
+            response = self.client.get(reverse("blog"), {"page": page})
+            self.assertEqual(response.status_code, 404, page)
+
+    def test_first_page_ok(self):
+        self.assertEqual(self.client.get(reverse("blog")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("blog"), {"page": "1"}).status_code, 200)

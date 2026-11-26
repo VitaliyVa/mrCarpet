@@ -1,6 +1,7 @@
 import re
 
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.paginator import InvalidPage, Paginator
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
 from .models import Article
@@ -61,13 +62,12 @@ def blog(request):
         )
 
     paginator = Paginator(queryset, PER_PAGE)
-    page = request.GET.get("page")
+    # a missing or empty ?page= is page 1; anything else invalid (999, abc)
+    # is a page that does not exist: 404, not a copy of another page
     try:
-        articles = paginator.page(page)
-    except PageNotAnInteger:
-        articles = paginator.page(1)
-    except EmptyPage:
-        articles = paginator.page(paginator.num_pages)
+        articles = paginator.page(request.GET.get("page") or 1)
+    except InvalidPage:
+        raise Http404("Сторінку не знайдено")
 
     # The newest post gets the wide card, on the unfiltered first page only:
     # in a topic view every card is already a pick.
