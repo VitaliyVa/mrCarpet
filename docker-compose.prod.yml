@@ -177,6 +177,30 @@ services:
     networks:
       - mrcarpet_network
 
+  rozetka-poller:
+    # Every poll_minutes (admin: Налаштування Rozetka): import new Rozetka
+    # Marketplace orders into Order (source=rozetka), stock decrement and the
+    # Telegram notification included. Credentials are in the database, not
+    # here (no env vars on the server): disabled in the admin = idle loop.
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    user: "0:0"
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=False
+      - ALLOWED_HOSTS=mrcarpet24.com,www.mrcarpet24.com
+      - DB_ENGINE=django.db.backends.sqlite3
+      - DB_NAME=/app/db.sqlite3
+      # SECRET_KEY and the Telegram token come from the mounted /app/.env and
+      # the database; listing them here would inject empty values.
+      - TZ=Europe/Kyiv
+    command: python manage.py rozetka_poll
+    restart: unless-stopped
+    networks:
+      - mrcarpet_network
+
   tiktok-daily:
     # Paused: normal deploys must not restart paid video generation.
     profiles: [social-automation]

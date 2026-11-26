@@ -63,6 +63,9 @@ def candidate_orders(queryset=None):
     qs = Order.objects.all() if queryset is None else queryset
     from django.db.models import Q
 
+    # Marketplace orders carry no ad click of ours and must never be uploaded.
+    qs = qs.filter(source=Order.SOURCE_SITE)
+
     sale = Q(payment_type=Order.PAYMENT_CASH, status__in=COD_DELIVERED_STATUSES) | (
         ~Q(payment_type=Order.PAYMENT_CASH) & Q(status__in=PREPAID_SALE_STATUSES)
     )

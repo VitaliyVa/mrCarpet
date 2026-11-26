@@ -93,6 +93,10 @@ def order_allows_purchase_event(order) -> bool:
     """True when GA4 purchase may fire for this order."""
     if order is None:
         return False
+    # Marketplace orders (Rozetka) are not our site's conversions: reporting
+    # them would feed Google Ads purchases that never came from its clicks.
+    if getattr(order, "source", "site") != "site":
+        return False
     status = getattr(order, "status", None)
     return status in PURCHASE_ELIGIBLE_STATUSES
 
@@ -119,7 +123,7 @@ def order_is_real_sale(order) -> bool:
     Used for the offline conversion export, independent of the GA4 stage
     setting: Ads offline uploads should only ever carry real sales.
     """
-    if order is None:
+    if order is None or getattr(order, "source", "site") != "site":
         return False
     status = getattr(order, "status", None)
     if getattr(order, "payment_type", None) == "cash":

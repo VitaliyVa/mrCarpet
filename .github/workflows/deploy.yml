@@ -145,7 +145,7 @@ jobs:
         # (ga4-weekly) все одно лишиться живим. Саме через зворотний
         # порядок він одного разу зник і звіт у понеділок не прийшов.
         echo "Starting background services (independent of healthcheck)..."
-        docker compose -f docker-compose.prod.yml up -d ga4-weekly content-scheduler
+        docker compose -f docker-compose.prod.yml up -d ga4-weekly content-scheduler rozetka-poller
         # The daemons take their Python code from the bind mount, so a plain
         # restart picks up new code; only Dockerfile changes need the rebuild
         # above. Naming them explicitly means a brand-new service starts on the

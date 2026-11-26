@@ -446,6 +446,88 @@ class ShopSettings(models.Model):
         return obj
 
 
+class RozetkaSettings(models.Model):
+    """Singleton: доступ до Rozetka Marketplace Seller API (імпорт замовлень).
+
+    Логін і пароль кабінету продавця (seller.rozetka.com.ua). Без SSH на
+    проді змінні середовища недоступні, тому все лежить у БД, як у
+    TelegramSettings. Сервіс rozetka-poller читає ці поля щоразу в циклі.
+    """
+
+    enabled = models.BooleanField(
+        verbose_name="Увімкнено",
+        default=False,
+        help_text="Вимкнено: нові замовлення з Rozetka не завантажуються.",
+    )
+    username = models.CharField(
+        verbose_name="Логін (email кабінету продавця)",
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    password = models.CharField(
+        verbose_name="Пароль",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Зберігається в БД. У формі не показується; порожнє поле = не змінювати.",
+    )
+    poll_minutes = models.PositiveSmallIntegerField(
+        verbose_name="Опитування, хв",
+        default=2,
+        help_text="Як часто перевіряти нові замовлення (1-60).",
+    )
+    access_token = models.CharField(
+        verbose_name="Access token (кеш)",
+        max_length=512,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    last_poll_at = models.DateTimeField(
+        verbose_name="Остання перевірка",
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    last_error = models.TextField(
+        verbose_name="Остання помилка",
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Порожньо = остання перевірка пройшла без помилок.",
+    )
+
+    class Meta:
+        verbose_name = "Налаштування Rozetka"
+        verbose_name_plural = "Налаштування Rozetka"
+
+    def __str__(self):
+        return "Налаштування Rozetka"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and RozetkaSettings.objects.exists():
+            return
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def is_configured(self) -> bool:
+        return bool(
+            self.enabled and self.username.strip() and self.password.strip()
+        )
+
+    @property
+    def interval_seconds(self) -> int:
+        minutes = 2 if self.poll_minutes is None else int(self.poll_minutes)
+        minutes = min(max(minutes, 1), 60)
+        return minutes * 60
+
+
 class NewsletterCampaign(models.Model):
     STATUS_DRAFT = "draft"
     STATUS_GENERATING = "generating"

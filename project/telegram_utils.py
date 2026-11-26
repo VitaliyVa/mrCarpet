@@ -205,6 +205,8 @@ def format_order_message(order, event="new"):
         "paid": "✅ Замовлення оплачено",
     }
     header = headers.get(event, "🛒 Замовлення")
+    if getattr(order, "source", "site") == "rozetka":
+        header = f"ROZETKA {header}"
     number = order.order_number or order.pk or "?"
     customer = f"{order.name} {order.surname}".strip() or "—"
     admin_url = order_admin_absolute_url(order)

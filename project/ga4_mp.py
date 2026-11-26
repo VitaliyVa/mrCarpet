@@ -200,6 +200,9 @@ def send_order_purchase_mp(
     не доїхала до GA4 (а мовчазний `return False` виглядає як «все ок»).
     """
     oid = getattr(order, "pk", None)
+    if getattr(order, "source", "site") != "site":
+        # Marketplace order (Rozetka): never a site conversion, even with force.
+        return False
     if not mp_configured():
         logger.warning("[ga4-mp] skip order=%s: GA4_MEASUREMENT_ID/API_SECRET не задані", oid)
         return False
@@ -260,6 +263,8 @@ def send_order_placed_mp(order, request=None, *, session_id: str | None = None) 
     or not imported at all).
     """
     oid = getattr(order, "pk", None)
+    if getattr(order, "source", "site") != "site":
+        return False
     if not mp_configured():
         logger.warning("[ga4-mp] skip order_placed order=%s: MP не налаштовано", oid)
         return False

@@ -107,6 +107,8 @@ def due_orders(*, now=None, delay_days: int = DELAY_DAYS):
             completed_at__isnull=False,
             completed_at__lte=now - timezone.timedelta(days=delay_days),
         )
+        # Rozetka buyers leave reviews there, and this link opens our site's form.
+        .filter(source=Order.SOURCE_SITE)
         .exclude(email="")
         # Placeholder addresses never reach anyone. They go to the staff
         # route below instead of coming due, and failing, every single day.
@@ -142,6 +144,7 @@ def due_orders_without_email(*, now=None, delay_days: int = DELAY_DAYS):
             completed_at__lte=now - timezone.timedelta(days=delay_days),
             completed_at__gte=now - timezone.timedelta(days=STAFF_NUDGE_MAX_AGE_DAYS),
         )
+        .filter(source=Order.SOURCE_SITE)
         .filter(Q(email="") | Q(email__iendswith="@temp.com"))
         .select_related("cart")
     )

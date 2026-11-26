@@ -24,9 +24,20 @@ class Order(AbstractCreatedUpdated):
 
     PAYMENT_CASH = "cash"
     PAYMENT_LIQPAY = "liqpay"
+    # Paid through the marketplace (card, Rozetka Pay, credit...): the money
+    # reaches us from Rozetka, not through our LiqPay.
+    PAYMENT_ROZETKA = "rozetka"
     PAYMENT_CHOICES = (
         (PAYMENT_CASH, "Оплата при отриманні"),
         (PAYMENT_LIQPAY, "Онлайн оплата (LiqPay)"),
+        (PAYMENT_ROZETKA, "Оплачено на Rozetka"),
+    )
+
+    SOURCE_SITE = "site"
+    SOURCE_ROZETKA = "rozetka"
+    SOURCE_CHOICES = (
+        (SOURCE_SITE, "Сайт"),
+        (SOURCE_ROZETKA, "Rozetka"),
     )
 
     order_number = models.BigIntegerField(
@@ -42,6 +53,22 @@ class Order(AbstractCreatedUpdated):
         choices=STATUS_CHOICES,
         default=STATUS_NEW,
         db_index=True,
+    )
+    source = models.CharField(
+        verbose_name="Джерело",
+        max_length=16,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_SITE,
+        db_index=True,
+        help_text="Звідки замовлення: наш сайт чи маркетплейс.",
+    )
+    rozetka_order_id = models.BigIntegerField(
+        verbose_name="Номер замовлення на Rozetka",
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        help_text="Захист від дубля при імпорті: одне замовлення Rozetka = один запис.",
     )
     name = models.CharField(
         verbose_name="Ім'я",
@@ -235,6 +262,11 @@ class Order(AbstractCreatedUpdated):
         number = self.order_number or self.pk or "?"
         customer = f"{self.name} {self.surname}".strip() or "—"
         return f"№{number} — {customer}"
+
+    @property
+    def is_marketplace(self) -> bool:
+        """Order came from a marketplace, not from the site's own checkout."""
+        return self.source != self.SOURCE_SITE
 
     def can_order(self) -> bool:
         for cart_product in self.cart.cart_products.all():

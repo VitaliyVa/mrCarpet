@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.http import HttpResponse, JsonResponse
@@ -10,6 +11,7 @@ from .models import (
     ContactRequest,
     NewsletterCampaign,
     NewsletterDelivery,
+    RozetkaSettings,
     ShopSettings,
     SMTPSettings,
     StockInquiry,
@@ -152,6 +154,84 @@ class TelegramSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request, obj=None):
         return TelegramSettings.objects.count() == 0
+
+    def has_change_permission(self, request, obj=None):
+        return True
+
+
+class RozetkaSettingsForm(forms.ModelForm):
+    # Write-only: the stored password never goes back into the page. An empty
+    # submit keeps the saved one, so saving other fields cannot wipe it.
+    password = forms.CharField(
+        label="Пароль",
+        required=False,
+        strip=False,
+        widget=forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"}),
+        help_text="Пароль від кабінету продавця Rozetka. Не показується; порожнє поле = лишити як є.",
+    )
+
+    class Meta:
+        model = RozetkaSettings
+        fields = ("enabled", "username", "password", "poll_minutes")
+
+    def clean_password(self):
+        value = self.cleaned_data.get("password") or ""
+        if not value and self.instance and self.instance.pk:
+            return self.instance.password
+        return value
+
+    def clean_poll_minutes(self):
+        value = self.cleaned_data.get("poll_minutes") or 2
+        if not 1 <= value <= 60:
+            raise forms.ValidationError("Від 1 до 60 хвилин.")
+        return value
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        # New credentials: the cached token belongs to the old account.
+        if {"username", "password"} & set(self.changed_data):
+            obj.access_token = ""
+        if commit:
+            obj.save()
+        return obj
+
+
+class RozetkaSettingsAdmin(admin.ModelAdmin):
+    form = RozetkaSettingsForm
+    list_display = ["enabled", "username", "poll_minutes", "last_poll_at", "last_error_short"]
+    readonly_fields = ["password_state", "last_poll_at", "last_error"]
+    fieldsets = (
+        (
+            "Rozetka Marketplace (Seller API)",
+            {
+                "description": (
+                    "Логін і пароль від seller.rozetka.com.ua. Після збереження й "
+                    "«Увімкнено» сервіс rozetka-poller кожні N хвилин забирає нові "
+                    "замовлення, створює їх тут зі статусом «Нове» і шле повідомлення "
+                    "в Telegram з позначкою ROZETKA. Залишки йдуть окремо через XML-фід."
+                ),
+                "fields": ("enabled", "username", "password", "password_state", "poll_minutes"),
+            },
+        ),
+        (
+            "Стан",
+            {"fields": ("last_poll_at", "last_error")},
+        ),
+    )
+
+    @admin.display(description="Пароль збережено")
+    def password_state(self, obj):
+        return "так" if obj and obj.password else "ні"
+
+    @admin.display(description="Остання помилка")
+    def last_error_short(self, obj):
+        return (obj.last_error or "")[:80] or "—"
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return RozetkaSettings.objects.count() == 0
 
     def has_change_permission(self, request, obj=None):
         return True
@@ -558,6 +638,7 @@ class NewsletterDeliveryAdmin(admin.ModelAdmin):
 admin.site.register(SMTPSettings, SMTPSettingsAdmin)
 admin.site.register(TelegramSettings, TelegramSettingsAdmin)
 admin.site.register(ShopSettings, ShopSettingsAdmin)
+admin.site.register(RozetkaSettings, RozetkaSettingsAdmin)
 admin.site.register(ContactRequest, ContactRequestAdmin)
 admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.unregister(Group)
