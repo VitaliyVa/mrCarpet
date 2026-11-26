@@ -427,6 +427,185 @@ class ImportTests(RozetkaTestBase):
         self.assertEqual(list(candidate_orders()), [order])
 
 
+class SplitSearchRozetka(FakeRozetka):
+    """/orders/search answers the created_from window and the late failed-orders
+    search (types=6) from separate lists, like the real API filters them."""
+
+    def __init__(self, window=None, failed=None, **kwargs):
+        super().__init__(orders=list(window or []), **kwargs)
+        self.window = list(window or [])
+        self.failed = list(failed or [])
+
+    def __call__(self, method, url, params=None, **kwargs):
+        if url.endswith("/orders/search"):
+            self.orders = self.failed if (params or {}).get("types") == 6 else self.window
+        elif url.rsplit("/", 1)[-1].isdigit():
+            self.orders = self.window + self.failed
+        return super().__call__(method, url, params=params, **kwargs)
+
+
+class CancellationTests(RozetkaTestBase):
+    def setUp(self):
+        super().setUp()
+        tg = TelegramSettings.load()
+        tg.is_enabled = True
+        tg.bot_token = "123:abc"
+        tg.chat_id = "-100"
+        tg.save()
+        patcher = patch("project.telegram_utils.send_telegram_message_async")
+        self.tg_send = patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = patch("project.telegram_utils._remember_agent_notify")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def import_then_fail(self, **kwargs):
+        fake = self.fake(rozetka_order(offer=self.offer, **kwargs))
+        self.assertEqual(import_new_orders()["created"], 1)
+        self.tg_send.reset_mock()
+        fake.orders[0]["status_group"] = 3
+        fake.orders[0]["status"] = 19
+        return fake
+
+    def stock(self, attr=None):
+        attr = attr or self.attr
+        attr.refresh_from_db()
+        return attr.quantity
+
+    def test_cancel_returns_stock_exactly_once(self):
+        self.import_then_fail(quantity=2)
+        self.assertEqual(self.stock(), 3)
+
+        first = import_new_orders()
+        self.assertEqual((first["cancelled"], first["created"], first["errors"]), (1, 0, []))
+        order = Order.objects.get()
+        self.assertEqual(order.status, Order.STATUS_CANCELLED)
+        self.assertIn("Rozetka скасувала замовлення, залишок повернено", order.message)
+        self.assertEqual(self.stock(), 5)
+
+        second = import_new_orders()
+        self.assertEqual((second["cancelled"], second["skipped"]), (0, 1))
+        self.assertEqual(self.stock(), 5)
+        self.assertEqual(self.tg_send.call_count, 1)
+
+    def test_already_cancelled_order_is_not_touched(self):
+        self.import_then_fail(quantity=2)
+        order = Order.objects.get()
+        order.status = Order.STATUS_CANCELLED  # manager cancelled it in the admin
+        order.save()
+        message = Order.objects.get().message
+
+        summary = import_new_orders()
+        self.assertEqual(summary["cancelled"], 0)
+        self.assertEqual(self.stock(), 3)
+        self.assertEqual(Order.objects.get().message, message)
+        self.tg_send.assert_not_called()
+
+    def test_oversold_order_returns_only_what_was_taken(self):
+        self.import_then_fail(quantity=8)  # 5 in stock, Rozetka sold 8
+        self.assertEqual(self.stock(), 0)
+        self.assertEqual(import_new_orders()["cancelled"], 1)
+        self.assertEqual(self.stock(), 5)  # not 8
+
+    def test_oversold_note_matches_its_own_line_only(self):
+        other_product = Product.objects.create(title="Килим Other", slug="kylym-other")
+        other = ProductAttribute.objects.create(
+            product=other_product, size=self.size, price=500, quantity=10
+        )
+        payload = rozetka_order(offer=self.offer, quantity=8)
+        line = deepcopy(payload["purchases"][0])
+        offer2 = f"{other_product.pk}x{other.pk}"
+        line["item"].update(article=offer2, price_offer_id=offer2, uploader_offer_id=offer2)
+        line["quantity"] = 3
+        payload["purchases"].append(line)
+        fake = self.fake(payload)
+        import_new_orders()
+        self.assertEqual((self.stock(), self.stock(other)), (0, 7))
+
+        fake.orders[0]["status_group"] = 3
+        import_new_orders()
+        self.assertEqual((self.stock(), self.stock(other)), (5, 10))
+
+    def test_unknown_failed_order_is_ignored(self):
+        self.fake(rozetka_order(rid=555, offer=self.offer, status_group=3, status=19))
+        summary = import_new_orders()
+        self.assertEqual((summary["cancelled"], summary["created"], summary["skipped"]), (0, 0, 1))
+        self.assertFalse(Order.objects.exists())
+        self.assertEqual(self.stock(), 5)
+        self.tg_send.assert_not_called()
+
+    def test_site_order_with_same_number_is_not_cancelled(self):
+        Order.objects.create(
+            name="A", surname="B", payment_type=Order.PAYMENT_CASH, total_price=1,
+            rozetka_order_id=556,
+        )
+        self.fake(rozetka_order(rid=556, offer=self.offer, status_group=3))
+        self.assertEqual(import_new_orders()["cancelled"], 0)
+        self.assertEqual(Order.objects.get().status, Order.STATUS_NEW)
+
+    def test_telegram_gets_a_short_cancel_line(self):
+        self.import_then_fail()
+        import_new_orders()
+        self.assertEqual(self.tg_send.call_count, 1)
+        text = self.tg_send.call_args.args[0]
+        self.assertTrue(
+            text.startswith("ROZETKA ❌ Замовлення №248888186 скасовано, залишок повернено"), text
+        )
+        self.assertIn("/admin/order/order/", text)
+
+    def test_telegram_respects_the_orders_switch(self):
+        self.import_then_fail()
+        TelegramSettings.objects.update(notify_orders=False)
+        self.assertEqual(import_new_orders()["cancelled"], 1)
+        self.tg_send.assert_not_called()
+
+    def test_custom_length_line_takes_and_returns_nothing(self):
+        self.attr.custom_attribute = True
+        self.attr.save()
+        self.import_then_fail(quantity=2)
+        self.assertEqual(self.stock(), 5)
+        self.assertEqual(import_new_orders()["cancelled"], 1)
+        self.assertEqual(self.stock(), 5)
+        self.assertEqual(CartProduct.objects.count(), 1)
+        self.assertNotIn("залишок повернено", Order.objects.get().message)
+        self.assertIn("залишок не змінювався", self.tg_send.call_args.args[0])
+
+    def test_late_cancellation_outside_the_window_is_found(self):
+        payload = rozetka_order(offer=self.offer, quantity=2)
+        fake = SplitSearchRozetka(window=[payload])
+        patcher = patch("project.rozetka_api.requests.request", fake)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        import_new_orders()
+        self.assertEqual(self.stock(), 3)
+
+        failed = deepcopy(payload)
+        failed.update(status_group=3, status=19, created="2026-11-01 10:00:00")
+        fake.window, fake.failed = [], [failed]
+        summary = import_new_orders()
+        self.assertEqual((summary["cancelled"], summary["errors"]), (1, []))
+        self.assertEqual(self.stock(), 5)
+        late = [c for c in fake.calls if c["path"] == "/orders/search"
+                and (c["params"] or {}).get("types") == 6]
+        self.assertTrue(late)
+        self.assertIn("status_updated_from", late[-1]["params"])
+        self.assertNotIn("created_from", late[-1]["params"])
+
+        again = import_new_orders()
+        self.assertEqual(again["cancelled"], 0)
+        self.assertEqual(self.stock(), 5)
+
+    def test_late_search_ignores_orders_we_never_imported(self):
+        stranger = rozetka_order(rid=999, offer=self.offer, status_group=3)
+        fake = SplitSearchRozetka(failed=[stranger])
+        patcher = patch("project.rozetka_api.requests.request", fake)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        summary = import_new_orders()
+        self.assertEqual((summary["cancelled"], summary["skipped"], summary["errors"]), (0, 0, []))
+        self.assertFalse(Order.objects.exists())
+
+
 class PollerBehaviourTests(RozetkaTestBase):
     def test_disabled_settings_do_nothing_and_make_no_http_call(self):
         self.cfg.enabled = False
