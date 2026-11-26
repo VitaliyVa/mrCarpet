@@ -573,6 +573,7 @@ class RozetkaItem(models.Model):
     rz_item_id = models.BigIntegerField(verbose_name="ID товару Rozetka", unique=True)
     offer_id = models.CharField(verbose_name="Offer id (наш)", max_length=64, db_index=True)
     last_quantity = models.IntegerField(verbose_name="Передана кількість", null=True, blank=True)
+    last_price = models.IntegerField(verbose_name="Передана ціна, грн", null=True, blank=True)
     synced_at = models.DateTimeField(verbose_name="Передано", null=True, blank=True)
 
     class Meta:

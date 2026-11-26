@@ -12,9 +12,12 @@ poll instead of waiting for the hourly XML feed.
     (`feed_stock_quantities` mirrors prom_feed.build_rozetka_offers); an offer
     the feed no longer has is sent as 0. Otherwise the API and the feed would
     keep overwriting each other.
-  * Only offers whose quantity differs from RozetkaItem.last_quantity are
-    sent, in batches of BATCH_SIZE. Price is never sent: it comes from the
-    feed (site price * markup).
+  * Price is sent too, exactly as the feed computes it (site price after
+    discount * markup, prom_feed.rozetka_price). Once the price list's sync
+    type in the cabinet is «Особистий кабінет (API)», Rozetka takes both
+    stock and price from the API only and ignores the feed for them.
+  * Only offers whose quantity or price differs from what was last sent are
+    sent, in batches of BATCH_SIZE.
 """
 
 from __future__ import annotations
@@ -39,7 +42,12 @@ OFFER_ID_RE = re.compile(r"^(\d+)x(\d+)$")
 # --- our side: what the feed publishes -------------------------------------
 
 def feed_stock_quantities(product_ids=None) -> dict[str, int]:
-    """{offer_id: stock_quantity} exactly as build_rozetka_offers would publish.
+    """{offer_id: stock_quantity} exactly as build_rozetka_offers would publish."""
+    return {k: q for k, (q, _p) in feed_offer_state(product_ids).items()}
+
+
+def feed_offer_state(product_ids=None) -> dict[str, tuple[int, int]]:
+    """{offer_id: (stock_quantity, price)} exactly as build_rozetka_offers would publish.
 
     Same products (merchant_feed.feed_products), same skips (no usable
     pictures, custom-length sizes, sizes without a price), same quantity
@@ -47,20 +55,26 @@ def feed_stock_quantities(product_ids=None) -> dict[str, int]:
     descriptions. `product_ids` narrows the query to the mapped products.
     """
     from project.merchant_feed import feed_products
-    from project.prom_feed import rozetka_offer_id, rozetka_pictures
+    from project.prom_feed import rozetka_markup, rozetka_offer_id, rozetka_pictures, rozetka_price
 
     products = feed_products()
     if product_ids is not None:
         products = products.filter(pk__in=list(product_ids))
-    quantities: dict[str, int] = {}
+    markup = rozetka_markup()
+    state: dict[str, tuple[int, int]] = {}
     for product in products:
         if not rozetka_pictures(product):
             continue
         for attr in product.product_attr.all():
             if attr.custom_attribute or not attr.price:
                 continue
-            quantities[rozetka_offer_id(product, attr)] = max(int(attr.quantity or 0), 0)
-    return quantities
+            total = attr.get_total_price()
+            site_price = total if total else attr.price
+            state[rozetka_offer_id(product, attr)] = (
+                max(int(attr.quantity or 0), 0),
+                rozetka_price(site_price, markup),
+            )
+    return state
 
 
 def _product_id(offer_id: str) -> int | None:
@@ -108,11 +122,12 @@ def refresh_items(client, settings, now=None) -> int:
         elif item.offer_id != offer_id:
             item.offer_id = offer_id
             item.last_quantity = None  # other offer now: send it again
+            item.last_price = None
             to_update.append(item)
     if to_create:
         RozetkaItem.objects.bulk_create(to_create, ignore_conflicts=True)
     if to_update:
-        RozetkaItem.objects.bulk_update(to_update, ["offer_id", "last_quantity"])
+        RozetkaItem.objects.bulk_update(to_update, ["offer_id", "last_quantity", "last_price"])
     if seen:
         RozetkaItem.objects.exclude(rz_item_id__in=list(seen)).delete()
 
@@ -216,14 +231,23 @@ def mass_update(client, items: list[dict]) -> dict[int, str]:
 # --- the pass ---------------------------------------------------------------
 
 def pending_changes(items) -> list[tuple]:
-    """[(RozetkaItem, quantity)] whose feed quantity differs from last_quantity."""
+    """[(RozetkaItem, quantity, price)] whose feed quantity or price differs from
+    what was last sent. price is None for an offer the feed no longer has
+    (sent as stock 0 only)."""
     product_ids = {pid for pid in (_product_id(i.offer_id) for i in items) if pid}
-    quantities = feed_stock_quantities(product_ids) if product_ids else {}
+    state = feed_offer_state(product_ids) if product_ids else {}
     changes = []
+    now = timezone.now()
     for item in items:
-        quantity = quantities.get(item.offer_id, 0)
-        if item.last_quantity is None or item.last_quantity != quantity:
-            changes.append((item, quantity))
+        # Refused as price-list managed: retry only every REFRESH_HOURS, so a
+        # later switch to API sync in the cabinet is picked up without a flood.
+        if (item.last_quantity is None and item.synced_at
+                and now - item.synced_at < timedelta(hours=REFRESH_HOURS)):
+            continue
+        quantity, price = state.get(item.offer_id, (0, None))
+        price_changed = price is not None and item.last_price != price
+        if item.last_quantity is None or item.last_quantity != quantity or price_changed:
+            changes.append((item, quantity, price))
     return changes
 
 
@@ -238,10 +262,12 @@ def push_changes(client, changes, now=None) -> tuple[int, list[str]]:
     errors: list[str] = []
     for start in range(0, len(changes), BATCH_SIZE):
         batch = changes[start:start + BATCH_SIZE]
-        payload = [
-            {"item_rz_id": int(item.rz_item_id), "stock_quantity": int(quantity)}
-            for item, quantity in batch
-        ]
+        payload = []
+        for item, quantity, price in batch:
+            row = {"item_rz_id": int(item.rz_item_id), "stock_quantity": int(quantity)}
+            if price is not None:
+                row["price"] = int(price)
+            payload.append(row)
         try:
             rejected = mass_update(client, payload)
         except Exception as exc:
@@ -250,19 +276,27 @@ def push_changes(client, changes, now=None) -> tuple[int, list[str]]:
             continue
         # Goods whose stock Rozetka takes from our XML price list refuse API
         # edits ("Синхронізація товару по прайс-листу..."). That is a cabinet
-        # setting, not a failure: the hourly feed carries the same quantity,
-        # so remember it as sent and stay quiet until our quantity changes.
+        # setting, not a failure: the hourly feed carries the same values.
+        # Stay quiet and retry such goods every REFRESH_HOURS (pending_changes).
         price_list = {rz for rz, reason in rejected.items() if PRICE_LIST_MANAGED in str(reason)}
         rejected = {rz: reason for rz, reason in rejected.items() if rz not in price_list}
         done = []
-        for item, quantity in batch:
+        for item, quantity, price in batch:
+            if int(item.rz_item_id) in price_list:
+                item.last_quantity = None
+                item.last_price = None
+                item.synced_at = now
+                done.append(item)
+                continue
             if int(item.rz_item_id) in rejected:
                 continue
             item.last_quantity = quantity
+            if price is not None:
+                item.last_price = price
             item.synced_at = now
             done.append(item)
         if done:
-            RozetkaItem.objects.bulk_update(done, ["last_quantity", "synced_at"])
+            RozetkaItem.objects.bulk_update(done, ["last_quantity", "last_price", "synced_at"])
         updated += len(done) - len(price_list)
         if rejected:
             sample = "; ".join(f"{rz} ({reason})" for rz, reason in list(rejected.items())[:3])

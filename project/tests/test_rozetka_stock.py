@@ -167,14 +167,16 @@ class MapRefreshTests(StockSyncTestBase):
 
 
 class StockPushTests(StockSyncTestBase):
-    def test_first_pass_sends_feed_quantities_without_price(self):
+    def test_first_pass_sends_feed_quantities_and_prices(self):
         result = sync_stock()
         self.assertEqual(result, {"updated": 2, "errors": []})
         self.assertEqual(
             sorted(self.fake.sent(), key=lambda i: i["item_rz_id"]),
-            [{"item_rz_id": 1001, "stock_quantity": 3}, {"item_rz_id": 1002, "stock_quantity": 0}],
+            [{"item_rz_id": 1001, "stock_quantity": 3, "price": 750},
+             {"item_rz_id": 1002, "stock_quantity": 0, "price": 1125}],
         )
         self.assertEqual(self.item(1001).last_quantity, 3)
+        self.assertEqual(self.item(1001).last_price, 750)
         self.assertEqual(self.item(1002).last_quantity, 0)
         self.assertIsNotNone(self.item(1001).synced_at)
 
@@ -187,8 +189,18 @@ class StockPushTests(StockSyncTestBase):
         ProductAttribute.objects.filter(pk=self.small.pk).update(quantity=2)  # sold one on the site
         result = sync_stock()
         self.assertEqual(result["updated"], 1)
-        self.assertEqual(self.fake.calls[-1]["json"]["items"], [{"item_rz_id": 1001, "stock_quantity": 2}])
+        self.assertEqual(self.fake.calls[-1]["json"]["items"],
+                         [{"item_rz_id": 1001, "stock_quantity": 2, "price": 750}])
         self.assertEqual(self.item(1001).last_quantity, 2)
+
+    def test_price_change_alone_is_sent(self):
+        sync_stock()
+        ProductAttribute.objects.filter(pk=self.small.pk).update(price=800)
+        result = sync_stock()
+        self.assertEqual(result["updated"], 1)
+        self.assertEqual(self.fake.calls[-1]["json"]["items"],
+                         [{"item_rz_id": 1001, "stock_quantity": 3, "price": 1000}])
+        self.assertEqual(self.item(1001).last_price, 1000)
 
     def test_offer_gone_from_site_is_sent_as_zero(self):
         sync_stock()
@@ -237,10 +249,17 @@ class StockPushTests(StockSyncTestBase):
         result = sync_stock()
         self.assertEqual(result["errors"], [])
         self.assertEqual(result["updated"], 0)
-        self.assertEqual(self.item(1001).last_quantity, 3)
+        self.assertIsNone(self.item(1001).last_quantity)
+        self.assertIsNotNone(self.item(1001).synced_at)
         calls = len([c for c in self.fake.calls if c["path"] == "/items/mass-update"])
         sync_stock()  # nothing changed on our side: no second request
         self.assertEqual(len([c for c in self.fake.calls if c["path"] == "/items/mass-update"]), calls)
+        # after REFRESH_HOURS (e.g. the cabinet switched to API) it is retried
+        self.fake.put_reply = None
+        RozetkaItem.objects.update(synced_at=timezone.now() - timedelta(hours=7))
+        RozetkaSettings.objects.filter(pk=self.cfg.pk).update(items_refreshed_at=timezone.now())
+        self.assertEqual(sync_stock()["updated"], 2)
+        self.assertEqual(self.item(1001).last_quantity, 3)
 
     def test_non_json_answer_is_a_batch_error(self):
         self.fake.put_reply = lambda items: FakeResponse(None, 502)
@@ -254,7 +273,8 @@ class StockPushTests(StockSyncTestBase):
         self.fake.token = "tok-2"  # cached tok-1 is now rejected
         result = sync_stock()
         self.assertEqual(result, {"updated": 1, "errors": []})
-        self.assertEqual(self.fake.calls[-1]["json"]["items"], [{"item_rz_id": 1001, "stock_quantity": 1}])
+        self.assertEqual(self.fake.calls[-1]["json"]["items"],
+                         [{"item_rz_id": 1001, "stock_quantity": 1, "price": 750}])
         self.cfg.refresh_from_db()
         self.assertEqual(self.cfg.access_token, "tok-2")
 
