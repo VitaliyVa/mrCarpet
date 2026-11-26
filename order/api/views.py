@@ -62,11 +62,21 @@ class OrderCreateViewSet(mixins.CreateModelMixin, GenericViewSet):
             if not data.get("surname") and data.get("name"):
                 data["surname"] = data.get("name")
 
-        if not email or email.endswith("@temp.com"):
+        # Email is optional. A placeholder address (@temp.com, left from old
+        # guest carts) is treated as none: nothing would ever reach it.
+        if email.lower().endswith("@temp.com"):
+            email = ""
+        # A promocode is counted per buyer by email, so it still needs one.
+        promo_requested = (data.get("promocode") or "").strip() or (
+            request.session.get("applied_promocode")
+            if hasattr(request, "session")
+            else None
+        )
+        if promo_requested and not email:
             return Response(
                 {
-                    "message": "Вкажіть коректний email для підтвердження замовлення",
-                    "email": ["Вкажіть коректний email"],
+                    "message": "Щоб застосувати промокод, вкажіть, будь ласка, email",
+                    "email": ["Вкажіть email, щоб застосувати промокод"],
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

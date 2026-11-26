@@ -7,7 +7,11 @@ from ..models import Order
 class OrderSerializer(serializers.ModelSerializer):
     cart = CartSerializer(read_only=True)
     promocode = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    email = serializers.EmailField(required=True)
+    # Optional: a buyer may order by phone only. Without an email there is
+    # no confirmation letter, review request or Google survey (each of them
+    # already skips an empty address). A promocode still needs one, see
+    # OrderCreateViewSet.create.
+    email = serializers.EmailField(required=False, allow_blank=True)
     city = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:

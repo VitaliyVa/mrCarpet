@@ -243,9 +243,9 @@ class SizeLandingPageTests(TestCase):
         self.assertIn(", сторінка 2 | mr.Carpet", _title(html))
         self.assertNotIn('class="catalog_intro"', html)
 
-    def test_page_past_the_end_canonicalises_to_the_last_page(self):
-        html = self.get(PATH + "?page=99")
-        self.assertEqual(_canonical(html), SITE + PATH + "?page=2")
+    def test_page_past_the_end_is_404(self):
+        resp = self.client.get(PATH + "?page=99")
+        self.assertEqual(resp.status_code, 404)
 
     def test_tracking_params_do_not_change_the_page(self):
         html = self.get(PATH + "?gclid=abc&utm_source=google")

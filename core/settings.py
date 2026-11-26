@@ -293,6 +293,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+# Sign-in is a modal in the header, there is no /accounts/login/ page: the
+# Django default sent guests from @login_required views (/profile/) to a 404.
+# The home page keeps ?next=<path>, so the front end can open the login modal
+# and return the buyer where they were.
+LOGIN_URL = "index"
+
 REST_FRAMEWORK = {
     'ORDERING_PARAM': 'sort',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
