@@ -227,6 +227,9 @@ def pending_changes(items) -> list[tuple]:
     return changes
 
 
+PRICE_LIST_MANAGED = "по прайс-листу"
+
+
 def push_changes(client, changes, now=None) -> tuple[int, list[str]]:
     from project.models import RozetkaItem
 
@@ -245,6 +248,12 @@ def push_changes(client, changes, now=None) -> tuple[int, list[str]]:
             logger.warning("rozetka stock: batch of %s failed: %s", len(batch), exc)
             errors.append(f"залишки ({len(batch)} шт.): {exc}"[:500])
             continue
+        # Goods whose stock Rozetka takes from our XML price list refuse API
+        # edits ("Синхронізація товару по прайс-листу..."). That is a cabinet
+        # setting, not a failure: the hourly feed carries the same quantity,
+        # so remember it as sent and stay quiet until our quantity changes.
+        price_list = {rz for rz, reason in rejected.items() if PRICE_LIST_MANAGED in str(reason)}
+        rejected = {rz: reason for rz, reason in rejected.items() if rz not in price_list}
         done = []
         for item, quantity in batch:
             if int(item.rz_item_id) in rejected:
@@ -254,7 +263,7 @@ def push_changes(client, changes, now=None) -> tuple[int, list[str]]:
             done.append(item)
         if done:
             RozetkaItem.objects.bulk_update(done, ["last_quantity", "synced_at"])
-        updated += len(done)
+        updated += len(done) - len(price_list)
         if rejected:
             sample = "; ".join(f"{rz} ({reason})" for rz, reason in list(rejected.items())[:3])
             errors.append(f"залишки: Rozetka не прийняла {len(rejected)} шт.: {sample}"[:500])

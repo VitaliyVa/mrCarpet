@@ -228,6 +228,20 @@ class StockPushTests(StockSyncTestBase):
         self.assertIn("1002", result["errors"][0])
         self.assertIn("товар заблоковано", result["errors"][0])
 
+    def test_price_list_managed_items_are_quiet_and_not_resent(self):
+        reason = ("Синхронізація товару по прайс-листу. Для редагування товару, "
+                  "необхідно змінити тип синхронізації.")
+        self.fake.put_reply = lambda items: FakeResponse({"success": False, "errors": {
+            str(i["item_rz_id"]): {"reason": [{"id": 1, "value": [reason]}]} for i in items
+        }})
+        result = sync_stock()
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["updated"], 0)
+        self.assertEqual(self.item(1001).last_quantity, 3)
+        calls = len([c for c in self.fake.calls if c["path"] == "/items/mass-update"])
+        sync_stock()  # nothing changed on our side: no second request
+        self.assertEqual(len([c for c in self.fake.calls if c["path"] == "/items/mass-update"]), calls)
+
     def test_non_json_answer_is_a_batch_error(self):
         self.fake.put_reply = lambda items: FakeResponse(None, 502)
         result = sync_stock()
