@@ -91,7 +91,11 @@ function validateOrderForm() {
     {
       key: "email",
       field: emailInput,
-      invalid: () => !isValidEmail(emailInput?.value.trim() || ""),
+      // optional: only a typed address must be valid (server asks for it with a promocode)
+      invalid: () => {
+        const value = emailInput?.value.trim() || "";
+        return value !== "" && !isValidEmail(value);
+      },
       message: "Будь ласка, введіть коректний email",
     },
     {

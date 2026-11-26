@@ -40,19 +40,19 @@ class BlogCardThumbnailTests(TestCase):
 
     def test_card_uses_480_and_240_thumbnails(self):
         card = self._card()
-        self.assertEqual(card["image"], "/media/thumbs/w480/products/rug-speed.webp")
-        self.assertEqual(card["image_small"], "/media/thumbs/w240/products/rug-speed.webp")
+        self.assertEqual(card["image"], "/media/thumbs/v2/w480/products/rug-speed.webp")
+        self.assertEqual(card["image_small"], "/media/thumbs/v2/w240/products/rug-speed.webp")
 
     def test_big_card_has_srcset_and_mini_card_uses_small(self):
         card = self._card()
         big = render_to_string("includes/blog_products.html", {"cards": [card]})
         self.assertIn(
-            'srcset="/media/thumbs/w240/products/rug-speed.webp 240w, '
-            '/media/thumbs/w480/products/rug-speed.webp 480w"',
+            'srcset="/media/thumbs/v2/w240/products/rug-speed.webp 240w, '
+            '/media/thumbs/v2/w480/products/rug-speed.webp 480w"',
             big,
         )
         mini = render_to_string("includes/blog_products_mini.html", {"cards": [card]})
-        self.assertIn('src="/media/thumbs/w240/products/rug-speed.webp"', mini)
+        self.assertIn('src="/media/thumbs/v2/w240/products/rug-speed.webp"', mini)
         self.assertNotIn("rug-speed.png", big + mini)
 
     def test_thumbnail_failure_falls_back_to_original(self):
