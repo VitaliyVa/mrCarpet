@@ -172,7 +172,7 @@ class RozetkaSettingsForm(forms.ModelForm):
 
     class Meta:
         model = RozetkaSettings
-        fields = ("enabled", "username", "password", "poll_minutes")
+        fields = ("enabled", "username", "password", "poll_minutes", "notify_messages", "sync_stock")
 
     def clean_password(self):
         value = self.cleaned_data.get("password") or ""
@@ -199,7 +199,7 @@ class RozetkaSettingsForm(forms.ModelForm):
 class RozetkaSettingsAdmin(admin.ModelAdmin):
     form = RozetkaSettingsForm
     list_display = ["enabled", "username", "poll_minutes", "last_poll_at", "last_error_short"]
-    readonly_fields = ["password_state", "last_poll_at", "last_error"]
+    readonly_fields = ["password_state", "last_poll_at", "last_error", "items_refreshed_at"]
     fieldsets = (
         (
             "Rozetka Marketplace (Seller API)",
@@ -208,14 +208,15 @@ class RozetkaSettingsAdmin(admin.ModelAdmin):
                     "Логін і пароль від seller.rozetka.com.ua. Після збереження й "
                     "«Увімкнено» сервіс rozetka-poller кожні N хвилин забирає нові "
                     "замовлення, створює їх тут зі статусом «Нове» і шле повідомлення "
-                    "в Telegram з позначкою ROZETKA. Залишки йдуть окремо через XML-фід."
+                    "в Telegram з позначкою ROZETKA. Нові повідомлення покупців теж ідуть "
+                    "у Telegram, а залишки з сайту одразу передаються на Rozetka."
                 ),
-                "fields": ("enabled", "username", "password", "password_state", "poll_minutes"),
+                "fields": ("enabled", "username", "password", "password_state", "poll_minutes", "notify_messages", "sync_stock"),
             },
         ),
         (
             "Стан",
-            {"fields": ("last_poll_at", "last_error")},
+            {"fields": ("last_poll_at", "last_error", "items_refreshed_at")},
         ),
     )
 

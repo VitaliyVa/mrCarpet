@@ -30,10 +30,52 @@ def run_once() -> dict:
     from project.rozetka_orders import import_new_orders
 
     try:
-        return import_new_orders()
+        result = import_new_orders()
     except Exception as exc:  # import_new_orders already guards; belt and braces
         logger.exception("rozetka poll pass failed")
-        return {"created": 0, "skipped": 0, "errors": [str(exc)], "disabled": False}
+        result = {"created": 0, "skipped": 0, "errors": [str(exc)], "disabled": False}
+    if result.get("disabled"):
+        return result
+    extra_errors = []
+    for name, func in _extra_steps():
+        try:
+            step = func() or {}
+        except Exception as exc:
+            logger.exception("rozetka %s step failed", name)
+            step = {"errors": [str(exc)]}
+        result[name] = step
+        extra_errors.extend(f"{name}: {e}" for e in step.get("errors") or [])
+    if extra_errors:
+        result["errors"] = list(result.get("errors") or []) + extra_errors
+        _append_error(extra_errors)
+    return result
+
+
+def _extra_steps():
+    """Steps after the order import; each owns its module and never raises."""
+    from project.models import RozetkaSettings
+    from project.rozetka_messages import notify_new_messages
+    from project.rozetka_stock import sync_stock
+
+    settings = RozetkaSettings.load()
+    steps = []
+    if settings.notify_messages:
+        steps.append(("messages", notify_new_messages))
+    if settings.sync_stock:
+        steps.append(("stock", sync_stock))
+    return steps
+
+
+def _append_error(errors: list[str]) -> None:
+    """import_new_orders wrote last_error for orders; add the other steps' errors."""
+    from project.models import RozetkaSettings
+
+    try:
+        settings = RozetkaSettings.load()
+        text = "; ".join(p for p in [settings.last_error] + errors[:3] if p)
+        RozetkaSettings.objects.filter(pk=settings.pk).update(last_error=text[:2000])
+    except Exception:
+        logger.exception("rozetka: could not save step errors")
 
 
 def next_sleep_seconds() -> int:

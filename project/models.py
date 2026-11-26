@@ -490,6 +490,22 @@ class RozetkaSettings(models.Model):
         blank=True,
         editable=False,
     )
+    notify_messages = models.BooleanField(
+        verbose_name="Повідомлення покупців у Telegram",
+        default=True,
+        help_text="Нові чати «Написати продавцю», запитання під товарами і звернення з Rozetka дублюються в Telegram.",
+    )
+    sync_stock = models.BooleanField(
+        verbose_name="Синхронізувати залишки",
+        default=True,
+        help_text="Кількість на сайті одразу передається на Rozetka (не чекаючи XML-фід).",
+    )
+    items_refreshed_at = models.DateTimeField(
+        verbose_name="Список товарів Rozetka оновлено",
+        null=True,
+        blank=True,
+        editable=False,
+    )
     last_error = models.TextField(
         verbose_name="Остання помилка",
         blank=True,
@@ -526,6 +542,45 @@ class RozetkaSettings(models.Model):
         minutes = 2 if self.poll_minutes is None else int(self.poll_minutes)
         minutes = min(max(minutes, 1), 60)
         return minutes * 60
+
+
+class RozetkaNotice(models.Model):
+    """Що з Rozetka вже надіслано в Telegram (чат-повідомлення, запитання, звернення).
+
+    key: "chat:<chat_id>:<message key>", "comment:<id>", "call:<id>". Унікальний,
+    тож кожна подія йде в Telegram один раз.
+    """
+
+    key = models.CharField(verbose_name="Ключ", max_length=191, unique=True)
+    kind = models.CharField(verbose_name="Тип", max_length=32, blank=True, default="")
+    created = models.DateTimeField(verbose_name="Створено", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Подія Rozetka (надіслано)"
+        verbose_name_plural = "Події Rozetka (надіслано)"
+
+    def __str__(self):
+        return self.key
+
+
+class RozetkaItem(models.Model):
+    """Товар на Rozetka і наша пропозиція (offer id з фіду "<product.pk>x<attr.pk>").
+
+    Заповнюється з GET /goods/all; last_quantity = що ми востаннє передали
+    через PUT /items/mass-update, щоб слати лише зміни.
+    """
+
+    rz_item_id = models.BigIntegerField(verbose_name="ID товару Rozetka", unique=True)
+    offer_id = models.CharField(verbose_name="Offer id (наш)", max_length=64, db_index=True)
+    last_quantity = models.IntegerField(verbose_name="Передана кількість", null=True, blank=True)
+    synced_at = models.DateTimeField(verbose_name="Передано", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Товар Rozetka"
+        verbose_name_plural = "Товари Rozetka"
+
+    def __str__(self):
+        return f"{self.offer_id} -> {self.rz_item_id}"
 
 
 class NewsletterCampaign(models.Model):

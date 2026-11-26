@@ -211,3 +211,70 @@ class RozetkaClient:
             "GET", "/order-statuses/search", params={"expand": "status_available"}
         ) or {}
         return list(content.get("orderStatus") or [])
+
+    # --- generic pagination ------------------------------------------------
+
+    def iter_pages(self, path: str, key: str, params: dict | None = None, *, max_pages: int = 50):
+        """Yield rows of content[key] over all pages of a GET search endpoint."""
+        page = 1
+        while page <= max_pages:
+            query = dict(params or {})
+            query["page"] = page
+            content = self.request("GET", path, params=query) or {}
+            rows = list(content.get(key) or [])
+            yield from rows
+            meta = content.get("_meta") or {}
+            page_count = int(meta.get("pageCount") or 1)
+            if not rows or page >= page_count:
+                return
+            page += 1
+
+    # --- buyer messages (Messages, ItemComments, Calls) --------------------
+
+    def iter_chats(self, *, msg_type: str = "items", updated_from: date | str | None = None,
+                   expand: str = "messages,item,user_fio,order_data", max_pages: int = 5):
+        """GET /messages/search: msgType "items" (questions about goods / to the
+        seller) or "orders" (chats inside an order). content.chats[]."""
+        params = {"msgType": msg_type, "expand": expand, "sort": "-updated"}
+        if updated_from:
+            params["updated_from"] = (
+                updated_from.isoformat() if isinstance(updated_from, date) else updated_from
+            )
+        yield from self.iter_pages("/messages/search", "chats", params, max_pages=max_pages)
+
+    def get_chat(self, chat_id: int, expand: str = "messages,item") -> dict:
+        """GET /messages/{id}."""
+        return self.request("GET", f"/messages/{int(chat_id)}", params={"expand": expand}) or {}
+
+    def iter_item_comments(self, *, created_from: date | str | None = None,
+                           expand: str = "children", max_pages: int = 5):
+        """GET /item-comments/search (questions and reviews under goods).
+        content.itemComments[]."""
+        params = {"sort": "-created", "expand": expand}
+        if created_from:
+            params["createdFrom"] = (
+                created_from.isoformat() if isinstance(created_from, date) else created_from
+            )
+        yield from self.iter_pages("/item-comments/search", "itemComments", params, max_pages=max_pages)
+
+    def iter_calls(self, *, created_from: date | str | None = None, max_pages: int = 5):
+        """GET /calls/search (customer requests passed on by Rozetka). content.calls[]."""
+        params = {"sort": "-id"}
+        if created_from:
+            params["created_from"] = (
+                created_from.isoformat() if isinstance(created_from, date) else created_from
+            )
+        yield from self.iter_pages("/calls/search", "calls", params, max_pages=max_pages)
+
+    # --- goods and stock --------------------------------------------------
+
+    def iter_goods(self, *, page_size: int = 100, max_pages: int = 100, **filters):
+        """GET /goods/all: our goods on Rozetka (rz_item_id, price_offer_id, ...).
+        content.items[]."""
+        params = {"pageSize": page_size}
+        params.update(filters)
+        yield from self.iter_pages("/goods/all", "items", params, max_pages=max_pages)
+
+    def mass_update(self, items: list[dict]):
+        """PUT /items/mass-update: [{"item_rz_id": int, "stock_quantity": int, "price"?: int}]."""
+        return self.request("PUT", "/items/mass-update", json={"items": items})
