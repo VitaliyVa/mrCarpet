@@ -37,7 +37,13 @@ def run_once() -> dict:
     if result.get("disabled"):
         return result
     extra_errors = []
-    for name, func in _extra_steps():
+    try:
+        steps = _extra_steps()
+    except Exception as exc:
+        logger.exception("rozetka: cannot read settings for extra steps")
+        steps = []
+        extra_errors.append(f"settings: {exc}")
+    for name, func in steps:
         try:
             step = func() or {}
         except Exception as exc:
@@ -103,8 +109,14 @@ def wait_for_telegram(timeout: float = 20.0) -> None:
 def describe(result: dict) -> str:
     if result.get("disabled"):
         return "disabled"
-    text = f"created {result['created']}, skipped {result['skipped']}"
-    if result["errors"]:
+    text = f"created {result.get('created', 0)}, cancelled {result.get('cancelled', 0)}, skipped {result.get('skipped', 0)}"
+    messages = (result.get("messages") or {}).get("sent")
+    stock = (result.get("stock") or {}).get("updated")
+    if messages:
+        text += f", messages {messages}"
+    if stock:
+        text += f", stock {stock}"
+    if result.get("errors"):
         text += f", errors: {'; '.join(result['errors'][:3])}"
     return text
 
@@ -125,6 +137,8 @@ class Command(BaseCommand):
         self.stdout.write("rozetka-poller started")
         while True:
             result = run_once()
-            if result.get("created") or result.get("errors"):
+            if (result.get("created") or result.get("cancelled") or result.get("errors")
+                    or (result.get("messages") or {}).get("sent")
+                    or (result.get("stock") or {}).get("updated")):
                 self.stdout.write(f"{datetime.now():%Y-%m-%d %H:%M} {describe(result)}")
             time.sleep(next_sleep_seconds())

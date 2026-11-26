@@ -186,6 +186,9 @@ jobs:
 
         echo "Running migrations..."
         docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput </dev/null || true
+        # rozetka-poller imports its Python once at start: restart it after
+        # migrate so new code (and new tables) are picked up on every deploy
+        docker compose -f docker-compose.prod.yml restart rozetka-poller </dev/null || true
 
         echo "Applying nginx config..."
         if [ "$NGINX_CONFIG_OK" = "1" ]; then
