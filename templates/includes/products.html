@@ -15,7 +15,7 @@
           width="365"
           height="420"
           sizes="(max-width: 600px) 45vw, 365px"
-          loading="lazy"
+          {% if eager %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
           decoding="async"
         />
     </div>

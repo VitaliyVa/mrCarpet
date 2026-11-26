@@ -45,7 +45,16 @@ def parse_slugs(value: str | None) -> list[str]:
     return slugs
 
 
-def _image_url(product) -> str | None:
+#: Card slots are 140-220 px wide; 480 covers the big card on 2x screens,
+#: 240 the sidebar mini card and 1x phones.
+CARD_IMAGE_WIDTHS = (240, 480)
+
+
+def _image_urls(product) -> dict[int, str] | None:
+    """{240: url, 480: url} of resized WebP copies, or None without a photo.
+
+    ``thumbnail_url`` falls back to the original URL when it cannot resize,
+    so a card never loses its picture over a thumbnail problem."""
     image = getattr(product, "image", None)
     name = getattr(image, "name", "") or ""
     if not name:
@@ -53,9 +62,18 @@ def _image_url(product) -> str | None:
     try:
         if not image.storage.exists(name):
             return None
-        return image.url
+        original = image.url
     except Exception:  # storage hiccup must not take the article down
         return None
+    from catalog.thumbnails import thumbnail_url
+
+    urls = {}
+    for width in CARD_IMAGE_WIDTHS:
+        try:
+            urls[width] = thumbnail_url(image, width) or original
+        except Exception:
+            urls[width] = original
+    return urls
 
 
 def _format_price(value) -> str:
@@ -114,6 +132,7 @@ def build_card(product) -> dict | None:
         ga_price = round(float(price_value), 2)
     except (TypeError, ValueError):
         ga_price = 0.0
+    images = _image_urls(product)
     return {
         # GA4 item fields (same shape as project/ga4_ecommerce.py).
         "id": product.pk,
@@ -123,7 +142,9 @@ def build_card(product) -> dict | None:
         "ga_item_id": offer_id(product, ga_attr),
         "title": product.title,
         "url": product.get_absolute_url(),
-        "image": _image_url(product),
+        # 480 px WebP for the big card, 240 px for the sidebar mini card.
+        "image": images[480] if images else None,
+        "image_small": images[240] if images else None,
         "price": price,
         "unit": unit,
         "from_label": from_label,
