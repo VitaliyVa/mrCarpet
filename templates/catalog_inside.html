@@ -265,7 +265,7 @@
                 {% if products %}
                 {% for product in products %}
                 <div class="cart_item" data-product-id="{{ product.get_card_size_attr.id }}" data-catalog-product-id="{{ product.id }}" data-product-title="{{ product.title }}">
-                    {% include 'includes/products.html' %}
+                    {% if forloop.counter <= 2 %}{% include 'includes/products.html' with eager=True %}{% else %}{% include 'includes/products.html' %}{% endif %}
                 </div>
                 {% endfor %}
                 {% else %}

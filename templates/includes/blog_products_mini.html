@@ -4,7 +4,7 @@
     {% for card in cards %}
     <a class="bl-mini-products__card{% if not card.in_stock %} is-oos{% endif %}" href="{{ card.url }}"{% if card.id %} data-catalog-product-id="{{ card.id }}" data-ga-item-id="{{ card.ga_item_id }}" data-product-title="{{ card.title }}" data-price="{{ card.ga_price }}" data-item-variant="{{ card.ga_variant }}"{% endif %}>
       <span class="bl-mini-products__media">
-        {% if card.image %}<img src="{{ card.image }}" alt="{{ card.title }}" width="140" height="160" loading="lazy" decoding="async">{% else %}<span aria-hidden="true">🧶</span>{% endif %}
+        {% if card.image %}<img src="{{ card.image_small|default:card.image }}" alt="{{ card.title }}" width="140" height="160" loading="lazy" decoding="async">{% else %}<span aria-hidden="true">🧶</span>{% endif %}
       </span>
       <span class="bl-mini-products__price">{% if card.from_label %}від {% endif %}{{ card.price }} {{ card.unit }}</span>
       <span class="bl-mini-products__title">{{ card.title }}</span>

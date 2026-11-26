@@ -3,7 +3,7 @@
   <a class="blog-products__card{% if not card.in_stock %} is-oos{% endif %}" href="{{ card.url }}"{% if card.id %} data-catalog-product-id="{{ card.id }}" data-ga-item-id="{{ card.ga_item_id }}" data-product-title="{{ card.title }}" data-price="{{ card.ga_price }}" data-item-variant="{{ card.ga_variant }}"{% endif %}>
     <span class="blog-products__media">
       {% if card.image %}
-      <img src="{{ card.image }}" alt="{{ card.title }}" width="365" height="420" sizes="(max-width: 600px) 45vw, 220px" loading="lazy" decoding="async">
+      <img src="{{ card.image }}"{% if card.image_small and card.image_small != card.image %} srcset="{{ card.image_small }} 240w, {{ card.image }} 480w"{% endif %} alt="{{ card.title }}" width="365" height="420" sizes="(max-width: 600px) 45vw, 220px" loading="lazy" decoding="async">
       {% else %}
       <span class="blog-products__noimg" aria-hidden="true">🧶</span>
       {% endif %}

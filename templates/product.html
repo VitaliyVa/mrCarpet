@@ -998,7 +998,7 @@
 {% endif %}
 
 {% endblock content %}{% block scripts %}
-<script src="/static/source/pages/product/index.js?v={{ static_v }}"></script>
+<script src="/static/source/pages/product/index.js?v={{ static_v }}" defer></script>
 {% if analytics_view_item %}
 {# JSON, not template numbers: the uk locale prints 1999.5 as "1999,5", a JS syntax error. #}
 {{ analytics_view_item|json_script:"ga4-view-item" }}
