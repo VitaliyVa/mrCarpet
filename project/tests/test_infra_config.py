@@ -345,3 +345,10 @@ class MaintenancePageTests(SimpleTestCase):
         self.assertNotIn("—", html)
         # self-contained: nothing that needs web or /static
         self.assertNotRegex(html, r'(src|href)="(/|http)')
+
+
+class DeployExitStatusTests(SimpleTestCase):
+    def test_finished_deploy_exits_zero_despite_bash_logout(self):
+        text = (ROOT / ".github" / "workflows" / "deploy.yml").read_text(encoding="utf-8")
+        self.assertIn('if [ "$DEPLOY_DONE" = "1" ]; then rc=0; fi', text)
+        self.assertIn("DEPLOY_DONE=1\n        echo \"Deployment completed successfully!\"\n        exit 0", text)

@@ -74,8 +74,13 @@ jobs:
         NEXT_DIR="$WORK_DIR/src"
         WEB_STOPPED=0
         WEB_STARTED=0
+        DEPLOY_DONE=0
         on_exit() {
           rc=$?
+          # The ssh login shell runs ~/.bash_logout before this trap; on
+          # Ubuntu its last test (clear_console) leaves $?=1, which turned a
+          # finished deploy into a red run. A completed deploy exits 0.
+          if [ "$DEPLOY_DONE" = "1" ]; then rc=0; fi
           # A failure inside the window (pull refused, cp failed...) used to
           # leave web stopped until someone noticed. Bring the stack back on
           # whatever code is on disk; the DB is untouched or atomically
@@ -342,7 +347,9 @@ jobs:
           exit 1
         fi
 
+        DEPLOY_DONE=1
         echo "Deployment completed successfully!"
+        exit 0
         EOF
 
     - name: Deployment status
