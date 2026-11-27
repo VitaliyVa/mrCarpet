@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .meta_webhook import meta_webhook
+from .order_viber import order_viber_redirect
 from .telegram_webhook import telegram_webhook
 from .threads_callbacks import (
     threads_data_deletion,
@@ -26,6 +27,7 @@ urlpatterns = [
     path("subscription/", SubscriptionCreateView.as_view(), name="subscription"),
     path("check-promocode/", check_promocode, name="check_promocode"),
     path("telegram/webhook/", telegram_webhook, name="telegram-webhook"),
+    path("order-viber/<str:token>/", order_viber_redirect, name="order-viber"),
     path("meta/webhook/", meta_webhook, name="meta-webhook"),
     path("viber/webhook/", viber_webhook, name="viber-webhook"),
     path("tiktok/authorize/", tiktok_oauth_start, name="tiktok-oauth-start"),

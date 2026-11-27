@@ -33,6 +33,16 @@ def telegram_webhook(request):
     except (UnicodeDecodeError, json.JSONDecodeError):
         return HttpResponse(status=400)
 
+    # Кнопки під «Нове замовлення»: текст для месенджера / сценарій дзвінка.
+    try:
+        from order.customer_contact import handle_order_callback
+
+        cq = update.get("callback_query")
+        if cq and handle_order_callback(cq):
+            return JsonResponse({"ok": True, "handled": "order_callback"})
+    except Exception:
+        logger.exception("order callback handler failed")
+
     # HITL-відповіді на коменти: наші callback-кнопки (crok:/crre:/crno:)
     # і reply оператора на алерт/чернетку — перехоплюємо ДО AI-агента.
     try:

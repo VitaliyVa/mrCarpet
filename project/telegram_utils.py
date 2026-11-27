@@ -68,7 +68,7 @@ def order_admin_absolute_url(order) -> str:
     return f"{base}{path}"
 
 
-def send_telegram_message(text, fail_silently=True, parse_mode=None):
+def send_telegram_message(text, fail_silently=True, parse_mode=None, reply_markup=None):
     """
     Синхронна відправка тексту в налаштований chat_id.
     Повертає True при успіху, False якщо вимкнено / помилка.
@@ -87,6 +87,8 @@ def send_telegram_message(text, fail_silently=True, parse_mode=None):
     }
     if parse_mode:
         payload["parse_mode"] = parse_mode
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     thread_id = (settings.message_thread_id or "").strip()
     if thread_id:
         try:
@@ -123,13 +125,15 @@ def send_telegram_message(text, fail_silently=True, parse_mode=None):
         return False
 
 
-def send_telegram_message_async(text, parse_mode=None):
+def send_telegram_message_async(text, parse_mode=None, reply_markup=None):
     """Фонова відправка — HTTP-відповідь клієнту не чекає Telegram."""
 
     def _run():
         close_old_connections()
         try:
-            ok = send_telegram_message(text, fail_silently=True, parse_mode=parse_mode)
+            ok = send_telegram_message(
+                text, fail_silently=True, parse_mode=parse_mode, reply_markup=reply_markup
+            )
             if ok:
                 print("[telegram] sent OK")
         finally:
@@ -256,6 +260,17 @@ def format_order_message(order, event="new"):
     if items:
         lines.append("Товари:")
         lines.extend(items)
+    try:
+        from order.customer_contact import order_checks
+
+        checks = order_checks(order)
+    except Exception:
+        logger.exception("order checks failed")
+        checks = []
+    if checks:
+        lines.append("")
+        lines.append("Перевірки:")
+        lines.extend(_esc(line) for line in checks)
     return "\n".join(lines)
 
 
@@ -317,7 +332,13 @@ def notify_order(order, event="new"):
     if not _should_notify("order"):
         return
     html_text = format_order_message(order, event=event)
-    send_telegram_message_async(html_text, parse_mode="HTML")
+    try:
+        from order.customer_contact import order_keyboard
+
+        keyboard = order_keyboard(order) if order.pk else None
+    except Exception:
+        keyboard = None
+    send_telegram_message_async(html_text, parse_mode="HTML", reply_markup=keyboard)
     # Plain fact for LLM context (order № survives for later «покажи деталі»)
     _remember_agent_notify(
         f"Нотифікація: замовлення №{order.order_number} "
