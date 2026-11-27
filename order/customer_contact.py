@@ -280,9 +280,21 @@ def _payment_text(order) -> str:
 
 
 def _shipping_text(order) -> str:
+    from order.models import Order
+
     if order.free_shipping:
         return "Доставка для вас безкоштовна."
-    return "Доставку оплачуєте на пошті за тарифом Нової Пошти."
+    text = "Доставку оплачуєте на пошті за тарифом Нової Пошти."
+    threshold = _shop_threshold() if order.source == Order.SOURCE_SITE else 0
+    if threshold:
+        gap = threshold - float(order.total_price or 0)
+        text += f"\nУ нас безкоштовна доставка від {threshold} грн."
+        if 0 < gap <= FREE_SHIPPING_HINT_GAP:
+            text += (
+                f" Вам не вистачило лише {gap:.0f} грн. Якщо захочете ще щось додати, "
+                "напишіть нам, і доставка буде безкоштовною."
+            )
+    return text
 
 
 def customer_message(order, items=None) -> str:

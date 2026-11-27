@@ -142,3 +142,17 @@ class CallbackTests(_Fixture, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "viber://chat?number=%2B380732095912")
         self.assertEqual(self.client.get("/api/order-viber/bad:token/").status_code, 404)
+
+
+class FreeShippingHintTests(_Fixture, TestCase):
+    @patch("order.customer_contact._shop_threshold", return_value=1499)
+    def test_threshold_and_gap(self, _):
+        text = customer_message(self._order(total_price=1400))
+        self.assertIn("У нас безкоштовна доставка від 1499 грн.", text)
+        self.assertIn("не вистачило лише 99 грн", text)
+        far = customer_message(self._order(total_price=400))
+        self.assertIn("від 1499 грн.", far)
+        self.assertNotIn("не вистачило", far)
+        free = customer_message(self._order(total_price=2000, free_shipping=True))
+        self.assertIn("Доставка для вас безкоштовна.", free)
+        self.assertNotIn("від 1499", free)
