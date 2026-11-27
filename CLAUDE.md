@@ -22,6 +22,11 @@ Django 4.2 магазин килимів, https://mrcarpet24.com. Деплой: 
 - Немає SSH для агентів. Зміни даних у проді тільки ідемпотентними data-міграціями за slug, без видалень,
   і їх готує/перевіряє головна сесія, не субагенти.
 
+## Замовлення (докладно: `docs/orders.md`)
+- Картка в Telegram з перевірками і кнопками (текст для месенджера, сценарій дзвінка, «🔄 Статус»): `order/customer_contact.py`, `order/bot_status.py`.
+- Статус міняти через `Order.save()` (адмінка або бот), не через `.update()`: на save висять сигнали (склад при скасуванні, лист з ТТН, GA4, Rozetka).
+- Відстеження Нової Пошти і прохання про відгук запускає `content_scheduler` (не `tiktok_scheduler`, він вимкнений).
+
 ## Тести
 `venv\Scripts\python.exe manage.py test project.tests catalog.tests blog.tests order.tests`
 
