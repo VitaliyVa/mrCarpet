@@ -43,6 +43,7 @@ from project.merchant_feed import (
     format_size,
     product_color,
     product_description,
+    product_pattern,
     product_shape,
     product_specs,
     variant_link,
@@ -183,6 +184,25 @@ ROZETKA_DEFAULT_MARKUP = "1.25"
 
 _COUNTRY_BY_CATEGORY = {"Турецькі": "Туреччина", "Українські": "Україна"}
 _STANDARD_PARAMS = {"розмір", "колір", "форма", "країна-виробник товару"}
+# Our spec names -> the names Rozetka uses for rug characteristics, so the
+# moderators' auto-mapping fills the marketplace filters. None drops the spec:
+# «Виробник» holds a country (it would clash with the brand on Rozetka) and
+# «Форма килима» repeats «Форма».
+_ROZETKA_SPEC_NAMES = {
+    "склад килима": "Матеріал",
+    "висота ворса": "Висота ворсу",
+    "виробник": None,
+    "форма килима": None,
+}
+# Room categories -> Rozetka «Призначення» values.
+_ROZETKA_ROOMS = {
+    "В дитячу": "Для дитячої",
+    "Для ванни": "Для ванної",
+    "Під двері": "Для передпокою",
+    "В кухню": "Для кухні",
+}
+_BRAND_COUNTRY = {"Karat": "Україна"}
+_SHADE_PREFIXES = ("темно-", "світло-")
 _PICTURE_SAFE = ":/%?&=+~-._,;@!$'()*"
 
 
@@ -250,14 +270,57 @@ def _rozetka_country(specs, categories) -> str:
     return ""
 
 
-def _rozetka_params(specs, size, color, shape, country) -> list[tuple[str, str]]:
+def _rozetka_main_color(color: str) -> str:
+    """'темно-сірий' -> 'Сірий'; '' for two-colour values ('сіро-коричневий')."""
+    value = (color or "").strip().lower()
+    for prefix in _SHADE_PREFIXES:
+        if value.startswith(prefix):
+            value = value[len(prefix):]
+    if not value or "-" in value or "/" in value or " " in value:
+        return ""
+    return value[:1].upper() + value[1:]
+
+
+def _rozetka_kind(title: str) -> str:
+    return "Килимові доріжки" if "доріжк" in (title or "").lower() else "Килими"
+
+
+def _rozetka_rooms(categories) -> list[str]:
+    rooms = []
+    for c in sorted(categories, key=lambda c: c.pk):
+        room = _ROZETKA_ROOMS.get((c.title or "").strip())
+        if room and room not in rooms:
+            rooms.append(room)
+    return rooms
+
+
+def _rozetka_params(
+    specs, size, color, shape, country, *,
+    kind="", vendor="", rooms=(), pattern="",
+) -> list[tuple[str, str]]:
     params = [
+        ("Вид", kind),
         ("Розмір", size),
         ("Колір", color),
+        ("Основний колір", _rozetka_main_color(color)),
         ("Форма", shape),
         ("Країна-виробник товару", country),
+        ("Країна реєстрації бренду", _BRAND_COUNTRY.get(vendor, "")),
     ]
-    params += [(n, v) for n, v in specs if n.lower() not in _STANDARD_PARAMS]
+    # several values in one tag, comma separated (Rozetka price list rules)
+    params.append(("Призначення", ", ".join(rooms)))
+    if pattern:
+        params.append(("Дизайн", pattern[:1].upper() + pattern[1:]))
+    taken = {n.lower() for n, v in params if v}
+    for name, value in specs:
+        lower = name.lower()
+        if lower in _STANDARD_PARAMS:
+            continue
+        mapped = _ROZETKA_SPEC_NAMES.get(lower, name)
+        if mapped is None or mapped.lower() in taken:
+            continue
+        taken.add(mapped.lower())
+        params.append((mapped, value))
     return [
         (name[:ROZETKA_MAX_PARAM], value[:ROZETKA_MAX_PARAM])
         for name, value in params
@@ -300,6 +363,8 @@ def build_rozetka_offers(products) -> list[dict]:
         categories = list(product.categories.all())
         category_id = rozetka_category_id(categories)
         country = _rozetka_country(specs, categories)
+        rooms = _rozetka_rooms(categories)
+        pattern = product_pattern(product, specs)
 
         attrs = sorted(product.product_attr.all(), key=lambda a: (a.sort_order, a.pk))
         for attr in attrs:
@@ -331,7 +396,11 @@ def build_rozetka_offers(products) -> list[dict]:
                 "name_ua": name,
                 "description": description,
                 "params": _rozetka_params(
-                    specs, size, color, product_shape(product, specs, size), country
+                    specs, size, color, product_shape(product, specs, size), country,
+                    kind=_rozetka_kind(product.title),
+                    vendor=vendor,
+                    rooms=rooms,
+                    pattern=pattern,
                 ),
             })
     return offers

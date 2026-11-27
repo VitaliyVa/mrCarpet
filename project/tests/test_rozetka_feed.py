@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from decimal import Decimal
 from unittest import TestCase as PlainTestCase
 
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from catalog.models import (
     Product,
@@ -206,8 +206,11 @@ class RozetkaFeedTests(TestCase):
         self.assertEqual(params["Колір"], "фіолетово-ліловий")
         self.assertEqual(params["Форма"], "Прямокутник")
         self.assertEqual(params["Країна-виробник товару"], "Туреччина")
-        self.assertEqual(params["Склад килима"], "Поліпропілен")
-        self.assertEqual(params["Висота ворса"], "6.5 мм")
+        self.assertEqual(params["Матеріал"], "Поліпропілен")  # Rozetka's own name
+        self.assertEqual(params["Висота ворсу"], "6.5 мм")
+        self.assertEqual(params["Вид"], "Килими")
+        self.assertNotIn("Склад килима", params)
+        self.assertNotIn("Виробник", params)  # held a country, clashed with the brand
         for value in params.values():
             self.assertTrue(value)
             self.assertLessEqual(len(value), 500)
@@ -247,3 +250,36 @@ class RozetkaEmptyShopTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         root = ET.fromstring(resp.content)
         self.assertEqual(root.findall("shop/offers/offer"), [])
+
+
+class RozetkaParamsTests(SimpleTestCase):
+    def test_spec_names_mapped_and_extras_added(self):
+        from project.prom_feed import _rozetka_params
+
+        params = _rozetka_params(
+            [("Склад килима", "Поліпропілен"), ("Висота ворса", "6.5 мм"),
+             ("Виробник", "Україна"), ("Форма килима", "Овал"), ("Основа", "Джут")],
+            "120x170 см", "темно-сірий", "Овал", "Україна",
+            kind="Килими", vendor="Karat", rooms=["Для дитячої", "Для кухні"],
+            pattern="абстрактний",
+        )
+        d = dict(params)
+        self.assertEqual(len(d), len(params))  # no duplicate names
+        self.assertEqual(d["Матеріал"], "Поліпропілен")
+        self.assertEqual(d["Висота ворсу"], "6.5 мм")
+        self.assertEqual(d["Основний колір"], "Сірий")
+        self.assertEqual(d["Країна реєстрації бренду"], "Україна")
+        self.assertEqual(d["Призначення"], "Для дитячої, Для кухні")
+        self.assertEqual(d["Дизайн"], "Абстрактний")
+        self.assertEqual(d["Основа"], "Джут")
+        self.assertNotIn("Виробник", d)
+        self.assertNotIn("Форма килима", d)
+
+    def test_two_tone_colour_and_unknown_brand_skip_extras(self):
+        from project.prom_feed import _rozetka_kind, _rozetka_params
+
+        d = dict(_rozetka_params([], "60x110 см", "сіро-коричневий", "", "", vendor="mr.Carpet"))
+        self.assertNotIn("Основний колір", d)
+        self.assertNotIn("Країна реєстрації бренду", d)
+        self.assertNotIn("Призначення", d)
+        self.assertEqual(_rozetka_kind("Килимова доріжка Flex 80 см"), "Килимові доріжки")
