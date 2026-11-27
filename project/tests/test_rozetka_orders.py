@@ -291,6 +291,23 @@ class ImportTests(RozetkaTestBase):
         import_new_orders()
         self.assertEqual(Order.objects.get().payment_type, Order.PAYMENT_ROZETKA)
 
+    def test_prepay_to_seller_is_not_marked_paid(self):
+        self.fake(self.order_payload(
+            payment_type="cashless",
+            payment_type_name="Передплата на картку продавця",
+        ))
+        import_new_orders()
+        order = Order.objects.get()
+        self.assertEqual(order.payment_type, Order.PAYMENT_PREPAY)
+        self.assertIn("Оплата: Передплата на картку продавця", order.message)
+
+    def test_account_payment_name_dict(self):
+        from project.rozetka_orders import order_payment_type
+
+        data = {"payment_type": "cashless",
+                "payment_type_name": {"uk": "Оплата на рахунок продавця"}}
+        self.assertEqual(order_payment_type(data), Order.PAYMENT_PREPAY)
+
     def test_second_poll_does_not_duplicate_or_renotify(self):
         self.fake(self.order_payload())
         import_new_orders()

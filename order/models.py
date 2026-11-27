@@ -27,10 +27,14 @@ class Order(AbstractCreatedUpdated):
     # Paid through the marketplace (card, Rozetka Pay, credit...): the money
     # reaches us from Rozetka, not through our LiqPay.
     PAYMENT_ROZETKA = "rozetka"
+    # Rozetka «Передплата на картку продавця» / «Оплата на рахунок продавця»:
+    # the buyer pays us directly, so check the money arrived before shipping.
+    PAYMENT_PREPAY = "prepay"
     PAYMENT_CHOICES = (
         (PAYMENT_CASH, "Оплата при отриманні"),
         (PAYMENT_LIQPAY, "Онлайн оплата (LiqPay)"),
         (PAYMENT_ROZETKA, "Оплачено на Rozetka"),
+        (PAYMENT_PREPAY, "Передоплата продавцю (перевірте, чи прийшли гроші)"),
     )
 
     SOURCE_SITE = "site"

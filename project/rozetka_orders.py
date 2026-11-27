@@ -249,6 +249,31 @@ def _merge_lines(purchases: list[dict]):
     return matched, unknown
 
 
+# payment_type_name words of the methods where the buyer pays the seller
+# directly (card or bank account), not through Rozetka.
+_PREPAY_WORDS = ("картку продавця", "рахунок продавця", "карту продавца", "счет продавца")
+
+
+def _payment_name(data: dict) -> str:
+    raw = data.get("payment_type_name")
+    if isinstance(raw, dict):
+        raw = raw.get("uk") or raw.get("ua") or raw.get("ru") or ""
+    return str(raw or "").strip()[:200]
+
+
+def order_payment_type(data: dict) -> str:
+    """cash -> on delivery; paid to the seller directly -> prepay (manager must
+    check the money); anything else (card / credit through Rozetka) -> rozetka."""
+    from order.models import Order
+
+    if str(data.get("payment_type") or "").lower() == "cash":
+        return Order.PAYMENT_CASH
+    name = _payment_name(data).lower()
+    if any(word in name for word in _PREPAY_WORDS):
+        return Order.PAYMENT_PREPAY
+    return Order.PAYMENT_ROZETKA
+
+
 def create_order(data: dict):
     """Create our Order from one Rozetka order dict. None if already imported.
 
@@ -274,16 +299,15 @@ def create_order(data: dict):
     phone = normalize_phone(delivery.get("recipient_phone")) or buyer_phone
     city, address = delivery_text(delivery, data.get("delivery_service"))
 
-    payment_type = (
-        Order.PAYMENT_CASH
-        if str(data.get("payment_type") or "").lower() == "cash"
-        else Order.PAYMENT_ROZETKA
-    )
+    payment_type = order_payment_type(data)
+    payment_name = _payment_name(data)
 
     purchases = list(data.get("purchases") or [])
     matched, notes = _merge_lines(purchases)
 
     note_lines = [f"Rozetka №{rozetka_id}"]
+    if payment_name:
+        note_lines.append(f"Оплата: {payment_name}")
     comment = str(data.get("comment") or "").strip()
     if comment:
         note_lines.append(f"Коментар покупця: {comment}")
