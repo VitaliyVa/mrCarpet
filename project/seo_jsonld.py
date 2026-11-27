@@ -27,7 +27,7 @@ KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea
 # Rozetka (27.11.2026); the blue «Місто» is the Turkish-made one.
 ALBAYRAK_PATTERNS = (
     r"\bla[\s-]?rosa\b", r"\bmodern\s*gk", r"\bпазли\b", r"\bміккі\b",
-    r"\b0391\b", r"\bмісто\s+синій\b",
+    r"\b0391\b", r"\bсиній\b.*\bмісто\b", r"\bмісто\b.*\bсиній\b",
 )
 # Karat article numbers without a collection word in our titles, matched on
 # Rozetka 27.11.2026: Flex 19682/91, 19264/91, 19689/811, 1956/91 (rubber

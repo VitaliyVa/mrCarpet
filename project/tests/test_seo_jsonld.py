@@ -465,6 +465,7 @@ class ProductBrandRuleTests(TestCase):
             self.assertEqual(product_brand(title), ("Karat", False), title)
         self.assertEqual(product_brand("Килим овальний Legenda 0391 синій"), ("ALBAYRAK", False))
         self.assertEqual(product_brand("Килим прямокутний дитячий Місто синій"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим прямокутний синій Місто"), ("ALBAYRAK", False))
         self.assertEqual(product_brand("Килим прямокутний дитячий Місто зелений"), ("Karat", False))
         for title in ("Килим під двері 100011095", "Килим Teppich Smile 5070998/05", "Килим для ванни 3205"):
             self.assertEqual(product_brand(title), ("mr.Carpet", True), title)
