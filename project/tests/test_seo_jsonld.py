@@ -460,4 +460,12 @@ class ProductBrandRuleTests(TestCase):
         self.assertEqual(product_brand("Килим дитячий Місто зелений", [("Країна-виробник", "Україна")]), ("Karat", False))
         self.assertEqual(product_brand("Килим дитячий Місто синій", [("Країна-виробник", "Туреччина")]), ("ALBAYRAK", False))
         self.assertEqual(product_brand("Килим Estera MR-452"), ("mr.Carpet", True))
+        for title in ("Килим прямокутний 19682-91 67x120 см", "Килим прямокутний 19689-811 сірий",
+                      "Килим прямокутний 1956-91", "Килим прямокутний 1918/91", "Килим овальний 919/80"):
+            self.assertEqual(product_brand(title), ("Karat", False), title)
+        self.assertEqual(product_brand("Килим овальний Legenda 0391 синій"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим прямокутний дитячий Місто синій"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим прямокутний дитячий Місто зелений"), ("Karat", False))
+        for title in ("Килим під двері 100011095", "Килим Teppich Smile 5070998/05", "Килим для ванни 3205"):
+            self.assertEqual(product_brand(title), ("mr.Carpet", True), title)
         self.assertEqual(product_brand("Килим", [("Бренд", "Merinos")]), ("Merinos", False))

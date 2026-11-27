@@ -23,7 +23,16 @@ ORG_NAME = "mr.Carpet"
 KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea", "lotos", "cappuccino", "kolibri")
 # Turkish ALBAYRAK (owner, 27.11.2026; Rozetka brand «ALBAYRAK»): La Rosa,
 # Modern GK, kids' Пазли and Міккі Маус.
-ALBAYRAK_PATTERNS = (r"\bla[\s-]?rosa\b", r"\bmodern\s*gk", r"\bпазли\b", r"\bміккі\b")
+# Legenda 0391: the same swirl design and number as «Килим ALBAYRAK 0391» on
+# Rozetka (27.11.2026); the blue «Місто» is the Turkish-made one.
+ALBAYRAK_PATTERNS = (
+    r"\bla[\s-]?rosa\b", r"\bmodern\s*gk", r"\bпазли\b", r"\bміккі\b",
+    r"\b0391\b", r"\bмісто\s+синій\b",
+)
+# Karat article numbers without a collection word in our titles, matched on
+# Rozetka 27.11.2026: Flex 19682/91, 19264/91, 19689/811, 1956/91 (rubber
+# back), Naturalle 1918/91, 1918/19, 919/xx (flat jute).
+KARAT_CODE_PATTERNS = (r"\b19\d{2,3}[-/]\d{2,3}\b", r"\b9\d{2}/\d{2}\b")
 BRAND_SPEC_KEYS = ("бренд", "торгова марка", "торговельна марка", "торгова марк")
 
 
@@ -39,12 +48,14 @@ def product_brand(title: str = "", specs=()) -> tuple[str, bool]:
     words = set(lower.replace("/", " ").split())
     if words & set(KARAT_COLLECTIONS):
         return "Karat", False
-    if "місто" in words:
-        # kids' «Місто»: Karat (owner, 27.11.2026); a Turkish-made one is Albayrak
-        country = " ".join(v for n, v in specs or () if "країна" in (n or "").lower())
-        return ("ALBAYRAK" if "туреч" in country.lower() else "Karat"), False
     if any(re.search(p, lower) for p in ALBAYRAK_PATTERNS):
         return "ALBAYRAK", False
+    if "місто" in words:
+        # green kids' «Місто» = Karat Kolibri 11061/130 (same picture on Rozetka)
+        country = " ".join(v for n, v in specs or () if "країна" in (n or "").lower())
+        return ("ALBAYRAK" if "туреч" in country.lower() else "Karat"), False
+    if any(re.search(p, lower) for p in KARAT_CODE_PATTERNS):
+        return "Karat", False
     return ORG_NAME, True
 ORG_EMAIL = "mr.carpet.shop@gmail.com"
 ORG_PHONE = "+380963988875"
