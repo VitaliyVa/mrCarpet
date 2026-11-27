@@ -11,7 +11,16 @@ from social.models import SocialPost
 from social.services.article_post import render_caption
 from social.services.media_urls import article_campaign, article_share_url
 
-migration = import_module("social.migrations.0027_rewrite_dry_facebook_captions")
+from django.db import connection
+from django.db.migrations.loader import MigrationLoader
+
+migration = import_module("social.migrations.0028_rewrite_dry_facebook_captions_fix")
+
+
+def historical_apps():
+    """The models as the migration sees them (no custom methods)."""
+    loader = MigrationLoader(connection)
+    return loader.project_state(("social", "0028_rewrite_dry_facebook_captions_fix")).apps
 
 
 class FacebookCaptionRewriteTests(TestCase):
@@ -36,8 +45,8 @@ class FacebookCaptionRewriteTests(TestCase):
 
     def test_rewrites_untouched_scheduled_post_once(self):
         post = self.make("scheduled", self.old)
-        migration.forwards(django_apps, None)
-        migration.forwards(django_apps, None)
+        migration.forwards(historical_apps(), None)
+        migration.forwards(historical_apps(), None)
         post.refresh_from_db()
         self.assertEqual(post.caption_fb, self.new)
         self.assertEqual(post.caption, self.new)
@@ -47,7 +56,7 @@ class FacebookCaptionRewriteTests(TestCase):
     def test_keeps_hand_edited_and_published(self):
         edited = self.make("scheduled", "Свій текст власника")
         published = self.make("published", self.old)
-        migration.forwards(django_apps, None)
+        migration.forwards(historical_apps(), None)
         edited.refresh_from_db(); published.refresh_from_db()
         self.assertEqual(edited.caption_fb, "Свій текст власника")
         self.assertEqual(published.caption_fb, self.old)
