@@ -261,17 +261,77 @@ def _payment_name(data: dict) -> str:
     return str(raw or "").strip()[:200]
 
 
+# status_payment names that mean the money is taken (hold = two-stage payment,
+# blocked on the buyer's card until we confirm it in RozetkaPay).
+_PAID_STATUSES = {"paid", "hold"}
+
+
+def rozetka_paid(data: dict) -> bool:
+    """True only when Rozetka says the online payment went through."""
+    if data.get("is_payed") is True:
+        return True
+    status = data.get("status_payment") or {}
+    if not isinstance(status, dict):
+        return False
+    return str(status.get("name") or "").lower() in _PAID_STATUSES
+
+
 def order_payment_type(data: dict) -> str:
     """cash -> on delivery; paid to the seller directly -> prepay (manager must
-    check the money); anything else (card / credit through Rozetka) -> rozetka."""
+    check the money); online through Rozetka (card, Apple/Google Pay, parts)
+    -> rozetka when paid, rozetka_unpaid while the buyer has not paid yet
+    (Rozetka sends these orders before the payment)."""
     from order.models import Order
 
-    if str(data.get("payment_type") or "").lower() == "cash":
+    kind = str(data.get("payment_type") or "").lower()
+    if kind == "cash":
         return Order.PAYMENT_CASH
     name = _payment_name(data).lower()
-    if any(word in name for word in _PREPAY_WORDS):
+    if kind == "no_cash" or any(word in name for word in _PREPAY_WORDS):
         return Order.PAYMENT_PREPAY
-    return Order.PAYMENT_ROZETKA
+    return Order.PAYMENT_ROZETKA if rozetka_paid(data) else Order.PAYMENT_ROZETKA_UNPAID
+
+
+def mark_paid_if_needed(data: dict):
+    """An imported order still waiting for its online payment: flip it to paid
+    once Rozetka reports the money. Returns the order when it changed."""
+    from order.models import Order
+
+    if not rozetka_paid(data):
+        return None
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .filter(
+                rozetka_order_id=int(data["id"]),
+                payment_type=Order.PAYMENT_ROZETKA_UNPAID,
+            )
+            .first()
+        )
+        if order is None:
+            return None
+        order.payment_type = Order.PAYMENT_ROZETKA
+        line = "Rozetka: оплату отримано, можна відправляти"
+        order.message = ((order.message + "\n") if order.message else "") + line
+        order.message = order.message[:MESSAGE_MAX]
+        order.save(update_fields=["payment_type", "message", "updated"])
+    return order
+
+
+def _notify_paid(order) -> None:
+    try:
+        from project import telegram_utils
+
+        if not telegram_utils._should_notify("order"):
+            return
+        number = order.order_number or order.rozetka_order_id
+        text = (
+            f"ROZETKA 💳 Замовлення №{number} оплачено онлайн, можна відправляти\n"
+            f"{telegram_utils.order_admin_absolute_url(order)}"
+        )
+        telegram_utils.send_telegram_message_async(text)
+    except Exception:
+        logger.exception("rozetka: telegram paid notify failed for order %s", order.pk)
 
 
 def create_order(data: dict):
@@ -535,7 +595,12 @@ def import_new_orders(client: RozetkaClient | None = None, *, lookback_days: int
                     _handle_failed(data, summary)
                     continue
                 if Order.objects.filter(rozetka_order_id=int(data["id"])).exists():
-                    summary["skipped"] += 1
+                    paid = mark_paid_if_needed(data)
+                    if paid is not None:
+                        summary["paid"] = summary.get("paid", 0) + 1
+                        _notify_paid(paid)
+                    else:
+                        summary["skipped"] += 1
                     continue
                 if "purchases" not in data:
                     data = client.get_order(int(data["id"]))

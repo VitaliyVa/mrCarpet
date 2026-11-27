@@ -287,9 +287,36 @@ class ImportTests(RozetkaTestBase):
         self.assertEqual((item.product_attr_id, item.quantity), (self.attr.pk, 2))
 
     def test_prepaid_order_gets_rozetka_payment_type(self):
-        self.fake(self.order_payload(payment_type="card"))
+        self.fake(self.order_payload(payment_type="card", is_payed=True))
         import_new_orders()
         self.assertEqual(Order.objects.get().payment_type, Order.PAYMENT_ROZETKA)
+
+    def test_unpaid_online_order_flips_to_paid_on_next_poll(self):
+        self.fake(self.order_payload(
+            payment_type="card", is_payed=False,
+            status_payment={"status_payment_id": 3, "name": "unpaid"},
+        ))
+        import_new_orders()
+        self.assertEqual(Order.objects.get().payment_type, Order.PAYMENT_ROZETKA_UNPAID)
+        self.fake(self.order_payload(
+            payment_type="card", is_payed=True,
+            status_payment={"status_payment_id": 2, "name": "paid"},
+        ))
+        summary = import_new_orders()
+        order = Order.objects.get()
+        self.assertEqual(summary.get("paid"), 1)
+        self.assertEqual(order.payment_type, Order.PAYMENT_ROZETKA)
+        self.assertIn("оплату отримано", order.message)
+        again = import_new_orders()  # no second flip
+        self.assertIsNone(again.get("paid"))
+
+    def test_two_stage_hold_counts_as_paid(self):
+        from project.rozetka_orders import order_payment_type
+
+        data = {"payment_type": "google_pay", "status_payment": {"name": "hold"}}
+        self.assertEqual(order_payment_type(data), Order.PAYMENT_ROZETKA)
+        data = {"payment_type": "part_pay", "status_payment": {"name": "unpaid"}}
+        self.assertEqual(order_payment_type(data), Order.PAYMENT_ROZETKA_UNPAID)
 
     def test_prepay_to_seller_is_not_marked_paid(self):
         self.fake(self.order_payload(

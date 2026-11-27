@@ -30,11 +30,15 @@ class Order(AbstractCreatedUpdated):
     # Rozetka «Передплата на картку продавця» / «Оплата на рахунок продавця»:
     # the buyer pays us directly, so check the money arrived before shipping.
     PAYMENT_PREPAY = "prepay"
+    # Online payment on Rozetka (card, Apple/Google Pay, parts): the order
+    # arrives before the buyer pays; the poller flips it to PAYMENT_ROZETKA.
+    PAYMENT_ROZETKA_UNPAID = "rozetka_unpaid"
     PAYMENT_CHOICES = (
         (PAYMENT_CASH, "Оплата при отриманні"),
         (PAYMENT_LIQPAY, "Онлайн оплата (LiqPay)"),
         (PAYMENT_ROZETKA, "Оплачено на Rozetka"),
         (PAYMENT_PREPAY, "Передоплата продавцю (перевірте, чи прийшли гроші)"),
+        (PAYMENT_ROZETKA_UNPAID, "Онлайн на Rozetka: ще НЕ оплачено, не відправляти"),
     )
 
     SOURCE_SITE = "site"

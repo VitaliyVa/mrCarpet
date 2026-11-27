@@ -31,7 +31,9 @@ BASE_URL = "https://api-seller.rozetka.com.ua"
 TIMEOUT_SECONDS = 20
 
 # GET /orders/search ?expand=... : everything the importer needs in one call.
-ORDER_EXPAND = "user,delivery,purchases,payment_type_name,delivery_service"
+ORDER_EXPAND = (
+    "user,delivery,purchases,payment_type_name,delivery_service,is_payed,status_payment"
+)
 
 # OrderStatus.status_group: 1 in progress, 2 successful, 3 failed (cancelled).
 STATUS_GROUP_IN_PROGRESS = 1
