@@ -206,7 +206,7 @@ _ROZETKA_ROOMS = {
     "Під двері": "Для передпокою",
     "В кухню": "Для кухні",
 }
-_BRAND_COUNTRY = {"Karat": "Україна"}
+_BRAND_COUNTRY = {"Karat": "Україна", "ALBAYRAK": "Туреччина"}
 _SHADE_PREFIXES = ("темно-", "світло-")
 _PICTURE_SAFE = ":/%?&=+~-._,;@!$'()*"
 

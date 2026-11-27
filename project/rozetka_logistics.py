@@ -16,7 +16,8 @@ Epicentr cards with their own logistics, see docs/marketplaces.md):
 Weight = full rectangle area (ovals/semicircles are overestimated on
 purpose) x kg/m² x 1.1 (film, tape, safety), rounded up to 0.1 kg.
 
-Packing: small rubber-backed mats go flat; everything else is a roll whose
+Packing: solid rubber door mats go flat; everything else is a roll (owner:
+bath and kitchen mats on rubber are rolled too) whose
 length is the short side + 3 cm (Epicentr: 80x150 -> 800 mm, 200x300 ->
 2000 mm) and whose diameter follows D = sqrt(4·t·L/π) + 2 cm, L the long
 side, t the effective rolled thickness (calibrated on Mira 200x300 ≈ 15-18 cm).
@@ -59,17 +60,19 @@ def product_kind(title: str, params: dict) -> tuple[float, float, bool]:
     base = (params.get("Основа") or "").lower()
     material = (params.get("Матеріал") or "").lower()
     rubber_base = base in ("гума", "резина")
+    # Owner 27.11.2026: bath and kitchen mats on rubber ship rolled too, so
+    # only solid rubber door mats go flat.
     for pattern, kg, thickness in _COLLECTIONS:
         if re.search(pattern, lower):
-            return kg, thickness, rubber_base
+            return kg, thickness, False
     if material == "гума":  # solid rubber door mat
         return 5.0, 8.0, True
     if rubber_base:
         if "ванн" in lower or _pile_mm(params.get("Висота ворсу", "")):
-            return 1.8, 7.0, True  # pile bath mats / Estera on rubber
+            return 1.8, 7.0, False  # pile bath mats / Estera on rubber
         if "двер" in lower:
-            return 2.0, 5.0, True
-        return 1.5, 4.0, True  # kitchen / flat-woven on rubber
+            return 2.0, 5.0, False
+        return 1.5, 4.0, False  # kitchen / flat-woven on rubber
     pile = _pile_mm(params.get("Висота ворсу", ""))
     if pile is None:
         return 1.5, 5.0, False  # flat-woven on jute

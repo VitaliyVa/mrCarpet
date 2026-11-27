@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import timedelta
 from decimal import Decimal
 from typing import Any
@@ -20,6 +21,9 @@ ORG_NAME = "mr.Carpet"
 # Ukraine). Checked on rozetka.com.ua 25.11.2026: Mira, Flex, Oksi, Fashion,
 # Fantasy, Lana, Itea, Lotos, Cappuccino, Kolibri appear as «Килим Karat <collection>».
 KARAT_COLLECTIONS = ("mira", "flex", "oksi", "fashion", "fantasy", "lana", "itea", "lotos", "cappuccino", "kolibri")
+# Turkish ALBAYRAK (owner, 27.11.2026; Rozetka brand «ALBAYRAK»): La Rosa,
+# Modern GK, kids' Пазли and Міккі Маус.
+ALBAYRAK_PATTERNS = (r"\bla[\s-]?rosa\b", r"\bmodern\s*gk", r"\bпазли\b", r"\bміккі\b")
 BRAND_SPEC_KEYS = ("бренд", "торгова марка", "торговельна марка", "торгова марк")
 
 
@@ -31,9 +35,16 @@ def product_brand(title: str = "", specs=()) -> tuple[str, bool]:
         lower = (name or "").lower()
         if value and any(k in lower for k in BRAND_SPEC_KEYS):
             return value, False
-    words = set((title or "").lower().replace("/", " ").split())
+    lower = (title or "").lower()
+    words = set(lower.replace("/", " ").split())
     if words & set(KARAT_COLLECTIONS):
         return "Karat", False
+    if "місто" in words:
+        # kids' «Місто»: Karat (owner, 27.11.2026); a Turkish-made one is Albayrak
+        country = " ".join(v for n, v in specs or () if "країна" in (n or "").lower())
+        return ("ALBAYRAK" if "туреч" in country.lower() else "Karat"), False
+    if any(re.search(p, lower) for p in ALBAYRAK_PATTERNS):
+        return "ALBAYRAK", False
     return ORG_NAME, True
 ORG_EMAIL = "mr.carpet.shop@gmail.com"
 ORG_PHONE = "+380963988875"

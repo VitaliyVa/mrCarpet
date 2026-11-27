@@ -454,5 +454,10 @@ class ProductBrandRuleTests(TestCase):
 
         self.assertEqual(product_brand("Килим прямокутний Mira 24058/160 60x110 см"), ("Karat", False))
         self.assertEqual(product_brand("Килим Kolibri 11001"), ("Karat", False))
-        self.assertEqual(product_brand("Килим La Rosa GK503"), ("mr.Carpet", True))
+        self.assertEqual(product_brand("Килим La Rosa GK503"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим овальний Modern GK506 сірий"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим прямокутний дитячий Пазли"), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим дитячий Місто зелений", [("Країна-виробник", "Україна")]), ("Karat", False))
+        self.assertEqual(product_brand("Килим дитячий Місто синій", [("Країна-виробник", "Туреччина")]), ("ALBAYRAK", False))
+        self.assertEqual(product_brand("Килим Estera MR-452"), ("mr.Carpet", True))
         self.assertEqual(product_brand("Килим", [("Бренд", "Merinos")]), ("Merinos", False))
