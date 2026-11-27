@@ -197,3 +197,22 @@ class TrackingTests(_Fixture, TestCase):
             due.assert_not_called()
             order_jobs(datetime(2026, 11, 28, 11, 0, tzinfo=KYIV))
             due.assert_called_once()
+
+
+class ResendActionTests(_Fixture, TestCase):
+    @patch("project.telegram_utils.send_telegram_message", return_value=True)
+    def test_resend_sends_card_with_buttons(self, send):
+        from django.contrib.admin.sites import site
+        from django.contrib.auth import get_user_model
+        from django.test import RequestFactory
+
+        order = self._order()
+        admin = site._registry[Order]
+        request = RequestFactory().post("/")
+        request.user = get_user_model().objects.create_superuser("a@a.com", "x")
+        with patch.object(admin, "message_user") as msg:
+            admin.resend_to_telegram(request, Order.objects.filter(pk=order.pk))
+        self.assertIn("🛒 Нове замовлення", send.call_args.args[0])
+        rows = send.call_args.kwargs["reply_markup"]["inline_keyboard"]
+        self.assertEqual(rows[1][0]["callback_data"], f"ordst:{order.pk}")
+        self.assertIn("1 з 1", msg.call_args.args[1])

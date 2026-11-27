@@ -112,7 +112,7 @@ class OrderAdmin(admin.ModelAdmin):
         "city",
         "created",
     )
-    actions = ("export_ads_conversions", "confirm_on_rozetka")
+    actions = ("export_ads_conversions", "confirm_on_rozetka", "resend_to_telegram")
     search_fields = (
         "order_number",
         "name",
@@ -288,6 +288,23 @@ class OrderAdmin(admin.ModelAdmin):
                 "Змініть його в кабінеті Rozetka.",
                 messages.WARNING,
             )
+
+    @admin.action(description="Надіслати в Telegram ще раз (картка з кнопками)")
+    def resend_to_telegram(self, request, queryset):
+        from project.telegram_utils import format_order_message, send_telegram_message
+
+        from .customer_contact import order_keyboard
+
+        sent = 0
+        for order in queryset.select_related("promocode")[:20]:
+            ok = send_telegram_message(
+                format_order_message(order, event="new"),
+                parse_mode="HTML",
+                reply_markup=order_keyboard(order),
+            )
+            sent += 1 if ok else 0
+        level = messages.SUCCESS if sent else messages.WARNING
+        self.message_user(request, f"Надіслано в Telegram: {sent} з {min(queryset.count(), 20)}", level)
 
     @admin.action(description="Підтвердити на Rozetka (статус «Опрацьовується менеджером»)")
     def confirm_on_rozetka(self, request, queryset):
