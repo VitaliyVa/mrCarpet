@@ -11,6 +11,7 @@ from django.test import TestCase
 
 from project.merchant_feed import (
     build_items,
+    color_base,
     description_with_facts,
     feed_product_type,
     price_band,
@@ -22,6 +23,7 @@ from project.merchant_feed import (
     parse_title,
     product_color,
     product_description,
+    product_pattern,
     render_feed,
     size_dimensions,
 )
@@ -182,6 +184,96 @@ class TitleParsingTests(PlainTestCase):
         self.assertEqual(parse_title("Килим Flex")["colors"], [])
 
 
+def _d(title, description, **kw):
+    return SimpleNamespace(
+        title=title, description=description, meta_description="", active_color=None, **kw
+    )
+
+
+class PatternTests(PlainTestCase):
+    def test_pattern_from_spec_wins(self):
+        prod = _d("Килим Mira", "Малюнок абстрактний, потертий.")
+        self.assertEqual(product_pattern(prod, [("Малюнок", "Однотонний")]), "Однотонний")
+        self.assertEqual(product_pattern(prod, [("Візерунок", "Вензелі")]), "Вензелі")
+
+    def test_pattern_from_description_keywords(self):
+        cases = (
+            ("Малюнок абстрактний, ніби трохи потертий.", "абстрактний"),
+            ("Однотонний світло-сірий, без малюнка.", "однотонний"),
+            ("Класичний візерунок з вензелями, приглушений.", "класичний"),
+            ("Бежевий килим з мармуровими розводами. Сучасний малюнок, без квіточок і вензелів.",
+             "мармуровий"),
+            ("Чорний з бежевою квіткою і завитками по краю.", "квітковий"),
+            ("Доріжка з широкими смугами навскіс.", "смугастий"),
+            ("Малюнок у чорно-бежеву клітинку з рамкою.", "геометричний"),
+        )
+        for text, expected in cases:
+            self.assertEqual(product_pattern(_d("Килим Flex 1918", text), []), expected, text)
+
+    def test_pattern_from_title(self):
+        self.assertEqual(product_pattern(_d("Килим прямокутний дитячий Пазли", ""), []), "дитячий")
+        self.assertEqual(product_pattern(_d("Килим прямокутний тигр Kolibri", ""), []), "тварини")
+
+    def test_no_pattern_when_unclear(self):
+        for text in (
+            "Завдяки класичній формі він доповнить спальню.",  # shape, not pattern
+            "Добре лягає і в передпокої, і в дитячій.",  # room, not a kids print
+            "Є такий самий однотонний, без мазків.",  # another product
+            "Любите м’якші лінії? Подивіться килим з вензелями.",
+            "",
+        ):
+            self.assertEqual(product_pattern(_d("Килим Estera MR-452", text), []), "", text)
+
+
+class DescriptionColorTests(PlainTestCase):
+    def test_color_fallback_from_description(self):
+        cases = (
+            ("Бежевий з чорними плямками, ніби потертий фарбою.", "бежевий/чорний"),
+            ("Сіра доріжка Flex з орнаментом під старовину.", "сірий"),
+            ("Прямокутний килим 19264-91 з сіро-чорним східним орнаментом.", "сіро-чорний"),
+            ("Малюнок з чорних, сірих і бежевих прямокутників.", "чорний/сірий/бежевий"),
+            ("На чорному фоні велике бежеве віяло.", "чорний/бежевий"),
+            ("Різнокольорові шматочки пазлу: червоні, жовті, сині.", "різнокольоровий"),
+            ("Покладіть біля ліжка. Чорно-білий малюнок пасує до сірих меблів.", "чорно-білий"),
+        )
+        for text, expected in cases:
+            self.assertEqual(product_color(_d("Килим Flex 19197-91", text), []), expected, text)
+
+    def test_no_color_from_pictures_accents_or_other_products(self):
+        for text in (
+            "Жовті очі дивляться просто на вас.",  # the tiger's eyes
+            "Яскравий, з радіоприймачем і зеленою травою.",  # picture details
+            "Малюнок абстрактний, з білими й синюватими розводами.",  # accent marks
+            "Темна однотонна середина і світла рамка.",  # 'темна' is no colour
+            "Є менший килимок, сірий, на 50х80 см.",  # another product
+            "Маленький розмір якраз біля ліжка.",  # 'біля' is not 'білий'
+        ):
+            self.assertEqual(product_color(_d("Килим Flex 19682-91", text), []), "", text)
+
+    def test_title_and_active_color_still_win(self):
+        text = "Чорний з бежевою квіткою."
+        self.assertEqual(product_color(_d("Килим сірий Flex", text), []), "сірий")
+        prod = _d("Килим Flex", text)
+        prod.active_color = SimpleNamespace(title="Синій")
+        self.assertEqual(product_color(prod, []), "Синій")
+        self.assertEqual(color_base("сіро-чорним"), "сіро-чорний")
+        self.assertEqual(color_base("синьою"), "синій")
+        self.assertEqual(color_base("біля"), "")
+
+    def test_facts_line_with_pattern(self):
+        text = description_with_facts(
+            "Гарний килим.", "60x100 см", "бежевий/чорний", "Поліпропілен", "абстрактний"
+        )
+        self.assertEqual(
+            text,
+            "Гарний килим.\n\nРозмір: 60x100 см. Колір: бежевий, чорний. "
+            "Матеріал: поліпропілен. Малюнок: абстрактний.",
+        )
+        long = description_with_facts("я" * 6000, "60x100 см", "сірий", "Поліпропілен", "Однотонний")
+        self.assertLessEqual(len(long), 5000)
+        self.assertTrue(long.endswith("Матеріал: поліпропілен. Малюнок: однотонний."))
+
+
 class DimensionsDescriptionTests(PlainTestCase):
     def test_dimensions(self):
         self.assertEqual(size_dimensions("120x200 см"), (120, 200))
@@ -274,6 +366,9 @@ class BuildItemsDbTests(TestCase):
         self.assertEqual(small["pattern"], "Однотонний")
         self.assertEqual((small["product_width"], small["product_length"]), ("60 cm", "100 cm"))
         self.assertTrue(small["description"].startswith("Мʼякий килимок"))
+        self.assertTrue(small["description"].endswith(
+            "Колір: фіолетово-ліловий. Матеріал: поліпропілен. Малюнок: однотонний."
+        ))
         self.assertEqual(
             [(d["attribute_name"], d["attribute_value"]) for d in small["product_detail"]],
             [("Склад килима", "Поліпропілен"), ("Форма килима", "Прямокутник"),
@@ -293,6 +388,24 @@ class BuildItemsDbTests(TestCase):
         self.assertEqual(details[0].findtext(f"{G}section_name"), "Характеристики")
         self.assertEqual(details[0].findtext(f"{G}attribute_value"), "Поліпропілен")
         self.assertEqual(item.findtext(f"{G}material"), "Поліпропілен")
+
+    def test_description_color_and_pattern_keep_title(self):
+        from catalog.models import ProductSpecification
+
+        ProductSpecification.objects.filter(specification__title="Малюнок").delete()
+        self.product.title = "Килим Flex 19197-91"
+        self.product.description = "Бежевий з чорними плямками, ніби потертий фарбою. " * 3
+        self.product.save()
+        small = self._items()[0]
+        self.assertEqual(small["title"], "Килим прямокутний Flex 19197-91 60x100 см")
+        self.assertEqual(small["color"], "бежевий/чорний")
+        self.assertEqual(small["pattern"], "абстрактний")
+        self.assertTrue(small["description"].endswith(
+            "Розмір: 60x100 см. Колір: бежевий, чорний. Матеріал: поліпропілен. "
+            "Малюнок: абстрактний."
+        ))
+        self.assertEqual(small["id"], f"{self.product.pk}-{self.small.pk}")
+        self.assertEqual(small["price"], "600.00 UAH")
 
     def test_shape_detail_only_from_real_data(self):
         from catalog.models import ProductSpecification
