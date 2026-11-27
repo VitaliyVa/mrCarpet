@@ -271,54 +271,58 @@ def _payment_text(order) -> str:
 
     total = f"{float(order.total_price or 0):.0f} грн"
     if order.payment_type == Order.PAYMENT_CASH:
-        return f"Сума: {total}, оплата при отриманні."
+        return f"{total}, оплата при отриманні"
     if order.payment_type in (Order.PAYMENT_LIQPAY, Order.PAYMENT_ROZETKA):
-        return f"Сума: {total}, вже оплачено."
+        return f"{total}, вже оплачено"
     if order.payment_type == Order.PAYMENT_PREPAY:
-        return f"Сума: {total}, передоплата на картку."
-    return f"Сума: {total}."
+        return f"{total}, передоплата на картку"
+    return total
 
 
-def _shipping_text(order) -> str:
+def _shipping_lines(order) -> list[str]:
+    """«📦 ...» and, for site orders under the threshold, «🎁 ...»."""
     from order.models import Order
 
     if order.free_shipping:
-        return "Доставка для вас безкоштовна."
-    text = "Доставку оплачуєте на пошті за тарифом Нової Пошти."
+        return ["📦 Доставка для вас безкоштовна"]
+    lines = ["📦 Доставка за тарифом Нової Пошти, оплата на пошті"]
     threshold = _shop_threshold() if order.source == Order.SOURCE_SITE else 0
     if threshold:
         gap = threshold - float(order.total_price or 0)
-        text += f"\nУ нас безкоштовна доставка від {threshold} грн."
         if 0 < gap <= FREE_SHIPPING_HINT_GAP:
-            text += (
-                f" Вам не вистачило лише {gap:.0f} грн. Якщо захочете ще щось додати, "
-                "напишіть нам, і доставка буде безкоштовною."
+            lines.append(
+                f"🎁 У нас безкоштовна доставка від {threshold} грн, вам не вистачило лише "
+                f"{gap:.0f} грн. Хочете щось додати? Напишіть, і доставка буде безкоштовною"
             )
-    return text
+        else:
+            lines.append(f"🎁 У нас безкоштовна доставка від {threshold} грн")
+    return lines
 
 
 def customer_message(order, items=None) -> str:
-    """Plain text for Viber / Telegram / SMS. Simple, warm, no em dashes."""
+    """Text for Viber / Telegram / SMS: one fact per line, an emoji as its marker.
+
+    Short lines with a leading icon read faster in a messenger than a
+    paragraph; emojis mark lines, they do not decorate. No em dashes.
+    """
     items = order_items(order) if items is None else items
     name = (order.name or "").strip()
-    hello = f"Добрий день, {name}!" if name else "Добрий день!"
     lines = [
-        hello,
-        "Це магазин килимів mr.Carpet (mrcarpet24.com).",
-        f"Ми отримали ваше замовлення №{order.order_number or order.pk}:",
+        (f"Добрий день, {name}! 👋" if name else "Добрий день! 👋"),
+        f"Це магазин килимів mr.Carpet. Ми отримали ваше замовлення №{order.order_number or order.pk} ✅",
+        "",
     ]
-    lines += [f"• {_item_label(i)}" for i in items] or ["• (див. замовлення)"]
-    lines.append(_payment_text(order))
+    lines += [f"🛍 {_item_label(i)}" for i in items] or ["🛍 (див. замовлення)"]
+    lines.append(f"💰 {_payment_text(order)}")
     delivery = _delivery_text(order)
     if delivery:
-        lines.append(f"Доставка: Нова Пошта, {delivery}.")
-    lines.append(_shipping_text(order))
-    lines.append("")
-    lines.append(
-        "Підтвердіть, будь ласка, що все вірно, і ми відправимо килим. "
-        "Номер накладної надішлемо сюди."
-    )
-    lines.append("Дякуємо!")
+        lines.append(f"🚚 Нова Пошта: {delivery}")
+    lines += _shipping_lines(order)
+    lines += [
+        "",
+        "Підтвердіть, будь ласка, що все вірно 🙏",
+        "Після відправки надішлемо номер накладної. Дякуємо!",
+    ]
     return "\n".join(lines)
 
 
