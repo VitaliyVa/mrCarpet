@@ -51,7 +51,9 @@ SEO_INDEXING_ENABLED = config("SEO_INDEXING_ENABLED", default=False, cast=bool)
 # ships inert and turns on the moment this is set, no deploy needed beyond
 # the env var. Find it via business.google.com → location → "Get more
 # reviews", or the Place ID Finder (developers.google.com/maps/documentation/places/web-service/place-id).
-GOOGLE_PLACE_ID = config("GOOGLE_PLACE_ID", default="")
+# mr.Carpet, вул. Незалежності 5а, Ланівці (verified profile, checked
+# 27.11.2026: writereview?placeid=... opens the review form for this shop).
+GOOGLE_PLACE_ID = config("GOOGLE_PLACE_ID", default="ChIJ2d42s2ItLkcRCs8BdLFSgAE") or "ChIJ2d42s2ItLkcRCs8BdLFSgAE"
 
 # Merchant Center account id for the Google Customer Reviews opt-in on
 # /success/ (project/customer_reviews.py). Set to an empty string to turn the

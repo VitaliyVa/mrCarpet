@@ -54,13 +54,17 @@ def stamp_completed_at(sender, instance: Order, **kwargs):
 def remember_previous_status(sender, instance: Order, **kwargs):
     """Keep the status before this save for the post_save purchase check."""
     previous = None
+    previous_ttn = ""
     if instance.pk:
-        previous = (
+        row = (
             Order.objects.filter(pk=instance.pk)
-            .values_list("status", flat=True)
+            .values_list("status", "ttn")
             .first()
         )
+        if row:
+            previous, previous_ttn = row[0], row[1] or ""
     instance._status_before_save = previous
+    instance._ttn_before_save = previous_ttn
 
 
 @receiver(post_save, sender=Order)
@@ -98,3 +102,40 @@ def send_cod_purchase_on_delivery(sender, instance: Order, created, **kwargs):
         client_id=instance.ga4_client_id or None,
         session_id=instance.ga4_session_id or None,
     )
+
+
+@receiver(post_save, sender=Order)
+def move_stock_on_cancel(sender, instance: Order, created, **kwargs):
+    """Cancel gives the rugs back to stock; undoing the cancel takes them again."""
+    if created or kwargs.get("raw"):
+        return
+    before = getattr(instance, "_status_before_save", None)
+    if before == instance.status:
+        return
+    from .stock import return_stock, take_stock_again
+
+    try:
+        if instance.status == Order.STATUS_CANCELLED:
+            return_stock(instance.pk)
+        elif before == Order.STATUS_CANCELLED:
+            take_stock_again(instance.pk)
+    except Exception:  # never block saving the order over stock
+        import logging
+
+        logging.getLogger(__name__).exception("stock move failed for order %s", instance.pk)
+
+
+@receiver(post_save, sender=Order)
+def email_tracking_number(sender, instance: Order, created, **kwargs):
+    """«Посилку відправлено, ТТН ...» once, when a site order is shipped with a TTN."""
+    if kwargs.get("raw") or instance.status != Order.STATUS_SHIPPED:
+        return
+    if instance.shipped_email_sent_at or not (instance.ttn or "").strip():
+        return
+    before = getattr(instance, "_status_before_save", None)
+    before_ttn = getattr(instance, "_ttn_before_save", "")
+    if not created and before == Order.STATUS_SHIPPED and before_ttn == instance.ttn:
+        return
+    from .shipping import enqueue_shipped_email
+
+    enqueue_shipped_email(instance.pk)

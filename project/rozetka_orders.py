@@ -467,7 +467,8 @@ def cancel_order(rozetka_id: int):
             .select_related("product_attr__product")
             .order_by("pk")
         )
-        to_return = _stock_to_return(order, cart_products)
+        # Admin or the bot may have cancelled-and-returned already (order/stock.py).
+        to_return = {} if order.stock_returned else _stock_to_return(order, cart_products)
         returned = 0
         for cart_product in cart_products:
             units = to_return.get(cart_product.pk)
@@ -478,11 +479,12 @@ def cancel_order(rozetka_id: int):
             attr.save(update_fields=["quantity"])
             returned += units
         order.status = Order.STATUS_CANCELLED
+        order.stock_returned = True
         note = "Rozetka скасувала замовлення"
         if returned:
             note += ", залишок повернено"
         order.message = "\n".join(p for p in (order.message, note) if p)[:MESSAGE_MAX]
-        order.save(update_fields=["status", "message", "updated"])
+        order.save(update_fields=["status", "stock_returned", "message", "updated"])
     return order, returned
 
 

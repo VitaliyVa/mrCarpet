@@ -539,9 +539,12 @@ class CancellationTests(RozetkaTestBase):
         order.save()
         message = Order.objects.get().message
 
+        # The admin cancel already gave the 2 rugs back (order/stock.py), and
+        # Rozetka's own cancel later must not give them back a second time.
+        self.assertEqual(self.stock(), 5)
         summary = import_new_orders()
         self.assertEqual(summary["cancelled"], 0)
-        self.assertEqual(self.stock(), 3)
+        self.assertEqual(self.stock(), 5)
         self.assertEqual(Order.objects.get().message, message)
         self.tg_send.assert_not_called()
 

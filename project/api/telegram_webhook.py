@@ -40,6 +40,12 @@ def telegram_webhook(request):
         cq = update.get("callback_query")
         if cq and handle_order_callback(cq):
             return JsonResponse({"ok": True, "handled": "order_callback"})
+
+        from order.bot_status import handle_ttn_reply
+
+        msg = update.get("message") or {}
+        if msg.get("reply_to_message") and handle_ttn_reply(msg):
+            return JsonResponse({"ok": True, "handled": "order_ttn"})
     except Exception:
         logger.exception("order callback handler failed")
 

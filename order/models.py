@@ -198,6 +198,38 @@ class Order(AbstractCreatedUpdated):
         editable=False,
         help_text="Порожньо = ще не просили. Один лист на замовлення, не більше.",
     )
+    stock_returned = models.BooleanField(
+        verbose_name="Залишок повернено на склад",
+        default=False,
+        editable=False,
+        help_text="Після скасування товар повернувся на склад (рівно один раз).",
+    )
+    shipped_email_sent_at = models.DateTimeField(
+        verbose_name="Лист «відправлено» надіслано",
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    np_status_code = models.CharField(
+        verbose_name="Нова Пошта: код статусу", max_length=8, blank=True, default="", editable=False
+    )
+    np_status = models.CharField(
+        verbose_name="Нова Пошта: статус посилки", max_length=255, blank=True, default="", editable=False
+    )
+    np_checked_at = models.DateTimeField(
+        verbose_name="Нова Пошта: перевірено", null=True, blank=True, editable=False
+    )
+    np_arrived_at = models.DateTimeField(
+        verbose_name="Посилка прибула у відділення", null=True, blank=True, editable=False
+    )
+    np_notified = models.CharField(
+        verbose_name="Нова Пошта: про що вже повідомили",
+        max_length=255,
+        blank=True,
+        default="",
+        editable=False,
+        help_text="Ключі подій через кому (arrived, remind, refused, ...), щоб не дублювати.",
+    )
     ga4_client_id = models.CharField(
         verbose_name="GA4 client_id",
         max_length=64,

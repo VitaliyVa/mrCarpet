@@ -384,7 +384,8 @@ def order_keyboard(order) -> dict:
             [
                 {"text": "✉️ Текст для месенджера", "callback_data": f"{CB_MESSAGE}:{order.pk}"},
                 {"text": "📞 Сценарій дзвінка", "callback_data": f"{CB_CALL}:{order.pk}"},
-            ]
+            ],
+            [{"text": "🔄 Статус", "callback_data": f"ordst:{order.pk}"}],
         ]
     }
 
@@ -425,7 +426,9 @@ def handle_order_callback(callback: dict) -> bool:
     data = callback.get("data") or ""
     action, _, raw_pk = data.partition(":")
     if action not in (CB_MESSAGE, CB_CALL):
-        return False
+        from order.bot_status import handle_status_callback
+
+        return handle_status_callback(callback)
 
     from order.models import Order
     from project.models import TelegramSettings

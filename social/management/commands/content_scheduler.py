@@ -33,7 +33,42 @@ def next_tick(now: datetime | None = None) -> datetime:
     return tick - timedelta(minutes=tick.minute % TICK_MINUTES)
 
 
-def run_once() -> str:
+# Order follow-ups ride this always-on loop (tiktok-daily, where review
+# invitations used to live, is paused, so they never went out).
+TRACK_HOURS = range(8, 22)  # Nova Poshta tracking, at the top of each hour
+REVIEW_HOUR = 11  # review invitations, once a day
+
+
+def order_jobs(now: datetime) -> list[str]:
+    """Hourly parcel tracking and the daily review invitations. Never raises."""
+    now = now.astimezone(KYIV)
+    if now.minute >= TICK_MINUTES:
+        return []
+    lines = []
+    if now.hour in TRACK_HOURS:
+        try:
+            from order.shipping import track_shipments
+
+            result = track_shipments()
+            if result != "tracking: nothing to check":
+                lines.append(result)
+        except Exception as exc:
+            logger.exception("parcel tracking failed")
+            lines.append(f"tracking failed: {exc}")
+    if now.hour == REVIEW_HOUR:
+        try:
+            from order.review_request import ask_staff_due, send_due
+
+            sent, asked = send_due(), ask_staff_due()
+            if sent or asked:
+                lines.append(f"review invites: {sent}, staff nudges: {asked}")
+        except Exception as exc:
+            logger.exception("review requests failed")
+            lines.append(f"review requests failed: {exc}")
+    return lines
+
+
+def run_once(now: datetime | None = None) -> str:
     """One pass. Never raises: the loop must outlive a Meta or DB hiccup."""
     close_old_connections()
     try:
@@ -42,7 +77,9 @@ def run_once() -> str:
         lines = release_due_posts()
     except Exception as exc:
         logger.exception("content scheduler pass failed")
-        return f"release failed: {exc}"
+        lines = [f"release failed: {exc}"]
+    try:
+        lines = list(lines or []) + order_jobs(now or datetime.now(KYIV))
     finally:
         close_old_connections()
     return "; ".join(lines) if lines else "nothing due"
