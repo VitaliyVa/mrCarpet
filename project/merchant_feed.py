@@ -13,9 +13,10 @@ Facts only from the DB, nothing generated:
   the PDP opens with that size and its price already rendered (canonical
   stays the clean product URL);
 - color / shape / type words are parsed from the shop-written title (and
-  active_color / specs as fallback); material, pattern and `product_detail`
-  come from ProductSpecification rows (same rows as the PDP `<dl>` and the
-  JSON-LD `additionalProperty`);
+  active_color / specs / the description's own colour words as fallback);
+  material and `product_detail` come from ProductSpecification rows (same
+  rows as the PDP `<dl>` and the JSON-LD `additionalProperty`); pattern from
+  a «Малюнок» spec, else from clear title / description words;
 - product_length / product_width come from the size label;
 - `shipping` (Nova Poshta, free from the ShopSettings threshold, handling and
   transit days) comes from project.free_shipping, same as the JSON-LD.
@@ -305,12 +306,197 @@ def product_shape(product, specs, size: str) -> str:
     return ""
 
 
-def product_color(product, specs) -> str:
-    """Google color: title colors (≤3, '/'), else active_color, else spec."""
+def _named_color(product, specs) -> str:
+    """Title colors (≤3, '/'), else active_color, else spec."""
     colors = parse_title(product.title)["colors"]
     if colors:
         return "/".join(c[:40] for c in colors[:3])
     return (_product_color(product) or _spec(specs, "колір", "цвет", "color"))[:100]
+
+
+def product_color(product, specs) -> str:
+    """Google color: title / active_color / spec, else the colour words the
+    description gives the rug itself ('Бежевий з чорними плямками')."""
+    return _named_color(product, specs) or description_color(product)[:100]
+
+
+# --- description facts (colour / pattern words the shop wrote) --------------
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+|\n+")
+# Sentences about another product ('Є такий самий однотонний', 'відрізняється
+# малюнком', 'подивіться зелений килимок') or questions say nothing about this one.
+_OTHER_PRODUCT_MARKERS = (
+    "подивіться", "відрізняється", "беріть", "такий самий", "така сама", "таке саме",
+    "такого ж", "з таким малюнком", "тієї ж серії", "як на більшому", "як на меншому",
+    "менший килим", "більший килим",
+)
+_OTHER_PRODUCT_STARTS = ("є ", "якщо ")
+# Colours of the room around the rug ('пасує до сірих меблів').
+_DECOR_MARKERS = (
+    "пасує", "поєднуєт", "подушк", "штор", "меблі", "покривал", "підлог", "підлоз",
+    "стін", "плитк",
+)
+# Thin accent marks: 'з білими й синюватими розводами' is not the rug colour.
+_ACCENT_WORDS = ("розвод", "прожилк", "штрих", "тріщин", "крапк")
+_FLEX_ENDINGS = (
+    "ий", "ій", "а", "я", "е", "є", "і", "ого", "его", "ього", "их", "іх", "им", "ім",
+    "ими", "іми", "ою", "ею", "ьою", "у", "ю", "ому", "ьому", "ої", "ей",
+)
+_SOFT_STEMS = {"син"}  # синій / синя / синю
+_VAGUE_COLOR_STEMS = {"темн", "кольоров"}  # 'темна середина', 'кольорові' say no colour
+_NOT_COLOR_WORDS = {"біля", "сина", "сину", "сини"}  # preposition / noun, not білий / синій
+# The sentence speaks about the rug's own colour ('Сіра доріжка', 'чорному фоні',
+# 'у коричнево-бежевих тонах'), not about a picture on it ('Жовті очі', 'зеленою травою').
+_RUG_COLOR_ANCHOR = re.compile(
+    r"килим|доріжк|\bфон|\bтон(?:ах|ами|і|ів)?\b|палітр|відтін|\bкол(?:ір|ьор)"
+    r"|малюн|візерун|орнамент"
+)
+_WORD = re.compile(r"[а-яіїєґʼ’'a-z0-9-]+", re.I)
+
+
+def _own_sentences(product) -> list[str]:
+    text = _clean(getattr(product, "description", "") or "")
+    meta = _clean(getattr(product, "meta_description", "") or "")
+    if len(meta) > len(text):
+        text = meta
+    sentences = []
+    for raw in _SENTENCE_SPLIT.split(text):
+        sentence = raw.strip()
+        lower = sentence.lower()
+        if not sentence or lower.endswith("?"):
+            continue
+        if lower.startswith(_OTHER_PRODUCT_STARTS) or any(m in lower for m in _OTHER_PRODUCT_MARKERS):
+            continue
+        sentences.append(sentence)
+    return sentences
+
+
+def _color_stem(part: str) -> str:
+    """Longest colour stem the word part starts with ('' when none)."""
+    best = ""
+    for stem in _COLOR_STEMS:
+        if part.startswith(stem) and len(stem) > len(best):
+            best = stem
+    return best
+
+
+def color_base(word: str) -> str:
+    """Inflected colour word -> masculine form ('чорними' -> 'чорний',
+    'сіро-чорним' -> 'сіро-чорний', 'Сіра' -> 'сірий'); '' when not a colour."""
+    lower = word.lower().strip(",.;:!()«»\"")
+    if lower in _NOT_COLOR_WORDS:
+        return ""
+    parts = [p for p in lower.split("-") if p]
+    if not parts or not _CYRILLIC.search(lower):
+        return ""
+    out = []
+    for n, part in enumerate(parts):
+        last = n == len(parts) - 1
+        prefix = ""
+        for pre in _COLOR_PREFIXES:
+            if part.startswith(pre) and len(part) > len(pre):
+                prefix, part = pre, part[len(pre):]
+                break
+        if not last:
+            if part in _COLOR_PREFIXES or (_color_stem(part) and part.endswith("о")):
+                out.append(prefix + part)
+                continue
+            return ""
+        if part in _COLOR_NOUNS:
+            out.append(prefix + part)
+            continue
+        stem = _color_stem(part)
+        if not stem or part[len(stem):] not in _FLEX_ENDINGS:
+            return ""
+        if stem in _VAGUE_COLOR_STEMS and len(parts) == 1 and not prefix:
+            return ""
+        out.append(prefix + stem + ("ій" if stem in _SOFT_STEMS else "ий"))
+    return "-".join(out)
+
+
+def description_color(product) -> str:
+    """Colours of the first own description sentence that names the rug
+    colour ('Бежевий з чорними плямками' -> 'бежевий/чорний'), ≤3; '' when
+    the text names none. Room-decor and accent-mark colours are skipped."""
+    for sentence in _own_sentences(product):
+        lower = sentence.lower()
+        # 'Чорно-білий малюнок пасує до сірих меблів': only the part before
+        # the room decor speaks about the rug.
+        cut = min((lower.find(m) for m in _DECOR_MARKERS if m in lower), default=len(lower))
+        lower = lower[:cut]
+        words = _WORD.findall(lower)
+        # 'Бежевий з чорними плямками': the sentence opens with the colour
+        # ('Різнокольорові шматочки пазлу' always speaks about the whole rug).
+        first = color_base(words[0]) if words else ""
+        opens_with_color = bool(first) and (
+            first.startswith("різнокольоров")
+            or len(words) == 1
+            or words[1] in {"з", "із", "зі", "та", "і", "й"}
+            or lower.lstrip()[len(words[0]):].startswith(",")
+        )
+        if not (opens_with_color or _RUG_COLOR_ANCHOR.search(lower)):
+            continue
+        colors: list[str] = []
+        for n, word in enumerate(words):
+            base = color_base(word)
+            if not base:
+                continue
+            after = " ".join(words[n + 1 : n + 4])
+            if any(a in after for a in _ACCENT_WORDS):
+                continue
+            if base.startswith("різнокольоров"):
+                return "різнокольоровий"
+            if base not in colors:
+                colors.append(base)
+        if colors:
+            return "/".join(c[:40] for c in colors[:3])
+    return ""
+
+
+PATTERN_SPEC_KEYS = ("малюн", "візерун", "орнамент", "дизайн", "принт")
+_SOLID_RE = re.compile(r"\bоднотонн(?:ий|а|е)\b(?!\s+середин)|без\s+малюнк|без\s+візерунк")
+_WITHOUT_RE = re.compile(r"\bбез\s+[^.,;:!]*")  # 'без квіточок і вензелів'
+_TITLE_PATTERNS = (
+    ("дитячий", re.compile(r"дитяч|міккі|пазл")),
+    ("тварини", re.compile(r"\b(?:тигр|леопард|зебр|ведмед|котик|собак|зайч)")),
+)
+_TEXT_PATTERNS = (  # first match wins
+    ("мармуровий", re.compile(r"мармур")),
+    ("класичний", re.compile(
+        r"вензел|медальйон|класичн\w*\s+(?:візерун|вензел|орнамент|малюн|килим)"
+        r"|орнамент\w*\s+під\s+старовин|східн\w*\s+орнамент|мереживн\w*\s+орнамент"
+    )),
+    ("квітковий", re.compile(r"квіт")),
+    ("рослинний", re.compile(r"\bлист(?:я|ям|оч|ок)|рослин")),
+    ("абстрактний", re.compile(r"абстракт|розвод|меланж|потерт\w*\s+малюн|плямк")),
+    ("смугастий", re.compile(r"смуг")),
+    ("хвилястий", re.compile(r"хвил")),
+    ("геометричний", re.compile(
+        r"геометр|ромб|клітин|квадратик|меандр|\bкіл\b|\bкола\b|кругами|промен"
+        r"|\bарок\b|\bарки\b|арками|клаптик|прямокутник(?:ів|ами)\b|навхрест|зигзаг"
+    )),
+)
+
+
+def product_pattern(product, specs) -> str:
+    """Google pattern: a «Малюнок» / «Візерунок» spec, else a short Ukrainian
+    word from what the title and description say about the rug ('однотонний',
+    'абстрактний', 'класичний', ...). '' when neither says it clearly."""
+    spec = _spec(specs, *PATTERN_SPEC_KEYS)
+    if spec:
+        return spec[:100]
+    title = _clean(product.title).lower()
+    for value, regex in _TITLE_PATTERNS:
+        if regex.search(title):
+            return value
+    text = " ".join([title, *_own_sentences(product)]).lower()
+    if _SOLID_RE.search(text):
+        return "однотонний"
+    text = _WITHOUT_RE.sub(" ", text)
+    for value, regex in _TEXT_PATTERNS:
+        if regex.search(text):
+            return value
+    return ""
 
 
 # --- feed -------------------------------------------------------------------
@@ -430,9 +616,11 @@ def size_class(dims) -> str:
     return "великий"
 
 
-def description_with_facts(description: str, size: str, color: str, material: str) -> str:
-    """Append a short facts line (size/color/material from the DB) so Google
-    can match descriptive queries; skipped facts are simply left out."""
+def description_with_facts(
+    description: str, size: str, color: str, material: str, pattern: str = ""
+) -> str:
+    """Append a short facts line (size/color/material/pattern from the DB) so
+    Google can match descriptive queries; skipped facts are simply left out."""
     facts = []
     if size:
         facts.append(f"Розмір: {size}.")
@@ -440,6 +628,8 @@ def description_with_facts(description: str, size: str, color: str, material: st
         facts.append(f"Колір: {color.replace('/', ', ')}.")
     if material:
         facts.append(f"Матеріал: {material.lower()}.")
+    if pattern:
+        facts.append(f"Малюнок: {pattern.lower()}.")
     if not facts:
         return description
     line = " ".join(facts)
@@ -524,9 +714,10 @@ def build_items(products) -> list[dict]:
             continue  # Google rejects items without image_link
         specs = product_specs(product)
         description = product_description(product)
-        color = product_color(product, specs)
+        title_color = _named_color(product, specs)
+        color = title_color or description_color(product)[:100]
         material = _spec(specs, "матеріал", "склад", "материал")[:200]
-        pattern = _spec(specs, "малюн", "візерун", "орнамент", "дизайн", "принт")[:100]
+        pattern = product_pattern(product, specs)
         highlights = [f"{n}: {v}"[:150] for n, v in specs][:10]
         categories = list(product.categories.all())
         product_type = feed_product_type(categories)
@@ -543,8 +734,10 @@ def build_items(products) -> list[dict]:
             item = {
                 "id": offer_id(product, attr),
                 "item_group_id": str(product.pk),
-                "title": feed_title(product, size, specs, color),
-                "description": description_with_facts(description, size, color, material),
+                # Title keeps the named colour only: a description colour
+                # ('бежевий/чорний') would rename approved offers.
+                "title": feed_title(product, size, specs, title_color),
+                "description": description_with_facts(description, size, color, material, pattern),
                 "link": variant_link(product, attr),
                 "image_link": images[0],
                 "additional_image_link": images[1 : 1 + MAX_ADDITIONAL_IMAGES],
