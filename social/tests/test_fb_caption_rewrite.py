@@ -67,3 +67,24 @@ class FacebookCaptionRewriteTests(TestCase):
             self.assertGreater(len([l for l in body.splitlines() if l.strip()]), 1, slug)
             self.assertNotIn("—", texts["new"], slug)
             self.assertNotIn("–", texts["new"], slug)
+
+
+class FacebookCaptionRestoreTests(FacebookCaptionRewriteTests):
+    """0029 puts the original captions back after 0028."""
+
+    def test_rewrites_untouched_scheduled_post_once(self):
+        restore = import_module("social.migrations.0029_restore_original_facebook_captions")
+        post = self.make("scheduled", self.old)
+        migration.forwards(historical_apps(), None)
+        restore.forwards(historical_apps(), None)
+        restore.forwards(historical_apps(), None)
+        post.refresh_from_db()
+        self.assertEqual(post.caption_fb, self.old)
+        self.assertEqual(post.caption, self.old)
+
+    def test_new_texts_are_multiline_without_long_dashes(self):
+        restore = import_module("social.migrations.0029_restore_original_facebook_captions")
+        edited = self.make("scheduled", "Свій текст власника")
+        restore.forwards(historical_apps(), None)
+        edited.refresh_from_db()
+        self.assertEqual(edited.caption_fb, "Свій текст власника")
