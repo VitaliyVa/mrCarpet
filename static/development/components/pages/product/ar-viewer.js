@@ -104,13 +104,25 @@ function getProductRoot() {
   return document.querySelector(".product[data-ar-ready]");
 }
 
+// Only the main product's size chips: related cards on the PDP («Інші форми
+// та кольори») also render .sizes-block, and a page-wide query mixed their
+// sizes into the 3D modal and clicked their chips.
+function pdpSizeChipEls() {
+  const root = document.querySelector("div.product[data-product-slug]");
+  if (!root) return [];
+  const block = [...root.querySelectorAll(".sizes-block")].find(
+    (b) => b.parentElement && b.parentElement.closest("[data-catalog-product-id]") === root
+  );
+  return block ? [...block.querySelectorAll(".size-label")] : [];
+}
+
 function getActiveSizeLabel() {
-  const active = document.querySelector(".sizes-block .size-label.active");
+  const active = pdpSizeChipEls().find((el) => el.classList.contains("active"));
   return active ? active.textContent.trim() : null;
 }
 
 function getSizeChips() {
-  return [...document.querySelectorAll(".sizes-block .size-label")].map((el) => ({
+  return pdpSizeChipEls().map((el) => ({
     label: el.textContent.trim(),
     itemId: el.dataset.item,
     el,
@@ -118,7 +130,7 @@ function getSizeChips() {
 }
 
 function setPdpActiveSize(label) {
-  const chips = document.querySelectorAll(".sizes-block .size-label");
+  const chips = pdpSizeChipEls();
   chips.forEach((chip) => {
     const match = chip.textContent.trim() === label;
     chip.classList.toggle("active", match);
@@ -865,7 +877,7 @@ export function initProductArViewer() {
     if (e.key === "Escape" && !modal.hidden) closeModal();
   });
 
-  document.querySelectorAll(".sizes-block .size-label").forEach((chip) => {
+  pdpSizeChipEls().forEach((chip) => {
     chip.addEventListener("click", () => {
       if (modal.hidden) return;
       const label = chip.textContent.trim();
