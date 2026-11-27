@@ -104,6 +104,17 @@ class Order(AbstractCreatedUpdated):
         null=True,
         help_text="Назва відділення / поштомату Нової Пошти",
     )
+    ttn = models.CharField(
+        verbose_name="ТТН",
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=(
+            "Номер накладної Нової Пошти. Для замовлень з Rozetka обов'язковий "
+            "при статусі «Відправлено»: його отримає Rozetka, і далі посилку "
+            "вона відстежує сама."
+        ),
+    )
     message = models.CharField(
         verbose_name="Повідомлення",
         max_length=1024,

@@ -1,12 +1,71 @@
 import io
+import logging
 
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
 from .models import Order, PromoCodeRedemption
+
+logger = logging.getLogger(__name__)
+
+
+def _cancel_reason_choices():
+    from project.rozetka_status import CANCEL_REASONS, CANCEL_SKIP
+
+    return (
+        [("", "— оберіть причину —")]
+        + [(str(pk), label) for pk, label in CANCEL_REASONS]
+        + [(CANCEL_SKIP, "Не передавати на Rozetka (вже скасовано в кабінеті)")]
+    )
+
+
+class OrderAdminForm(forms.ModelForm):
+    rozetka_cancel_reason = forms.ChoiceField(
+        label="Причина скасування для Rozetka",
+        required=False,
+        choices=_cancel_reason_choices,
+        help_text=(
+            "Потрібна, коли замовлення з Rozetka переводите в «Скасовано»: "
+            "Rozetka отримає саме цю причину."
+        ),
+    )
+
+    class Meta:
+        model = Order
+        fields = "__all__"
+
+    def clean(self):
+        cleaned = super().clean()
+        order = self.instance
+        if not (order and order.pk and order.source == Order.SOURCE_ROZETKA
+                and order.rozetka_order_id):
+            return cleaned
+        before = (
+            Order.objects.filter(pk=order.pk).values_list("status", flat=True).first()
+        )
+        status = cleaned.get("status")
+        if (
+            status == Order.STATUS_SHIPPED
+            and before != Order.STATUS_SHIPPED
+            and not (cleaned.get("ttn") or "").strip()
+        ):
+            self.add_error(
+                "ttn", "Rozetka не прийме «Відправлено» без ТТН. Впишіть номер накладної."
+            )
+        if (
+            status == Order.STATUS_CANCELLED
+            and before != Order.STATUS_CANCELLED
+            and not cleaned.get("rozetka_cancel_reason")
+        ):
+            self.add_error(
+                "rozetka_cancel_reason",
+                "Оберіть причину: Rozetka без неї не скасує замовлення.",
+            )
+        return cleaned
 
 
 class AdClickFilter(admin.SimpleListFilter):
@@ -27,6 +86,7 @@ class AdClickFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    form = OrderAdminForm
     list_display = (
         "order_number",
         "status_badge",
@@ -43,6 +103,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display_links = ("order_number", "customer")
     list_filter = (
         "status",
+        "source",
         "payment_type",
         "free_shipping",
         AdClickFilter,
@@ -51,7 +112,7 @@ class OrderAdmin(admin.ModelAdmin):
         "city",
         "created",
     )
-    actions = ("export_ads_conversions",)
+    actions = ("export_ads_conversions", "confirm_on_rozetka")
     search_fields = (
         "order_number",
         "name",
@@ -63,6 +124,7 @@ class OrderAdmin(admin.ModelAdmin):
         "promocode_code",
         "promocode__code",
         "gclid",
+        "ttn",
     )
     date_hierarchy = "created"
     ordering = ("-created",)
@@ -83,6 +145,8 @@ class OrderAdmin(admin.ModelAdmin):
         "ga4_mp_sent",
         "review_request_sent_at",
         "review_links",
+        "source",
+        "rozetka_order_id",
     )
     list_select_related = ("promocode",)
 
@@ -120,6 +184,7 @@ class OrderAdmin(admin.ModelAdmin):
                 "fields": (
                     "city",
                     "address",
+                    "ttn",
                     "message",
                     "free_shipping",
                     "free_shipping_threshold",
@@ -166,6 +231,81 @@ class OrderAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    ROZETKA_FIELDSET = (
+        "Rozetka",
+        {
+            "fields": ("source", "rozetka_order_id", "rozetka_cancel_reason"),
+            "description": (
+                "Статус сам передається на Rozetka: «Оплачено, комплектується» → "
+                "«Комплектується», «Відправлено» → «Передано в службу доставки» з ТТН, "
+                "«Скасовано» → обрана причина. Результат з'являється рядком "
+                "«Rozetka ✓ / ✗» у полі «Повідомлення» (оновіть сторінку за кілька секунд)."
+            ),
+        },
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj is not None and obj.source == Order.SOURCE_ROZETKA:
+            return (self.ROZETKA_FIELDSET,) + tuple(fieldsets)
+        return fieldsets
+
+    def save_model(self, request, obj, form, change):
+        before = None
+        if change and obj.pk:
+            before = Order.objects.filter(pk=obj.pk).values("status", "ttn").first()
+        super().save_model(request, obj, form, change)
+        try:
+            from project import rozetka_status
+
+            push = rozetka_status.push_for_change(
+                obj, before, form.cleaned_data.get("rozetka_cancel_reason", "")
+            )
+            if push is not None:
+                rozetka_status.schedule(obj.pk, push)
+                self.message_user(
+                    request,
+                    f"Rozetka: передаємо статус «{push.label}». Результат буде "
+                    "в полі «Повідомлення» за кілька секунд.",
+                    messages.INFO,
+                )
+        except Exception:
+            logger.exception("rozetka: could not schedule status push for order %s", obj.pk)
+            self.message_user(
+                request,
+                "Замовлення збережено, але статус на Rozetka не передано. "
+                "Змініть його в кабінеті Rozetka.",
+                messages.WARNING,
+            )
+
+    @admin.action(description="Підтвердити на Rozetka (статус «Опрацьовується менеджером»)")
+    def confirm_on_rozetka(self, request, queryset):
+        from project import rozetka_status
+
+        selected = queryset.count()
+        pks = list(
+            queryset.filter(
+                source=Order.SOURCE_ROZETKA,
+                rozetka_order_id__isnull=False,
+                status__in=(Order.STATUS_NEW, Order.STATUS_AWAITING_PAYMENT),
+            ).values_list("pk", flat=True)
+        )
+        skipped = selected - len(pks)
+        if pks:
+            rozetka_status.schedule_many(pks, rozetka_status.confirm_push())
+            self.message_user(
+                request,
+                f"Rozetka: підтверджуємо {len(pks)} замовл. у фоні. Результат буде "
+                "в полі «Повідомлення» кожного замовлення.",
+                messages.INFO,
+            )
+        if skipped:
+            self.message_user(
+                request,
+                f"Пропущено {skipped}: не з Rozetka або вже не в статусі «Нове» / «Очікує оплати».",
+                messages.WARNING,
+            )
 
     @admin.action(description="Вивантажити для Google Ads (CSV, лише оплачені з gclid)")
     def export_ads_conversions(self, request, queryset):
