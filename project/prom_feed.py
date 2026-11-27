@@ -51,6 +51,7 @@ from project.merchant_feed import (
     variant_link,
 )
 from project.seo_jsonld import KARAT_COLLECTIONS, ORG_NAME, product_brand  # noqa: F401
+from project.rozetka_logistics import logistics as rozetka_logistics
 from project.seo_urls import absolute_site_url
 from project.text_encoding import fix_utf8_mojibake
 
@@ -452,6 +453,22 @@ def build_rozetka_offers(products) -> list[dict]:
                 seen_names,
             )
             quantity = max(int(attr.quantity or 0), 0)
+            params = _rozetka_params(
+                specs, size, color, product_shape(product, specs, size), country,
+                kind=_rozetka_kind(product.title),
+                vendor=vendor,
+                rooms=rooms,
+                pattern=pattern,
+            )
+            try:
+                ship = rozetka_logistics(product.title, size, dict(params))
+            except Exception:  # never break the feed over an estimate
+                ship = None
+            if ship:
+                params += [
+                    ("Вага", ship["weight_text"]),
+                    ("Габарити упаковки", ship["package_text"]),
+                ]
             offers.append({
                 "id": rozetka_offer_id(product, attr),
                 "group_id": str(product.pk),
@@ -468,13 +485,7 @@ def build_rozetka_offers(products) -> list[dict]:
                 "name": name,
                 "name_ua": name,
                 "description": description,
-                "params": _rozetka_params(
-                    specs, size, color, product_shape(product, specs, size), country,
-                    kind=_rozetka_kind(product.title),
-                    vendor=vendor,
-                    rooms=rooms,
-                    pattern=pattern,
-                ),
+                "params": params,
             })
     return offers
 
