@@ -57,10 +57,10 @@ class RozetkaHelpersTests(PlainTestCase):
             rozetka_vendor([("Склад килима", "Поліпропілен")]),
             (ROZETKA_FALLBACK_VENDOR, True),
         )
-        self.assertEqual(rozetka_vendor([]), ("mr.Carpet", True))
+        self.assertEqual(rozetka_vendor([]), ("Без бренду", True))
         self.assertEqual(rozetka_vendor([], "Килим прямокутний Mira 24192/261"), ("Karat", False))
         self.assertEqual(rozetka_vendor([], "Килим Flex 19197-91"), ("Karat", False))
-        self.assertEqual(rozetka_vendor([], "Килим La Rosa GK503"), ("mr.Carpet", True))
+        self.assertEqual(rozetka_vendor([], "Килим La Rosa GK503"), ("Без бренду", True))
 
     def test_picture_url_percent_encoded(self):
         url = rozetka_picture_url("https://mrcarpet24.com/media/products/килим 1.jpg")
@@ -198,7 +198,7 @@ class RozetkaFeedTests(TestCase):
     def test_category_vendor_description_and_params(self):
         offer = self._root().findall("shop/offers/offer")[0]
         self.assertEqual(offer.findtext("categoryId"), str(self.category.pk))  # room, not country
-        self.assertEqual(offer.findtext("vendor"), "mr.Carpet")  # no brand spec -> fallback
+        self.assertEqual(offer.findtext("vendor"), "Без бренду")  # no brand spec -> fallback
         self.assertTrue(offer.findtext("description").startswith("<p>Мʼякий килимок"))
         self.assertTrue(offer.findtext("description_ua").startswith("<p>Мʼякий килимок"))
         params = {p.get("name"): p.text for p in offer.findall("param")}
@@ -283,3 +283,91 @@ class RozetkaParamsTests(SimpleTestCase):
         self.assertNotIn("Країна реєстрації бренду", d)
         self.assertNotIn("Призначення", d)
         self.assertEqual(_rozetka_kind("Килимова доріжка Flex 80 см"), "Килимові доріжки")
+
+
+class RozetkaDescriptionTests(SimpleTestCase):
+    def test_size_list_and_cross_sell_dropped(self):
+        from project.prom_feed import rozetka_description
+
+        text = (
+            "Сірий прямокутний килим Mira 24058/160. Малюнок абстрактний.\n"
+            "Ворс 6.5 мм, основа джутова. Розмірів десять, від 60х110 см до 3х4 м. "
+            "Зроблено в Україні.\n"
+            "Любите м’якші лінії? Є такий самий овальний."
+        )
+        out = rozetka_description(text)
+        self.assertNotIn("Розмірів", out)
+        self.assertNotIn("овальний", out)
+        self.assertNotIn("Любите", out)
+        self.assertIn("Зроблено в Україні.", out)
+        self.assertIn("Ворс 6.5 мм, основа джутова.", out)
+
+    def test_single_size_cut_out_of_sentence(self):
+        from project.prom_feed import rozetka_description
+
+        self.assertEqual(
+            rozetka_description("Коричневий гумовий килимок під двері, 40х60 см, у формі напівкола."),
+            "Коричневий гумовий килимок під двері, у формі напівкола.",
+        )
+        self.assertEqual(
+            rozetka_description("Сірий килимок Taflan для ванної кімнати, розмір 60х100 см."),
+            "Сірий килимок Taflan для ванної кімнати.",
+        )
+
+    def test_nothing_left_keeps_original(self):
+        from project.prom_feed import rozetka_description
+
+        self.assertEqual(rozetka_description("Є два розміри: 60х80 см і 70х120 см."),
+                         "Є два розміри: 60х80 см і 70х120 см.")
+
+
+
+class ShapeTitleWinsTests(SimpleTestCase):
+    def test_title_shape_beats_mistyped_spec(self):
+        from types import SimpleNamespace
+
+        from project.merchant_feed import product_shape
+
+        oval = SimpleNamespace(title="Килим овальний Modern GK506 сірий")
+        self.assertEqual(product_shape(oval, [("Форма килима", "Прямокутник")], "120x200 см"), "Овал")
+        semi = SimpleNamespace(title="Килим напівкруглий під двері гумовий")
+        self.assertEqual(product_shape(semi, [("Форма", "Напівколо")], ""), "Напівколо")
+        round_ = SimpleNamespace(title="Килим круглий Kids")
+        self.assertEqual(product_shape(round_, [("Форма", "Круглий")], ""), "Круглий")
+
+
+class SpecFixMigrationTests(TestCase):
+    def test_fixes_shape_pile_and_rubber(self):
+        import importlib
+
+        from django.db import connection
+        from django.db.migrations.loader import MigrationLoader
+
+        from catalog.models import Product
+
+        oval = Product.objects.create(title="Килим овальний Modern GK506", slug="kilim-ovalnii-sirii-moderngk506-o")
+        oksi = Product.objects.create(title="Килим прямокутний Oksi 38025.608", slug="kilim-priamokutnii-oksi-38025608")
+        other = Product.objects.create(title="Килим прямокутний", slug="kilim-inshii")
+        _spec(oval, "Форма килима", "Прямокутник")
+        _spec(other, "Форма килима", "Прямокутник")
+        _spec(oksi, "Висота ворса", "Безворсовий")
+        _spec(other, "Основа", "Резина")
+
+        apps = MigrationLoader(connection).project_state(
+            ("catalog", "0051_fix_specs_for_rozetka")
+        ).apps
+        mod = importlib.import_module("catalog.migrations.0051_fix_specs_for_rozetka")
+        mod.forwards(apps, None)
+        mod.forwards(apps, None)  # idempotent
+
+        shape = ProductSpecification.objects.get(product=oval)
+        self.assertEqual(shape.spec_value.title, "Овал")
+        self.assertEqual(
+            ProductSpecification.objects.get(product=other, specification__title="Форма килима").spec_value.title,
+            "Прямокутник",
+        )
+        self.assertIsNone(ProductSpecification.objects.get(product=oksi).spec_value)
+        self.assertEqual(
+            ProductSpecification.objects.get(product=other, specification__title="Основа").spec_value.title,
+            "Гума",
+        )

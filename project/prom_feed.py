@@ -17,8 +17,10 @@ Rozetka specifics:
   as long as the rows exist. category id is ProductCategory.pk;
 - price = site price (after discount) * ROZETKA_PRICE_MARKUP (settings,
   default 1.25: Rozetka commission ~20%, 1/0.8), rounded to whole UAH;
-- `vendor` comes from a «Бренд» / «Торгова марка» spec, else the fallback
-  `mr.Carpet` (see `rozetka_vendor`);
+- `vendor` comes from a «Бренд» / «Торгова марка» spec or a Karat
+  collection, else «Без бренду» (see `rozetka_vendor`);
+- descriptions lose size lists and «є такий самий ...» sentences
+  (Rozetka bans offers of other goods, see `rozetka_description`);
 - `name` and `name_ua` are both Ukrainian (there is no Russian site) and are
   made unique per offer;
 - custom-size (cut to length) and price-less sizes are skipped.
@@ -172,7 +174,9 @@ def build_feed() -> str:
 
 ROZETKA_SHOP_NAME = "Mr Carpet"
 ROZETKA_COMPANY = "ФОП Стецюк Микола Олексійович"
-ROZETKA_FALLBACK_VENDOR = ORG_NAME  # "mr.Carpet"
+# Rozetka: unknown producer must be «Без бренду» (manager, 27.11.2026); the
+# shop name is not a brand.
+ROZETKA_FALLBACK_VENDOR = "Без бренду"
 ROZETKA_FALLBACK_CATEGORY_ID = 1000000  # products without any category
 ROZETKA_FALLBACK_CATEGORY_NAME = "Килими"
 ROZETKA_MAX_NAME = 255
@@ -228,9 +232,76 @@ def rozetka_offer_id(product, attr) -> str:
 
 
 def rozetka_vendor(specs: list[tuple[str, str]], title: str = "") -> tuple[str, bool]:
-    """(vendor, is_fallback): same rule as Google (seo_jsonld.product_brand)."""
+    """(vendor, is_fallback): same rule as Google (seo_jsonld.product_brand),
+    except that an unknown producer is «Без бренду», not the shop name."""
     vendor, fallback = product_brand(title, specs)
+    if fallback:
+        vendor = ROZETKA_FALLBACK_VENDOR
     return vendor[:ROZETKA_MAX_PARAM], fallback
+
+
+# Rozetka bans offers of other goods in descriptions; the size list is the
+# variant picker's job. Sentences matching these are dropped from the feed.
+_RZ_DROP_SENTENCE = re.compile(
+    r"розмір\w*\s+(?:один|два|три|чотири|п.ять|шість|сім|вісім|дев.ять|десять)\b"
+    r"|\b(?:є|має)\s+(?:\w+\s+)?розмір"
+    r"|\bє\s+(?:і\s+|ще\s+)?(?:такий|така|таке|овальн|прямокутн|кругл|напівкругл|менш|більш)"
+    r"|\b(?:такий|така|таке)\s+(?:самий|сама|саме|ж|же)\b"
+    r"|\bмодель\s+є\b|з\s+тієї\s+ж\s+серії|подивіться|номер\s+\d|\bза\s+килим",
+    re.IGNORECASE,
+)
+# One offer's size in the shared text ('Синій килимок, 60х100 см.') is cut
+# out of the sentence: each size is its own offer with a «Розмір» param.
+_RZ_SIZE = re.compile(
+    r"(?:,\s*)?(?:\bрозмір(?:ом)?\s+)?\d+(?:[.,]\d+)?\s*[хx×]\s*\d+(?:[.,]\d+)?"
+    r"(?:\s*(?:см|м)\b\.?)?",
+    re.IGNORECASE,
+)
+_RZ_SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+")
+
+
+def _rz_without_size(sentence: str) -> str | None:
+    """None drops the sentence (two or more sizes = a size list)."""
+    found = _RZ_SIZE.findall(sentence)
+    if not found:
+        return sentence
+    if len(found) > 1:
+        return None
+    end = sentence[-1] if sentence[-1] in ".!?…" else ""
+    out = _RZ_SIZE.sub("", sentence).rstrip(" .!?…")
+    out = re.sub(r"\s+,", ",", re.sub(r"\s{2,}", " ", out)).strip(" ,")
+    if len(out.split()) < 2:
+        return None
+    return out + (end or ".")
+
+
+def rozetka_description(text: str) -> str:
+    """Site description without size lists and cross-sell sentences. A
+    question right before a dropped sentence ('Любите м'якші лінії?') goes
+    too; a single size inside a sentence is cut out. Falls back to the
+    original when nothing would be left."""
+    paragraphs = []
+    for paragraph in re.split(r"\n\s*\n", text or ""):
+        lines = []
+        for line in paragraph.split("\n"):
+            kept: list[str] = []
+            for sentence in _RZ_SENTENCE_SPLIT.split(line.strip()):
+                if not sentence:
+                    continue
+                cleaned_sentence = (
+                    None if _RZ_DROP_SENTENCE.search(sentence) else _rz_without_size(sentence)
+                )
+                if cleaned_sentence is None:
+                    if kept and kept[-1].endswith("?"):
+                        kept.pop()
+                    continue
+                kept.append(cleaned_sentence)
+            if kept:
+                lines.append(" ".join(kept))
+        if lines:
+            paragraphs.append("\n".join(lines))
+    cleaned = "\n\n".join(paragraphs).strip()
+    return cleaned or (text or "")
 
 
 def rozetka_picture_url(url: str) -> str:
@@ -356,7 +427,9 @@ def build_rozetka_offers(products) -> list[dict]:
         pictures = rozetka_pictures(product)
         if not pictures:
             continue
-        description = product_description(product, ROZETKA_MAX_DESCRIPTION)
+        description = rozetka_description(
+            product_description(product, ROZETKA_MAX_DESCRIPTION)
+        )
         specs = product_specs(product)
         color = product_color(product, specs)
         vendor, vendor_fallback = rozetka_vendor(specs, product.title)

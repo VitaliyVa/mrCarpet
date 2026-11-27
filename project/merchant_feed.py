@@ -296,11 +296,18 @@ def feed_title(product, size: str, specs=None, color: str = "") -> str:
 
 def product_shape(product, specs, size: str) -> str:
     spec_shape = _spec(specs, "форма")
-    if spec_shape:
-        return spec_shape
     parsed = parse_title(product.title)
-    if parsed["shape_noun"]:
-        return parsed["shape_noun"]
+    title_noun = parsed["shape_noun"]
+    if spec_shape:
+        # a mistyped spec ('Прямокутник' on an oval rug) loses to the title,
+        # which names what the buyer sees; wording-only differences
+        # ('Круглий' vs 'Круг') keep the spec
+        spec_shape_of = _shape_of(spec_shape)
+        if title_noun and spec_shape_of and spec_shape_of[1] != title_noun:
+            return title_noun
+        return spec_shape
+    if title_noun:
+        return title_noun
     if _DIAMETER_RE.match(size or ""):
         return "Круг"
     return ""
