@@ -45,8 +45,22 @@ class MessageInline(admin.TabularInline):
 class ConversationAdmin(admin.ModelAdmin):
     list_display = ("__str__", "message_count", "order_link", "cost_usd", "updated")
     list_filter = ("created",)
-    readonly_fields = ("id", "created", "updated", "order", "input_tokens", "output_tokens", "cost_usd")
+    readonly_fields = (
+        "id", "created", "updated", "order", "cards_shown", "stock_requests",
+        "input_tokens", "output_tokens", "cost_usd", "tech_log",
+    )
     exclude = ("api_messages", "pending_order", "session_key", "client_hash")
+
+    @admin.display(description="Технічний журнал (що бачила модель)")
+    def tech_log(self, obj):
+        import json
+
+        from django.utils.html import format_html
+
+        text = json.dumps(obj.api_messages or [], ensure_ascii=False, indent=1)
+        return format_html(
+            '<pre style="max-height:420px;overflow:auto;white-space:pre-wrap;font-size:12px">{}</pre>', text[:60000]
+        )
     inlines = [MessageInline]
     date_hierarchy = "created"
 
