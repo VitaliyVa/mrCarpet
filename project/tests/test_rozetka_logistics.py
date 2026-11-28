@@ -33,7 +33,12 @@ class RozetkaLogisticsTests(SimpleTestCase):
         self.assertEqual(rubber["package_text"], "0.03x0.4x0.6 м")
 
     def test_kinds(self):
-        self.assertEqual(product_kind("Килим овальний Fantasy Grey", MIRA)[0], 2.6)
+        # Seller's scale, 28.11.2026 (kg per m²).
+        self.assertEqual(product_kind("Килим овальний Fantasy Grey", MIRA)[0], 2.15)
+        self.assertEqual(product_kind("Килим Mira 24058/160", MIRA)[0], 1.6)
+        self.assertEqual(product_kind("Килим Oksi 38025.608", MIRA)[0], 1.35)
+        self.assertEqual(product_kind("Килим прямокутний Flex 1952-M91", MIRA)[0], 1.5)
+        self.assertEqual(product_kind("Килим для ванни Taflan", {"Основа": "Гума", "Висота ворсу": "6.5 мм"})[0], 1.1)
         self.assertEqual(product_kind("Килим напівкруглий під двері гумовий", {"Матеріал": "Гума", "Основа": "Гума"})[0], 5.0)
         self.assertEqual(product_kind("Килим La Rosa G1163", {"Висота ворсу": "10 мм", "Основа": "Джут"})[0], 2.1)
         self.assertEqual(product_kind("Килим дитячий Місто", {"Висота ворсу": "4 мм", "Основа": "Джут"})[0], 1.2)

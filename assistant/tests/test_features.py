@@ -276,3 +276,44 @@ class RoundThreeTests(CatalogMixin, TestCase):
             run_tool(ctx, "order_status", {"order_number": "1", "phone": "0500000000"})
         result, error = run_tool(ctx, "order_status", {"order_number": str(order.order_number), "phone": "0961234567"})
         self.assertIn("Забагато", result["error"])
+
+
+class ThinkingAndErrorsTests(CatalogMixin, TestCase):
+    def setUp(self):
+        s = AssistantSettings.load()
+        s.enabled, s.api_key = True, "sk-ant-test"
+        s.save()
+
+    def test_old_thinking_blocks_are_not_replayed(self):
+        conv = Conversation.objects.create(api_messages=[
+            {"role": "user", "content": "привіт"},
+            {"role": "assistant", "content": [
+                {"type": "thinking", "thinking": "", "signature": "old"},
+                {"type": "text", "text": "Привіт!"},
+            ]},
+        ])
+        session = self.client.session
+        session.save()
+        Conversation.objects.filter(pk=conv.pk).update(session_key=session.session_key)
+        fake = FakeClient([_response([_text("Ок")])])
+        with mock.patch("assistant.service._client", return_value=fake):
+            self.client.post("/api/assistant/message/", {"message": "ще", "conversation_id": str(conv.pk)},
+                             content_type="application/json")
+        sent = fake.calls[0]["messages"]
+        self.assertFalse(any(b.get("type") == "thinking" for m in sent if isinstance(m["content"], list) for b in m["content"]))
+        conv.refresh_from_db()
+        self.assertFalse("thinking" in str(conv.api_messages))
+
+    def test_failure_names_the_reason(self):
+        import anthropic
+        import httpx2 as httpx
+
+        from assistant.service import failure_text
+
+        req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        overloaded = anthropic.APIStatusError("overloaded", response=httpx.Response(529, request=req), body=None)
+        text, kind = failure_text(overloaded)
+        self.assertIn("перевантажений", text)
+        self.assertEqual(kind, "api_529")
+        text, kind = failure_text(anthropic.APITimeoutError(request=req))
+        self.assertIn("затрималась", text)

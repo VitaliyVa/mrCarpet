@@ -112,12 +112,12 @@ class AssistantMessageView(_SessionAPIView):
         if not is_staff and messages_last_hour(mine) >= settings.messages_per_hour:
             return _too_many(
                 COOLDOWN_SECONDS,
-                "Забагато повідомлень. Спробуйте трохи пізніше або подзвоніть нам.",
+                "Забагато повідомлень за годину. Зробіть, будь ласка, паузу і спробуйте пізніше.",
             )
         if spent_today() >= settings.daily_budget_usd:
             return _too_many(
                 COOLDOWN_SECONDS,
-                "Чат зараз перевантажений. Подзвоніть нам: +380 96 398 88 75.",
+                "Помічник на сьогодні вичерпав ліміт. Спробуйте завтра.",
             )
 
         session_key = _session_key(request)
@@ -132,7 +132,7 @@ class AssistantMessageView(_SessionAPIView):
         ):
             return _too_many(
                 60,
-                "Ця розмова вже задовга. Почніть нову (кнопка «Нова») або подзвоніть нам: +380 96 398 88 75.",
+                "Ця розмова вже задовга. Почніть нову кнопкою «Нова розмова» вгорі.",
             )
 
         # The Django request: its user comes from AuthenticationMiddleware, so a

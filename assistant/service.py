@@ -32,10 +32,31 @@ PRICES = {
     AssistantSettings.MODEL_SONNET: (Decimal("2.00"), Decimal("10.00")),
 }
 
-FALLBACK_TEXT = (
-    "Вибачте, зараз не можу відповісти. Подзвоніть нам: +380 96 398 88 75, "
-    "або оформіть замовлення на сайті."
-)
+FALLBACK_TEXT = "Щось пішло не так з мого боку. Напишіть, будь ласка, ще раз."
+
+
+def failure_text(exc) -> tuple[str, str]:
+    """(what the buyer reads, a short kind for the admin) for a failed turn.
+    The reason in plain words, so a buyer knows whether to retry now or later."""
+    try:
+        import anthropic
+    except Exception:  # pragma: no cover
+        return FALLBACK_TEXT, "unknown"
+    if isinstance(exc, anthropic.APITimeoutError):
+        return "Відповідь затрималась, сервіс думав задовго. Спробуйте надіслати ще раз.", "timeout"
+    if isinstance(exc, anthropic.APIConnectionError):
+        return "Не вдалося звʼязатися з сервісом ШІ. Спробуйте ще раз за хвилину.", "connection"
+    if isinstance(exc, anthropic.RateLimitError):
+        return "Зараз забагато запитів до помічника. Спробуйте за хвилину.", "rate_limit"
+    if isinstance(exc, anthropic.AuthenticationError) or isinstance(exc, anthropic.PermissionDeniedError):
+        return "Помічник тимчасово на технічній паузі. Спробуйте трохи пізніше.", "auth"
+    if isinstance(exc, anthropic.APIStatusError):
+        if exc.status_code in (500, 502, 503, 529):
+            return "Сервіс ШІ зараз перевантажений. Спробуйте ще раз за хвилину.", f"api_{exc.status_code}"
+        if "credit" in str(exc).lower() or "billing" in str(exc).lower():
+            return "Помічник тимчасово на технічній паузі. Спробуйте трохи пізніше.", "billing"
+        return "Не вдалося обробити це повідомлення. Спробуйте написати інакше.", f"api_{exc.status_code}"
+    return FALLBACK_TEXT, type(exc).__name__
 
 SYSTEM_PROMPT = """Ти консультант інтернет-магазину килимів mr.Carpet (mrcarpet24.com) у чаті на сайті.
 
@@ -260,7 +281,11 @@ def run_turn(
     Message.objects.create(conversation=conversation, role=Message.ROLE_USER, content=text)
 
     ctx = ToolContext(request, conversation)
-    history = _trimmed_history(list(conversation.api_messages or []))
+    # Thinking blocks are kept only inside one turn (tool rounds need them).
+    # Between turns they are dropped: Haiku 5.5 rejects a replayed block once
+    # the system prompt or the tools changed, so every chat started before a
+    # deploy that touched them failed with a 400.
+    history = _strip_thinking(_trimmed_history(list(conversation.api_messages or [])))
     history.append({"role": "user", "content": text})
     context_line = visitor_context(request, page)
     if context_line:
@@ -269,13 +294,14 @@ def run_turn(
         history.append({"role": "system", "content": context_line})
 
     reply_text = ""
+    error_kind = ""
     try:
         client = _client(settings.resolved_api_key())
         started = time.monotonic()
         for _round in range(MAX_TOOL_ROUNDS):
             if time.monotonic() - started > TURN_DEADLINE_SECONDS:
                 logger.warning("assistant turn over deadline (conversation %s)", conversation.pk)
-                reply_text = reply_text or "Шукаю задовго. Напишіть, будь ласка, коротше, що саме шукаєте, або подзвоніть нам."
+                reply_text = reply_text or "Шукаю задовго. Напишіть, будь ласка, коротше, що саме шукаєте."
                 break
             response = client.messages.create(
                 model=settings.model,
@@ -315,21 +341,21 @@ def run_turn(
                 )
             history.append({"role": "user", "content": results})
         else:
-            reply_text = reply_text or "Щось я заплутався. Спробуйте написати інакше або подзвоніть нам."
-    except Exception:
+            reply_text = reply_text or "Щось я заплуталась. Спробуйте написати інакше."
+    except Exception as exc:
         logger.exception("assistant turn failed (conversation %s)", conversation.pk)
-        reply_text = FALLBACK_TEXT
+        reply_text, error_kind = failure_text(exc)
         # The failed exchange is not kept: the next message starts clean
         # from the last good history.
-        history = list(conversation.api_messages or [])
+        history = _strip_thinking(list(conversation.api_messages or []))
         history.append({"role": "user", "content": text})
-        history.append({"role": "assistant", "content": [{"type": "text", "text": FALLBACK_TEXT}]})
+        history.append({"role": "assistant", "content": [{"type": "text", "text": reply_text}]})
 
     # The API rejects a history that ends on an assistant tool_use without results.
     if history and history[-1].get("role") == "user" and isinstance(history[-1].get("content"), list):
         history.append({"role": "assistant", "content": [{"type": "text", "text": reply_text or "…"}]})
 
-    conversation.api_messages = history
+    conversation.api_messages = _strip_thinking(history)
     conversation.save()
 
     reply_text, quick = split_quick_replies(reply_text)
@@ -340,6 +366,8 @@ def run_turn(
     if not reply_text:
         reply_text = "Готово." if ctx.order_card or ctx.cart_changed else "…"
     payload = _payload(ctx, reply_text)
+    if error_kind:
+        payload["error_kind"] = error_kind
     if quick and not ctx.order_card:
         payload["quick_replies"] = quick
     message = Message.objects.create(

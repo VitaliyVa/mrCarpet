@@ -232,7 +232,8 @@ class ApiTests(CatalogMixin, TestCase):
         broken.messages.create.side_effect = RuntimeError("boom")
         with mock.patch("assistant.service._client", return_value=broken):
             data = self._post("привіт").json()
-        self.assertIn("+380 96 398 88 75", data["message"]["content"])
+        self.assertIn("Щось пішло не так", data["message"]["content"])
+        self.assertNotIn("+380", data["message"]["content"])
         conv = Conversation.objects.get(pk=data["conversation_id"])
         self.assertEqual(conv.api_messages[-1]["role"], "assistant")
 

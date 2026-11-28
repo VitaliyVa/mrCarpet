@@ -37,14 +37,19 @@ ROLL_EXTRA_CM = 3
 FILM_CM = 2
 
 # (title regex, kg/m², effective rolled thickness mm); first match wins.
+# Weighed by the seller on 28.11.2026, 1 m² each: Mira 1.6, Flex 1.5,
+# Fantasy 2.15, Oksi 1.35, bath set 1.1 kg. They replace the research figures
+# above for those collections (Fantasy was 2.6, Oksi 1.55, bath mats 1.8).
 _COLLECTIONS = (
-    (r"\bfantasy\b", 2.6, 13.0),
+    (r"\bfantasy\b", 2.15, 13.0),
     (r"\bkolibri\b", 2.3, 8.0),
     (r"\blotos\b", 1.85, 8.0),
     (r"\bitea\b", 1.8, 8.0),
     (r"\bfashion\b", 1.8, 8.0),
     (r"\bcappuccino\b", 1.7, 7.0),
-    (r"\bmira\b|\boksi\b|\bgold\b", 1.55, 6.5),
+    (r"\bmira\b", 1.6, 6.5),
+    (r"\boksi\b", 1.35, 6.5),
+    (r"\bgold\b", 1.55, 6.5),
     (r"\bflex\b", 1.5, 4.0),
 )
 
@@ -69,7 +74,7 @@ def product_kind(title: str, params: dict) -> tuple[float, float, bool]:
         return 5.0, 8.0, True
     if rubber_base:
         if "ванн" in lower or _pile_mm(params.get("Висота ворсу", "")):
-            return 1.8, 7.0, False  # pile bath mats / Estera on rubber
+            return 1.1, 7.0, False  # bath mats on rubber (seller weighed 1.1 kg/m², 28.11.2026)
         if "двер" in lower:
             return 2.0, 5.0, False
         return 1.5, 4.0, False  # kitchen / flat-woven on rubber
