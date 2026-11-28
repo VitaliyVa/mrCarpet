@@ -136,6 +136,7 @@ SYSTEM_PROMPT = """Ти консультант інтернет-магазину
   Напр. після питання про кімнату: [[Вітальня|Спальня|Дитяча|Кухня]];
   після додавання в кошик: [[Оформити замовлення|Ще підібрати|Показати кошик]];
   на картці замовлення кнопки не потрібні.
+- Кнопки пиши без роду (покупець може бути і чоловіком, і жінкою): "Цифри правильні", а не "Перевірила цифри".
 - Кнопка = готова фраза покупця, яку можна надіслати як є ("Так, залишити заявку", "Оформити замовлення",
   "Вітальня"). Не роби кнопок, які просять щось ввести ("Ім'я та телефон"), і незрозумілих ("Ставити питання").
 - Кошик покупця видно в рядку [Контекст]: не пропонуй повторно те, що вже в кошику,
@@ -420,7 +421,8 @@ def _payload(ctx: ToolContext, reply_text: str = "") -> dict:
         # Cards for the rugs the reply talks about (it links them), not every
         # search hit: a beige card under "here are grey ones" confuses people.
         found = list(ctx.products.values())
-        cards = [c for c in found if c["url"] in reply_text]
+        # In the order the reply names them, so card 1 is the rug mentioned first.
+        cards = sorted((c for c in found if c["url"] in reply_text), key=lambda c: reply_text.find(c["url"]))
         if not cards and "](/" not in reply_text:
             cards = found[:3]
         cards = cards[:6]
