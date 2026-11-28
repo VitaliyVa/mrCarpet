@@ -365,11 +365,13 @@ def fallback_quick_replies(request, reply_text: str) -> list[str]:
         has_items = bool(cart) and cart.get_cart_product_total_quantity() > 0
     except Exception:
         has_items = False
+    # A reply that asks something (a name, a city, a colour) needs its own
+    # answers; generic buttons under it only confuse.
+    if reply_text.rstrip().endswith("?"):
+        return []
     if has_items:
         return ["Оформити замовлення", "Ще підібрати", "Показати кошик"]
-    if reply_text.rstrip().endswith("?"):
-        return ["Підібрати килим", "Доставка і оплата"]
-    return []
+    return ["Підібрати килим", "Доставка і оплата"]
 
 
 def _json(value) -> str:

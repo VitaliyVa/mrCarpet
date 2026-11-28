@@ -166,7 +166,8 @@ class ChatCartTests(CatalogMixin, TestCase):
         from assistant.service import fallback_quick_replies
 
         request = self.make_request()
-        self.assertEqual(fallback_quick_replies(request, "Готово."), [])
+        self.assertEqual(fallback_quick_replies(request, "Готово."), ["Підібрати килим", "Доставка і оплата"])
+        self.assertEqual(fallback_quick_replies(request, "Як вас звати?"), [])
         run_tool(ToolContext(request, Conversation.objects.create()), "add_to_cart", {"size_id": self.attr.pk})
         line = visitor_context(request, None)
         self.assertIn(f"{self.product.title} 2.0х3.0 x1 (size_id {self.attr.pk})", line)

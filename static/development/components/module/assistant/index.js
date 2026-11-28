@@ -383,6 +383,7 @@ class AssistantWidget {
           <div class="assistant-log" role="log" aria-live="polite"></div>
           <button type="button" class="assistant-latest" hidden>Нові повідомлення ↓</button>
         </div>
+        <div class="assistant-quickbar" hidden></div>
         <div class="assistant-picker" hidden></div>
         <form class="assistant-composer">
           <div class="assistant-field">
@@ -409,6 +410,7 @@ class AssistantWidget {
     this.log = $(".assistant-log");
     this.latestBtn = $(".assistant-latest");
     this.pickerBox = $(".assistant-picker");
+    this.quickBar = $(".assistant-quickbar");
     this.form = $(".assistant-composer");
     this.input = $("textarea");
     this.sendBtn = $(".assistant-send");
@@ -896,6 +898,7 @@ class AssistantWidget {
   async openPicker() {
     this.picker = "categories";
     this.renderPicker();
+    this.renderQuickBar();
     await this.loadCategories();
     if (this.picker !== "categories") return;
     if (!this.categories.length) this.closePicker();
@@ -906,6 +909,7 @@ class AssistantWidget {
     if (!this.picker) return;
     this.picker = null;
     this.renderPicker();
+    this.renderQuickBar();
   }
 
   async confirmOrder(button) {
@@ -1149,9 +1153,8 @@ class AssistantWidget {
     this.log.textContent = "";
     if (!this.messages.length && !this.restoring) this.log.appendChild(this.renderWelcome());
     if (this.restoring && !this.messages.length) this.log.appendChild(this.renderSkeleton());
-    const lastQuickIndex = this.lastQuickIndex();
     this.messages.forEach((message, index) => {
-      const node = this.renderMessage(message, index === lastQuickIndex && !this.busy);
+      const node = this.renderMessage(message, false);
       if (index >= this.renderedCount) node.classList.add("is-new");
       this.log.appendChild(node);
     });
@@ -1163,9 +1166,36 @@ class AssistantWidget {
       box.setAttribute("role", "alert");
       this.log.appendChild(box);
     }
+    this.renderQuickBar();
     this.input.disabled = false;
     this.syncSend();
     if (!wasNearBottom && this.messages.length) this.latestBtn.hidden = false;
+  }
+
+  renderQuickBar() {
+    const bar = this.quickBar;
+    const index = this.lastQuickIndex();
+    const options = index >= 0 && !this.busy && this.picker !== "categories" ? this.messages[index].quick_replies : [];
+    const key = options.join("|");
+    if (bar.dataset.key === key) return;
+    bar.dataset.key = key;
+    bar.textContent = "";
+    if (!options.length) {
+      bar.classList.remove("is-visible");
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    const chips = options.map((text, i) => {
+      const chip = el("button", "assistant-chip");
+      chip.type = "button";
+      chip.dataset.send = text;
+      chip.style.setProperty("--i", i);
+      chip.innerHTML = `<span>${escapeHtml(text)}</span>${ICONS.send}`;
+      return chip;
+    });
+    bar.appendChild(makeSlider("assistant-quick", chips));
+    requestAnimationFrame(() => bar.classList.add("is-visible"));
   }
 
   lastQuickIndex() {
