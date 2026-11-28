@@ -1,5 +1,5 @@
 /**
- * Site chat bot widget (bottom-left). Backend: assistant/ (Django).
+ * Site chat bot widget (bottom-right). Backend: assistant/ (Django).
  *
  *  POST /api/assistant/message/                  {message, conversation_id?}
  *  GET  /api/assistant/conversations/<id>/       history
