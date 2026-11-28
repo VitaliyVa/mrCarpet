@@ -1333,9 +1333,6 @@ class AssistantWidget {
       qrBox.appendChild(qr);
       qrBox.appendChild(el("p", "", "Наведіть камеру телефона на код: килим зʼявиться у вашій кімнаті в реальному розмірі."));
       card.appendChild(qrBox);
-      const view = el("a", "assistant-ar-secondary", "Подивитись у 3D тут");
-      view.href = ar.link_3d;
-      card.appendChild(view);
     }
     return card;
   }
