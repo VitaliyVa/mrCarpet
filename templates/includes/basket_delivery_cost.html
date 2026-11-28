@@ -30,10 +30,6 @@
   <p class="basket__calculate-delivery-hint" id="basket-delivery-hint">
     До безкоштовної доставки ще {{ fs.remaining }} грн.
   </p>
-  {% elif fs.enabled and fs.qualifies %}
-  <p class="basket__calculate-delivery-hint is-free" id="basket-delivery-hint">
-    Безкоштовна доставка від {{ fs.threshold }} грн.
-  </p>
   {% else %}
   <p
     class="basket__calculate-delivery-hint"

@@ -308,10 +308,10 @@ function updateFreeShippingUI(fs, finalPrice) {
       <span class="basket__calculate-delivery-was">Від ${fromPrice} грн.</span>
       <span class="basket__calculate-delivery-now">Безкоштовно</span>
     `;
+    // "Безкоштовно" next to the struck price already says it: no extra line.
     if (hintEl) {
-      hintEl.hidden = false;
-      hintEl.classList.add("is-free");
-      hintEl.textContent = `Безкоштовна доставка від ${threshold} грн.`;
+      hintEl.hidden = true;
+      hintEl.textContent = "";
     }
   } else {
     priceEl.classList.remove("is-free");

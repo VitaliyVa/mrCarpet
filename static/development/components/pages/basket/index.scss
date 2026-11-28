@@ -697,19 +697,20 @@
         text-align: right;
         white-space: nowrap;
 
+        // Old price struck through and "Безкоштовно" on one line, opposite
+        // the "Вартість доставки" label.
         &.is-free {
-          white-space: normal;
+          display: inline-flex;
+          align-items: baseline;
+          gap: 8px;
 
           .basket__calculate-delivery-was {
-            display: block;
             text-decoration: line-through;
             opacity: 0.55;
             font-size: 0.85em;
           }
 
           .basket__calculate-delivery-now {
-            display: block;
-            margin-top: 4px;
             color: #a46c46;
             font-weight: 600;
           }
