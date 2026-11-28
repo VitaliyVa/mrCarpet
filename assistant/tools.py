@@ -25,7 +25,8 @@ TOOLS = [
         "description": (
             "Пошук килимів у каталозі магазину. Повертає товари в наявності з "
             "розмірами (size_id), цінами і посиланнями. Шукай короткими словами: "
-            "колір, форма, матеріал, кімната, розмір (200x300 або 2х3)."
+            "колір, форма, матеріал, кімната, розмір (200x300 або 2х3). query може бути "
+            "порожнім разом з on_sale / only_new."
         ),
         "input_schema": {
             "type": "object",
@@ -35,6 +36,8 @@ TOOLS = [
                     "description": "Слова для пошуку, напр. «сірий овальний 160x230».",
                 },
                 "max_price": {"type": "integer", "description": "Максимальна ціна, грн."},
+                "on_sale": {"type": "boolean", "description": "Тільки товари зі знижкою зараз."},
+                "only_new": {"type": "boolean", "description": "Тільки новинки."},
                 "sort": {
                     "type": "string",
                     "enum": ["relevance", "price_asc"],
@@ -42,9 +45,18 @@ TOOLS = [
                 },
                 "min_price": {"type": "integer", "description": "Мінімальна ціна, грн."},
             },
-            "required": ["query"],
+            "required": [],
             "additionalProperties": False,
         },
+    },
+    {
+        "name": "catalog_overview",
+        "description": (
+            "Загальна картина каталогу: скільки килимів у наявності, категорії, матеріали, "
+            "висота ворсу, діапазон цін, скільки новинок і товарів зі знижкою. Для питань "
+            "'що у вас є', 'скільки килимів', 'чи є вовняні'."
+        ),
+        "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
         "name": "get_product",
@@ -302,6 +314,7 @@ def _card(product) -> dict:
         "url": product.get_absolute_url(),
         "image": "",
         "price_from": min((s["price"] for s in sizes), default=None),
+        "on_sale": any(s["old_price"] for s in sizes),
         "sizes": sizes,
         "sold_out": _sold_out(product),
         "cut_to_length": _has_custom(product),
@@ -387,12 +400,30 @@ def _relevance(product, tokens) -> int:
     return score
 
 
-def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None, sort: str = "relevance"):
+def search_products(
+    ctx: ToolContext,
+    query: str = "",
+    max_price=None,
+    min_price=None,
+    sort: str = "relevance",
+    on_sale: bool = False,
+    only_new: bool = False,
+):
     from catalog.filters import search_tokens, token_q
     from catalog.models import Product
 
-    tokens = search_tokens(query)[:6]
+    tokens = search_tokens(query or "")[:6]
     qs = _product_qs()
+    if on_sale:
+        qs = qs.filter(product_attr__discount__gt=0, product_attr__quantity__gt=0).distinct()
+    if only_new:
+        from project.novelty import get_novelty_days
+        from django.utils import timezone
+        from datetime import timedelta
+
+        days = get_novelty_days()
+        qs = qs.filter(is_new=True, created__gte=timezone.now() - timedelta(days=days)) if days > 0 else qs.none()
+    partial = False
     if tokens:
         # One query per word (see catalog.filters.matching_product_ids).
         per_token = [
@@ -409,9 +440,10 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
             if scores:
                 best = max(scores.values())
                 ids = {pk for pk, n in scores.items() if n == best}
+                partial = True
         found = list(qs.filter(pk__in=ids)[:150])
     else:
-        found = list(qs[:40])
+        found = list(qs[:60])
 
     if tokens:
         found.sort(key=lambda p: -_relevance(p, tokens))
@@ -445,6 +477,11 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
         return {"found": 0, "hint": "Нічого не знайшлось. Спробуй менше слів або інші слова."}
     return {
         "found": len(results),
+        **(
+            {"note": "Точних збігів за всіма словами немає, це найближчі за частиною слів. Скажи покупцю, що саме такого немає, і запропонуй ці як схожі."}
+            if partial
+            else {}
+        ),
         "products": [
             {k: card[k] for k in ("id", "title", "url", "price_from", "sizes", "sold_out", "cut_to_length", "ar")}
             for card in results
@@ -982,7 +1019,54 @@ def order_status(ctx: ToolContext, order_number: str, phone: str):
     return data
 
 
+def catalog_overview(ctx: ToolContext):
+    from collections import Counter
+
+    from django.core.cache import cache
+
+    from catalog.models import Product, ProductCategory, ProductSpecification
+
+    data = cache.get("assistant:overview:v1")
+    if data is not None:
+        return data
+    products = list(_product_qs())
+    in_stock = [p for p in products if _sizes(p) or _has_custom(p)]
+    ids = [p.pk for p in in_stock]
+    prices = [s_["price"] for p in in_stock for s_ in _sizes(p)]
+    specs = Counter()
+    for spec, value in ProductSpecification.objects.filter(product_id__in=ids).values_list(
+        "specification__title", "spec_value__title"
+    ):
+        if spec in ("Матеріал", "Висота ворсу", "Основа", "Країна виробник", "Країна", "Форма") and value:
+            specs[(spec, value)] += 1
+    grouped: dict = {}
+    for (spec, value), n in specs.most_common():
+        grouped.setdefault(spec, {})[value] = n
+    from django.db.models import Count, Q
+
+    categories = {
+        c.title: c.n
+        for c in ProductCategory.objects.annotate(n=Count("products", filter=Q(products__in=ids), distinct=True))
+        .filter(n__gt=0)
+        .order_by("-n")
+    }
+    from project.novelty import product_is_novelty
+
+    data = {
+        "rugs_in_stock": len(in_stock),
+        "price_min": min(prices) if prices else None,
+        "price_max": max(prices) if prices else None,
+        "on_sale": sum(1 for p in in_stock if any(s_["old_price"] for s_ in _sizes(p))),
+        "new": sum(1 for p in in_stock if product_is_novelty(p)),
+        "categories": categories,
+        "specs": grouped,
+    }
+    cache.set("assistant:overview:v1", data, 600)
+    return data
+
+
 HANDLERS = {
+    "catalog_overview": catalog_overview,
     "order_status": order_status,
     "show_ar": show_ar,
     "request_stock": request_stock,

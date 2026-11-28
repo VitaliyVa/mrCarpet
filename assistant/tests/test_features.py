@@ -317,3 +317,21 @@ class ThinkingAndErrorsTests(CatalogMixin, TestCase):
         self.assertEqual(kind, "api_529")
         text, kind = failure_text(anthropic.APITimeoutError(request=req))
         self.assertIn("затрималась", text)
+
+
+class OverviewTests(CatalogMixin, TestCase):
+    def test_overview_and_sale_filter(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        size = Size.objects.create(title="0.8х1.5")
+        sale = Product.objects.create(title="Килим акційний", slug="sale-rug")
+        ProductAttribute.objects.create(product=sale, size=size, price=1000, discount=20, quantity=1)
+        ctx = ToolContext(self.make_request(), None)
+        overview, _ = run_tool(ctx, "catalog_overview", {})
+        self.assertEqual(overview["rugs_in_stock"], 2)
+        self.assertEqual(overview["on_sale"], 1)
+        result, _ = run_tool(ctx, "search_products", {"on_sale": True})
+        self.assertEqual([p["title"] for p in result["products"]], ["Килим акційний"])
+        partial, _ = run_tool(ctx, "search_products", {"query": "вовняний сірий"})
+        self.assertIn("note", partial)
