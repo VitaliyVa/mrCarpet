@@ -176,7 +176,7 @@ TOOLS = [
         "name": "request_stock",
         "description": (
             "Залишити заявку на розмір, якого немає в наявності (sold_out). Менеджер "
-            "передзвонить, коли привезуть, або запропонує схожий. Перед викликом збери "
+            "звʼяжеться, коли привезуть, або запропонує схожий. Перед викликом збери "
             "ім'я і телефон і коротко перепитай покупця, чи все правильно."
         ),
         "input_schema": {
@@ -194,7 +194,7 @@ TOOLS = [
     {
         "name": "request_callback",
         "description": (
-            "Заявка на дзвінок менеджера, коли в чаті не вирішити: килим під індивідуальний "
+            "Заявка менеджеру (він звʼяжеться з покупцем), коли в чаті не вирішити: килим під індивідуальний "
             "розмір, довга доріжка, опт, складне питання. Збери ім'я і телефон, коротко "
             "перепитай і опиши запит одним-двома реченнями."
         ),
@@ -598,7 +598,7 @@ def shop_info(ctx: ToolContext, topic: str):
                 f"Повернути можна протягом {t['return_days_text']}, не рахуючи дня покупки, "
                 "якщо килимом не користувались, є ярлики, ціле пакування і документ про "
                 "оплату. Килими, зроблені під ваш розмір, не повертаються. Доставку назад "
-                "оплачує покупець, крім браку. Спершу треба подзвонити або написати нам."
+                "оплачує покупець, крім браку. Спершу треба написати нам (Telegram, пошта) або залишити заявку в чаті."
             ),
             "page": "/refund/",
         }
@@ -607,13 +607,15 @@ def shop_info(ctx: ToolContext, topic: str):
             "text": (
                 "Так, килими під індивідуальний розмір робимо на замовлення. Ціну і строк "
                 "менеджер скаже після дзвінка. Такі килими оплачуються наперед повністю і не "
-                "повертаються. Можна залишити заявку на дзвінок (request_callback)."
+                "повертаються. Можна залишити заявку менеджеру, він звʼяжеться (request_callback)."
             ),
             "page": "/delivery/",
         }
     return {
-        "phone": ORG_PHONE,
+        "best_way": "Написати: у Telegram https://t.me/mrcarpet24, на пошту або залишити заявку в чаті.",
+        "telegram": "https://t.me/mrcarpet24",
         "email": ORG_EMAIL,
+        "phone": ORG_PHONE,
         "hours": "Пн-Пт 9:00-18:00, субота і неділя вихідні",
         "address": "Тернопільська обл., м. Ланівці, вул. Незалежності 5а",
         "visit": (
@@ -760,7 +762,7 @@ def find_warehouse(ctx: ToolContext, city_id: int, query: str = ""):
 MAX_CARDS_PER_CONVERSATION = 4
 MAX_CARDS_PER_CLIENT_DAY = 8
 MAX_CHAT_ORDERS_PER_CLIENT_DAY = 2
-CALL_US = "Для ще одного замовлення подзвоніть нам: +380 96 398 88 75, або оформіть його на сторінці /checkout/."
+CALL_US = "Для ще одного замовлення напишіть нам у Telegram (https://t.me/mrcarpet24) або оформіть його на сторінці /checkout/."
 
 
 def _order_card_limit(conversation) -> str | None:
@@ -887,12 +889,12 @@ def request_stock(ctx: ToolContext, size_id: int, full_name: str, phone: str, em
     since = timezone.now() - timedelta(hours=24)
     recent = StockInquiry.objects.filter(phone=normalized, created__gte=since)
     if recent.filter(product_attr=attr).exists():
-        return {"ok": True, "text": "Заявку на цей розмір уже прийнято, менеджер зателефонує."}
+        return {"ok": True, "text": "Заявку на цей розмір уже прийнято, менеджер звʼяжеться."}
     if (
         recent.count() >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY
         or _client_stock_requests(ctx) >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY
     ):
-        return {"error": "Сьогодні вже прийнято кілька заявок. Подзвоніть нам: +380 96 398 88 75."}
+        return {"error": "Сьогодні вже прийнято кілька заявок. Напишіть нам у Telegram: https://t.me/mrcarpet24."}
 
     inquiry = StockInquiry.objects.create(
         name=name,
@@ -908,7 +910,7 @@ def request_stock(ctx: ToolContext, size_id: int, full_name: str, phone: str, em
         "ok": True,
         "text": (
             f"Заявку прийнято: {attr.product.title}, {inquiry.size_label}. "
-            "Менеджер зателефонує, коли привезуть, або запропонує схожий килим."
+            "Менеджер звʼяжеться, коли привезуть, або запропонує схожий килим."
         ),
     }
 
@@ -926,7 +928,7 @@ def request_callback(ctx: ToolContext, full_name: str, phone: str, request: str)
     if len(text) < 5:
         return {"error": "Опиши, що потрібно покупцю."}
     if _client_stock_requests(ctx) >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY:
-        return {"error": "Сьогодні вже прийнято кілька заявок. Подзвоніть нам: +380 96 398 88 75."}
+        return {"error": "Сьогодні вже прийнято кілька заявок. Напишіть нам у Telegram: https://t.me/mrcarpet24."}
 
     contact = ContactRequest.objects.create(
         name=name,
@@ -941,7 +943,7 @@ def request_callback(ctx: ToolContext, full_name: str, phone: str, request: str)
         notify_contact(contact)
     except Exception:
         pass
-    return {"ok": True, "text": "Заявку прийнято. Менеджер зателефонує в робочий час (Пн-Пт 9:00-18:00)."}
+    return {"ok": True, "text": "Заявку прийнято. Менеджер звʼяжеться в робочий час (Пн-Пт 9:00-18:00)."}
 
 
 def _client_stock_requests(ctx) -> int:
@@ -1026,7 +1028,7 @@ def order_status(ctx: ToolContext, order_number: str, phone: str):
     if ctx.conversation is not None:
         tries = (ctx.conversation.pending_order or {}).get("_status_tries", 0)
         if tries >= MAX_STATUS_LOOKUPS_PER_CONVERSATION:
-            return {"error": "Забагато спроб. Подзвоніть нам: +380 96 398 88 75."}
+            return {"error": "Забагато спроб. Напишіть нам у Telegram: https://t.me/mrcarpet24."}
     digits = re.sub(r"\D", "", order_number or "")
     normalized = normalize_phone(phone)
     if not digits or not normalized:
@@ -1037,7 +1039,7 @@ def order_status(ctx: ToolContext, order_number: str, phone: str):
         ctx.conversation.pending_order = {**(ctx.conversation.pending_order or {}), "_status_tries": tries + 1}
         ctx.conversation.save(update_fields=["pending_order", "updated"])
     if order is None or normalize_phone(order.phone or "") != normalized:
-        return {"error": "Не знайшли замовлення з таким номером і телефоном. Перевірте цифри або подзвоніть нам."}
+        return {"error": "Не знайшли замовлення з таким номером і телефоном. Перевірте цифри або напишіть нам у Telegram."}
     data = {
         "order_number": order.order_number,
         "status": order.get_status_display(),

@@ -180,7 +180,7 @@ class AssistantOrderPlacedView(_SessionAPIView):
             text = f"Замовлення №{order.order_number} створено. Зараз відкриється сторінка оплати карткою."
         else:
             text = (
-                f"Дякуємо! Замовлення №{order.order_number} оформлено. Ми зателефонуємо, "
+                f"Дякуємо! Замовлення №{order.order_number} оформлено. Ми звʼяжемося з вами, "
                 "щоб підтвердити, і відправимо Новою Поштою."
             )
         history = list(conversation.api_messages or [])

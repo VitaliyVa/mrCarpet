@@ -149,6 +149,8 @@ function safeHref(url) {
     // to an outside site, even if someone talks the model into writing one.
     if (parsed.origin === window.location.origin) return parsed.pathname + parsed.search + parsed.hash;
     if (parsed.protocol === "tel:" || parsed.protocol === "mailto:") return parsed.href;
+    // The shop's own Telegram, where buyers are asked to write.
+    if (parsed.origin === "https://t.me" && /^\/mrcarpet24\/?$/i.test(parsed.pathname)) return parsed.href;
   } catch (e) {
     /* not a URL */
   }
@@ -159,7 +161,9 @@ function inline(text) {
   let html = escapeHtml(text);
   html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) => {
     const href = safeHref(url.replace(/&amp;/g, "&"));
-    return href ? `<a href="${escapeHtml(href)}">${label}</a>` : label;
+    if (!href) return label;
+    const external = /^https:/.test(href);
+    return `<a href="${escapeHtml(href)}"${external ? ' target="_blank" rel="noopener"' : ""}>${label}</a>`;
   });
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(\+380[\d\s]{9,13}\d)/g, (m) => `<a href="tel:${m.replace(/\s/g, "")}">${m}</a>`);
@@ -1407,7 +1411,7 @@ class AssistantWidget {
         p.sold_out.slice(0, 3).forEach((s) => {
           const btn = el("button", "assistant-size is-request", `Заявка ${s.size}`);
           btn.type = "button";
-          btn.title = "Залишити заявку: менеджер зателефонує, коли привезуть";
+          btn.title = "Залишити заявку: менеджер звʼяжеться, коли привезуть";
           btn.dataset.send = `Хочу залишити заявку на ${p.title}, розмір ${s.size}, його зараз немає`;
           sizes.appendChild(btn);
         });
