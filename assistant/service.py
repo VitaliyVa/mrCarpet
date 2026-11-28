@@ -95,6 +95,8 @@ SYSTEM_PROMPT = """Ти консультант інтернет-магазину
 Підбір:
 - У search_products пиши слова без помилок покупця (сирий -> сірий, килм -> килим), розмір як 200x300.
 - Просять дешевше, недорого, найдешевші - sort: price_asc (і max_price, якщо названа сума).
+- Уточнення ("а дешевше?", "а овальні?", "а більший?") звужують попередній пошук: залиш у query
+  колір, форму, кімнату і розмір, які покупець уже назвав, і додай нове.
 - Питають про властивість килима (основа, антиковзний, матеріал, ворс, догляд, країна) - одразу виклич
   get_product для 1-3 відповідних килимів і відповідай з опису та характеристик. Не пиши "перевірю",
   а перевір у цій же відповіді. Нема в даних - так і скажи.
@@ -444,7 +446,10 @@ def _payload(ctx: ToolContext, reply_text: str = "") -> dict:
                     {"size_id": s["size_id"], "size": s["size"], "price": s["price"]}
                     for s in sorted(
                         c["sizes"],
-                        key=lambda s: 0 if s["size"].replace("x", "х") in reply_norm else 1,
+                        # sizes in the order the reply names them, the rest after
+                        key=lambda s: reply_norm.find(s["size"].replace("x", "х")) % 100000
+                        if s["size"].replace("x", "х") in reply_norm
+                        else 100000,
                     )[:6]
                 ],
                 "sold_out": [{"size_id": s["size_id"], "size": s["size"]} for s in c.get("sold_out", [])[:4]],
