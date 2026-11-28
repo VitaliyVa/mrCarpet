@@ -121,7 +121,8 @@ class AssistantMessageView(_SessionAPIView):
 
         # The Django request: its user comes from AuthenticationMiddleware, so a
         # logged-in buyer gets the cart of their account, as on the site.
-        reply = run_turn(request._request, conversation, text, settings=settings)
+        page = request.data.get("page") if isinstance(request.data.get("page"), dict) else None
+        reply = run_turn(request._request, conversation, text, settings=settings, page=page)
         conversation.refresh_from_db()
         return Response({**_state(conversation), "message": reply})
 
@@ -181,3 +182,30 @@ class AssistantOrderPlacedView(_SessionAPIView):
         conversation.save()
         message = Message.objects.create(conversation=conversation, role=Message.ROLE_ASSISTANT, content=text)
         return Response({**_state(conversation), "message": serialize_message(message)})
+
+
+class AssistantConfigView(_SessionAPIView):
+    """Category tiles for the «Підібрати килим» picker (cached 10 min)."""
+
+    def get(self, request):
+        from django.core.cache import cache
+
+        data = cache.get("assistant:config:v1")
+        if data is None:
+            from django.db.models import Count
+
+            from catalog.models import ProductCategory
+            from catalog.thumbnails import thumbnail_url
+
+            categories = []
+            for cat in ProductCategory.objects.annotate(_n=Count("products")).filter(_n__gt=0).order_by("pk"):
+                try:
+                    image = thumbnail_url(cat.image, 240) if cat.image else ""
+                except Exception:
+                    image = ""
+                categories.append({"id": cat.pk, "title": cat.title, "image": image, "url": cat.get_absolute_url()})
+            data = {"categories": categories}
+            cache.set("assistant:config:v1", data, 600)
+        response = Response(data)
+        response["Cache-Control"] = "public, max-age=600"
+        return response

@@ -124,6 +124,25 @@ TOOLS = [
         },
     },
     {
+        "name": "request_stock",
+        "description": (
+            "Залишити заявку на розмір, якого немає в наявності (sold_out). Менеджер "
+            "передзвонить, коли привезуть, або запропонує схожий. Перед викликом збери "
+            "ім'я і телефон і коротко перепитай покупця, чи все правильно."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "size_id": {"type": "integer", "description": "size_id з sold_out."},
+                "full_name": {"type": "string"},
+                "phone": {"type": "string"},
+                "email": {"type": "string", "description": "Необов'язково."},
+            },
+            "required": ["size_id", "full_name", "phone"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "prepare_order",
         "description": (
             "Показати покупцю картку підтвердження замовлення з того, що в "
@@ -183,6 +202,15 @@ def _abs_image(product) -> str:
         return ""
 
 
+def _sold_out(product) -> list[dict]:
+    """Sizes that exist but are not in stock: the buyer can leave a request."""
+    return [
+        {"size_id": a.pk, "size": a.size.title if a.size else ""}
+        for a in product.product_attr.all()
+        if not a.custom_attribute and not a.in_stock
+    ]
+
+
 def _sizes(product) -> list[dict]:
     rows = []
     for attr in product.product_attr.all():
@@ -213,6 +241,7 @@ def _card(product) -> dict:
         "image": "",
         "price_from": min((s["price"] for s in sizes), default=None),
         "sizes": sizes,
+        "sold_out": _sold_out(product),
         "cut_to_length": _has_custom(product),
     }
 
@@ -303,11 +332,12 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
             continue
         if min_price and not any(p >= int(min_price) for p in prices):
             continue
-        if not card["sizes"] and not card["cut_to_length"]:
+        if not card["sizes"] and not card["cut_to_length"] and not card["sold_out"]:
             continue
         results.append(card)
-        if len(results) >= MAX_RESULTS:
-            break
+    # In stock first; sold-out rugs stay findable for a stock request.
+    results.sort(key=lambda c: 0 if (c["sizes"] or c["cut_to_length"]) else 1)
+    results = results[:MAX_RESULTS]
     by_pk = {p.pk: p for p in found}
     for card in results:
         card["image"] = _abs_image(by_pk[card["id"]])
@@ -317,7 +347,7 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
     return {
         "found": len(results),
         "products": [
-            {k: card[k] for k in ("id", "title", "url", "price_from", "sizes", "cut_to_length")}
+            {k: card[k] for k in ("id", "title", "url", "price_from", "sizes", "sold_out", "cut_to_length")}
             for card in results
         ],
     }
@@ -326,7 +356,15 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
 def get_product(ctx: ToolContext, product_id: int):
     from django.utils.html import strip_tags
 
-    product = _product_qs().prefetch_related("product_specs__specification", "product_specs__spec_value").filter(pk=product_id).first()
+    from catalog.models import Product
+
+    product = (
+        Product.admin_objects.prefetch_related(
+            "product_attr__size", "colors", "images", "product_specs__specification", "product_specs__spec_value"
+        )
+        .filter(pk=product_id)
+        .first()
+    )
     if not product:
         return {"error": "Товар не знайдено або його немає в наявності."}
     card = _card(product)
@@ -338,7 +376,7 @@ def get_product(ctx: ToolContext, product_id: int):
             specs[ps.specification.title] = ps.spec_value.title
     description = re.sub(r"\s+", " ", strip_tags(product.description or "")).strip()[:900]
     return {
-        **{k: card[k] for k in ("id", "title", "url", "sizes", "cut_to_length")},
+        **{k: card[k] for k in ("id", "title", "url", "sizes", "sold_out", "cut_to_length")},
         "colors": [c.title for c in product.colors.all()],
         "specs": specs,
         "description": description,
@@ -632,7 +670,112 @@ def prepare_order(
     }
 
 
+MAX_STOCK_REQUESTS_PER_CLIENT_DAY = 3
+
+
+def request_stock(ctx: ToolContext, size_id: int, full_name: str, phone: str, email: str = ""):
+    from datetime import timedelta
+
+    from django.core.exceptions import ValidationError
+    from django.core.validators import validate_email
+    from django.utils import timezone
+
+    from catalog.models import ProductAttribute
+    from project.models import StockInquiry
+
+    attr = ProductAttribute.objects.select_related("product", "size").filter(pk=size_id).first()
+    if not attr or not attr.product:
+        return {"error": "Такого розміру немає."}
+    if attr.in_stock:
+        return {"error": "Цей розмір є в наявності, його можна просто додати в кошик."}
+    name = re.sub(r"\s+", " ", full_name or "").strip()[:115]
+    if len(name) < 2:
+        return {"error": "Потрібне ім'я покупця."}
+    normalized = normalize_phone(phone)
+    if not normalized:
+        return {"error": "Телефон має бути український, напр. 0961234567."}
+    email = (email or "").strip()
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            return {"error": "Email виглядає неправильно. Можна без нього."}
+
+    since = timezone.now() - timedelta(hours=24)
+    recent = StockInquiry.objects.filter(phone=normalized, created__gte=since)
+    if recent.filter(product_attr=attr).exists():
+        return {"ok": True, "text": "Заявку на цей розмір уже прийнято, менеджер зателефонує."}
+    if (
+        recent.count() >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY
+        or _client_stock_requests(ctx) >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY
+    ):
+        return {"error": "Сьогодні вже прийнято кілька заявок. Подзвоніть нам: +380 96 398 88 75."}
+
+    inquiry = StockInquiry.objects.create(
+        name=name,
+        email=email,
+        phone=normalized,
+        product=attr.product,
+        product_attr=attr,
+    )
+    ctx.conversation.stock_requests = (ctx.conversation.stock_requests or 0) + 1
+    ctx.conversation.save(update_fields=["stock_requests", "updated"])
+    _notify_stock_inquiry(inquiry)
+    return {
+        "ok": True,
+        "text": (
+            f"Заявку прийнято: {attr.product.title}, {inquiry.size_label}. "
+            "Менеджер зателефонує, коли привезуть, або запропонує схожий килим."
+        ),
+    }
+
+
+def _client_stock_requests(ctx) -> int:
+    from datetime import timedelta
+
+    from django.db.models import Sum
+    from django.utils import timezone
+
+    from .models import Conversation
+
+    if not ctx.conversation.client_hash:
+        return ctx.conversation.stock_requests or 0
+    since = timezone.now() - timedelta(hours=24)
+    return (
+        Conversation.objects.filter(client_hash=ctx.conversation.client_hash, updated__gte=since)
+        .aggregate(n=Sum("stock_requests"))["n"]
+        or 0
+    )
+
+
+def _notify_stock_inquiry(inquiry):
+    """The same letters and Telegram note as the site's «Запит наявності» form."""
+    from project.email_utils import build_stock_inquiry_admin_email, build_stock_inquiry_customer_email
+    from project.models import SMTPSettings
+    from project.smtp_utils import send_smtp_mail_async
+    from project.telegram_utils import notify_stock
+
+    try:
+        notify_to = SMTPSettings.load().server_email
+    except Exception:
+        notify_to = None
+    try:
+        if notify_to:
+            subject, text, html = build_stock_inquiry_admin_email(inquiry)
+            send_smtp_mail_async(subject, text, [notify_to], html_message=html)
+        if inquiry.email:
+            subject, text, html = build_stock_inquiry_customer_email(inquiry)
+            send_smtp_mail_async(subject, text, [inquiry.email], html_message=html)
+    except Exception:
+        pass
+    try:
+        notify_stock(inquiry)
+    except Exception:
+        pass
+
+
 HANDLERS = {
+    "request_stock": request_stock,
     "search_products": search_products,
     "get_product": get_product,
     "shop_info": shop_info,

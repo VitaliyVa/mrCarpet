@@ -99,6 +99,9 @@ class Conversation(models.Model):
     cards_shown = models.PositiveSmallIntegerField(
         verbose_name="Показано карток замовлення", default=0
     )
+    stock_requests = models.PositiveSmallIntegerField(
+        verbose_name="Заявок на відсутні розміри", default=0
+    )
     input_tokens = models.PositiveIntegerField(default=0)
     output_tokens = models.PositiveIntegerField(default=0)
     cost_usd = models.DecimalField(
