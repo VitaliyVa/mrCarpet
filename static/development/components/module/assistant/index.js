@@ -27,6 +27,7 @@ const KEYS = {
   inflight: "mrc_assistant_inflight",
   teaser: "mrc_assistant_teaser",
   open: "mrc_assistant_open",
+  pos: "mrc_assistant_pos",
 };
 const SHOW_CART = "Показати кошик";
 const LIMIT = 500;
@@ -365,6 +366,7 @@ class AssistantWidget {
     root.innerHTML = `
       <section class="assistant-panel" id="mrc-assistant" role="dialog" aria-modal="false" aria-labelledby="mrc-assistant-title" hidden>
         <button type="button" class="assistant-resize" aria-label="Змінити розмір вікна" title="Потягніть, щоб змінити розмір. Подвійний клік: звичайний розмір">${ICONS.grip}</button>
+        <button type="button" class="assistant-move" aria-label="Перемістити вікно" title="Потягніть, щоб перемістити. Подвійний клік: повернути в кут"><span></span></button>
         <header class="assistant-header">
           <span class="assistant-avatar" aria-hidden="true"><span>mr</span><i class="assistant-online"></i></span>
           <div class="assistant-header-text">
@@ -479,6 +481,9 @@ class AssistantWidget {
     });
     $(".assistant-teaser-close").addEventListener("click", () => this.hideTeaser(true));
     this.bindResize($(".assistant-resize"));
+    this.bindMove($(".assistant-move"));
+    this.applyPos(local.json(KEYS.pos));
+    window.addEventListener("resize", () => this.applyPos(this.pos, true));
     this.applySize(local.json(KEYS.size));
     this.autosize();
   }
@@ -569,6 +574,65 @@ class AssistantWidget {
       local.set(KEYS.size, null);
       this.applySize(null);
     });
+  }
+
+  // ── move the window anywhere on the screen (the launcher stays in its corner) ──
+  bindMove(handle) {
+    let start = null;
+    const move = (e) => {
+      if (!start) return;
+      const dx = Math.min(start.maxDx, Math.max(start.minDx, e.clientX - start.x));
+      const dy = Math.min(start.maxDy, Math.max(start.minDy, e.clientY - start.y));
+      this.applyPos({ x: start.px + dx, y: start.py + dy });
+    };
+    const up = () => {
+      if (!start) return;
+      start = null;
+      this.root.classList.remove("is-moving");
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+      local.set(KEYS.pos, this.pos ? JSON.stringify(this.pos) : null);
+    };
+    handle.addEventListener("pointerdown", (e) => {
+      if (isPhone() || this.expanded || e.button !== 0) return;
+      e.preventDefault();
+      const r = this.panel.getBoundingClientRect();
+      const pos = this.pos || { x: 0, y: 0 };
+      const m = 8;
+      start = {
+        x: e.clientX,
+        y: e.clientY,
+        px: pos.x,
+        py: pos.y,
+        minDx: m - r.left,
+        maxDx: window.innerWidth - m - r.right,
+        minDy: m - r.top,
+        maxDy: window.innerHeight - m - r.bottom,
+      };
+      this.root.classList.add("is-moving");
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", up);
+    });
+    handle.addEventListener("dblclick", () => {
+      local.set(KEYS.pos, null);
+      this.applyPos(null);
+    });
+  }
+
+  /** Offset of the panel from its corner; kept inside the screen. */
+  applyPos(pos, clamp) {
+    this.pos = pos && (pos.x || pos.y) ? { x: Math.round(pos.x), y: Math.round(pos.y) } : null;
+    if (!this.pos || isPhone()) {
+      this.panel.style.removeProperty("translate");
+      return;
+    }
+    if (clamp && !this.panel.hidden) {
+      this.panel.style.removeProperty("translate");
+      const r = this.panel.getBoundingClientRect();
+      this.pos.x = Math.max(8 - r.left, Math.min(0, this.pos.x));
+      this.pos.y = Math.max(8 - r.top, Math.min(0, this.pos.y));
+    }
+    this.panel.style.translate = `${this.pos.x}px ${this.pos.y}px`;
   }
 
   applySize(size) {

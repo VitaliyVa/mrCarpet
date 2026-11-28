@@ -2302,3 +2302,71 @@ body.product-ar-modal-open .assistant-widget {
     background: transparent;
   }
 }
+
+// ── drag handle to move the window ──
+.assistant-move {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab !important;
+  touch-action: none;
+  transform: translateX(-50%);
+
+  span {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.35);
+    transition: background-color 0.2s ease, width 0.25s $ease;
+  }
+
+  &:hover span {
+    width: 44px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .assistant-widget.is-expanded & {
+    display: none;
+  }
+}
+
+.assistant-widget.is-moving {
+  user-select: none;
+
+  .assistant-panel {
+    transition: none;
+  }
+
+  .assistant-move {
+    cursor: grabbing !important;
+
+    span {
+      background: #fff;
+    }
+  }
+}
+
+// The big window is centred, not moved.
+.assistant-widget.is-expanded .assistant-panel {
+  translate: none !important;
+}
+
+@media (max-width: 520px) {
+  .assistant-move {
+    display: none;
+  }
+
+  .assistant-panel {
+    translate: none !important;
+  }
+}
