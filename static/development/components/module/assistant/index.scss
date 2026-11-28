@@ -1923,3 +1923,61 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   width: 34px;
   height: 34px;
 }
+
+// ── smoother cards, room for the lifted shadow, mouse drag ──
+.assistant-slider-track {
+  margin: -6px 0 -14px;
+  padding: 6px 2px 18px;
+}
+
+.assistant-slider.is-dragging .assistant-slider-track {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+  user-select: none;
+
+  * {
+    pointer-events: none;
+  }
+}
+
+.assistant-product {
+  will-change: transform;
+  transition: transform 0.45s $ease, box-shadow 0.45s $ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  .assistant-product-img img {
+    transition: opacity 0.35s ease, transform 0.6s $ease;
+  }
+}
+
+.assistant-tile,
+.assistant-chip,
+.assistant-suggestion {
+  transition-timing-function: $ease;
+  transition-duration: 0.35s;
+}
+
+.assistant-product-img img,
+.assistant-tile-img img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+// Room for "1.6х2.3 / 2 700 грн" in a half-width chip.
+.assistant-product {
+  flex-basis: 188px;
+}
+
+.assistant-product .assistant-size {
+  gap: 4px;
+  padding: 5px 5px;
+
+  .assistant-size-text i {
+    overflow: visible;
+    font-size: 11px;
+  }
+}

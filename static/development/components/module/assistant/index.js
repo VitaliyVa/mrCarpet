@@ -213,7 +213,7 @@ const ICONS = {
   send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>',
   expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg>',
   shrink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7"/></svg>',
-  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4A8 8 0 1 1 20 11.5Z"/><path d="M12 8.2v6.6M8.7 11.5h6.6"/></svg>',
   left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
   right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -260,6 +260,49 @@ function makeSlider(className, items) {
     },
     { passive: false }
   );
+  // Drag with the mouse like a regular slider (touch scrolls natively).
+  let drag = null;
+  track.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || track.scrollWidth <= track.clientWidth) return;
+    drag = { x: e.clientX, left: track.scrollLeft, moved: false, id: e.pointerId, lastX: e.clientX, lastT: performance.now(), v: 0 };
+  });
+  track.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) > 5) {
+      drag.moved = true;
+      track.setPointerCapture(e.pointerId);
+      wrap.classList.add("is-dragging");
+    }
+    if (!drag.moved) return;
+    const now = performance.now();
+    drag.v = (e.clientX - drag.lastX) / Math.max(1, now - drag.lastT);
+    drag.lastX = e.clientX;
+    drag.lastT = now;
+    track.scrollLeft = drag.left - dx;
+  });
+  const endDrag = (e) => {
+    if (!drag) return;
+    const moved = drag.moved;
+    const velocity = drag.v;
+    drag = null;
+    if (!moved) return;
+    wrap.classList.remove("is-dragging");
+    // A little glide in the direction of the throw, then the row snaps.
+    if (!reduceMotion() && Math.abs(velocity) > 0.2) {
+      track.scrollBy({ left: -velocity * 220, behavior: "smooth" });
+    }
+    // The click that ends a drag must not open a card or add a size.
+    const block = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+    };
+    track.addEventListener("click", block, { capture: true, once: true });
+    setTimeout(() => track.removeEventListener("click", block, { capture: true }), 50);
+  };
+  track.addEventListener("pointerup", endDrag);
+  track.addEventListener("pointercancel", endDrag);
+  track.addEventListener("dragstart", (e) => e.preventDefault());
   if (window.ResizeObserver) new ResizeObserver(sync).observe(track);
   requestAnimationFrame(sync);
   track.querySelectorAll("img").forEach((img) => img.addEventListener("load", sync, { once: true }));
