@@ -1,4 +1,4 @@
-{% extends '_base.html' %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
+{% extends '_base.html' %}{% load catalog_filters %}{% block robots %}{% include 'includes/robots_noindex.html' %}{% endblock %}{% block styles %}
 <link rel="stylesheet" href="/static/source/pages/basket/index.css?v={{ static_v }}" />
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
@@ -13,7 +13,7 @@
 
         <div class="title">
             <h1>Оформлення замовлення</h1>
-            <span id="cart-count">{{ cart.cart_products.all|length }} товари</span>
+            <span id="cart-count">{% with n=cart.cart_products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}</span>
         </div>
 
         <!-- Блок порожньої корзини -->
