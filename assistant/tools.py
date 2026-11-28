@@ -210,7 +210,7 @@ def _card(product) -> dict:
         "id": product.pk,
         "title": product.title,
         "url": product.get_absolute_url(),
-        "image": _abs_image(product),
+        "image": "",
         "price_from": min((s["price"] for s in sizes), default=None),
         "sizes": sizes,
         "cut_to_length": _has_custom(product),
@@ -271,25 +271,27 @@ def normalize_phone(raw: str) -> str | None:
 
 def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None):
     from catalog.filters import search_tokens, token_q
+    from catalog.models import Product
 
     tokens = search_tokens(query)[:6]
     qs = _product_qs()
-    found = []
     if tokens:
-        strict = qs
-        for token in tokens:
-            strict = strict.filter(token_q(token))
-        found = list(strict.distinct()[:40])
-        if not found and len(tokens) > 1:
+        # One query per word (see catalog.filters.matching_product_ids).
+        per_token = [
+            set(Product.admin_objects.filter(token_q(t)).values_list("pk", flat=True).order_by().distinct())
+            for t in tokens
+        ]
+        ids = set.intersection(*per_token)
+        if not ids and len(tokens) > 1:
             # Not every word matched one rug: keep the ones matching most words.
             scores: dict[int, int] = {}
-            for token in tokens:
-                for pk in qs.filter(token_q(token)).values_list("pk", flat=True).distinct()[:200]:
+            for found_ids in per_token:
+                for pk in found_ids:
                     scores[pk] = scores.get(pk, 0) + 1
             if scores:
                 best = max(scores.values())
-                ids = [pk for pk, s in scores.items() if s == best][:40]
-                found = list(qs.filter(pk__in=ids))
+                ids = {pk for pk, n in scores.items() if n == best}
+        found = list(qs.filter(pk__in=ids)[:40])
     else:
         found = list(qs[:40])
 
@@ -306,7 +308,9 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
         results.append(card)
         if len(results) >= MAX_RESULTS:
             break
+    by_pk = {p.pk: p for p in found}
     for card in results:
+        card["image"] = _abs_image(by_pk[card["id"]])
         _remember(ctx, card)
     if not results:
         return {"found": 0, "hint": "Нічого не знайшлось. Спробуй менше слів або інші слова."}
@@ -326,6 +330,7 @@ def get_product(ctx: ToolContext, product_id: int):
     if not product:
         return {"error": "Товар не знайдено або його немає в наявності."}
     card = _card(product)
+    card["image"] = _abs_image(product)
     _remember(ctx, card)
     specs = {}
     for ps in product.product_specs.all():

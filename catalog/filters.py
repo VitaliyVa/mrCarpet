@@ -150,12 +150,33 @@ class ProductFilter(django_filters.FilterSet):
         tokens = search_tokens(value)
         if not tokens:
             return queryset
-        for token in tokens:
-            queryset = queryset.filter(token_q(token))
-        return queryset.distinct()
+        ids = matching_product_ids(tokens)
+        return queryset.filter(pk__in=ids)
+
+
+def matching_product_ids(tokens: list[str]) -> set[int]:
+    """Products matching every token.
+
+    One small query per word, intersected here. Chaining .filter(token_q(..))
+    for every word added five multi-valued joins per word (colours, specs,
+    categories, sizes) to one query; at five words SQLite multiplied rows
+    for minutes.
+    """
+    from .models import Product
+
+    ids: set[int] | None = None
+    for token in tokens:
+        found = set(
+            Product.admin_objects.filter(token_q(token)).values_list("pk", flat=True).order_by().distinct()
+        )
+        ids = found if ids is None else ids & found
+        if not ids:
+            return set()
+    return ids or set()
 
 
 SEARCH_STOP_WORDS = {
+    "грн", "гривень", "до", "від", "кімнати", "кімнату",
     "купити", "куплю", "ціна", "ціни", "ціною", "недорого", "дешево", "дешеві",
     "інтернет", "магазин", "магазині", "україна", "україні", "доставка",
     "для", "під", "та", "або", "на", "в", "у", "з", "із", "і", "й",

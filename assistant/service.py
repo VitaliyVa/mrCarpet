@@ -7,6 +7,7 @@ request's session cart and the reply must arrive in a few seconds.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 from decimal import Decimal
 
@@ -19,6 +20,8 @@ from .tools import TOOLS, ToolContext, run_tool
 logger = logging.getLogger(__name__)
 
 MAX_TOOL_ROUNDS = 8
+# A buyer waits for the reply: past this, answer with what we have.
+TURN_DEADLINE_SECONDS = 35
 MAX_HISTORY = 60  # API messages kept for the next request
 MAX_OUTPUT_TOKENS = 4000
 
@@ -77,7 +80,7 @@ SYSTEM_PROMPT = """Ти консультант інтернет-магазину
 def _client(api_key: str):
     import anthropic
 
-    return anthropic.Anthropic(api_key=api_key, max_retries=1, timeout=45.0)
+    return anthropic.Anthropic(api_key=api_key, max_retries=1, timeout=25.0)
 
 
 def spent_today() -> Decimal:
@@ -161,7 +164,12 @@ def run_turn(request, conversation: Conversation, text: str, settings: Assistant
     reply_text = ""
     try:
         client = _client(settings.resolved_api_key())
+        started = time.monotonic()
         for _round in range(MAX_TOOL_ROUNDS):
+            if time.monotonic() - started > TURN_DEADLINE_SECONDS:
+                logger.warning("assistant turn over deadline (conversation %s)", conversation.pk)
+                reply_text = reply_text or "Шукаю задовго. Напишіть, будь ласка, коротше, що саме шукаєте, або подзвоніть нам."
+                break
             response = client.messages.create(
                 model=settings.model,
                 max_tokens=MAX_OUTPUT_TOKENS,
