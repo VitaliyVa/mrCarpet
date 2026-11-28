@@ -53,13 +53,13 @@ TOOLS = [
     },
     {
         "name": "shop_info",
-        "description": "Умови магазину: доставка, оплата, повернення, контакти.",
+        "description": "Умови магазину: доставка, оплата, повернення, контакти і графік, килими під індивідуальний розмір (custom).",
         "input_schema": {
             "type": "object",
             "properties": {
                 "topic": {
                     "type": "string",
-                    "enum": ["delivery", "payment", "returns", "contacts"],
+                    "enum": ["delivery", "payment", "returns", "contacts", "custom"],
                 }
             },
             "required": ["topic"],
@@ -139,6 +139,24 @@ TOOLS = [
                 "email": {"type": "string", "description": "Необов'язково."},
             },
             "required": ["size_id", "full_name", "phone"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "request_callback",
+        "description": (
+            "Заявка на дзвінок менеджера, коли в чаті не вирішити: килим під індивідуальний "
+            "розмір, довга доріжка, опт, складне питання. Збери ім'я і телефон, коротко "
+            "перепитай і опиши запит одним-двома реченнями."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "full_name": {"type": "string"},
+                "phone": {"type": "string"},
+                "request": {"type": "string", "description": "Що потрібно покупцю, з розмірами."},
+            },
+            "required": ["full_name", "phone", "request"],
             "additionalProperties": False,
         },
     },
@@ -433,10 +451,21 @@ def shop_info(ctx: ToolContext, topic: str):
             ),
             "page": "/refund/",
         }
+    if topic == "custom":
+        return {
+            "text": (
+                "Так, килими під індивідуальний розмір робимо на замовлення. Ціну і строк "
+                "менеджер скаже після дзвінка. Такі килими оплачуються наперед повністю і не "
+                "повертаються. Можна залишити заявку на дзвінок (request_callback)."
+            ),
+            "page": "/delivery/",
+        }
     return {
         "phone": ORG_PHONE,
         "email": ORG_EMAIL,
+        "hours": "Пн-Пт 9:00-18:00, субота і неділя вихідні",
         "address": "Тернопільська обл., м. Ланівці, вул. Незалежності 5а",
+        "visit": "Приїхати можна, але краще спершу подзвонити, щоб потрібний килим точно чекав.",
         "page": "/contacts/",
     }
 
@@ -730,6 +759,37 @@ def request_stock(ctx: ToolContext, size_id: int, full_name: str, phone: str, em
     }
 
 
+def request_callback(ctx: ToolContext, full_name: str, phone: str, request: str):
+    from project.models import ContactRequest
+
+    name = re.sub(r"\s+", " ", full_name or "").strip()[:115]
+    if len(name) < 2:
+        return {"error": "Потрібне ім'я покупця."}
+    normalized = normalize_phone(phone)
+    if not normalized:
+        return {"error": "Телефон має бути український, напр. 0961234567."}
+    text = re.sub(r"\s+", " ", request or "").strip()[:600]
+    if len(text) < 5:
+        return {"error": "Опиши, що потрібно покупцю."}
+    if _client_stock_requests(ctx) >= MAX_STOCK_REQUESTS_PER_CLIENT_DAY:
+        return {"error": "Сьогодні вже прийнято кілька заявок. Подзвоніть нам: +380 96 398 88 75."}
+
+    contact = ContactRequest.objects.create(
+        name=name,
+        email="",
+        text=f"Заявка з чат-бота на сайті. Телефон: {normalized}\n{text}",
+    )
+    ctx.conversation.stock_requests = (ctx.conversation.stock_requests or 0) + 1
+    ctx.conversation.save(update_fields=["stock_requests", "updated"])
+    try:
+        from project.telegram_utils import notify_contact
+
+        notify_contact(contact)
+    except Exception:
+        pass
+    return {"ok": True, "text": "Заявку прийнято. Менеджер зателефонує в робочий час (Пн-Пт 9:00-18:00)."}
+
+
 def _client_stock_requests(ctx) -> int:
     from datetime import timedelta
 
@@ -776,6 +836,7 @@ def _notify_stock_inquiry(inquiry):
 
 HANDLERS = {
     "request_stock": request_stock,
+    "request_callback": request_callback,
     "search_products": search_products,
     "get_product": get_product,
     "shop_info": shop_info,

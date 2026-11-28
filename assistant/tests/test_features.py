@@ -103,3 +103,42 @@ class ConfigTests(TestCase):
         cache.clear()
         data = self.client.get("/api/assistant/config/").json()
         self.assertEqual([c["title"] for c in data["categories"]], ["Для ванни"])
+
+
+class CallbackTests(CatalogMixin, TestCase):
+    @mock.patch("project.telegram_utils.notify_contact")
+    def test_callback_creates_contact_request(self, notify):
+        from project.models import ContactRequest
+
+        ctx = ToolContext(self.make_request(), Conversation.objects.create(client_hash="abc"))
+        result, error = run_tool(ctx, "request_callback", {
+            "full_name": "Марія", "phone": "0951234567", "request": "Килим під розмір 2.3 на 3.4",
+        })
+        self.assertFalse(error, result)
+        contact = ContactRequest.objects.get()
+        self.assertIn("+380951234567", contact.text)
+        self.assertIn("2.3 на 3.4", contact.text)
+        notify.assert_called_once()
+        _, error = run_tool(ctx, "request_callback", {"full_name": "Марія", "phone": "123", "request": "x" * 10})
+        self.assertTrue(error)
+
+    def test_custom_and_hours_facts(self):
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        custom, _ = run_tool(ctx, "shop_info", {"topic": "custom"})
+        self.assertIn("робимо на замовлення", custom["text"])
+        contacts, _ = run_tool(ctx, "shop_info", {"topic": "contacts"})
+        self.assertIn("9:00-18:00", contacts["hours"])
+
+
+class CardSizeOrderTests(CatalogMixin, TestCase):
+    def test_discussed_size_comes_first(self):
+        from assistant.service import _payload
+
+        small = Size.objects.create(title="0.8х1.5")
+        ProductAttribute.objects.create(product=self.product, size=small, price=900, quantity=1, sort_order=0)
+        self.attr.sort_order = 5
+        self.attr.save()
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        run_tool(ctx, "search_products", {"query": "сірий"})
+        payload = _payload(ctx, "Є [Mira](/catalog/product/mira-grey/) 2.0x3.0 за 3200 грн")
+        self.assertEqual(payload["products"][0]["sizes"][0]["size"], "2.0х3.0")
