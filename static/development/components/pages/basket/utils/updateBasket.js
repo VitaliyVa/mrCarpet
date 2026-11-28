@@ -1,3 +1,5 @@
+import { updateFreeShippingUI } from "./freeShipping";
+
 const formatCartCountLabel = (count) => {
   const abs = Math.abs(count) % 100;
   const last = abs % 10;
@@ -22,11 +24,24 @@ export const updateBasket = (basket) => {
     ".basket__calculate-total-price-value"
   );
 
+  // The API sends "2400 грн."; an applied promocode keeps its percent in the
+  // summary, so the new total gets the same discount the shop will charge.
+  const rawTotal = parseFloat(String(basket.total_price).replace(/[^\d.,]/g, "").replace(",", "."));
+  const discountEl = basketElement.querySelector(".basket__calculate-discount-value");
+  const discount = discountEl ? Math.abs(parseFloat(discountEl.textContent)) || 0 : 0;
+  const total = Number.isFinite(rawTotal)
+    ? Math.round(rawTotal * (1 - discount / 100) * 100) / 100
+    : null;
+  const totalLabel = total === null ? basket.total_price : `${total} грн.`;
+
   if (totalPriceForProducts) {
-    totalPriceForProducts.textContent = basket.total_price;
+    totalPriceForProducts.textContent = totalLabel;
   }
   if (totalPrice) {
-    totalPrice.textContent = basket.total_price;
+    totalPrice.textContent = totalLabel;
+  }
+  if (total !== null) {
+    updateFreeShippingUI(null, total);
   }
 
   const itemsCount = basket.cart_products?.length ?? 0;
