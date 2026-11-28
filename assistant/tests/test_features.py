@@ -346,3 +346,14 @@ class NewItemsTests(CatalogMixin, TestCase):
         Product.admin_objects.filter(pk=self.product.pk).update(is_new=False)
         result, _ = run_tool(ctx, "search_products", {"only_new": True})
         self.assertEqual(result["found"], 0)
+
+
+class ShippingInfoTests(CatalogMixin, TestCase):
+    def test_get_product_has_parcel_estimate(self):
+        ctx = ToolContext(self.make_request(), None)
+        result, error = run_tool(ctx, "get_product", {"product_id": self.product.pk})
+        self.assertFalse(error, result)
+        row = result["shipping"][0]
+        self.assertEqual(row["size"], "2.0х3.0")
+        self.assertTrue(row["weight"].endswith("кг"))
+        self.assertTrue(row["package"].endswith("м"))

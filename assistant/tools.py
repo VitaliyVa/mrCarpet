@@ -492,6 +492,28 @@ def search_products(
     }
 
 
+def _shipping(product, specs: dict) -> list[dict]:
+    """Parcel weight and size per size: the same estimate the Rozetka feed uses
+    (project.rozetka_logistics, seller-weighed kg/m² where known)."""
+    from project.merchant_feed import format_size
+    from project.rozetka_logistics import logistics
+
+    names = {"склад килима": "Матеріал", "матеріал": "Матеріал", "висота ворса": "Висота ворсу",
+             "висота ворсу": "Висота ворсу", "основа": "Основа"}
+    params = {names[k.lower()]: v for k, v in specs.items() if k and k.lower() in names}
+    rows = []
+    for attr in product.product_attr.all():
+        if attr.custom_attribute or not attr.size:
+            continue
+        try:
+            ship = logistics(product.title, format_size(attr.size.title), params)
+        except Exception:
+            ship = None
+        if ship:
+            rows.append({"size": attr.size.title, "weight": ship["weight_text"], "package": ship["package_text"]})
+    return rows[:12]
+
+
 def get_product(ctx: ToolContext, product_id: int):
     from django.utils.html import strip_tags
 
@@ -515,6 +537,7 @@ def get_product(ctx: ToolContext, product_id: int):
             specs[ps.specification.title] = ps.spec_value.title
     description = re.sub(r"\s+", " ", strip_tags(product.description or "")).strip()[:900]
     return {
+        "shipping": _shipping(product, specs),
         **{k: card[k] for k in ("id", "title", "url", "sizes", "sold_out", "cut_to_length", "ar")},
         "colors": [c.title for c in product.colors.all()],
         "specs": specs,
@@ -1032,7 +1055,7 @@ def catalog_overview(ctx: ToolContext):
 
     from catalog.models import Product, ProductCategory, ProductSpecification
 
-    data = cache.get("assistant:overview:v2")
+    data = cache.get("assistant:overview:v3")
     if data is not None:
         return data
     products = list(_product_qs())
@@ -1043,7 +1066,7 @@ def catalog_overview(ctx: ToolContext):
     for spec, value in ProductSpecification.objects.filter(product_id__in=ids).values_list(
         "specification__title", "spec_value__title"
     ):
-        if spec in ("Склад килима", "Матеріал", "Висота ворсу", "Основа", "Виробник", "Країна", "Форма килима") and value:
+        if spec in ("Склад килима", "Матеріал", "Висота ворсу", "Висота ворса", "Основа", "Виробник", "Країна", "Форма килима") and value:
             specs[(spec, value)] += 1
     grouped: dict = {}
     for (spec, value), n in specs.most_common():
@@ -1067,7 +1090,7 @@ def catalog_overview(ctx: ToolContext):
         "categories": categories,
         "specs": grouped,
     }
-    cache.set("assistant:overview:v2", data, 600)
+    cache.set("assistant:overview:v3", data, 600)
     return data
 
 
