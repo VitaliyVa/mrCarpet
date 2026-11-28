@@ -2379,3 +2379,23 @@ body.product-ar-modal-open .assistant-widget {
     scroll-snap-align: none;
   }
 }
+
+// Pressed quick reply: white text on the dark fill. While the row is being
+// dragged the button keeps its normal look (no hover, no pressed fill).
+.assistant-quickbar .assistant-chip:active {
+  border-color: $accent-dark;
+  background: $accent-dark;
+  color: #fff;
+}
+
+.assistant-quickbar .assistant-slider.is-dragging .assistant-chip,
+.assistant-quickbar .assistant-slider.is-dragging .assistant-chip:active {
+  border-color: $accent;
+  background: $accent-soft;
+  color: $accent-dark;
+  box-shadow: 0 2px 8px rgba(138, 90, 56, 0.12);
+}
+
+.assistant-widget button:focus:not(:focus-visible) {
+  outline: none;
+}
