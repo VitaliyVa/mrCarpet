@@ -376,7 +376,7 @@ class ProductVariantsPageTests(TestCase):
         self.assertIn(f'href="{self.rect.get_absolute_url()}"', html)
         self.assertIn(f'href="{self.oval_beige.get_absolute_url()}"', html)
         self.assertNotIn(f'href="{self.unrelated.get_absolute_url()}"', html)
-        self.assertNotIn("—", html.split("product-variants-links")[1].split("</section>")[0])
+        self.assertNotIn("—", html.split("product-variants")[1].split("</section>")[0])
 
     def test_rectangular_twin_links_back_to_oval(self):
         html = self.client.get(self.rect.get_absolute_url()).content.decode()
@@ -385,7 +385,7 @@ class ProductVariantsPageTests(TestCase):
 
     def test_no_block_without_siblings(self):
         html = self.client.get(self.unrelated.get_absolute_url()).content.decode()
-        self.assertNotIn("product-variants-links__list", html)
+        self.assertNotIn("product-variants__label", html)
 
     def test_pdp_jsonld_group_and_size_param(self):
         html = self.client.get(self.oval.get_absolute_url()).content.decode()
