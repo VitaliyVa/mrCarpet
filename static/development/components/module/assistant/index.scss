@@ -2431,3 +2431,36 @@ body.product-ar-modal-open .assistant-widget {
     border-bottom: 0;
   }
 }
+
+// «Приміряти вдома» under a product card in the chat.
+.assistant-product-ar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border: 1.5px solid $accent;
+  border-radius: 12px;
+  background: $card;
+  color: $accent-dark;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 14px;
+  transition: background-color 0.25s $ease, color 0.25s $ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: $accent;
+    color: #fff;
+  }
+
+  &:active {
+    background: $accent-dark;
+    color: #fff;
+  }
+}

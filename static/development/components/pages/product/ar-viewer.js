@@ -746,13 +746,30 @@ async function loadSizeIntoViewer(sizeLabel) {
 
     if (autoArRequested) {
       autoArRequested = false;
-      await launchAr();
+      if (mv.canActivateAR) {
+        // A phone opens the camera / Scene Viewer / Quick Look only in answer
+        // to a tap. A link (?ar=1 from the chat or a QR code) has no tap left
+        // after the page loaded, so activateAR() was silently ignored and
+        // nothing happened. Point at the button instead: one tap starts AR.
+        promptArTap();
+      } else {
+        await launchAr();
+      }
     }
   } catch (err) {
     setStatus(err.message || String(err), true);
   } finally {
     setLoading(false);
   }
+}
+
+function promptArTap() {
+  const btn = document.getElementById("product-ar-launch");
+  setStatus("Натисніть «Приміряти килим у себе вдома», і відкриється камера.");
+  if (!btn) return;
+  btn.classList.add("is-attention");
+  btn.scrollIntoView({ block: "center", behavior: "smooth" });
+  btn.addEventListener("click", () => btn.classList.remove("is-attention"), { once: true });
 }
 
 function renderModalSizes(activeLabel) {
@@ -831,10 +848,10 @@ function handleDeepLink() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("view3d") !== "1") return;
 
-  const guardKey =
-    "ar-deeplink:" + window.location.pathname + window.location.search;
-  if (sessionStorage.getItem(guardKey)) return;
-  sessionStorage.setItem(guardKey, "1");
+  // Open on every fresh visit of the link (a second tap in the chat opened
+  // nothing before), but not again on a reload or the back button.
+  const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+  if (nav && (nav.type === "reload" || nav.type === "back_forward")) return;
 
   const size = params.get("size") || undefined;
   const ar = params.get("ar") === "1";

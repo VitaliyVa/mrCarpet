@@ -461,6 +461,7 @@ def _payload(ctx: ToolContext, reply_text: str = "") -> dict:
                 "url": c["url"],
                 "image": c["image"],
                 "price_from": c["price_from"],
+                "ar": bool(c.get("ar")),
                 # Sizes the reply talks about first, so the card shows the one discussed.
                 "sizes": [
                     {"size_id": s["size_id"], "size": s["size"], "price": s["price"]}

@@ -1433,3 +1433,20 @@ body.product-ar-modal-open {
 // .rate-area > label:active {
 //   position: relative;
 // }
+
+
+// Opened from a link (chat, QR): the try-on button asks for the tap a phone
+// needs before it may start the camera.
+.product-ar-modal__ar-btn.is-attention {
+  animation: product-ar-attention 1.4s ease-in-out infinite;
+}
+
+@keyframes product-ar-attention {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(164, 108, 70, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(164, 108, 70, 0);
+  }
+}

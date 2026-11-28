@@ -43,6 +43,8 @@ const THINKING = ["Шукаю в каталозі…", "Перевіряю на�
 const TAB_ID = Math.random().toString(36).slice(2);
 const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const isPhone = () => window.matchMedia("(max-width: 520px)").matches;
+// A touch phone or tablet (AR there); isPhone() above is only about layout.
+const isPhoneDevice = () => window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches;
 
 const local = {
   get(key) {
@@ -248,6 +250,7 @@ const ICONS = {
   bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
   cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg>',
+  cube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>',
   grip: '<svg viewBox="0 0 12 12" fill="currentColor"><circle cx="2" cy="2" r="1.1"/><circle cx="6" cy="2" r="1.1"/><circle cx="2" cy="6" r="1.1"/></svg>',
 };
 
@@ -959,6 +962,11 @@ class AssistantWidget {
       this.addSize(sizeBtn);
       return;
     }
+    const tryOn = t.closest("[data-try-on]");
+    if (tryOn) {
+      this.tryOn(tryOn.dataset);
+      return;
+    }
     const removeBtn = t.closest("[data-remove-size]");
     if (removeBtn) {
       this.removeSize(removeBtn);
@@ -1405,6 +1413,17 @@ class AssistantWidget {
         });
         card.appendChild(sizes);
       }
+      if (p.ar) {
+        const tryOn = el("button", "assistant-product-ar");
+        tryOn.type = "button";
+        tryOn.dataset.tryOn = "1";
+        tryOn.dataset.url = p.url;
+        tryOn.dataset.title = p.title;
+        tryOn.dataset.image = p.image || "";
+        tryOn.dataset.size = (p.sizes && p.sizes[0] && p.sizes[0].size) || "";
+        tryOn.innerHTML = `${ICONS.cube}<span>Приміряти вдома</span>`;
+        card.appendChild(tryOn);
+      }
       if (soldOut) {
         card.appendChild(el("span", "assistant-sizes-label", "Немає в наявності:"));
         const sizes = el("div", "assistant-product-sizes");
@@ -1422,8 +1441,29 @@ class AssistantWidget {
     return makeSlider("assistant-products", cards);
   }
 
+  /** «Приміряти вдома» under a product card: no model call. On a phone it opens
+   * the product's try-on window; on a computer it shows the QR code here. */
+  tryOn(data) {
+    const params = new URLSearchParams({ view3d: "1", ...(data.size ? { size: data.size } : {}) });
+    const ar = {
+      title: data.title,
+      image: data.image,
+      size: data.size,
+      link_3d: `${data.url}?${params}`,
+      link_ar: `${data.url}?${params}&ar=1`,
+    };
+    trackEvent("assistant_try_on", { page_type: window.__mrPageType || "" });
+    if (isPhoneDevice()) {
+      window.location.href = ar.link_ar;
+      return;
+    }
+    this.messages.push({ id: `ar-${Date.now()}`, role: "assistant", content: "Наведіть камеру телефона на код, і килим зʼявиться у вашій кімнаті.", ar });
+    this.render();
+    this.scrollToBottom(true);
+  }
+
   renderAr(ar) {
-    const phone = window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches;
+    const phone = isPhoneDevice();
     const card = el("div", `assistant-ar${phone ? " is-phone" : ""}`);
     const head = el("div", "assistant-ar-head");
     head.appendChild(rugImage(ar.image, ar.title, "assistant-ar-img"));
@@ -1434,10 +1474,12 @@ class AssistantWidget {
     head.appendChild(info);
     card.appendChild(head);
     if (phone) {
-      const go = el("a", "assistant-ar-primary", "Приміряти вдома");
+      const go = el("a", "assistant-ar-primary", "Відкрити примірку");
       go.href = ar.link_ar;
       card.appendChild(go);
-      card.appendChild(el("p", "assistant-ar-hint", "Відкриється камера: наведіть її на підлогу, і килим зʼявиться в реальному розмірі."));
+      card.appendChild(
+        el("p", "assistant-ar-hint", "Відкриється 3D-килим. Натисніть «Приміряти килим у себе вдома», увімкнеться камера: наведіть її на підлогу.")
+      );
     } else {
       const qrBox = el("div", "assistant-ar-qr");
       const qr = el("img");
