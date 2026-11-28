@@ -417,12 +417,15 @@ def search_products(
     if on_sale:
         qs = qs.filter(product_attr__discount__gt=0, product_attr__quantity__gt=0).distinct()
     if only_new:
-        from project.novelty import get_novelty_days
-        from django.utils import timezone
-        from datetime import timedelta
+        # The same rule as the site's «Новинка» badge (no date counts as new).
+        from project.novelty import product_is_novelty
 
-        days = get_novelty_days()
-        qs = qs.filter(is_new=True, created__gte=timezone.now() - timedelta(days=days)) if days > 0 else qs.none()
+        new_ids = [p.pk for p in qs.filter(is_new=True).only("pk", "is_new", "created") if product_is_novelty(p)]
+        qs = qs.filter(pk__in=new_ids)
+    if (only_new or on_sale) and tokens:
+        # "новинки", "знижки" as words find nothing; the filter already says it.
+        generic = ("нов", "знижк", "акці", "розпрод")
+        tokens = [t for t in tokens if not t.startswith(generic)]
     partial = False
     if tokens:
         # One query per word (see catalog.filters.matching_product_ids).
@@ -1026,7 +1029,7 @@ def catalog_overview(ctx: ToolContext):
 
     from catalog.models import Product, ProductCategory, ProductSpecification
 
-    data = cache.get("assistant:overview:v1")
+    data = cache.get("assistant:overview:v2")
     if data is not None:
         return data
     products = list(_product_qs())
@@ -1037,7 +1040,7 @@ def catalog_overview(ctx: ToolContext):
     for spec, value in ProductSpecification.objects.filter(product_id__in=ids).values_list(
         "specification__title", "spec_value__title"
     ):
-        if spec in ("Матеріал", "Висота ворсу", "Основа", "Країна виробник", "Країна", "Форма") and value:
+        if spec in ("Склад килима", "Матеріал", "Висота ворсу", "Основа", "Виробник", "Країна", "Форма килима") and value:
             specs[(spec, value)] += 1
     grouped: dict = {}
     for (spec, value), n in specs.most_common():
@@ -1061,7 +1064,7 @@ def catalog_overview(ctx: ToolContext):
         "categories": categories,
         "specs": grouped,
     }
-    cache.set("assistant:overview:v1", data, 600)
+    cache.set("assistant:overview:v2", data, 600)
     return data
 
 

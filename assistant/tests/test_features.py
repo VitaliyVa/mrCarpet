@@ -335,3 +335,14 @@ class OverviewTests(CatalogMixin, TestCase):
         self.assertEqual([p["title"] for p in result["products"]], ["Килим акційний"])
         partial, _ = run_tool(ctx, "search_products", {"query": "вовняний сірий"})
         self.assertIn("note", partial)
+
+
+class NewItemsTests(CatalogMixin, TestCase):
+    def test_only_new_matches_the_site_badge(self):
+        Product.admin_objects.filter(pk=self.product.pk).update(is_new=True, created=None)
+        ctx = ToolContext(self.make_request(), None)
+        result, _ = run_tool(ctx, "search_products", {"query": "новинки", "only_new": True})
+        self.assertEqual(result["products"][0]["id"], self.product.pk)
+        Product.admin_objects.filter(pk=self.product.pk).update(is_new=False)
+        result, _ = run_tool(ctx, "search_products", {"only_new": True})
+        self.assertEqual(result["found"], 0)
