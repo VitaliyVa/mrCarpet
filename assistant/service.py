@@ -82,6 +82,13 @@ SYSTEM_PROMPT = """Ти консультант інтернет-магазину
   Ніколи не кажи, що замовлення вже оформлене, поки система не повідомить про це.
 - Якщо покупцю зручніше самому, дай посилання на /checkout/.
 
+Примірка вдома (3D / AR):
+- Товари з ar: true можна приміряти вдома через камеру телефона в реальному розмірі.
+- Коли покупець кілька повідомлень обговорює один такий килим, сумнівається, чи підійде за розміром чи кольором,
+  або питає, як він виглядатиме в кімнаті, запропонуй примірку кнопкою [[Приміряти вдома|...]].
+  Якщо погодився або сам просить, виклич show_ar з product_id і обраним розміром. Пропонуй не частіше одного разу на килим.
+- У [Контекст] буде "пристрій: телефон" або "пристрій: компʼютер". На компʼютері покупець побачить QR-код для телефона.
+
 Немає в наявності:
 - Розміри з sold_out зараз відсутні. Не кажи, що їх можна купити.
 - Запропонуй схожі килими в наявності АБО залишити заявку: збери ім'я і телефон,
@@ -193,12 +200,16 @@ def visitor_context(request, page: dict | None) -> str:
 
     parts = []
     path = str((page or {}).get("path") or "")[:200]
+    device = (page or {}).get("device")
+    if device in ("phone", "desktop"):
+        parts.append("пристрій: " + ("телефон" if device == "phone" else "компʼютер"))
     product_match = re.match(r"^/catalog/product/([\w-]+)/", path)
     category_match = re.match(r"^/catalog/([\w-]+)/$", path)
     if product_match:
-        product = Product.admin_objects.filter(slug=product_match.group(1)).only("pk", "title").first()
+        product = Product.admin_objects.filter(slug=product_match.group(1)).only("pk", "title", "ar_status").first()
         if product:
-            parts.append(f"покупець дивиться товар «{product.title}» (product_id {product.pk})")
+            ar = ", є примірка 3D/AR" if product.ar_status == Product.AR_STATUS_READY else ""
+            parts.append(f"покупець дивиться товар «{product.title}» (product_id {product.pk}{ar})")
     elif category_match:
         category = ProductCategory.objects.filter(slug=category_match.group(1)).only("title").first()
         if category:
@@ -399,6 +410,8 @@ def _payload(ctx: ToolContext, reply_text: str = "") -> dict:
         ]
     if ctx.order_card:
         payload["order"] = public_order(ctx.order_card)
+    if ctx.ar_card:
+        payload["ar"] = ctx.ar_card
     return payload
 
 
@@ -418,6 +431,7 @@ def serialize_message(message: Message, extra: dict | None = None) -> dict:
         "products": (message.payload or {}).get("products", []),
         "order": (message.payload or {}).get("order"),
         "quick_replies": (message.payload or {}).get("quick_replies", []),
+        "ar": (message.payload or {}).get("ar"),
     }
     if extra:
         data.update(extra)

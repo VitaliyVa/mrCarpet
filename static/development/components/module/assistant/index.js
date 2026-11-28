@@ -727,7 +727,10 @@ class AssistantWidget {
     try {
       const { data } = await api.post("/message/", {
         message: text,
-        page: { path: window.location.pathname },
+        page: {
+          path: window.location.pathname,
+          device: window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches ? "phone" : "desktop",
+        },
         ...(this.conversationId ? { conversation_id: this.conversationId } : {}),
       });
       this.conversationId = data.conversation_id;
@@ -1241,6 +1244,7 @@ class AssistantWidget {
     wrap.appendChild(bubble);
     if (message.products && message.products.length) wrap.appendChild(this.renderProducts(message.products));
     if (message.order) wrap.appendChild(this.renderOrder(message.order));
+    if (message.ar) wrap.appendChild(this.renderAr(message.ar));
     if (withQuick) {
       const chips = message.quick_replies.map((text, i) => {
         const chip = el("button", "assistant-chip", text);
@@ -1299,6 +1303,41 @@ class AssistantWidget {
       return card;
     });
     return makeSlider("assistant-products", cards);
+  }
+
+  renderAr(ar) {
+    const phone = window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches;
+    const card = el("div", `assistant-ar${phone ? " is-phone" : ""}`);
+    const head = el("div", "assistant-ar-head");
+    head.appendChild(rugImage(ar.image, ar.title, "assistant-ar-img"));
+    const info = el("div", "assistant-ar-info");
+    info.appendChild(el("span", "assistant-ar-badge", "3D · AR"));
+    info.appendChild(el("p", "assistant-ar-title", "Приміряйте килим у себе вдома"));
+    info.appendChild(el("p", "assistant-ar-sub", `${ar.title}${ar.size ? `, ${ar.size}` : ""}`));
+    head.appendChild(info);
+    card.appendChild(head);
+    if (phone) {
+      const go = el("a", "assistant-ar-primary", "Приміряти вдома");
+      go.href = ar.link_ar;
+      card.appendChild(go);
+      card.appendChild(el("p", "assistant-ar-hint", "Відкриється камера: наведіть її на підлогу, і килим зʼявиться в реальному розмірі."));
+    } else {
+      const qrBox = el("div", "assistant-ar-qr");
+      const qr = el("img");
+      qr.width = 132;
+      qr.height = 132;
+      qr.alt = "QR-код для примірки з телефона";
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=264x264&margin=8&data=${encodeURIComponent(
+        window.location.origin + ar.link_ar
+      )}`;
+      qrBox.appendChild(qr);
+      qrBox.appendChild(el("p", "", "Наведіть камеру телефона на код: килим зʼявиться у вашій кімнаті в реальному розмірі."));
+      card.appendChild(qrBox);
+      const view = el("a", "assistant-ar-secondary", "Подивитись у 3D тут");
+      view.href = ar.link_3d;
+      card.appendChild(view);
+    }
+    return card;
   }
 
   renderOrder(order) {

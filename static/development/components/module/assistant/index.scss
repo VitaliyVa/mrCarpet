@@ -1981,3 +1981,143 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
     font-size: 11px;
   }
 }
+
+// ── AR / 3D try-on card ──
+.assistant-ar {
+  width: 100%;
+  max-width: 420px;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #ffffff 0%, #f6eee5 100%);
+  box-shadow: 0 0 0 1px rgba(168, 114, 74, 0.25), 0 10px 26px rgba(47, 40, 35, 0.1);
+  animation: assistant-rise 0.5s $ease both 0.1s;
+}
+
+.assistant-ar-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assistant-ar-img {
+  display: block;
+  flex: none;
+  width: 56px;
+  height: 72px;
+  border-radius: 10px;
+  background: $tile-bg;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    padding: 4px;
+    object-fit: contain;
+  }
+
+  &.is-broken img {
+    display: none;
+  }
+}
+
+.assistant-ar-info {
+  min-width: 0;
+}
+
+.assistant-ar-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: $ink;
+  color: #fff;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.assistant-ar-title {
+  margin: 4px 0 2px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.assistant-ar-sub {
+  margin: 0;
+  overflow: hidden;
+  color: $muted;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.assistant-ar-qr {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fff;
+
+  img {
+    flex: none;
+    width: 132px;
+    height: 132px;
+    border-radius: 8px;
+  }
+
+  p {
+    margin: 0;
+    color: $ink-soft;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}
+
+.assistant-ar-primary,
+.assistant-ar-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  margin-top: 12px;
+  border-radius: 23px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 16px;
+  text-decoration: none;
+  transition: transform 0.25s $ease, box-shadow 0.25s $ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.assistant-ar-primary {
+  background: linear-gradient(135deg, #b27c53 0%, $accent-dark 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(138, 90, 56, 0.3);
+}
+
+.assistant-ar-secondary {
+  height: 40px;
+  background: transparent;
+  color: $accent-dark;
+  box-shadow: inset 0 0 0 1px rgba(168, 114, 74, 0.35);
+
+  &:hover {
+    background: $accent-soft;
+  }
+}
+
+.assistant-ar-hint {
+  margin: 8px 4px 0;
+  color: $muted;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+// The product's own 3D / AR window takes the whole screen: step aside.
+body.product-ar-modal-open .assistant-widget {
+  display: none;
+}

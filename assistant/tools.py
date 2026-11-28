@@ -67,6 +67,22 @@ TOOLS = [
         },
     },
     {
+        "name": "show_ar",
+        "description": (
+            "Показати покупцю примірку килима вдома в 3D/AR (тільки для товарів з ar: true). "
+            "На телефоні покупець побачить кнопку, на комп'ютері QR-код для телефона."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "product_id": {"type": "integer"},
+                "size": {"type": "string", "description": "Розмір, напр. 2.0х3.0, якщо обраний."},
+            },
+            "required": ["product_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "view_cart",
         "description": "Що зараз у кошику покупця, сума і чи безкоштовна доставка.",
         "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -201,6 +217,7 @@ class ToolContext:
         self.order_card: dict | None = None
         self.cart_changed = False
         self.cart_events: list[dict] = []
+        self.ar_card: dict | None = None
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -227,6 +244,12 @@ def _sold_out(product) -> list[dict]:
         for a in product.product_attr.all()
         if not a.custom_attribute and not a.in_stock
     ]
+
+
+def _ar_ready(product) -> bool:
+    from catalog.models import Product
+
+    return getattr(product, "ar_status", None) == Product.AR_STATUS_READY
 
 
 def _sizes(product) -> list[dict]:
@@ -261,6 +284,7 @@ def _card(product) -> dict:
         "sizes": sizes,
         "sold_out": _sold_out(product),
         "cut_to_length": _has_custom(product),
+        "ar": _ar_ready(product),
     }
 
 
@@ -365,7 +389,7 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
     return {
         "found": len(results),
         "products": [
-            {k: card[k] for k in ("id", "title", "url", "price_from", "sizes", "sold_out", "cut_to_length")}
+            {k: card[k] for k in ("id", "title", "url", "price_from", "sizes", "sold_out", "cut_to_length", "ar")}
             for card in results
         ],
     }
@@ -394,7 +418,7 @@ def get_product(ctx: ToolContext, product_id: int):
             specs[ps.specification.title] = ps.spec_value.title
     description = re.sub(r"\s+", " ", strip_tags(product.description or "")).strip()[:900]
     return {
-        **{k: card[k] for k in ("id", "title", "url", "sizes", "sold_out", "cut_to_length")},
+        **{k: card[k] for k in ("id", "title", "url", "sizes", "sold_out", "cut_to_length", "ar")},
         "colors": [c.title for c in product.colors.all()],
         "specs": specs,
         "description": description,
@@ -834,7 +858,37 @@ def _notify_stock_inquiry(inquiry):
         pass
 
 
+def show_ar(ctx: ToolContext, product_id: int, size: str = ""):
+    from urllib.parse import urlencode
+
+    from catalog.models import Product
+
+    product = Product.admin_objects.prefetch_related("product_attr__size", "images").filter(pk=product_id).first()
+    if not product:
+        return {"error": "Товар не знайдено."}
+    if not _ar_ready(product):
+        return {"error": "Для цього килима 3D-примірки ще немає."}
+    sizes = [a.size.title for a in product.product_attr.all() if a.size and not a.custom_attribute]
+    wanted = (size or "").replace("x", "х").replace("X", "х").strip()
+    label = next((s_ for s_ in sizes if s_.replace("x", "х") == wanted), "") or (sizes[0] if sizes else "")
+    base = product.get_absolute_url()
+    params = {"view3d": "1", **({"size": label} if label else {})}
+    ctx.ar_card = {
+        "product_id": product.pk,
+        "title": product.title,
+        "image": _abs_image(product),
+        "size": label,
+        "link_3d": f"{base}?{urlencode(params)}",
+        "link_ar": f"{base}?{urlencode({**params, 'ar': '1'})}",
+    }
+    return {
+        "shown": True,
+        "text": "Покупець бачить кнопку примірки (на компʼютері QR-код). Коротко поясни, що килим зʼявиться вдома в реальному розмірі.",
+    }
+
+
 HANDLERS = {
+    "show_ar": show_ar,
     "request_stock": request_stock,
     "request_callback": request_callback,
     "search_products": search_products,

@@ -205,3 +205,28 @@ class LoggedInCartTests(CatalogMixin, TestCase):
         self.client.post("/api/assistant/cart/", {"action": "add", "size_id": self.attr.pk}, content_type="application/json")
         cart = Cart.objects.get(user=user, ordered=False)
         self.assertEqual(cart.cart_products.count(), 1)
+
+
+class ArTests(CatalogMixin, TestCase):
+    def test_show_ar_only_for_ready_products(self):
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        _, error = run_tool(ctx, "show_ar", {"product_id": self.product.pk})
+        self.assertTrue(error)
+        Product.admin_objects.filter(pk=self.product.pk).update(ar_status=Product.AR_STATUS_READY)
+        result, error = run_tool(ctx, "show_ar", {"product_id": self.product.pk, "size": "2.0x3.0"})
+        self.assertFalse(error, result)
+        self.assertEqual(ctx.ar_card["size"], "2.0х3.0")
+        self.assertIn("view3d=1", ctx.ar_card["link_3d"])
+        self.assertIn("ar=1", ctx.ar_card["link_ar"])
+
+    def test_context_has_device_and_ar_flag(self):
+        Product.admin_objects.filter(pk=self.product.pk).update(ar_status=Product.AR_STATUS_READY)
+        line = visitor_context(self.make_request(), {"path": f"/catalog/product/{self.product.slug}/", "device": "phone"})
+        self.assertIn("пристрій: телефон", line)
+        self.assertIn("є примірка 3D/AR", line)
+
+    def test_search_marks_ar(self):
+        Product.admin_objects.filter(pk=self.product.pk).update(ar_status=Product.AR_STATUS_READY)
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        result, _ = run_tool(ctx, "search_products", {"query": "сірий"})
+        self.assertTrue(result["products"][0]["ar"])
