@@ -285,6 +285,29 @@ class CheckoutTests(_CartFixture, TestCase):
         self.assertEqual(response.status_code, 201, response.content)
         return Order.objects.get(order_number=response.json()["order_number"])
 
+    def test_checkout_keeps_the_buyer_comment(self, *_):
+        attr = self._product_attr()
+        cart = Cart.objects.create()
+        CartProduct.objects.create(cart=cart, product_attr=attr, quantity=1)
+        session = self.client.session
+        session["cart_id"] = cart.id
+        session.save()
+        response = self.client.post(
+            "/api/create-order/",
+            {
+                "name": "Оксана Тест",
+                "phone": "+380501112233",
+                "city": "Київ",
+                "address": "Відділення 1",
+                "payment_method": "cash",
+                "message": "Подзвоніть після 18:00",
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        order = Order.objects.get(order_number=response.json()["order_number"])
+        self.assertEqual(order.message, "Подзвоніть після 18:00")
+
     def test_cash_checkout_stores_click_and_sends_order_placed(self, *_):
         cookies = {
             COOKIE_NAME: _cookie(

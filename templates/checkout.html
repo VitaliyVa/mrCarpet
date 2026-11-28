@@ -6,11 +6,13 @@
         <div class="bread-crumbs">
             <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
             <span class="color_black_sub">/</span>
-            <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
+            <a href="{% url 'cart' %}" class="color_black_sub">Кошик</a>
+            <span class="color_black_sub">/</span>
+            <span class="color_gold">Оформлення</span>
         </div>
 
         <div class="title">
-            <h1>Кошик</h1>
+            <h1>Оформлення замовлення</h1>
             <span id="cart-count">{{ cart.cart_products.all|length }} товари</span>
         </div>
 
@@ -119,7 +121,7 @@
                                                     class="input-transparent"
                                                     type="email"
                                                     name="email"
-                                                    placeholder="Email (необов'язково), щоб отримати лист про замовлення"
+                                                    placeholder="Email (необов'язково)"
                                                     autocomplete="email"
                                                     inputmode="email"
                                                     aria-label="Email (необов'язково)"
@@ -439,10 +441,45 @@
                             </div>
                         </div>
                     </div>
+                    <div class="basket__comment">
+                        <label class="basket__comment-title font-size-26 bold" for="order-comment">
+                            Коментар до замовлення
+                        </label>
+                        <p class="basket__comment-hint">Необов'язково. Напишіть, якщо хочете щось уточнити: колір, розмір, зручний час для дзвінка.</p>
+                        <textarea
+                                id="order-comment"
+                                class="basket__comment-input"
+                                name="message"
+                                rows="3"
+                                maxlength="1000"
+                                placeholder="Ваш коментар"
+                        ></textarea>
+                    </div>
                 </div>
             </div>
 
             <div class="basket_right__wrapper">
+                <div class="basket__summary basket_right">
+                    <div class="basket__summary-head">
+                        <h3 class="basket__summary-title">Ваше замовлення</h3>
+                        <a href="{% url 'cart' %}" class="basket__summary-edit color_gold">Змінити</a>
+                    </div>
+                    <ul class="basket__summary-list">
+                        {% for cart_product in cart.cart_products.all %}
+                        <li class="basket__summary-item">
+                            {% if cart_product.product_attr.product.image %}
+                            <img class="basket__summary-img" src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" width="56" height="56" loading="lazy" decoding="async" />
+                            {% endif %}
+                            <div class="basket__summary-info">
+                                <span class="basket__summary-name">{{ cart_product.product_attr.product.title }}</span>
+                                <span class="basket__summary-meta">{{ cart_product.product_attr.size }}{% if cart_product.product_attr.custom_attribute and cart_product.length %}, довжина {{ cart_product.length }} м{% endif %} · {{ cart_product.quantity }} шт.</span>
+                            </div>
+                            <span class="basket__summary-price">{{ cart_product.cart_product_total_price|floatformat:"-2" }} грн</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
                 <div class="basket__promocode basket_right">
                     {% include "includes/basket_promocode_title.html" %}
                     <div class="basket_right_block">

@@ -242,6 +242,7 @@ export async function submitOrder() {
   const emailInput = document.getElementById("nova-post-email");
   const phoneInput = document.getElementById("nova-post-phone");
   const cityInput = document.getElementById("nova-post-city-input");
+  const commentInput = document.getElementById("order-comment");
 
   const paymentMethod =
     document.querySelector('input[name="payment"]:checked') ||
@@ -288,6 +289,7 @@ export async function submitOrder() {
     address: address,
     payment_type: paymentType,
     promocode: localStorage.getItem("applied_promocode") || "",
+    message: (commentInput?.value || "").trim().slice(0, 1000),
   };
 
   trackCheckoutSubmit(paymentTypeFromInput(paymentMethod));

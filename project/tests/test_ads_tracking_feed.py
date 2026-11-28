@@ -243,6 +243,26 @@ class CheckoutFormAndLabelsTests(TestCase):
         self.assertEqual(btn.group(1).strip(), "Підтвердити замовлення")
         self.assertNotIn("Перейти до оформлення", html)
 
+    def test_checkout_shows_order_summary_and_comment_field(self):
+        self._with_cart()
+        html = self.client.get("/checkout/").content.decode()
+        self.assertIn("<h1>Оформлення замовлення</h1>", html)
+        self.assertIn('class="basket__summary basket_right"', html)
+        self.assertEqual(html.count('class="basket__summary-item"'), 1)
+        self.assertIn(self.product.title, html)
+        textarea = re.search(r'<textarea[^>]*id="order-comment"[^>]*>', html, re.S)
+        self.assertIsNotNone(textarea)
+        self.assertIn('maxlength="1000"', textarea.group(0))
+        self.assertNotIn("required", textarea.group(0))
+
+    def test_checkout_bundle_sends_the_comment(self):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        bundle = Path(settings.BASE_DIR, "static/source/pages/basket/index.js").read_text(encoding="utf-8")
+        self.assertIn("order-comment", bundle)
+
     def test_cart_button_says_place_order(self):
         self._with_cart()
         html = self.client.get("/cart/").content.decode()
