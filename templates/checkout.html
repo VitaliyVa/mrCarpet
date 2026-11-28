@@ -473,7 +473,7 @@
                         {% for cart_product in cart.cart_products.all %}
                         <li class="basket__summary-item">
                             {% if cart_product.product_attr.product.image %}
-                            <img class="basket__summary-img" src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" width="56" height="56" loading="lazy" decoding="async" />
+                            <img class="basket__summary-img" src="{{ cart_product.product_attr.product.image.url }}" alt="{{ cart_product.product_attr.product.title }}" width="56" height="56" decoding="async" />
                             {% endif %}
                             <div class="basket__summary-info">
                                 <span class="basket__summary-name">{{ cart_product.product_attr.product.title }}</span>
