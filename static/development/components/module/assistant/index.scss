@@ -86,7 +86,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
 
   // Pops in once with the page; after the first open it returns by transition.
   .assistant-widget:not(.was-opened) & {
-    animation: assistant-launcher-in 0.6s $spring both 0.4s;
+    animation: assistant-launcher-in 0.6s $spring backwards 0.4s;
   }
 
   &:hover {
@@ -459,7 +459,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
 }
 
 .is-new {
-  animation: assistant-rise 0.42s $ease both;
+  animation: assistant-rise 0.42s $ease backwards;
 }
 
 @keyframes assistant-rise {
@@ -547,7 +547,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   font-size: 16px;
   text-align: left;
   box-shadow: 0 1px 2px rgba(47, 40, 35, 0.05), 0 4px 14px rgba(47, 40, 35, 0.05);
-  animation: assistant-rise 0.45s $ease both;
+  animation: assistant-rise 0.45s $ease backwards;
   animation-delay: calc(var(--i, 0) * 70ms + 120ms);
   transition: transform 0.25s $spring, box-shadow 0.25s ease;
 
@@ -860,7 +860,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   color: $ink;
   font-size: 15px;
   white-space: nowrap;
-  animation: assistant-rise 0.4s $ease both;
+  animation: assistant-rise 0.4s $ease backwards;
   animation-delay: calc(var(--i, 0) * 60ms);
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.25s $spring;
 
@@ -892,7 +892,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   border-radius: 18px;
   background: $card;
   box-shadow: 0 1px 2px rgba(47, 40, 35, 0.05), 0 4px 16px rgba(47, 40, 35, 0.06);
-  animation: assistant-rise 0.45s $ease both;
+  animation: assistant-rise 0.45s $ease backwards;
   animation-delay: calc(var(--i, 0) * 70ms);
   transition: transform 0.3s $spring, box-shadow 0.3s ease;
 
@@ -1036,7 +1036,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   border-radius: 20px;
   background: $card;
   box-shadow: 0 0 0 1.5px rgba(168, 114, 74, 0.45), 0 10px 28px rgba(47, 40, 35, 0.1);
-  animation: assistant-rise 0.5s $ease both 0.1s;
+  animation: assistant-rise 0.5s $ease backwards 0.1s;
 
   &.is-stale {
     box-shadow: 0 1px 2px rgba(47, 40, 35, 0.05);
@@ -1263,7 +1263,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   border-radius: 16px;
   background: transparent;
   color: $ink;
-  animation: assistant-rise 0.4s $ease both;
+  animation: assistant-rise 0.4s $ease backwards;
   animation-delay: calc(var(--i, 0) * 50ms);
   transition: transform 0.25s $spring, background 0.2s ease;
 
@@ -1608,7 +1608,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   padding: 6px;
   border-radius: 14px;
   background: $bg;
-  animation: assistant-rise 0.3s $ease both;
+  animation: assistant-rise 0.3s $ease backwards;
 }
 
 .assistant-cart-link {
@@ -1990,7 +1990,7 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
   border-radius: 20px;
   background: linear-gradient(160deg, #ffffff 0%, #f6eee5 100%);
   box-shadow: 0 0 0 1px rgba(168, 114, 74, 0.25), 0 10px 26px rgba(47, 40, 35, 0.1);
-  animation: assistant-rise 0.5s $ease both 0.1s;
+  animation: assistant-rise 0.5s $ease backwards 0.1s;
 }
 
 .assistant-ar-head {
@@ -2120,4 +2120,74 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
 // The product's own 3D / AR window takes the whole screen: step aside.
 body.product-ar-modal-open .assistant-widget {
   display: none;
+}
+
+// ── no hover jitter ──
+// A hovered element that moves away from the cursor loses :hover at its edge,
+// drops back, gets hovered again: that loop was the flicker. Buttons no longer
+// move; the card still lifts, with an invisible strip that keeps the pointer in.
+.assistant-product {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -8px;
+    left: 0;
+    height: 8px;
+  }
+}
+
+.assistant-product .assistant-size,
+.assistant-product .assistant-size:hover,
+.assistant-chip:hover,
+.assistant-suggestion:hover,
+.assistant-tile:hover,
+.assistant-send:hover:not(:disabled) {
+  transform: none;
+}
+
+.assistant-product .assistant-size {
+  transition: background-color 0.25s $ease, color 0.25s $ease, box-shadow 0.25s $ease;
+
+  .assistant-size-icon {
+    transition: transform 0.35s $ease, background-color 0.25s $ease, opacity 0.2s ease;
+  }
+}
+
+.assistant-suggestion:hover {
+  box-shadow: 0 2px 4px rgba(47, 40, 35, 0.06), 0 10px 24px rgba(47, 40, 35, 0.12);
+}
+
+.assistant-tile:hover .assistant-tile-img img {
+  transform: scale(1.06);
+}
+
+.assistant-tile-img img {
+  transition: transform 0.45s $ease;
+}
+
+.assistant-send:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+// Entry animations hold only their start frame (backwards), not the end one:
+// a "both" fill keeps owning transform after the entrance, so the hover lift
+// could not transition back and snapped down.
+.assistant-widget {
+  .is-new,
+  .assistant-product,
+  .assistant-chip,
+  .assistant-suggestion,
+  .assistant-tile,
+  .assistant-order,
+  .assistant-ar,
+  .assistant-cart-item {
+    animation-fill-mode: backwards;
+  }
+}
+
+.assistant-product {
+  transition: transform 0.5s $ease, box-shadow 0.5s $ease;
 }
