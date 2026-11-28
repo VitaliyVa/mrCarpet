@@ -231,3 +231,48 @@ class ArTests(CatalogMixin, TestCase):
         ctx = ToolContext(self.make_request(), Conversation.objects.create())
         result, _ = run_tool(ctx, "search_products", {"query": "сірий"})
         self.assertTrue(result["products"][0]["ar"])
+
+
+class RelevanceTests(CatalogMixin, TestCase):
+    def test_round_rug_beats_half_round_and_descriptions(self):
+        size = Size.objects.create(title="0.67х0.67")
+        for title, desc in [
+            ("Килим під двері напівкруглий Flex", ""),
+            ("Килим овальний бежевий", "майже круглий за формою"),
+            ("Килим круглий графіт Smile", ""),
+        ]:
+            p = Product.objects.create(title=title, slug=title.lower().replace(" ", "-"), description=desc)
+            ProductAttribute.objects.create(product=p, size=size, price=500, quantity=1)
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        result, _ = run_tool(ctx, "search_products", {"query": "круглий килим"})
+        self.assertEqual(result["products"][0]["title"], "Килим круглий графіт Smile")
+
+
+class RoundThreeTests(CatalogMixin, TestCase):
+    def test_na_sizes_and_cheapest_first(self):
+        from catalog.filters import search_tokens
+
+        self.assertEqual(search_tokens("килим 2на3"), ["килим", "2x3"])
+        self.assertEqual(search_tokens("160 на 230 сірий"), ["160x230", "сірий"])
+        size = Size.objects.create(title="0.6х1.0")
+        cheap = Product.objects.create(title="Килим сірий дешевий", slug="cheap-grey")
+        ProductAttribute.objects.create(product=cheap, size=size, price=300, quantity=1)
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        result, _ = run_tool(ctx, "search_products", {"query": "сірий", "sort": "price_asc"})
+        self.assertEqual(result["products"][0]["title"], "Килим сірий дешевий")
+
+    def test_order_status_needs_the_right_phone(self):
+        from order.models import Order
+
+        order = Order.objects.create(name="А", surname="Б", phone="+380961234567", ttn="20450000000000")
+        ctx = ToolContext(self.make_request(), Conversation.objects.create())
+        result, error = run_tool(ctx, "order_status", {"order_number": str(order.order_number), "phone": "0961234567"})
+        self.assertFalse(error, result)
+        self.assertEqual(result["ttn"], "20450000000000")
+        result, error = run_tool(ctx, "order_status", {"order_number": str(order.order_number), "phone": "0500000000"})
+        self.assertTrue(error)
+        self.assertNotIn("ttn", result)
+        for _ in range(5):
+            run_tool(ctx, "order_status", {"order_number": "1", "phone": "0500000000"})
+        result, error = run_tool(ctx, "order_status", {"order_number": str(order.order_number), "phone": "0961234567"})
+        self.assertIn("Забагато", result["error"])

@@ -2271,3 +2271,12 @@ body.product-ar-modal-open .assistant-widget {
   font-size: 10px;
   line-height: 12px;
 }
+
+// Most product photos are shot on white: a white frame with a hairline
+// edge, not a beige tile around a white photo.
+.assistant-product-img,
+.assistant-cart-img,
+.assistant-ar-img {
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(47, 40, 35, 0.06);
+}

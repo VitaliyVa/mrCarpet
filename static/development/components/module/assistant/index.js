@@ -390,7 +390,6 @@ class AssistantWidget {
             <textarea rows="1" maxlength="${LIMIT}" placeholder="Напишіть питання…" aria-label="Ваше повідомлення" enterkeyhint="send"></textarea>
             <button type="submit" class="assistant-send" aria-label="Надіслати" disabled>${ICONS.send}</button>
           </div>
-          <p class="assistant-note">ШІ-помічник. Ціни й наявність беремо з каталогу.</p>
         </form>
       </section>
       <div class="assistant-teaser" hidden>

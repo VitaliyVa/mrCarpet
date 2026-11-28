@@ -35,6 +35,11 @@ TOOLS = [
                     "description": "Слова для пошуку, напр. «сірий овальний 160x230».",
                 },
                 "max_price": {"type": "integer", "description": "Максимальна ціна, грн."},
+                "sort": {
+                    "type": "string",
+                    "enum": ["relevance", "price_asc"],
+                    "description": "price_asc, коли просять дешевше / недорого / найдешевші.",
+                },
                 "min_price": {"type": "integer", "description": "Мінімальна ціна, грн."},
             },
             "required": ["query"],
@@ -79,6 +84,22 @@ TOOLS = [
                 "size": {"type": "string", "description": "Розмір, напр. 2.0х3.0, якщо обраний."},
             },
             "required": ["product_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "order_status",
+        "description": (
+            "Статус замовлення покупця. Потрібні номер замовлення і телефон, на який його "
+            "оформлено: без збігу телефону нічого не показуємо."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "order_number": {"type": "string"},
+                "phone": {"type": "string"},
+            },
+            "required": ["order_number", "phone"],
             "additionalProperties": False,
         },
     },
@@ -340,7 +361,33 @@ def normalize_phone(raw: str) -> str | None:
 # ── tool implementations ─────────────────────────────────────────────────────
 
 
-def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None):
+def _relevance(product, tokens) -> int:
+    """How well a rug matches the words: a title word starting with the word
+    (круглий) beats a word inside another (напівкруглий), which beats the
+    description. Search used to keep the newest six, so the one round rug
+    lost to half-round door mats and ovals that mention "круглий"."""
+    from catalog.filters import _stem, size_variants
+
+    title = (product.title or "").lower()
+    description = (product.description or "").lower()
+    sizes = {(a.size.title or "").replace("x", "х") for a in product.product_attr.all() if a.size}
+    score = 0
+    for token in tokens:
+        variants = size_variants(token)
+        if variants:
+            score += 4 if any(v.replace("x", "х") in sizes for v in variants) else 0
+            continue
+        stem = _stem(token).lower()
+        if re.search(r"(^|[\s,(«\"'-])" + re.escape(stem), title):
+            score += 6
+        elif stem in title:
+            score += 3
+        elif stem in description:
+            score += 1
+    return score
+
+
+def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None, sort: str = "relevance"):
     from catalog.filters import search_tokens, token_q
     from catalog.models import Product
 
@@ -362,10 +409,12 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
             if scores:
                 best = max(scores.values())
                 ids = {pk for pk, n in scores.items() if n == best}
-        found = list(qs.filter(pk__in=ids)[:40])
+        found = list(qs.filter(pk__in=ids)[:150])
     else:
         found = list(qs[:40])
 
+    if tokens:
+        found.sort(key=lambda p: -_relevance(p, tokens))
     results = []
     for product in found:
         card = _card(product)
@@ -377,8 +426,16 @@ def search_products(ctx: ToolContext, query: str, max_price=None, min_price=None
         if not card["sizes"] and not card["cut_to_length"] and not card["sold_out"]:
             continue
         results.append(card)
+        if sort != "price_asc" and len(results) >= MAX_RESULTS * 3:
+            break
     # In stock first; sold-out rugs stay findable for a stock request.
-    results.sort(key=lambda c: 0 if (c["sizes"] or c["cut_to_length"]) else 1)
+    if sort == "price_asc":
+        def cheapest(c):
+            prices = [s_["price"] for s_ in c["sizes"] if not max_price or s_["price"] <= int(max_price)]
+            return min(prices) if prices else 10**9
+        results.sort(key=lambda c: (0 if (c["sizes"] or c["cut_to_length"]) else 1, cheapest(c)))
+    else:
+        results.sort(key=lambda c: 0 if (c["sizes"] or c["cut_to_length"]) else 1)
     results = results[:MAX_RESULTS]
     by_pk = {p.pk: p for p in found}
     for card in results:
@@ -461,7 +518,8 @@ def shop_info(ctx: ToolContext, topic: str):
                 "При отриманні: платите у відділенні Нової Пошти, Нова Пошта бере "
                 "свою комісію, її платить покупець. Онлайн карткою через LiqPay "
                 "одразу після оформлення. Килими, які ріжемо під ваш розмір, "
-                "оплачуються наперед повністю."
+                "оплачуються наперед повністю. Готівкою або переказом на рахунок (напр. для ФОП чи "
+                "офісу) теж можна, якщо домовитись з менеджером по телефону."
             ),
             "page": "/delivery/",
         }
@@ -887,7 +945,45 @@ def show_ar(ctx: ToolContext, product_id: int, size: str = ""):
     }
 
 
+MAX_STATUS_LOOKUPS_PER_CONVERSATION = 5
+
+
+def order_status(ctx: ToolContext, order_number: str, phone: str):
+    from order.models import Order
+
+    if ctx.conversation is not None:
+        tries = (ctx.conversation.pending_order or {}).get("_status_tries", 0)
+        if tries >= MAX_STATUS_LOOKUPS_PER_CONVERSATION:
+            return {"error": "Забагато спроб. Подзвоніть нам: +380 96 398 88 75."}
+    digits = re.sub(r"\D", "", order_number or "")
+    normalized = normalize_phone(phone)
+    if not digits or not normalized:
+        return {"error": "Потрібні номер замовлення і телефон, на який його оформлено."}
+    order = Order.objects.filter(order_number=int(digits)).first()
+    if ctx.conversation is not None:
+        # Counted on every lookup, found or not: guessing numbers is slow.
+        ctx.conversation.pending_order = {**(ctx.conversation.pending_order or {}), "_status_tries": tries + 1}
+        ctx.conversation.save(update_fields=["pending_order", "updated"])
+    if order is None or normalize_phone(order.phone or "") != normalized:
+        return {"error": "Не знайшли замовлення з таким номером і телефоном. Перевірте цифри або подзвоніть нам."}
+    data = {
+        "order_number": order.order_number,
+        "status": order.get_status_display(),
+        "created": order.created.strftime("%d.%m.%Y") if order.created else "",
+        "total": order.total_price,
+        "city": order.city,
+        "address": order.address,
+    }
+    if order.ttn:
+        data["ttn"] = order.ttn
+        data["track_url"] = f"https://novaposhta.ua/tracking/?cargo_number={order.ttn}"
+    if getattr(order, "np_status", ""):
+        data["nova_poshta_status"] = order.np_status
+    return data
+
+
 HANDLERS = {
+    "order_status": order_status,
     "show_ar": show_ar,
     "request_stock": request_stock,
     "request_callback": request_callback,

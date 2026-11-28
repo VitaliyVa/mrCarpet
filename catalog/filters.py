@@ -206,7 +206,10 @@ def size_variants(token: str) -> list[str]:
 
 
 def search_tokens(value: str) -> list[str]:
-    text = re.sub(r"(\d)\s*([xх×*])\s*(\d)", r"\1\2\3", (value or "").strip().lower())
+    text = (value or "").strip().lower()
+    # "160 на 230", "2на3" are sizes too.
+    text = re.sub(r"(\d)\s*на\s*(\d)", r"\1x\2", text)
+    text = re.sub(r"(\d)\s*([xх×*])\s*(\d)", r"\1\2\3", text)
     tokens = []
     for word in re.split(r"[\s,;/]+", text):
         word = word.strip(".!?\"'«»()")
