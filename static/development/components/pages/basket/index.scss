@@ -932,7 +932,7 @@
     }
 
     &_right {
-      & + & {
+      &:last-child {
         margin-bottom: 0;
       }
     }
@@ -1119,7 +1119,7 @@
     }
 
     &__calculate {
-      padding: 20px 8px;
+      padding: 20px 16px;
       font-size: 14px;
 
       &-title {
