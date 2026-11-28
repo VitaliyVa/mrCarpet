@@ -11,7 +11,8 @@
 {% if variant_links %}
 <section class="product-variants-links" aria-labelledby="product-variants-links-title">
   <style>
-    .product-variants-links { padding: 32px 0 8px; }
+    .product-variants-links { padding: 32px 0 64px; }
+    @media (max-width: 768px) { .product-variants-links { padding: 24px 0 40px; } }
     .product-variants-links__title { font-size: 22px; line-height: 1.3; margin: 0 0 8px; }
     .product-variants-links__intro { margin: 0 0 20px; color: #6b6b6b; font-size: 15px; line-height: 1.5; max-width: 720px; }
     .product-variants-links__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
