@@ -357,3 +357,18 @@ class ShippingInfoTests(CatalogMixin, TestCase):
         self.assertEqual(row["size"], "2.0х3.0")
         self.assertTrue(row["weight"].endswith("кг"))
         self.assertTrue(row["package"].endswith("м"))
+
+
+class CancelCardTests(CatalogMixin, TestCase):
+    def test_cancel_turns_the_card_off(self):
+        conv = Conversation.objects.create(client_hash="abc")
+        ctx = ToolContext(self.make_request(), conv)
+        run_tool(ctx, "add_to_cart", {"size_id": self.attr.pk})
+        run_tool(ctx, "prepare_order", {"full_name": "Іван Петренко", "phone": "0961234567", "city_id": self.city.pk,
+                                        "warehouse_id": self.warehouse.pk, "payment": "cash"})
+        self.assertTrue(Conversation.objects.get(pk=conv.pk).pending_order.get("token"))
+        result, error = run_tool(ctx, "cancel_order_card", {})
+        self.assertFalse(error, result)
+        conv.refresh_from_db()
+        self.assertIsNone(conv.pending_order.get("token"))
+        self.assertEqual(conv.cards_shown, 1)

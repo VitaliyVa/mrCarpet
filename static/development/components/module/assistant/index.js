@@ -176,7 +176,26 @@ export function renderMarkdown(text) {
       list = null;
     }
   };
+  let table = null;
+  const closeTable = () => {
+    if (!table) return;
+    const rows = table.filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r));
+    html += '<div class="assistant-table"><table>';
+    rows.forEach((row, i) => {
+      const cells = row.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|");
+      const tag = i === 0 ? "th" : "td";
+      html += `<tr>${cells.map((c) => `<${tag}>${inline(c.trim())}</${tag}>`).join("")}</tr>`;
+    });
+    html += "</table></div>";
+    table = null;
+  };
   lines.forEach((line) => {
+    if (/^\s*\|.*\|\s*$/.test(line)) {
+      closeList();
+      (table = table || []).push(line);
+      return;
+    }
+    closeTable();
     const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
     const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
     if (bullet || numbered) {
@@ -193,6 +212,7 @@ export function renderMarkdown(text) {
     if (line.trim()) html += `<p>${inline(line)}</p>`;
   });
   closeList();
+  closeTable();
   return html;
 }
 

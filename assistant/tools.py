@@ -210,6 +210,11 @@ TOOLS = [
         },
     },
     {
+        "name": "cancel_order_card",
+        "description": "Покупець передумав оформлювати: картка з кнопкою «Підтвердити» гасне. Кошик не змінюється.",
+        "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
         "name": "prepare_order",
         "description": (
             "Показати покупцю картку підтвердження замовлення з того, що в "
@@ -251,6 +256,7 @@ class ToolContext:
         self.cart_changed = False
         self.cart_events: list[dict] = []
         self.ar_card: dict | None = None
+        self.order_cancelled = False
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -1094,7 +1100,21 @@ def catalog_overview(ctx: ToolContext):
     return data
 
 
+def cancel_order_card(ctx: ToolContext):
+    if ctx.conversation is None:
+        return {"error": "Немає розмови."}
+    pending = ctx.conversation.pending_order or {}
+    if not pending.get("token"):
+        return {"ok": True, "text": "Активної картки замовлення немає."}
+    # Keep only internal counters; the token goes, so the card's button stops working.
+    ctx.conversation.pending_order = {k: v for k, v in pending.items() if k.startswith("_")}
+    ctx.conversation.save(update_fields=["pending_order", "updated"])
+    ctx.order_cancelled = True
+    return {"ok": True, "text": "Картку скасовано, кнопка «Підтвердити» більше не працює. Кошик лишився як був."}
+
+
 HANDLERS = {
+    "cancel_order_card": cancel_order_card,
     "catalog_overview": catalog_overview,
     "order_status": order_status,
     "show_ar": show_ar,
