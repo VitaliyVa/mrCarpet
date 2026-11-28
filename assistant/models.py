@@ -96,6 +96,9 @@ class Conversation(models.Model):
         blank=True,
         related_name="assistant_conversations",
     )
+    cards_shown = models.PositiveSmallIntegerField(
+        verbose_name="Показано карток замовлення", default=0
+    )
     input_tokens = models.PositiveIntegerField(default=0)
     output_tokens = models.PositiveIntegerField(default=0)
     cost_usd = models.DecimalField(

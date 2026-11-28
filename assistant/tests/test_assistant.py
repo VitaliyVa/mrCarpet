@@ -81,7 +81,7 @@ class ToolsTests(CatalogMixin, TestCase):
         result, error = run_tool(self.ctx, "search_products", {"query": "сірий 200x300"})
         self.assertFalse(error)
         self.assertEqual(result["products"][0]["sizes"][0], {
-            "size_id": self.attr.pk, "size": "2.0х3.0", "price": 3200, "old_price": None, "left": 2,
+            "size_id": self.attr.pk, "size": "2.0х3.0", "price": 3200, "old_price": None,
         })
         self.assertIn(self.product.pk, self.ctx.products)
 
@@ -161,7 +161,7 @@ class ApiTests(CatalogMixin, TestCase):
     def test_full_chat_order_flow(self):
         fake = FakeClient([
             _response([_tool("t1", "search_products", {"query": "сірий"})], stop="tool_use"),
-            _response([_text("Ось сірий килим Mira, 3200 грн.")]),
+            _response([_text("Ось сірий [килим Mira](/catalog/product/mira-grey/), 3200 грн.")]),
             _response([_tool("t2", "add_to_cart", {"size_id": self.attr.pk})], stop="tool_use"),
             _response([_tool("t3", "find_city", {"name": "Тернопіль"})], stop="tool_use"),
             _response([_tool("t4", "prepare_order", {
@@ -259,3 +259,78 @@ class ApiTests(CatalogMixin, TestCase):
         self.assertEqual(conv.api_messages[-1]["role"], "assistant")
         self.assertTrue(data["message"]["content"])
         self.assertEqual(Message.objects.filter(conversation=conv).count(), 2)
+
+
+class SecurityTests(CatalogMixin, TestCase):
+    def setUp(self):
+        s = AssistantSettings.load()
+        s.enabled = True
+        s.api_key = "sk-ant-test"
+        s.save()
+        self.request = self.make_request()
+        self.args = {"full_name": "Іван Петренко", "phone": "0961234567", "city_id": self.city.pk,
+                     "warehouse_id": self.warehouse.pk, "payment": "cash"}
+
+    def _ctx(self, client_hash="abc"):
+        conv = Conversation.objects.create(client_hash=client_hash)
+        return ToolContext(self.request, conv)
+
+    def test_order_cards_are_limited_per_conversation(self):
+        ctx = self._ctx()
+        run_tool(ctx, "add_to_cart", {"size_id": self.attr.pk})
+        for _ in range(4):
+            _, error = run_tool(ctx, "prepare_order", self.args)
+            self.assertFalse(error)
+        result, error = run_tool(ctx, "prepare_order", self.args)
+        self.assertTrue(error)
+        self.assertIn("+380 96 398 88 75", result["error"])
+
+    def test_chat_orders_are_limited_per_visitor_per_day(self):
+        for _ in range(2):
+            order = Order.objects.create(name="A", surname="B", phone="+380961234567")
+            Conversation.objects.create(client_hash="abc", order=order)
+        ctx = self._ctx()
+        run_tool(ctx, "add_to_cart", {"size_id": self.attr.pk})
+        result, error = run_tool(ctx, "prepare_order", self.args)
+        self.assertTrue(error)
+        # Another visitor is not affected.
+        other = self._ctx(client_hash="other")
+        _, error = run_tool(other, "prepare_order", self.args)
+        self.assertFalse(error)
+
+    def test_spoofed_forwarded_for_does_not_dodge_the_limit(self):
+        s = AssistantSettings.load()
+        s.messages_per_hour = 1
+        s.save()
+        fake = FakeClient([_response([_text("Привіт!")])])
+        with mock.patch("assistant.service._client", return_value=fake):
+            ok = self.client.post("/api/assistant/message/", {"message": "1"}, content_type="application/json",
+                                  HTTP_X_REAL_IP="9.9.9.9", HTTP_X_FORWARDED_FOR="1.1.1.1")
+            again = self.client.post("/api/assistant/message/", {"message": "2"}, content_type="application/json",
+                                     HTTP_X_REAL_IP="9.9.9.9", HTTP_X_FORWARDED_FOR="2.2.2.2")
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual(again.status_code, 429)
+
+    def test_long_or_costly_conversation_is_stopped(self):
+        fake = FakeClient([_response([_text("Привіт!")])])
+        with mock.patch("assistant.service._client", return_value=fake):
+            conv_id = self.client.post("/api/assistant/message/", {"message": "1"},
+                                       content_type="application/json").json()["conversation_id"]
+        Conversation.objects.filter(pk=conv_id).update(cost_usd="0.2")
+        again = self.client.post("/api/assistant/message/", {"message": "2", "conversation_id": conv_id},
+                                 content_type="application/json")
+        self.assertEqual(again.status_code, 429)
+        self.assertIn("Нова", again.json()["error"])
+
+    def test_cards_follow_the_products_the_reply_links(self):
+        size = Size.objects.create(title="0.8х1.5")
+        beige = Product.objects.create(title="Килим бежевий Mira", slug="mira-beige")
+        ProductAttribute.objects.create(product=beige, size=size, price=900, quantity=1)
+        fake = FakeClient([
+            _response([_tool("t1", "search_products", {"query": "килим"})], stop="tool_use"),
+            _response([_text("Ось [сірий](/catalog/product/mira-grey/).")]),
+        ])
+        with mock.patch("assistant.service._client", return_value=fake):
+            data = self.client.post("/api/assistant/message/", {"message": "килим"},
+                                    content_type="application/json").json()
+        self.assertEqual([p["id"] for p in data["message"]["products"]], [self.product.pk])

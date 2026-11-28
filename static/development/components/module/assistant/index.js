@@ -104,8 +104,9 @@ function safeHref(url) {
   if (/^\/(?!\/)/.test(raw)) return raw;
   try {
     const parsed = new URL(raw);
+    // Only our own pages, phone and email: a reply can never send the buyer
+    // to an outside site, even if someone talks the model into writing one.
     if (parsed.origin === window.location.origin) return parsed.pathname + parsed.search + parsed.hash;
-    if (parsed.protocol === "https:") return parsed.href;
     if (parsed.protocol === "tel:" || parsed.protocol === "mailto:") return parsed.href;
   } catch (e) {
     /* not a URL */
@@ -118,8 +119,7 @@ function inline(text) {
   html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (match, label, url) => {
     const href = safeHref(url.replace(/&amp;/g, "&"));
     if (!href) return label;
-    const external = /^https?:/.test(href);
-    return `<a href="${escapeHtml(href)}"${external ? ' target="_blank" rel="noopener"' : ""}>${label}</a>`;
+    return `<a href="${escapeHtml(href)}">${label}</a>`;
   });
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(\+380[\d\s]{9,13}\d)/g, (m) => `<a href="tel:${m.replace(/\s/g, "")}">${m}</a>`);

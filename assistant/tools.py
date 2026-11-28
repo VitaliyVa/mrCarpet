@@ -195,7 +195,6 @@ def _sizes(product) -> list[dict]:
                 "size": attr.size.title if attr.size else "",
                 "price": int(round(float(price))),
                 "old_price": int(attr.price) if attr.discount else None,
-                "left": min(int(attr.quantity or 0), 10),
             }
         )
     return rows
@@ -530,6 +529,35 @@ def find_warehouse(ctx: ToolContext, city_id: int, query: str = ""):
     }
 
 
+# Spam guard for orders made in the chat. Real buyers place one order, maybe
+# fix it once or twice; these stop a script from filling the admin with fakes.
+MAX_CARDS_PER_CONVERSATION = 4
+MAX_CARDS_PER_CLIENT_DAY = 8
+MAX_CHAT_ORDERS_PER_CLIENT_DAY = 2
+CALL_US = "Для ще одного замовлення подзвоніть нам: +380 96 398 88 75, або оформіть його на сторінці /checkout/."
+
+
+def _order_card_limit(conversation) -> str | None:
+    from datetime import timedelta
+
+    from django.db.models import Sum
+    from django.utils import timezone
+
+    from .models import Conversation
+
+    if (conversation.cards_shown or 0) >= MAX_CARDS_PER_CONVERSATION:
+        return "Ліміт карток у цій розмові вичерпано. " + CALL_US
+    if not conversation.client_hash:
+        return None
+    since = timezone.now() - timedelta(hours=24)
+    mine = Conversation.objects.filter(client_hash=conversation.client_hash, updated__gte=since)
+    if mine.filter(order__isnull=False).count() >= MAX_CHAT_ORDERS_PER_CLIENT_DAY:
+        return "Сьогодні з цього пристрою вже оформлено кілька замовлень у чаті. " + CALL_US
+    if (mine.aggregate(n=Sum("cards_shown"))["n"] or 0) >= MAX_CARDS_PER_CLIENT_DAY:
+        return "Забагато спроб оформлення сьогодні. " + CALL_US
+    return None
+
+
 def prepare_order(
     ctx: ToolContext,
     full_name: str,
@@ -544,6 +572,9 @@ def prepare_order(
     from django.core.exceptions import ValidationError
     from nova_poshta.models import Settlement
 
+    limit = _order_card_limit(ctx.conversation)
+    if limit:
+        return {"error": limit}
     summary = _cart_summary(ctx.request)
     if not summary["items"]:
         return {"error": "Кошик порожній. Спершу додай товар."}
@@ -584,7 +615,8 @@ def prepare_order(
         "delivery_from": summary["delivery_from"],
     }
     ctx.conversation.pending_order = draft
-    ctx.conversation.save(update_fields=["pending_order", "updated"])
+    ctx.conversation.cards_shown = (ctx.conversation.cards_shown or 0) + 1
+    ctx.conversation.save(update_fields=["pending_order", "cards_shown", "updated"])
     ctx.order_card = draft
     return {
         "shown": True,

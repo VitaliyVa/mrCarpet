@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+from decimal import Decimal
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -12,11 +13,24 @@ from .service import messages_last_hour, run_turn, serialize_message, spent_toda
 
 MAX_MESSAGE_CHARS = 500
 COOLDOWN_SECONDS = 60 * 10
+# One conversation is one shopping trip. Past these the bot is being used for
+# something else (or burned on purpose): ask to start over or call.
+MAX_TURNS_PER_CONVERSATION = 40
+MAX_COST_PER_CONVERSATION = Decimal("0.15")
+
+
+def client_ip(request) -> str:
+    # X-Real-IP is set by our nginx from the TCP peer. X-Forwarded-For is not
+    # used: its first entry is whatever the visitor sent, so a spammer could
+    # rotate it to dodge the limits.
+    real = (request.META.get("HTTP_X_REAL_IP") or "").strip()
+    if real:
+        return real
+    return request.META.get("REMOTE_ADDR") or ""
 
 
 def _client_hash(request) -> str:
-    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
-    ip = forwarded or request.META.get("REMOTE_ADDR") or ""
+    ip = client_ip(request)
     return hashlib.sha256(f"mrcarpet-assistant:{ip}".encode()).hexdigest()[:32]
 
 
@@ -96,6 +110,14 @@ class AssistantMessageView(_SessionAPIView):
             conversation = _own_conversation(request, request.data.get("conversation_id"))
         if conversation is None:
             conversation = Conversation.objects.create(session_key=session_key, client_hash=client_hash)
+        elif (
+            conversation.messages.filter(role=Message.ROLE_USER).count() >= MAX_TURNS_PER_CONVERSATION
+            or conversation.cost_usd >= MAX_COST_PER_CONVERSATION
+        ):
+            return _too_many(
+                60,
+                "Ця розмова вже задовга. Почніть нову (кнопка «Нова») або подзвоніть нам: +380 96 398 88 75.",
+            )
 
         # The Django request: its user comes from AuthenticationMiddleware, so a
         # logged-in buyer gets the cart of their account, as on the site.
