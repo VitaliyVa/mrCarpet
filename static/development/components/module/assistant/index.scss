@@ -1362,6 +1362,13 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
     overflow-y: auto;
   }
 
+  // The rounded field around it already shows focus.
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
   &::placeholder {
     color: #a89d93;
   }
