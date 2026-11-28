@@ -279,11 +279,17 @@
                             <line x1="81" y1="81" x2="88" y2="88" stroke="#89817C" stroke-width="3" stroke-linecap="round"/>
                         </svg>
                     </div>
+                    {% if request.GET.q %}
+                    <h2 class="catalog__empty-title">За запитом «{{ request.GET.q }}» нічого не знайшли</h2>
+                    <p class="catalog__empty-text">Спробуйте коротше: тільки колір, форму чи розмір. Або напишіть нам, підберемо килим.</p>
+                    <a href="{{ request.path }}" class="catalog__empty-btn btn-gold">Показати всі килими</a>
+                    {% else %}
                     <h2 class="catalog__empty-title">Товарів не знайдено</h2>
                     <p class="catalog__empty-text">Спробуйте змінити параметри фільтрації або скиньте всі фільтри</p>
                     <button onclick="resetFilters()" class="catalog__empty-btn btn-gold">
                         Скинути фільтри
                     </button>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>

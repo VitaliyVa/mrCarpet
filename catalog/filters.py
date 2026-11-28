@@ -1,3 +1,5 @@
+import re
+
 import django_filters
 from django.db.models import Min, Q, Case, When, ExpressionWrapper, F, FloatField
 from django.db.models.functions import Coalesce
@@ -138,6 +140,90 @@ class ProductFilter(django_filters.FilterSet):
         return queryset.filter(product_specs__in=specs)
 
     def search(self, queryset, name, value):
-        return queryset.filter(
-            Q(title__icontains=value) | Q(description__icontains=value)
+        """
+        Every meaningful word of the query must match somewhere: title,
+        description, colour, a specification value, a category or a size.
+        "сірий 200x300" used to look for that whole phrase in the title and
+        found nothing. Word endings are trimmed (сірий / сіра / сірі),
+        sizes in cm are read as the shop's metres (200x300 -> 2.0х3.0).
+        """
+        tokens = search_tokens(value)
+        if not tokens:
+            return queryset
+        for token in tokens:
+            queryset = queryset.filter(token_q(token))
+        return queryset.distinct()
+
+
+SEARCH_STOP_WORDS = {
+    "купити", "куплю", "ціна", "ціни", "ціною", "недорого", "дешево", "дешеві",
+    "інтернет", "магазин", "магазині", "україна", "україні", "доставка",
+    "для", "під", "та", "або", "на", "в", "у", "з", "із", "і", "й",
+    "см", "м",
+}
+
+_SIZE_RE = re.compile(r"^(\d+(?:[.,]\d+)?)\s*[xх×*]\s*(\d+(?:[.,]\d+)?)$", re.I)
+
+
+def _metres(raw: str) -> float:
+    number = float(raw.replace(",", "."))
+    return number / 100 if number > 10 else number
+
+
+def _fmt_metres(number: float) -> str:
+    text = f"{number:.2f}".rstrip("0")
+    return text + "0" if text.endswith(".") else text
+
+
+def size_variants(token: str) -> list[str]:
+    """'200x300', '2х3', '2.0x3.0' -> ['2.0х3.0', '2.0x3.0']."""
+    match = _SIZE_RE.match(token)
+    if not match:
+        return []
+    width, length = (_fmt_metres(_metres(part)) for part in match.groups())
+    return [f"{width}х{length}", f"{width}x{length}"]
+
+
+def search_tokens(value: str) -> list[str]:
+    text = re.sub(r"(\d)\s*([xх×*])\s*(\d)", r"\1\2\3", (value or "").strip().lower())
+    tokens = []
+    for word in re.split(r"[\s,;/]+", text):
+        word = word.strip(".!?\"'«»()")
+        if not word or word in SEARCH_STOP_WORDS:
+            continue
+        if size_variants(word):
+            tokens.append(word)
+        elif len(word) >= 2:
+            tokens.append(word)
+    return tokens
+
+
+def _stem(word: str) -> str:
+    # Crude Ukrainian ending trim: сірий/сіра/сірі -> сір, овальний -> оваль.
+    if len(word) >= 5:
+        return word[:-2]
+    if len(word) == 4:
+        return word[:-1]
+    return word
+
+
+def token_q(token: str) -> Q:
+    sizes = size_variants(token)
+    if sizes:
+        q = Q()
+        for size in sizes:
+            q |= Q(product_attr__size__title__iexact=size)
+        return q
+    stem = _stem(token)
+    q = Q(product_attr__size__title__icontains=token)
+    # SQLite's LIKE ignores case only for ASCII, so "кил" would miss "Килим":
+    # try the lower and the capitalised form of the stem.
+    for form in {stem, stem.capitalize()}:
+        q |= (
+            Q(title__icontains=form)
+            | Q(description__icontains=form)
+            | Q(colors__title__icontains=form)
+            | Q(product_specs__spec_value__title__icontains=form)
+            | Q(categories__title__icontains=form)
         )
+    return q
