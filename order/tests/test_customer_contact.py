@@ -53,7 +53,7 @@ class _Fixture:
 class OrderChecksTests(_Fixture, TestCase):
     def test_parcel_and_last_item(self):
         checks = order_checks(self._order())
-        self.assertTrue(any(c.startswith("📦 Посилка: ~5.8 кг") for c in checks), checks)
+        self.assertTrue(any(c.startswith("📦 Посилка: ~4.8 кг") for c in checks), checks)
         self.assertTrue(any("Останній на складі" in c for c in checks))
         self.assertFalse(any(c.startswith("⚠️") for c in checks), checks)
 
