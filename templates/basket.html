@@ -10,11 +10,9 @@
                 <span class="color_black_sub">/</span>
                 <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
             </div>
-            <span class="basket__count" id="cart-count">{{ cart_products|length }} {{ cart_products|length|plural_uk:"товар,товари,товарів" }}</span>
-        </div>
-
-        <div class="title">
-            <h1>Кошик</h1>
+            <div class="title basket__title">
+                <h1>Кошик</h1>
+            </div>
         </div>
 
         <!-- Блок порожньої корзини -->

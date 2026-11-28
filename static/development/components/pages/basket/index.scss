@@ -8,19 +8,27 @@
     margin: 4px 0 0;
   }
 
-  // Breadcrumbs on the left, item count opposite them on the right.
+  // Breadcrumbs on the left, the page title centred in the same row. The
+  // empty third column mirrors the first so the title sits in the real centre.
   &__top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: end;
+    column-gap: 24px;
+
+    .bread-crumbs {
+      padding-bottom: 6px;
+    }
   }
 
-  &__count {
+  &__title {
+    justify-content: center;
     padding-top: 15px;
-    font-size: 15px;
-    color: #89817c;
-    white-space: nowrap;
+
+    h1 {
+      margin: 0;
+      text-align: center;
+    }
   }
 
   &__center {
@@ -1012,14 +1020,13 @@
       margin: 4px 0 0;
     }
 
-    // Breadcrumbs are hidden on phones; the count sits above the title.
+    // Breadcrumbs are hidden on phones: the title takes the whole row.
     &__top {
-      justify-content: flex-start;
+      display: block;
     }
 
-    &__count {
+    &__title {
       padding-top: 18px;
-      font-size: 14px;
     }
   }
 

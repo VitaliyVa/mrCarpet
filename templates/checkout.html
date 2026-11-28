@@ -11,11 +11,9 @@
                 <span class="color_black_sub">/</span>
                 <span class="color_gold">Оформлення</span>
             </div>
-            <span class="basket__count" id="cart-count">{% with n=cart.cart_products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}</span>
-        </div>
-
-        <div class="title">
-            <h1>Оформлення замовлення</h1>
+            <div class="title basket__title">
+                <h1>Оформлення замовлення</h1>
+            </div>
         </div>
 
         <!-- Блок порожньої корзини -->
