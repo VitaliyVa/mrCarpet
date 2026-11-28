@@ -2370,3 +2370,12 @@ body.product-ar-modal-open .assistant-widget {
     translate: none !important;
   }
 }
+
+// Free scroll: no snapping to a card after a drag, a swipe or a wheel turn.
+.assistant-slider-track {
+  scroll-snap-type: none;
+
+  > * {
+    scroll-snap-align: none;
+  }
+}

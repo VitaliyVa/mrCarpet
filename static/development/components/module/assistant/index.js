@@ -289,10 +289,8 @@ function makeSlider(className, items) {
     drag = null;
     if (!moved) return;
     wrap.classList.remove("is-dragging");
-    // A little glide in the direction of the throw, then the row snaps.
-    if (!reduceMotion() && Math.abs(velocity) > 0.2) {
-      track.scrollBy({ left: -velocity * 220, behavior: "smooth" });
-    }
+    // Free scroll: the row stays exactly where it was let go.
+    void velocity;
     // The click that ends a drag must not open a card or add a size.
     const block = (ev) => {
       ev.stopPropagation();
