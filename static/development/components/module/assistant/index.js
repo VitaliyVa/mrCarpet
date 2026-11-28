@@ -523,6 +523,8 @@ class AssistantWidget {
     if (!this.loaded) {
       this.loaded = true;
       this.renderedCount = 0;
+      // Skeleton, not the welcome screen, while an existing chat loads.
+      if (this.conversationId) this.restoring = true;
       this.render();
       await this.restore();
     }

@@ -84,7 +84,7 @@ GA4_SERVICE_ACCOUNT_JSON = config("GA4_SERVICE_ACCOUNT_JSON", default="")
 GOOGLE_APPLICATION_CREDENTIALS = config("GOOGLE_APPLICATION_CREDENTIALS", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
-STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20261128y")
+STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20261128z")
 
 # Behind nginx TLS termination (see config/mrcarpet.docker X-Forwarded-Proto).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -311,8 +311,8 @@ REST_FRAMEWORK = {
 
 LIQPAY_PUBLIC_KEY = config("LIQPAY_PUBLIC_KEY", None)
 LIQPAY_PRIVATE_KEY = config("LIQPAY_PRIVATE_KEY", None)
-# Sandbox відв'язаний від DEBUG: в адмінці зараз тестові ключі.
-# Перехід на бойові платежі = LIQPAY_SANDBOX=false у прод .env + бойові ключі в адмінці.
+# Sandbox відв'язаний від DEBUG. Default True лише для локальної розробки: на проді
+# LIQPAY_SANDBOX=false у .env і бойові ключі в адмінці (оплати мають статус success).
 LIQPAY_SANDBOX = config("LIQPAY_SANDBOX", default=True, cast=bool)
 
 # Ukrposhta address-classifier (прод/локальний .env; без токена пошук відділень УП не працює)
