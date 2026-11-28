@@ -95,10 +95,15 @@ SYSTEM_PROMPT = """Ти консультант інтернет-магазину
 - Посилання давай тільки на сторінки mrcarpet24.com (відносні, напр. /delivery/) і наш телефон.
 - Не тисни на покупця і не лякай, що товар закінчується.
 
-Кнопки:
-- Коли питаєш покупця і є очевидні короткі відповіді, додай В САМОМУ КІНЦІ окремий рядок
-  [[варіант 1|варіант 2|варіант 3]] з 2-4 варіантами по 1-3 слова. Покупець побачить їх як кнопки.
-  Напр. після питання про кімнату: [[Вітальня|Спальня|Дитяча|Кухня]].
+Кнопки (обов'язково):
+- Майже кожну відповідь закінчуй окремим рядком [[варіант 1|варіант 2|варіант 3]]: 2-4 короткі
+  (1-3 слова) наступні кроки, які покупець може натиснути замість того, щоб писати.
+  Напр. після питання про кімнату: [[Вітальня|Спальня|Дитяча|Кухня]];
+  після додавання в кошик: [[Оформити замовлення|Ще підібрати|Показати кошик]];
+  на картці замовлення кнопки не потрібні.
+- Кошик покупця видно в рядку [Контекст]: не пропонуй повторно те, що вже в кошику,
+  краще підкажи доповнення (напр. килимок під двері чи у ванну до великого килима).
+- Покупець може сам додати розмір кнопкою в картці товару. Тоді в контексті зʼявиться новий товар у кошику.
 """
 
 
@@ -211,7 +216,13 @@ def visitor_context(request, page: dict | None) -> str:
         cart = get_cart_readonly(request)
         count = cart.get_cart_product_total_quantity() if cart else 0
         if count:
-            parts.append(f"у кошику {count} шт. на {int(cart.get_total_price())} грн")
+            lines = [
+                f"{cp.product_attr.product.title} {cp.product_attr.size.title if cp.product_attr.size else ''}"
+                f" x{cp.quantity} (size_id {cp.product_attr_id})"
+                for cp in cart.cart_products.select_related("product_attr__product", "product_attr__size")[:8]
+                if cp.product_attr.product
+            ]
+            parts.append(f"у кошику {count} шт. на {int(cart.get_total_price())} грн: " + ", ".join(lines))
     except Exception:
         pass
     return ("[Контекст: " + "; ".join(parts) + "]") if parts else ""
@@ -302,6 +313,8 @@ def run_turn(
     conversation.save()
 
     reply_text, quick = split_quick_replies(reply_text)
+    if not quick and not ctx.order_card:
+        quick = fallback_quick_replies(request, reply_text)
     if not reply_text:
         reply_text = "Готово." if ctx.order_card or ctx.cart_changed else "…"
     payload = _payload(ctx, reply_text)
@@ -325,6 +338,22 @@ def split_quick_replies(text: str) -> tuple[str, list[str]]:
         return text, []
     options = [o.strip()[:40] for o in match.group(1).split("|") if o.strip()][:4]
     return text[: match.start()].rstrip(), options
+
+
+def fallback_quick_replies(request, reply_text: str) -> list[str]:
+    """When the model forgot the buttons: sensible next steps from the cart."""
+    try:
+        from cart.utils import get_cart_readonly
+
+        cart = get_cart_readonly(request)
+        has_items = bool(cart) and cart.get_cart_product_total_quantity() > 0
+    except Exception:
+        has_items = False
+    if has_items:
+        return ["Оформити замовлення", "Ще підібрати", "Показати кошик"]
+    if reply_text.rstrip().endswith("?"):
+        return ["Підібрати килим", "Доставка і оплата"]
+    return []
 
 
 def _json(value) -> str:

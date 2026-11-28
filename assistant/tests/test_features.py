@@ -142,3 +142,32 @@ class CardSizeOrderTests(CatalogMixin, TestCase):
         run_tool(ctx, "search_products", {"query": "сірий"})
         payload = _payload(ctx, "Є [Mira](/catalog/product/mira-grey/) 2.0x3.0 за 3200 грн")
         self.assertEqual(payload["products"][0]["sizes"][0]["size"], "2.0х3.0")
+
+
+class ChatCartTests(CatalogMixin, TestCase):
+    def test_add_list_remove(self):
+        empty = self.client.get("/api/assistant/cart/").json()
+        self.assertEqual(empty["count"], 0)
+        added = self.client.post("/api/assistant/cart/", {"action": "add", "size_id": self.attr.pk},
+                                 content_type="application/json").json()
+        self.assertEqual((added["count"], added["total"]), (1, 3200))
+        self.assertEqual(added["items"][0]["title"], self.product.title)
+        self.assertEqual(added["cart_events"][0]["item"]["item_id"], f"{self.product.pk}-{self.attr.pk}")
+        # The site's own cart sees it too.
+        self.assertEqual(len(self.client.get("/api/cart-products/").json()), 1)
+        too_many = self.client.post("/api/assistant/cart/", {"action": "add", "size_id": self.attr.pk, "quantity": 5},
+                                    content_type="application/json")
+        self.assertEqual(too_many.status_code, 400)
+        removed = self.client.post("/api/assistant/cart/", {"action": "remove", "size_id": self.attr.pk},
+                                   content_type="application/json").json()
+        self.assertEqual(removed["count"], 0)
+
+    def test_context_lists_cart_items_and_fallback_buttons(self):
+        from assistant.service import fallback_quick_replies
+
+        request = self.make_request()
+        self.assertEqual(fallback_quick_replies(request, "Готово."), [])
+        run_tool(ToolContext(request, Conversation.objects.create()), "add_to_cart", {"size_id": self.attr.pk})
+        line = visitor_context(request, None)
+        self.assertIn(f"{self.product.title} 2.0х3.0 x1 (size_id {self.attr.pk})", line)
+        self.assertEqual(fallback_quick_replies(request, "Додала."), ["Оформити замовлення", "Ще підібрати", "Показати кошик"])

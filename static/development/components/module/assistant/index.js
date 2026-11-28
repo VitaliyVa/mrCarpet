@@ -26,7 +26,9 @@ const KEYS = {
   sync: "mrc_assistant_sync",
   inflight: "mrc_assistant_inflight",
   teaser: "mrc_assistant_teaser",
+  open: "mrc_assistant_open",
 };
+const SHOW_CART = "Показати кошик";
 const LIMIT = 500;
 const MIN_W = 340;
 const MIN_H = 460;
@@ -62,6 +64,24 @@ const local = {
       return JSON.parse(this.get(key) || "null");
     } catch (e) {
       return null;
+    }
+  },
+};
+
+const session = {
+  get(key) {
+    try {
+      return window.sessionStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  },
+  set(key, value) {
+    try {
+      if (value === null || value === undefined) window.sessionStorage.removeItem(key);
+      else window.sessionStorage.setItem(key, value);
+    } catch (e) {
+      /* private mode */
     }
   },
 };
@@ -201,6 +221,8 @@ const ICONS = {
   rug: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><rect x="8" y="6" width="8" height="12" rx="1"/><path d="M5 1.5v1.5M9 1.5v1.5M15 1.5v1.5M19 1.5v1.5M5 21v1.5M9 21v1.5M15 21v1.5M19 21v1.5"/></svg>',
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg>',
   bag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg>',
   grip: '<svg viewBox="0 0 12 12" fill="currentColor"><circle cx="2" cy="2" r="1.1"/><circle cx="6" cy="2" r="1.1"/><circle cx="2" cy="6" r="1.1"/></svg>',
 };
 
@@ -277,9 +299,21 @@ class AssistantWidget {
     this.cooldownUntil = 0;
     this.renderedCount = 0;
     this.recovery = null;
+    this.cart = null;
     this.build();
     this.bindSync();
     this.scheduleTeaser();
+    this.reopenAfterNavigation();
+  }
+
+  /** The chat was open on the previous page (a link in it was clicked): open it again. */
+  reopenAfterNavigation() {
+    const state = session.get(KEYS.open);
+    if (!state || isPhone()) return;
+    this.root.classList.add("no-intro");
+    if (state === "expanded") this.toggleExpand(true);
+    this.show();
+    setTimeout(() => this.root.classList.remove("no-intro"), 600);
   }
 
   // ── DOM ──
@@ -295,11 +329,13 @@ class AssistantWidget {
             <p class="assistant-status">Онлайн · підберу килим і оформлю замовлення</p>
           </div>
           <div class="assistant-header-actions">
+            <button type="button" class="assistant-icon-btn assistant-cart-btn" aria-label="Кошик" title="Кошик" aria-expanded="false">${ICONS.cart}<span class="assistant-cart-count" hidden>0</span></button>
             <button type="button" class="assistant-icon-btn assistant-reset" aria-label="Нова розмова" title="Нова розмова">${ICONS.reset}</button>
             <button type="button" class="assistant-icon-btn assistant-expand" aria-label="Розгорнути" title="Розгорнути">${ICONS.expand}</button>
             <button type="button" class="assistant-icon-btn assistant-close" aria-label="Закрити чат" title="Закрити">${ICONS.close}</button>
           </div>
         </header>
+        <div class="assistant-cart-panel" hidden></div>
         <div class="assistant-body">
           <div class="assistant-log" role="log" aria-live="polite"></div>
           <button type="button" class="assistant-latest" hidden>Нові повідомлення ↓</button>
@@ -337,6 +373,24 @@ class AssistantWidget {
     this.unread = $(".assistant-unread");
     this.expandBtn = $(".assistant-expand");
     this.teaser = $(".assistant-teaser");
+    this.cartBtn = $(".assistant-cart-btn");
+    this.cartCount = $(".assistant-cart-count");
+    this.cartPanel = $(".assistant-cart-panel");
+    this.cartBtn.addEventListener("click", () => this.toggleCart());
+    if (window.matchMedia("(hover: hover)").matches) {
+      let leaveTimer = null;
+      const enter = () => {
+        clearTimeout(leaveTimer);
+        this.toggleCart(true);
+      };
+      const leave = () => {
+        leaveTimer = setTimeout(() => this.toggleCart(false), 280);
+      };
+      this.cartBtn.addEventListener("mouseenter", enter);
+      this.cartBtn.addEventListener("mouseleave", leave);
+      this.cartPanel.addEventListener("mouseenter", enter);
+      this.cartPanel.addEventListener("mouseleave", leave);
+    }
 
     this.input.value = local.get(KEYS.draft) || "";
     this.launcher.addEventListener("click", () => (this.open ? this.close() : this.show()));
@@ -396,6 +450,8 @@ class AssistantWidget {
     document.body.classList.add("assistant-open");
     this.launcher.setAttribute("aria-expanded", "true");
     this.unread.hidden = true;
+    session.set(KEYS.open, this.expanded ? "expanded" : "1");
+    this.loadCart();
     trackEvent("assistant_open", { page_type: window.__mrPageType || "" });
     if (!this.loaded) {
       this.loaded = true;
@@ -411,6 +467,8 @@ class AssistantWidget {
   close() {
     if (!this.open) return;
     this.open = false;
+    session.set(KEYS.open, null);
+    this.toggleCart(false);
     this.launcher.setAttribute("aria-expanded", "false");
     document.body.classList.remove("assistant-open");
     const done = () => {
@@ -426,6 +484,7 @@ class AssistantWidget {
   toggleExpand(force) {
     this.expanded = typeof force === "boolean" ? force : !this.expanded;
     this.root.classList.toggle("is-expanded", this.expanded);
+    if (this.open) session.set(KEYS.open, this.expanded ? "expanded" : "1");
     this.expandBtn.innerHTML = this.expanded ? ICONS.shrink : ICONS.expand;
     this.expandBtn.setAttribute("aria-label", this.expanded ? "Згорнути" : "Розгорнути");
     this.expandBtn.title = this.expanded ? "Згорнути" : "Розгорнути";
@@ -525,6 +584,7 @@ class AssistantWidget {
         return;
       }
       if (!info || info.tab === TAB_ID) return;
+      if (this.open) this.loadCart();
       this.conversationId = info.conv || null;
       if (!this.conversationId) {
         this.recovery = null;
@@ -634,7 +694,10 @@ class AssistantWidget {
       this.orderNumber = data.order_number || null;
       const reply = data.message || {};
       this.messages.push(reply);
-      if (reply.cart_changed) this.refreshCart();
+      if (reply.cart_changed) {
+        this.refreshCart();
+        this.loadCart();
+      }
       (reply.cart_events || []).forEach((ev) => {
         if (ev.event === "add_to_cart" && ev.item) {
           trackEcommerce("add_to_cart", {
@@ -732,6 +795,10 @@ class AssistantWidget {
   onClick(event) {
     const t = event.target;
     const pick = t.closest("[data-send]");
+    if (pick && pick.dataset.send === SHOW_CART) {
+      this.toggleCart(true);
+      return;
+    }
     if (pick) {
       this.send(pick.dataset.send, { keepPicker: pick.dataset.keepPicker === "1" });
       return;
@@ -754,8 +821,17 @@ class AssistantWidget {
     }
     const sizeBtn = t.closest("[data-add-size]");
     if (sizeBtn) {
-      this.send(`Додай у кошик ${sizeBtn.dataset.title}, розмір ${sizeBtn.dataset.size}`);
+      this.addSize(sizeBtn);
       return;
+    }
+    const removeBtn = t.closest("[data-remove-size]");
+    if (removeBtn) {
+      this.removeSize(removeBtn);
+      return;
+    }
+    if (t.closest("[data-cart-order]")) {
+      this.toggleCart(false);
+      this.send("Оформити замовлення");
     }
     if (t.closest("[data-recover-send]") && this.recovery) {
       const text = this.recovery.text;
@@ -852,6 +928,152 @@ class AssistantWidget {
     return null;
   }
 
+  // ── cart in the chat ──
+  async loadCart() {
+    try {
+      const { data } = await api.get("/cart/");
+      this.setCart(data);
+    } catch (e) {
+      /* the panel shows what it had */
+    }
+  }
+
+  setCart(data) {
+    this.cart = data;
+    const count = Number(data?.count) || 0;
+    this.cartCount.textContent = count;
+    this.cartCount.hidden = count === 0;
+    this.cartBtn.classList.remove("is-bump");
+    void this.cartBtn.offsetWidth;
+    if (count) this.cartBtn.classList.add("is-bump");
+    updateCountBadge(".header_bottom_panel_cart", count);
+    window.cartProductsCount = (data?.items || []).length;
+    if (!this.cartPanel.hidden) this.renderCart();
+  }
+
+  toggleCart(force) {
+    const open = typeof force === "boolean" ? force : this.cartPanel.hidden;
+    if (open === !this.cartPanel.hidden) return;
+    this.cartBtn.setAttribute("aria-expanded", String(open));
+    this.cartBtn.classList.toggle("is-active", open);
+    if (open) {
+      this.renderCart();
+      this.cartPanel.hidden = false;
+      requestAnimationFrame(() => this.cartPanel.classList.add("is-visible"));
+      if (!this.cart) this.loadCart();
+    } else {
+      this.cartPanel.classList.remove("is-visible");
+      setTimeout(() => {
+        if (!this.cartPanel.classList.contains("is-visible")) this.cartPanel.hidden = true;
+      }, 220);
+    }
+  }
+
+  renderCart() {
+    const box = this.cartPanel;
+    box.textContent = "";
+    const items = this.cart?.items || [];
+    const head = el("div", "assistant-cart-head");
+    head.appendChild(el("span", "assistant-cart-title", "Ваш кошик"));
+    if (items.length) head.appendChild(el("span", "assistant-cart-sum", money(this.cart.total)));
+    box.appendChild(head);
+    if (!this.cart) {
+      box.appendChild(el("p", "assistant-cart-empty", "Завантажую…"));
+      return;
+    }
+    if (!items.length) {
+      box.appendChild(el("p", "assistant-cart-empty", "Поки порожньо. Оберіть розмір у картці товару, і він зʼявиться тут."));
+      return;
+    }
+    const list = el("ul", "assistant-cart-items");
+    items.forEach((item) => {
+      const li = el("li", "assistant-cart-item");
+      const link = el("a", "assistant-cart-link");
+      link.href = item.url || "#";
+      link.appendChild(rugImage(item.image, item.title, "assistant-cart-img"));
+      const info = el("span", "assistant-cart-info");
+      info.appendChild(el("span", "assistant-cart-name", item.title));
+      info.appendChild(el("span", "assistant-cart-meta", `${item.size}${item.quantity > 1 ? ` × ${item.quantity}` : ""} · ${money(item.line_total)}`));
+      link.appendChild(info);
+      li.appendChild(link);
+      const remove = el("button", "assistant-cart-remove");
+      remove.type = "button";
+      remove.dataset.removeSize = item.size_id;
+      remove.setAttribute("aria-label", `Прибрати ${item.title}`);
+      remove.title = "Прибрати з кошика";
+      remove.innerHTML = ICONS.trash;
+      li.appendChild(remove);
+      list.appendChild(li);
+    });
+    box.appendChild(list);
+    box.appendChild(
+      el(
+        "p",
+        "assistant-cart-note",
+        this.cart.free_delivery
+          ? "Доставка безкоштовна"
+          : this.cart.to_free_delivery
+          ? `До безкоштовної доставки ще ${money(this.cart.to_free_delivery)}`
+          : ""
+      )
+    );
+    const actions = el("div", "assistant-cart-actions");
+    const order = el("button", "assistant-cart-primary", "Оформити в чаті");
+    order.type = "button";
+    order.dataset.cartOrder = "1";
+    const checkout = el("a", "assistant-cart-secondary", "На сторінку оформлення");
+    checkout.href = "/checkout/";
+    actions.append(order, checkout);
+    box.appendChild(actions);
+  }
+
+  async addSize(button) {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.classList.add("is-loading");
+    try {
+      const { data } = await api.post("/cart/", { action: "add", size_id: Number(button.dataset.addSize), quantity: 1 });
+      button.classList.remove("is-loading");
+      button.classList.add("is-added");
+      this.setCart(data);
+      (data.cart_events || []).forEach((ev) => {
+        if (ev.event === "add_to_cart" && ev.item) {
+          trackEcommerce("add_to_cart", { currency: CURRENCY, value: Number(ev.item.price) || 0, items: [ev.item] });
+        }
+      });
+      this.note(`Додано в кошик: ${button.dataset.title}, ${button.dataset.size}`, true);
+      this.broadcast();
+      setTimeout(() => {
+        button.classList.remove("is-added");
+        button.disabled = false;
+      }, 1600);
+    } catch (error) {
+      button.classList.remove("is-loading");
+      button.disabled = false;
+      const data = error?.response?.data;
+      if (data && data.items) this.setCart(data);
+      this.note(data?.error || "Не вдалося додати. Спробуйте ще раз.", false);
+    }
+  }
+
+  async removeSize(button) {
+    button.disabled = true;
+    try {
+      const { data } = await api.post("/cart/", { action: "remove", size_id: Number(button.dataset.removeSize) });
+      this.setCart(data);
+      this.broadcast();
+    } catch (error) {
+      button.disabled = false;
+    }
+  }
+
+  /** A short line in the chat for things done without the bot (a size added). */
+  note(text, ok) {
+    this.messages.push({ id: `note-${Date.now()}`, role: "note", ok, content: text });
+    this.render();
+    this.scrollToBottom(true);
+  }
+
   // ── layout helpers ──
   autosize() {
     this.input.style.height = "auto";
@@ -904,7 +1126,7 @@ class AssistantWidget {
     const last = this.messages.length - 1;
     if (last < 0) return -1;
     const m = this.messages[last];
-    return m.role !== "user" && m.quick_replies && m.quick_replies.length ? last : -1;
+    return m.role === "assistant" && m.quick_replies && m.quick_replies.length ? last : -1;
   }
 
   renderWelcome() {
@@ -956,6 +1178,18 @@ class AssistantWidget {
   }
 
   renderMessage(message, withQuick) {
+    if (message.role === "note") {
+      const note = el("div", `assistant-note-line${message.ok ? " is-ok" : " is-error"}`);
+      note.innerHTML = `<span class="assistant-note-icon">${message.ok ? ICONS.check : ICONS.close}</span>`;
+      note.appendChild(el("span", "", message.content));
+      if (message.ok) {
+        const show = el("button", "assistant-note-action", "Кошик");
+        show.type = "button";
+        show.dataset.send = SHOW_CART;
+        note.appendChild(show);
+      }
+      return note;
+    }
     const isUser = message.role === "user";
     const wrap = el("div", `assistant-message assistant-message--${isUser ? "user" : "assistant"}`);
     const bubble = el("div", "assistant-bubble");
@@ -993,6 +1227,7 @@ class AssistantWidget {
       link.appendChild(info);
       card.appendChild(link);
       if (p.sizes && p.sizes.length) {
+        card.appendChild(el("span", "assistant-sizes-label", "Додати в кошик:"));
         const sizes = el("div", "assistant-product-sizes");
         p.sizes.slice(0, 4).forEach((s) => {
           const btn = el("button", "assistant-size");
@@ -1001,12 +1236,13 @@ class AssistantWidget {
           btn.dataset.addSize = s.size_id;
           btn.dataset.size = s.size;
           btn.dataset.title = p.title;
-          btn.innerHTML = `${ICONS.plus}<span>${escapeHtml(s.size)}</span>`;
+          btn.innerHTML = `<span class="assistant-size-icon">${ICONS.plus}</span><span class="assistant-size-done">${ICONS.check}</span><span class="assistant-size-text"><b>${escapeHtml(s.size)}</b><i>${escapeHtml(money(s.price))}</i></span>`;
           sizes.appendChild(btn);
         });
         card.appendChild(sizes);
       }
       if (soldOut) {
+        card.appendChild(el("span", "assistant-sizes-label", "Немає в наявності:"));
         const sizes = el("div", "assistant-product-sizes");
         p.sold_out.slice(0, 3).forEach((s) => {
           const btn = el("button", "assistant-size is-request", `Заявка ${s.size}`);

@@ -209,3 +209,70 @@ class AssistantConfigView(_SessionAPIView):
         response = Response(data)
         response["Cache-Control"] = "public, max-age=600"
         return response
+
+
+class AssistantCartView(_SessionAPIView):
+    """The chat's own cart panel: the same session cart as the site.
+
+    GET: items with photo, size and price. POST {action: add|remove, size_id,
+    quantity?}: a size chip or the × in the panel, done at once without the model.
+    """
+
+    def get(self, request):
+        return Response(cart_payload(request._request))
+
+    def post(self, request):
+        from .tools import ToolContext, add_to_cart, remove_from_cart
+
+        action = request.data.get("action")
+        try:
+            size_id = int(request.data.get("size_id"))
+        except (TypeError, ValueError):
+            return Response({"error": "Немає розміру."}, status=status.HTTP_400_BAD_REQUEST)
+        ctx = ToolContext(request._request, conversation=None)
+        if action == "add":
+            result = add_to_cart(ctx, size_id, request.data.get("quantity") or 1)
+        elif action == "remove":
+            result = remove_from_cart(ctx, size_id)
+        else:
+            return Response({"error": "Невідома дія."}, status=status.HTTP_400_BAD_REQUEST)
+        if "error" in result:
+            return Response({**cart_payload(request._request), "error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({**cart_payload(request._request), "added": result.get("added"), "cart_events": ctx.cart_events})
+
+
+def cart_payload(request) -> dict:
+    from cart.utils import get_cart_readonly
+    from project.free_shipping import free_shipping_for_total
+
+    from .tools import _abs_image
+
+    cart = get_cart_readonly(request)
+    items = []
+    if cart:
+        rows = cart.cart_products.select_related("product_attr__product", "product_attr__size").prefetch_related(
+            "product_attr__product__images"
+        )
+        for cp in rows:
+            attr = cp.product_attr
+            product = attr.product
+            items.append(
+                {
+                    "size_id": attr.pk,
+                    "title": product.title if product else "",
+                    "url": product.get_absolute_url() if product else "",
+                    "image": _abs_image(product) if product else "",
+                    "size": attr.size.title if attr.size else (f"{cp.length} м" if cp.length else ""),
+                    "quantity": cp.quantity,
+                    "line_total": cp.cart_product_total_price(),
+                }
+            )
+    total = cart.get_total_price() if items else 0
+    fs = free_shipping_for_total(total)
+    return {
+        "items": items,
+        "count": sum(i["quantity"] for i in items),
+        "total": total,
+        "free_delivery": fs["qualifies"],
+        "to_free_delivery": fs["remaining"] if fs["enabled"] else 0,
+    }

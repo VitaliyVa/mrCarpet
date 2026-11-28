@@ -1483,3 +1483,443 @@ body:has(.header.active, .header_bottom_panel_search.active, .catalog_inside_fil
     transition-duration: 0.01ms !important;
   }
 }
+
+// ── after navigation the chat is back without the entry animation ──
+.assistant-widget.no-intro .assistant-panel,
+.assistant-widget.no-intro .assistant-log .is-new {
+  animation: none;
+}
+
+// ── cart button in the header ──
+.assistant-cart-btn {
+  position: relative;
+
+  &.is-active {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+
+  &.is-bump svg {
+    animation: assistant-bump 0.45s $spring;
+  }
+}
+
+@keyframes assistant-bump {
+  40% {
+    transform: scale(1.25) rotate(-8deg);
+  }
+}
+
+.assistant-cart-count {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e0a374;
+  color: #2f2823;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 11px;
+  line-height: 17px;
+  text-align: center;
+  animation: assistant-pop 0.35s $spring;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+// ── cart panel (drops from the header) ──
+.assistant-cart-panel {
+  position: absolute;
+  top: 74px;
+  right: 12px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 140px);
+  padding: 14px;
+  border-radius: 18px;
+  background: $card;
+  box-shadow: 0 18px 44px rgba(30, 24, 20, 0.22), 0 0 0 1px $line;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.2s ease, transform 0.3s $spring;
+
+  &.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.assistant-widget.is-expanded .assistant-cart-panel {
+  left: auto;
+  width: 400px;
+}
+
+.assistant-cart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.assistant-cart-title {
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 17px;
+}
+
+.assistant-cart-sum {
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 17px;
+  color: $accent-dark;
+}
+
+.assistant-cart-empty {
+  margin: 4px 0 2px;
+  color: $muted;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.assistant-cart-items {
+  @include no-scrollbar;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.assistant-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 14px;
+  background: $bg;
+  animation: assistant-rise 0.3s $ease both;
+}
+
+.assistant-cart-link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: $ink;
+  text-decoration: none;
+}
+
+.assistant-cart-img {
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 56px;
+  border-radius: 9px;
+  background: $tile-bg;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    padding: 3px;
+    object-fit: contain;
+  }
+
+  &.is-broken img {
+    display: none;
+  }
+}
+
+.assistant-cart-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.assistant-cart-name {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.assistant-cart-meta {
+  color: $muted;
+  font-size: 13px;
+}
+
+.assistant-cart-remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: $muted;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: #fbe6e3;
+    color: $danger;
+  }
+}
+
+.assistant-cart-note {
+  margin: 10px 2px 0;
+  color: $ok;
+  font-size: 14px;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.assistant-cart-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.assistant-cart-primary,
+.assistant-cart-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border-radius: 21px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 15px;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s $spring;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.assistant-cart-primary {
+  border: 0;
+  background: linear-gradient(135deg, #b27c53 0%, $accent-dark 100%);
+  color: #fff;
+}
+
+.assistant-cart-secondary {
+  background: $bg;
+  color: $ink;
+
+  &:hover {
+    background: $tile-bg;
+  }
+}
+
+// ── size chips: a clear "add to cart" grid ──
+.assistant-sizes-label {
+  margin: -2px 4px -4px;
+  color: $muted;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.assistant-product .assistant-product-sizes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 0;
+}
+
+.assistant-product .assistant-size {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px 6px;
+  border-radius: 10px;
+  text-align: left;
+
+  .assistant-size-icon,
+  .assistant-size-done {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    transition: transform 0.3s $spring, opacity 0.2s ease;
+
+    svg {
+      width: 11px;
+      height: 11px;
+      opacity: 1;
+    }
+  }
+
+  .assistant-size-done {
+    position: absolute;
+    left: 6px;
+    background: $ok;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  .assistant-size-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.15;
+
+    b {
+      font-family: "Futura PT Medium", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    i {
+      overflow: hidden;
+      color: $muted;
+      font-size: 11px;
+      font-style: normal;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &:hover .assistant-size-text i {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  &:hover .assistant-size-icon {
+    background: rgba(255, 255, 255, 0.25);
+    transform: rotate(90deg);
+  }
+
+  &.is-loading {
+    cursor: wait;
+    opacity: 0.7;
+  }
+
+  &.is-added {
+    background: #e3f2e8;
+    color: $ink;
+
+    .assistant-size-done {
+      opacity: 1;
+      transform: none;
+    }
+
+    .assistant-size-icon {
+      opacity: 0;
+    }
+
+    .assistant-size-text i {
+      color: $ok;
+    }
+  }
+
+  &.is-request {
+    grid-column: span 2;
+    justify-content: center;
+  }
+}
+
+// ── note line: "added to cart" ──
+.assistant-note-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  max-width: 100%;
+  padding: 6px 8px 6px 8px;
+  border-radius: 16px;
+  background: #e8f4ec;
+  color: #2f5c3f;
+  font-size: 14px;
+  line-height: 1.3;
+
+  &.is-error {
+    background: #fcecea;
+    color: #8c1d18;
+  }
+}
+
+.assistant-note-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: currentColor;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    color: #fff;
+  }
+}
+
+.assistant-note-action {
+  flex: none;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+  color: #2f5c3f;
+  font-size: 13px;
+
+  &:hover {
+    background: #2f5c3f;
+    color: #fff;
+  }
+}
+
+// Size chips fill the row: a lone size takes the full width, two share it.
+.assistant-product .assistant-product-sizes {
+  display: flex;
+  flex-wrap: wrap;
+
+  .assistant-size {
+    flex: 1 1 calc(50% - 3px);
+  }
+}
+
+// Four header buttons: keep the title on one line.
+.assistant-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.assistant-header {
+  gap: 10px;
+  padding-right: 10px;
+}
+
+.assistant-header-actions {
+  gap: 0;
+}
+
+.assistant-icon-btn {
+  width: 34px;
+  height: 34px;
+}
