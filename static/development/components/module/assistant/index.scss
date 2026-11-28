@@ -1,0 +1,669 @@
+// Site chat bot, bottom-left. Scoped under .assistant-widget.
+$ink: #453f3a;
+$ink-sub: #6b645e;
+$cream: #fffcf2;
+$paper: #ffffff;
+$gold: #a46c46;
+$gold-dark: #8a5535;
+$line: #e8dfd2;
+$soft: #f6efe3;
+$shadow: 0 18px 48px rgba(69, 63, 58, 0.22);
+
+.assistant-widget {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 1500; // above the header (999), below modals (9999)
+  font-family: "Futura PT Book", sans-serif;
+  color: $ink;
+  -webkit-font-smoothing: antialiased;
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+}
+
+// The checkout sticky bar sits at the very bottom on phones.
+body.has-checkout-sticky-bar .assistant-widget {
+  bottom: 92px;
+}
+
+.assistant-launcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 20px 0 16px;
+  border: 0;
+  border-radius: 27px;
+  background: $ink;
+  color: $cream;
+  box-shadow: 0 10px 28px rgba(69, 63, 58, 0.32);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    background: #2f2a26;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(69, 63, 58, 0.38);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $gold;
+    outline-offset: 3px;
+  }
+}
+
+.assistant-launcher-icon {
+  display: inline-flex;
+}
+
+.assistant-launcher-label {
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+}
+
+.assistant-unread {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: $gold;
+  color: $paper;
+  font-size: 13px;
+  line-height: 22px;
+  text-align: center;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.assistant-widget.is-open .assistant-launcher {
+  display: none;
+}
+
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  width: 390px;
+  height: min(640px, calc(100vh - 48px));
+  border: 1px solid $line;
+  border-radius: 20px;
+  background: $cream;
+  box-shadow: $shadow;
+  overflow: hidden;
+  animation: assistant-in 0.22s ease-out;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+@keyframes assistant-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.assistant-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  background: $ink;
+  color: $cream;
+}
+
+.assistant-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: $gold;
+  color: $paper;
+  font-family: "Futura PT Bold", sans-serif;
+  font-size: 15px;
+}
+
+.assistant-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.assistant-title {
+  margin: 0;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.assistant-status {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.25;
+  opacity: 0.8;
+}
+
+.assistant-reset,
+.assistant-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border: 0;
+  border-radius: 17px;
+  background: rgba(255, 252, 242, 0.12);
+  color: $cream;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 252, 242, 0.22);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $cream;
+    outline-offset: 2px;
+  }
+}
+
+.assistant-reset {
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.assistant-close {
+  width: 34px;
+}
+
+.assistant-log {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.assistant-welcome {
+  padding: 6px 2px;
+}
+
+.assistant-welcome-title {
+  margin: 0 0 6px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.assistant-welcome-text {
+  margin: 0 0 14px;
+  color: $ink-sub;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.assistant-suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.assistant-suggestion {
+  padding: 9px 14px;
+  border: 1px solid $line;
+  border-radius: 18px;
+  background: $paper;
+  color: $ink;
+  font-size: 15px;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: $gold;
+    background: $soft;
+  }
+}
+
+.assistant-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+
+  &--user {
+    align-items: flex-end;
+  }
+
+  &--assistant {
+    align-items: flex-start;
+  }
+}
+
+.assistant-bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+
+  p {
+    margin: 0;
+
+    + p {
+      margin-top: 6px;
+    }
+  }
+
+  ul,
+  ol {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+
+  li + li {
+    margin-top: 3px;
+  }
+
+  a {
+    color: $gold-dark;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .assistant-message--user & {
+    border-bottom-right-radius: 4px;
+    background: $ink;
+    color: $cream;
+    white-space: pre-wrap;
+  }
+
+  .assistant-message--assistant & {
+    border: 1px solid $line;
+    border-bottom-left-radius: 4px;
+    background: $paper;
+  }
+}
+
+.assistant-products {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.assistant-product {
+  display: flex;
+  flex: 0 0 150px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid $line;
+  border-radius: 14px;
+  background: $paper;
+  scroll-snap-align: start;
+}
+
+.assistant-product-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: $ink;
+  text-decoration: none;
+
+  &:hover .assistant-product-title {
+    color: $gold-dark;
+  }
+}
+
+.assistant-product-img {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  background: $soft;
+  object-fit: cover;
+
+  &.is-broken {
+    color: transparent; // hide the alt text over an empty tile
+  }
+}
+
+.assistant-product-title {
+  display: -webkit-box;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.assistant-product-price {
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 15px;
+}
+
+.assistant-product-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.assistant-size {
+  padding: 3px 7px;
+  border: 1px solid $line;
+  border-radius: 8px;
+  background: $cream;
+  color: $ink;
+  font-size: 13px;
+
+  &:hover {
+    border-color: $gold;
+  }
+}
+
+.assistant-order {
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid $gold;
+  border-radius: 16px;
+  background: $paper;
+
+  &.is-stale {
+    border-color: $line;
+    opacity: 0.75;
+  }
+}
+
+.assistant-order-title {
+  margin: 0 0 8px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 18px;
+}
+
+.assistant-order-items {
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid $line;
+  list-style: none;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 15px;
+    line-height: 1.3;
+
+    + li {
+      margin-top: 6px;
+    }
+  }
+
+  strong {
+    flex: none;
+    font-family: "Futura PT Medium", sans-serif;
+    font-weight: 500;
+  }
+}
+
+.assistant-order-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.3;
+
+  dt {
+    color: $ink-sub;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.assistant-order-error {
+  margin: 8px 0 0;
+  color: #b3261e;
+  font-size: 14px;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.assistant-order-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.assistant-order-confirm,
+.assistant-order-edit {
+  height: 44px;
+  border-radius: 22px;
+  font-family: "Futura PT Medium", sans-serif;
+  font-size: 16px;
+}
+
+.assistant-order-confirm {
+  flex: 1 1 auto;
+  border: 0;
+  background: $gold;
+  color: $paper;
+
+  &:hover {
+    background: $gold-dark;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+}
+
+.assistant-order-edit {
+  padding: 0 16px;
+  border: 1px solid $line;
+  background: $paper;
+  color: $ink;
+
+  &:hover {
+    border-color: $gold;
+  }
+}
+
+.assistant-order-stale {
+  margin: 10px 0 0;
+  color: $ink-sub;
+  font-size: 14px;
+}
+
+.assistant-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: $ink-sub;
+  font-size: 15px;
+}
+
+.assistant-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid $line;
+  border-radius: 14px;
+  background: $paper;
+
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $gold;
+    animation: assistant-dot 1.1s infinite ease-in-out;
+
+    &:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+  }
+}
+
+@keyframes assistant-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.assistant-error {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fbe9e7;
+  color: #8c1d18;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.assistant-composer {
+  padding: 10px 12px 10px;
+  border-top: 1px solid $line;
+  background: $paper;
+}
+
+.assistant-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.assistant-composer textarea {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 120px;
+  padding: 11px 14px;
+  border: 1px solid $line;
+  border-radius: 22px;
+  background: $cream;
+  color: $ink;
+  font: inherit;
+  font-size: 16px; // 16px stops iOS from zooming in
+  line-height: 1.35;
+  resize: none;
+  outline: none;
+
+  &:focus {
+    border-color: $gold;
+  }
+
+  &::placeholder {
+    color: #9a928b;
+  }
+}
+
+.assistant-send {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: $gold;
+  color: $paper;
+  transition: background 0.15s ease, opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: $gold-dark;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.assistant-note {
+  margin: 6px 4px 0;
+  color: #8a827b;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+@media (max-width: 520px) {
+  body.assistant-open {
+    overflow: hidden;
+  }
+
+  .assistant-widget {
+    left: 12px;
+    bottom: 12px;
+  }
+
+  .assistant-launcher {
+    height: 50px;
+    padding: 0 16px 0 13px;
+  }
+
+  .assistant-widget.is-open {
+    inset: 0;
+  }
+
+  .assistant-panel {
+    width: 100vw;
+    height: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-panel,
+  .assistant-typing i {
+    animation: none;
+  }
+
+  .assistant-log {
+    scroll-behavior: auto;
+  }
+}

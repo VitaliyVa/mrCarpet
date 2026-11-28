@@ -84,7 +84,7 @@ GA4_SERVICE_ACCOUNT_JSON = config("GA4_SERVICE_ACCOUNT_JSON", default="")
 GOOGLE_APPLICATION_CREDENTIALS = config("GOOGLE_APPLICATION_CREDENTIALS", default="")
 GOOGLE_SITE_VERIFICATION = config("GOOGLE_SITE_VERIFICATION", default="")
 # Bump on each frontend deploy so browsers bypass nginx immutable 30d JS/CSS cache.
-STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20261128g")
+STATIC_ASSET_VERSION = config("STATIC_ASSET_VERSION", default="20261128h")
 
 # Behind nginx TLS termination (see config/mrcarpet.docker X-Forwarded-Proto).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -151,6 +151,7 @@ INSTALLED_APPS = [
     'ukr_poshta',
     'payment',
     'social.apps.SocialConfig',
+    'assistant.apps.AssistantConfig',
     'rest_framework',
     'django_filters',
     'drf_yasg',
@@ -187,6 +188,7 @@ TEMPLATES = [
                 'cart.context_processors.context',
                 'project.context_processors.seo_jsonld',
                 'project.context_processors.shop_settings',
+                'assistant.context_processors.assistant',
             ],
         },
     },
@@ -320,6 +322,8 @@ UKR_POSHTA_BEARER = config("UKR_POSHTA_BEARER", default="")
 VIBER_AUTH_TOKEN = config("VIBER_AUTH_TOKEN", default="")
 
 REPLICATE_API_TOKEN = config("REPLICATE_API_TOKEN", default=None)
+# Site chat bot (assistant app). The key can also be set in the admin.
+ANTHROPIC_API_KEY = config("ANTHROPIC_API_KEY", default="")
 
 # Absolute site URL for Telegram product links etc.
 SITE_URL = config("SITE_URL", default="https://mrcarpet24.com").rstrip("/")

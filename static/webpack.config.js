@@ -52,6 +52,7 @@ module.exports = {
     faq: "./faq.js",
     password_reset: "./password_reset.js",
     unsubscribe: "./unsubscribe.js",
+    assistant: "./assistant.js",
   },
   output: {
     filename: "[name]/index.js",
