@@ -316,7 +316,7 @@ function updateFreeShippingUI(fs, finalPrice) {
   } else {
     priceEl.classList.remove("is-free");
     priceEl.innerHTML = `
-      <span class="basket__calculate-delivery-carrier">за тарифами перевізника</span>
+      <span class="basket__calculate-delivery-carrier">${fromPrice > 0 ? `Від ${fromPrice} грн.` : "за тарифами Нової Пошти"}</span>
     `;
     if (hintEl) {
       if (enabled && remaining > 0) {

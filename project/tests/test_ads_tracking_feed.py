@@ -254,8 +254,8 @@ class CheckoutFormAndLabelsTests(TestCase):
         self.assertIsNotNone(textarea)
         self.assertIn('maxlength="1000"', textarea.group(0))
         self.assertNotIn("required", textarea.group(0))
-        self.assertIn('<span id="cart-count">1 товар</span>', html)
-        self.assertIn('<span id="cart-count">1 товар</span>', self.client.get("/cart/").content.decode())
+        self.assertIn('<span class="basket__count" id="cart-count">1 товар</span>', html)
+        self.assertIn('<span class="basket__count" id="cart-count">1 товар</span>', self.client.get("/cart/").content.decode())
 
     def test_checkout_bundle_sends_the_comment(self):
         from pathlib import Path

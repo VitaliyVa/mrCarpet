@@ -8,11 +8,28 @@
     margin: 4px 0 0;
   }
 
+  // Breadcrumbs on the left, item count opposite them on the right.
+  &__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  &__count {
+    padding-top: 15px;
+    font-size: 15px;
+    color: #89817c;
+    white-space: nowrap;
+  }
+
   &__center {
-    margin-top: 60px;
+    margin-top: 28px;
 
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 40px;
   }
 
   // Порожня корзина
@@ -83,7 +100,8 @@
   }
 
   &__left {
-    width: 60%;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   &__items {
@@ -229,7 +247,7 @@
   }
 
   &__checkout {
-    max-width: 846px;
+    max-width: none;
     padding-bottom: 44px;
   }
 
@@ -289,8 +307,10 @@
     &-body {
       display: none;
       flex-direction: row;
-      max-width: calc(100% - 160px);
-      padding: 20px 0 46px;
+      // Centred by the accordion's left: 50% + translateX(-50%), so no side margins.
+      width: calc(100% - 60px);
+      max-width: none;
+      padding: 20px 0 30px;
       border-top: 1px solid #e9ecef;
 
       &-block {
@@ -387,9 +407,9 @@
     &.active {
       &.basket__delivery-item {
         .basket__checkbox-item-head {
-          column-gap: normal;
-          max-width: calc(100% - 32px);
-          padding: 30px 87px 20px;
+          column-gap: 16px;
+          max-width: none;
+          padding: 24px 30px 20px;
         }
 
         .basket__checkbox-item-body {
@@ -416,12 +436,14 @@
 
     &-item {
       .basket__checkbox-item-head {
-        justify-content: space-between;
+        justify-content: flex-start;
+        column-gap: 16px;
       }
 
       .basket__checkbox-item-title {
-        min-width: 116px;
-        width: 116px;
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
       }
     }
   }
@@ -492,8 +514,9 @@
   &_right {
     &__wrapper {
       position: sticky;
-      top: 20%;
-      height: 100%;
+      top: 20px;
+      flex: 0 0 400px;
+      max-width: 400px;
       margin-bottom: 15px;
     }
 
@@ -715,6 +738,45 @@
     margin: 35px 0 20px;
   }
 
+  &__sticky-bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: #fff;
+    box-shadow: 0 -4px 16px rgba(69, 63, 58, 0.12);
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__sticky-total {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    line-height: 1.2;
+    color: #89817c;
+
+    b {
+      font-size: 18px;
+      color: #a46c46;
+    }
+  }
+
+  &__sticky-btn {
+    flex: 0 0 auto;
+    padding: 14px 22px;
+    font-size: 15px;
+  }
+
   &__comment {
     margin-top: 40px;
 
@@ -867,11 +929,11 @@
         &.basket__delivery-item {
           .basket__checkbox-item-head {
             max-width: none;
-            padding: 30px 50px 20px;
+            padding: 24px 30px 20px;
           }
 
           .basket__checkbox-item-body {
-            max-width: calc(100% - 100px);
+            max-width: none;
           }
         }
       }
@@ -880,6 +942,11 @@
     &_right {
       max-width: 350px;
       margin-left: 0;
+
+      &__wrapper {
+        flex-basis: 350px;
+        max-width: 350px;
+      }
     }
   }
 
@@ -904,7 +971,9 @@
 
       &__wrapper {
         position: static;
+        flex: none;
         width: 100%;
+        max-width: none;
       }
     }
   }
@@ -913,7 +982,7 @@
     padding-bottom: 49px;
 
     &__center {
-      margin-top: 40px;
+      margin-top: 24px;
     }
 
     &_item {
@@ -940,7 +1009,17 @@
 
   @media (max-width: 828px) {
     h1 {
-      margin: 18px 0 0;
+      margin: 4px 0 0;
+    }
+
+    // Breadcrumbs are hidden on phones; the count sits above the title.
+    &__top {
+      justify-content: flex-start;
+    }
+
+    &__count {
+      padding-top: 18px;
+      font-size: 14px;
     }
   }
 
@@ -1064,7 +1143,9 @@
           }
 
           .basket__checkbox-item-body {
-            max-width: calc(100% - 34px);
+            width: calc(100% - 24px);
+            max-width: none;
+            padding: 16px 0;
           }
         }
       }
@@ -1073,8 +1154,8 @@
     &__delivery {
       &-item {
         .basket__checkbox-item-title {
-          min-width: 72px;
-          width: 72px;
+          min-width: 0;
+          width: auto;
         }
       }
     }
@@ -1179,4 +1260,9 @@
       }
     }
   }
+}
+
+// Room for the fixed confirm bar on the checkout page (phones only).
+body.has-checkout-sticky-bar {
+  padding-bottom: 76px;
 }

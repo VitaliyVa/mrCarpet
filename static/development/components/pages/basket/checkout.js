@@ -28,6 +28,41 @@ document.addEventListener("click", ({ target }) => {
 initPromocode();
 initNovaPost();
 initOrderForm();
+initStickyConfirm();
+
+// On a phone the confirm button sits at the very bottom, under the summary.
+// While it is still below the screen, a bar with the total and a copy of the
+// button stays at the bottom; it disappears once the real button is visible.
+function initStickyConfirm() {
+  const bar = document.getElementById("checkout-sticky-bar");
+  const mainBtn = document.querySelector(".basket__to-order-btn");
+  if (!bar || !mainBtn || !("IntersectionObserver" in window)) return;
+
+  const stickyBtn = bar.querySelector(".basket__sticky-btn");
+  const stickyTotal = document.getElementById("checkout-sticky-total");
+  const totalEl = document.querySelector(".basket__calculate-total-price-value");
+  const phone = window.matchMedia("(max-width: 720px)");
+
+  stickyBtn?.addEventListener("click", () => mainBtn.click());
+
+  const setVisible = (show) => {
+    bar.hidden = !show;
+    document.body.classList.toggle("has-checkout-sticky-bar", show);
+    if (show && stickyTotal && totalEl) {
+      stickyTotal.textContent = totalEl.textContent.trim();
+    }
+  };
+
+  let below = false;
+  const update = () => setVisible(phone.matches && below);
+
+  new IntersectionObserver(([entry]) => {
+    below = !entry.isIntersecting && entry.boundingClientRect.top > 0;
+    update();
+  }).observe(mainBtn);
+
+  phone.addEventListener?.("change", update);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   restorePromocode();

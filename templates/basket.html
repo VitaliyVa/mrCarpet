@@ -4,15 +4,17 @@
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
     <div class="container">
-        <div class="bread-crumbs">
-            <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
-            <span class="color_black_sub">/</span>
-            <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
+        <div class="basket__top">
+            <div class="bread-crumbs">
+                <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+                <span class="color_black_sub">/</span>
+                <a href="{% url 'cart' %}" class="color_gold">Кошик</a>
+            </div>
+            <span class="basket__count" id="cart-count">{{ cart_products|length }} {{ cart_products|length|plural_uk:"товар,товари,товарів" }}</span>
         </div>
 
         <div class="title">
             <h1>Кошик</h1>
-            <span id="cart-count">{{ cart_products|length }} {{ cart_products|length|plural_uk:"товар,товари,товарів" }}</span>
         </div>
 
         <!-- Блок порожньої корзини -->

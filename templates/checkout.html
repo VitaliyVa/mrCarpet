@@ -3,17 +3,19 @@
 {% endblock styles %}{% block content %}
 <section class="basket first_section">
     <div class="container">
-        <div class="bread-crumbs">
-            <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
-            <span class="color_black_sub">/</span>
-            <a href="{% url 'cart' %}" class="color_black_sub">Кошик</a>
-            <span class="color_black_sub">/</span>
-            <span class="color_gold">Оформлення</span>
+        <div class="basket__top">
+            <div class="bread-crumbs">
+                <a href="{% url 'index' %}" class="color_black_sub">Головна</a>
+                <span class="color_black_sub">/</span>
+                <a href="{% url 'cart' %}" class="color_black_sub">Кошик</a>
+                <span class="color_black_sub">/</span>
+                <span class="color_gold">Оформлення</span>
+            </div>
+            <span class="basket__count" id="cart-count">{% with n=cart.cart_products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}</span>
         </div>
 
         <div class="title">
             <h1>Оформлення замовлення</h1>
-            <span id="cart-count">{% with n=cart.cart_products.all|length %}{{ n }} {{ n|plural_uk:"товар,товари,товарів" }}{% endwith %}</span>
         </div>
 
         <!-- Блок порожньої корзини -->
@@ -43,12 +45,15 @@
                                     class="basket__checkbox-item basket__delivery-item checkbox-radio accordion accordion_content__block active"
                             >
                                 <div class="basket__checkbox-item-head accordion__title">
+                                    {# Доставка поки одна, тому кружечок вибору приховано. Коли з'явиться друга (Укрпошта, кур'єр), прибрати hidden і style. Сам input лишається: checkout.js ставить його checked при кліку на заголовок. #}
                                     <input
                                             id="nova-post"
                                             class="checkbox__input"
                                             name="delivery"
                                             type="radio"
                                             checked
+                                            hidden
+                                            style="display: none;"
                                     />
                                     <div class="basket__checkbox-item-icon">
                                         <img
@@ -514,6 +519,14 @@
                         >
                             {{ cart.get_total_price }} грн.
                         </p>
+                    </div>
+
+                    <div class="basket__sticky-bar" id="checkout-sticky-bar" hidden>
+                        <div class="basket__sticky-total">
+                            <span>До сплати</span>
+                            <b id="checkout-sticky-total">{{ cart.get_total_price }} грн.</b>
+                        </div>
+                        <button type="button" class="basket__sticky-btn btn-gold">Підтвердити</button>
                     </div>
 
                     <button class="basket__to-order-btn basket_right_btn btn-gold">
