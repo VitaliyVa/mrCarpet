@@ -121,6 +121,13 @@ class CallbackTests(CatalogMixin, TestCase):
         notify.assert_called_once()
         _, error = run_tool(ctx, "request_callback", {"full_name": "Марія", "phone": "123", "request": "x" * 10})
         self.assertTrue(error)
+        _, error = run_tool(ctx, "request_callback", {"full_name": "Марія", "request": "x" * 10})
+        self.assertTrue(error)  # neither phone nor email
+        result, error = run_tool(ctx, "request_callback", {"full_name": "Марія", "email": "m@example.com", "request": "Питання про опт"})
+        self.assertFalse(error, result)
+        latest = ContactRequest.objects.latest("pk")
+        self.assertEqual(latest.email, "m@example.com")
+        self.assertIn("admin/assistant/conversation/", latest.text)
 
     def test_custom_and_hours_facts(self):
         ctx = ToolContext(self.make_request(), Conversation.objects.create())

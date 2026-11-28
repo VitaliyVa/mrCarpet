@@ -284,7 +284,7 @@ class SecurityTests(CatalogMixin, TestCase):
             self.assertFalse(error)
         result, error = run_tool(ctx, "prepare_order", self.args)
         self.assertTrue(error)
-        self.assertIn("t.me/mrcarpet24", result["error"])
+        self.assertIn("повідомлення менеджеру", result["error"])
 
     def test_chat_orders_are_limited_per_visitor_per_day(self):
         for _ in range(2):
