@@ -222,6 +222,19 @@ export function renderMarkdown(text) {
   return html;
 }
 
+/** Size to try on: the one the reply named (it comes first), unless that is a
+ * small mat; then the size nearest a room rug (2x3 m), which says more in AR. */
+function tryOnSize(sizes) {
+  const area = (label) => {
+    const m = String(label || "").match(/(\d+(?:[.,]\d+)?)\s*[xх]\s*(\d+(?:[.,]\d+)?)/i);
+    return m ? parseFloat(m[1].replace(",", ".")) * parseFloat(m[2].replace(",", ".")) : 0;
+  };
+  if (!sizes.length) return "";
+  if (area(sizes[0].size) >= 1.5) return sizes[0].size;
+  const best = [...sizes].sort((a, b) => Math.abs(area(a.size) - 6) - Math.abs(area(b.size) - 6))[0];
+  return best.size;
+}
+
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -1420,7 +1433,7 @@ class AssistantWidget {
         tryOn.dataset.url = p.url;
         tryOn.dataset.title = p.title;
         tryOn.dataset.image = p.image || "";
-        tryOn.dataset.size = (p.sizes && p.sizes[0] && p.sizes[0].size) || "";
+        tryOn.dataset.size = tryOnSize(p.sizes || []);
         tryOn.innerHTML = `${ICONS.cube}<span>Приміряти вдома</span>`;
         card.appendChild(tryOn);
       }
