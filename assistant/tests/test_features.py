@@ -171,3 +171,37 @@ class ChatCartTests(CatalogMixin, TestCase):
         line = visitor_context(request, None)
         self.assertIn(f"{self.product.title} 2.0х3.0 x1 (size_id {self.attr.pk})", line)
         self.assertEqual(fallback_quick_replies(request, "Додала."), ["Оформити замовлення", "Ще підібрати", "Показати кошик"])
+
+
+class StaffLimitTests(TestCase):
+    def test_staff_skip_hourly_limit(self):
+        from django.contrib.auth import get_user_model
+
+        s = AssistantSettings.load()
+        s.enabled, s.api_key, s.messages_per_hour = True, "sk-ant-test", 1
+        s.save()
+        User = get_user_model()
+        staff = User.objects.create_user(email="staff@example.com", password="x", is_staff=True) \
+            if "email" in [f.name for f in User._meta.fields] and User.USERNAME_FIELD == "email" \
+            else User.objects.create_user(username="staff", password="x", is_staff=True)
+        self.client.force_login(staff)
+        fake = FakeClient([_response([_text("1")]), _response([_text("2")])])
+        with mock.patch("assistant.service._client", return_value=fake):
+            for text in ("a", "b"):
+                r = self.client.post("/api/assistant/message/", {"message": text}, content_type="application/json")
+                self.assertEqual(r.status_code, 200)
+
+
+class LoggedInCartTests(CatalogMixin, TestCase):
+    def test_chat_adds_to_the_account_cart(self):
+        from django.contrib.auth import get_user_model
+
+        from cart.models import Cart
+
+        User = get_user_model()
+        user = User.objects.create_user(email="buyer@example.com", password="x") \
+            if User.USERNAME_FIELD == "email" else User.objects.create_user(username="buyer", password="x")
+        self.client.force_login(user)
+        self.client.post("/api/assistant/cart/", {"action": "add", "size_id": self.attr.pk}, content_type="application/json")
+        cart = Cart.objects.get(user=user, ordered=False)
+        self.assertEqual(cart.cart_products.count(), 1)

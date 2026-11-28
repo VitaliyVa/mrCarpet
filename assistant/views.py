@@ -4,6 +4,8 @@ from decimal import Decimal
 
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 
 from order.models import Order
@@ -69,12 +71,23 @@ def _state(conversation) -> dict:
     }
 
 
+class _SessionUser(SessionAuthentication):
+    """The site session's user, without DRF's CSRF check: a guest may not have
+    a CSRF cookie yet, and every request here is JSON (a cross-site form cannot
+    send it without a CORS preflight, which we never allow)."""
+
+    def enforce_csrf(self, request):
+        return
+
+
 class _SessionAPIView(APIView):
-    # Same-origin widget on the shop's own session. No DRF auth classes, so a
-    # guest is not asked for a CSRF token it may not have yet; nothing here
-    # acts for a logged-in account beyond that browser's own cart.
-    authentication_classes = []
+    # With no auth classes DRF sets request.user to AnonymousUser even for a
+    # logged-in buyer, and the cart tools then used a session cart instead of
+    # the account's. The session class keeps the real user.
+    authentication_classes = [_SessionUser]
     permission_classes = []
+    # JSON only: a cross-site <form> cannot post it (see _SessionUser).
+    parser_classes = [JSONParser]
 
 
 class AssistantMessageView(_SessionAPIView):
@@ -93,7 +106,10 @@ class AssistantMessageView(_SessionAPIView):
 
         client_hash = _client_hash(request)
         mine = Conversation.objects.filter(client_hash=client_hash).values("pk")
-        if messages_last_hour(mine) >= settings.messages_per_hour:
+        # Shop staff (logged into the admin) test the bot a lot from the shop's
+        # own connection: the hourly limit would lock real buyers on that IP out.
+        is_staff = bool(getattr(getattr(request._request, "user", None), "is_staff", False))
+        if not is_staff and messages_last_hour(mine) >= settings.messages_per_hour:
             return _too_many(
                 COOLDOWN_SECONDS,
                 "Забагато повідомлень. Спробуйте трохи пізніше або подзвоніть нам.",
