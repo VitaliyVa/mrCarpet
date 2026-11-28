@@ -55,9 +55,10 @@ class VisitorContextTests(CatalogMixin, TestCase):
             self.client.post("/api/assistant/message/",
                              {"message": "а цей є?", "page": {"path": f"/catalog/product/{self.product.slug}/"}},
                              content_type="application/json")
-        sent = fake.calls[0]["messages"][0]["content"]
-        self.assertTrue(sent.startswith("[Контекст: покупець дивиться товар"))
-        self.assertTrue(sent.endswith("а цей є?"))
+        messages = fake.calls[0]["messages"]
+        self.assertEqual(messages[0], {"role": "user", "content": "а цей є?"})
+        self.assertEqual(messages[1]["role"], "system")
+        self.assertTrue(messages[1]["content"].startswith("[Контекст: покупець дивиться товар"))
 
 
 class StockRequestTests(CatalogMixin, TestCase):
